@@ -1,6 +1,9 @@
 RACK_DIR ?= .tools/Rack-SDK
 SOURCES += $(wildcard src/*.cpp)
-DISTRIBUTABLES += README.md docs examples res
+DISTRIBUTABLES += README.md examples res
+# Explicit public documentation list: local continuation notes stay local.
+DISTRIBUTABLES += docs/HARDWARE-UI.md docs/MOD-TEST.md docs/UI-TARGET.md
+DISTRIBUTABLES += docs/VALIDATION.md docs/DEVELOPMENT.md docs/TESTING.md docs/FEATURE-STATUS.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk

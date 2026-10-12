@@ -62,3 +62,14 @@ installed or published as production plugins.
 
 The existing project metadata and third-party asset attribution are preserved.
 Making the repository public does not change its declared software license.
+
+## Public test releases
+
+`v2.3.1` is the first downloadable Windows alpha, with the same runtime code as
+2.3.0. GitHub Releases hosts the `.vcvplugin`, portable demo, tester guide, and
+SHA-256 checksums. It is marked as a prerelease. Release assets are separate from
+GitHub's automatic source archives.
+
+`Makefile` lists distributable documents explicitly so local continuation notes
+cannot enter a public package. Verify staged contents, runtime assets, absence
+of test hooks, and the published download's checksum before sharing a build.

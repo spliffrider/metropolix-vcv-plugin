@@ -10,7 +10,7 @@
       "id": 1,
       "plugin": "MetropolixLab",
       "model": "Metropolix",
-      "version": "2.3.0",
+      "version": "2.3.1",
       "params": [
         {
           "id": 0,
