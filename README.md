@@ -4,11 +4,17 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.5.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.6.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/MetropolixLab-2.5.0-win-x64.vcvplugin)** · **[Stage/Track comparison patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/Accumulator-modes.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.5.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.6.0/MetropolixLab-2.6.0-win-x64.vcvplugin)** · **[Stage/Track comparison patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/Accumulator-modes.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.6.0)**
 
-2.5.0 adds **Track accumulation** alongside the original Stage mode. Select a
+2.6.0 activates **CTRL 1 and CTRL 2** with 23 destinations, independent track
+assignments, direct panel control and bipolar offsets, an OLED assignment page,
+hover help, menus, and Rack undo. Older patches keep both knobs unassigned.
+See the [CTRL guide](docs/CTRL-KNOBS.md) and try the
+[CTRL performance patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.6.0/CTRL-performance.vcv).
+
+2.5.0 added **Track accumulation** alongside the original Stage mode. Select a
 track, then **ALT → LIM → Mode**, or right-click **TRK 1/2 → Accumulator mode**.
 The LIM display also exposes limits, order, polarity, and reset. Old patches
 retain Stage mode and their existing parameter/cable IDs. Preset chaining is
@@ -99,7 +105,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.5.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.6.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -170,7 +176,7 @@ The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX destinations, CTRL assignments, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware preset banks/chains, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware preset banks/chains, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
@@ -183,6 +189,7 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-ui.ps1
 .\scripts\test-ui.ps1 -Aux
 .\scripts\test-ui.ps1 -Display
+.\scripts\test-ui.ps1 -Controls
 .\scripts\test-ui.ps1 -Audio
 .\scripts\test-ui.ps1 -Modulation
 .\scripts\test-ui.ps1 -Hardware
@@ -198,7 +205,7 @@ The musical check records 24 seconds from the actual stereo mix in Rack at
 DC offset, and finite samples. These are technical checks; listening feedback
 is still needed to judge the composition and timbre.
 
-The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 20 screen states in `tmp/display-qa`.
+The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 28 screen states in `tmp/display-qa`.
 
 Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Other platforms have not been built or tested.
 

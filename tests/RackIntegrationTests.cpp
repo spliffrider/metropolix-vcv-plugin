@@ -12,7 +12,7 @@ void require(bool value, const char* message) {
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
-    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::NUM_PARAMS==415,"mode appends after all existing parameters");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::NUM_PARAMS==421,"CTRL appends after all existing parameters");
     static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
@@ -229,6 +229,44 @@ int main() {
         module.uiPage.store(Metropolix::ACCUM_PAGE);module.uiField.store(5);
         json_t* data=module.dataToJson();module.dataFromJson(data);json_decref(data);
         require(module.uiPage.load()==Metropolix::ACCUM_PAGE && module.uiField.load()==5,"LIM page and all six fields survive save/load");
+    }
+    {
+        Metropolix m;
+        auto assign=[&](int k,metro::CtrlDestination d,float value,int target) {
+            m.params[Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION)].setValue(d);
+            m.params[Metropolix::ctrlParam(k,Metropolix::CTRL_VALUE)].setValue(value);
+            m.params[Metropolix::ctrlParam(k,Metropolix::CTRL_ASSIGNMENT)].setValue(target);
+            m.readSettings();
+        };
+        require(m.integer(Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION))==metro::CtrlGateLength && m.integer(Metropolix::ctrlParam(1,Metropolix::CTRL_DESTINATION))==metro::CtrlSlideAmount,"new modules use hardware CTRL defaults");
+        assign(0,metro::CtrlGateLength,1,0);
+        require(m.params[Metropolix::trackParam(0,Metropolix::GATE_LENGTH)].getValue()==99 && m.params[Metropolix::trackParam(1,Metropolix::GATE_LENGTH)].getValue()==50,"direct CTRL changes only assigned base settings");
+        require(m.ctrlOwner(Metropolix::trackParam(0,Metropolix::GATE_LENGTH))==0 && m.ctrlOwner(Metropolix::trackParam(1,Metropolix::GATE_LENGTH))==-1,"ownership follows target track");
+        assign(1,metro::CtrlGateLength,-1,2);
+        require(m.sequencer.settings.tracks[0].gateLength==.01f && m.ctrlOwner(Metropolix::trackParam(0,Metropolix::GATE_LENGTH))==1,"CTRL 2 wins direct collisions");
+        assign(0,metro::CtrlNone,0,2);assign(1,metro::CtrlNone,0,2);
+        require(m.params[Metropolix::trackParam(0,Metropolix::GATE_LENGTH)].getValue()==1 && m.ctrlOwner(Metropolix::trackParam(0,Metropolix::GATE_LENGTH))==-1,"unassigning direct control retains resulting panel value and releases lock");
+        assign(0,metro::CtrlTempo,1,1);require(m.sequencer.settings.bpm==400,"tempo is global even with track 2 assignment");
+        assign(0,metro::CtrlClockDiv,-1,0);assign(1,metro::CtrlStagesLength,-1,1);
+        require(m.sequencer.settings.tracks[0].division==1 && m.sequencer.settings.tracks[1].length==1,"clock division and stage length reach engine");
+        assign(0,metro::CtrlAccumMode,1,2);assign(1,metro::CtrlAccumPolar,0,1);
+        require(m.sequencer.settings.tracks[0].accumMode==metro::TrackAccumulation && m.sequencer.settings.tracks[1].accumBipolar,"accumulator direct destinations reach engine");
+        assign(0,metro::CtrlPitchOffset,.333f,0);assign(1,metro::CtrlOutputSwap,1,2);
+        for(int t=0;t<2;++t)m.params[Metropolix::trackParam(t,Metropolix::GATE_LENGTH)].setValue(50);
+        m.selectedCtrl.store(1);m.uiPage.store(Metropolix::CTRL_PAGE);m.uiField.store(1);
+        json_t* params=m.paramsToJson();json_t* data=m.dataToJson();Metropolix restored;
+        restored.paramsFromJson(params);restored.dataFromJson(data);json_decref(params);json_decref(data);
+        for(int id=0;id<Metropolix::NUM_PARAMS;++id)require(m.params[id].getValue()==restored.params[id].getValue(),"CTRL patch serialization keeps every parameter");
+        require(restored.selectedCtrl.load()==1 && restored.uiPage.load()==Metropolix::CTRL_PAGE && restored.uiField.load()==1,"CTRL page and selected knob survive save/load");
+        Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;
+        restored.params[Metropolix::RUN].setValue(1);restored.process(args);
+        require(restored.outputs[Metropolix::PITCH_1].getVoltage()==0 && std::abs(restored.outputs[Metropolix::PITCH_2].getVoltage()-.333f)<.0001f,"physical pitch outputs swap after per-track control");
+        restored.params[Metropolix::trackParam(0,Metropolix::MUTE)].setValue(1);
+        for(int i=0;i<32;++i)restored.process(args);
+        require(restored.outputs[Metropolix::GATE_2].getVoltage()==0 && restored.outputs[Metropolix::GATE_1].getVoltage()==5,"physical gate outputs swap with pitch");
+        m.params[Metropolix::trackParam(0,Metropolix::GATE_LENGTH)].setValue(37);
+        json_t* old=json_pack("{s:i}","schemaVersion",8);m.dataFromJson(old);json_decref(old);
+        require(m.sequencer.settings.controls[0].destination==metro::CtrlNone && m.sequencer.settings.controls[1].destination==metro::CtrlNone && m.params[Metropolix::trackParam(0,Metropolix::GATE_LENGTH)].getValue()==37,"2.5 patches clear CTRL without altering old panel values");
     }
     delete context.engine;
     context.engine = nullptr;

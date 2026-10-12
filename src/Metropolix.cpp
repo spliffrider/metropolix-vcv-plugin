@@ -46,6 +46,7 @@ void line(NVGcontext* vg, float x1, float y1, float x2, float y2, NVGcolor color
 }
 void setWithHistory(ParamQuantity* q, float value) {
     if (!q || !q->module) return;
+    if(auto* m=dynamic_cast<Metropolix*>(q->module))if(m->ctrlOwner(q->paramId)>=0)return;
     float before = q->getValue();
     q->setValue(value);
     if (q->getValue() == before) return;
@@ -69,7 +70,7 @@ void trackSettingsMenu(Metropolix* m) {
         auto* q = m->getParamQuantity(id);
         menu->addChild(createIndexSubmenuItem(label, values,
             [q, offset] { return static_cast<size_t>(std::round(q->getValue()) - offset); },
-            [q, offset](size_t index) { setWithHistory(q, static_cast<float>(index + offset)); }));
+            [q, offset](size_t index) { setWithHistory(q, static_cast<float>(index + offset)); }, m->ctrlOwner(id)>=0));
     };
     choice("Direction", Metropolix::extraParam(t, Metropolix::REVERSED), {"Forward", "Reverse"});
     std::vector<std::string> divisions;
@@ -155,6 +156,30 @@ void appendAuxMenu(ui::Menu* menu, Metropolix* m, int input) {
     }));
 }
 
+void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
+    if(!m)return;
+    menu->addChild(new ui::MenuSeparator);
+    menu->addChild(createMenuLabel(string::f("CTRL %d",knob+1)));
+    auto choice=[menu,m,knob](const std::string& label,int property,std::vector<std::string> values) {
+        auto* q=m->getParamQuantity(Metropolix::ctrlParam(knob,property));
+        menu->addChild(createIndexSubmenuItem(label,values,
+            [q]{return static_cast<size_t>(q->getValue());},
+            [q](size_t value){setWithHistory(q,static_cast<float>(value));}));
+    };
+    choice("Destination",Metropolix::CTRL_DESTINATION,Metropolix::ctrlDestinations());
+    choice("Target tracks",Metropolix::CTRL_ASSIGNMENT,{"Track 1","Track 2","Both tracks"});
+    menu->addChild(createMenuItem("Centre knob (noon)","",[m,knob] {
+        setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_VALUE)),0.f);
+    }));
+    menu->addChild(createMenuItem("Clear assignment","",[m,knob] {
+        setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION)),0.f);
+    }));
+    menu->addChild(createSubmenuItem("Not implemented yet","",[](ui::Menu* sub) {
+        for(auto name:{"Accum Dir","Gate Scale","Scale (User)","Slider Range","Swing","Velocity"})
+            sub->addChild(createMenuLabel(name));
+    }));
+}
+
 // All views bind to the same ParamQuantity, preserving Rack automation, reset,
 // numeric entry, patch serialization, and undo in both compact and open views.
 struct ValueCell : app::Knob {
@@ -169,6 +194,7 @@ struct ValueCell : app::Knob {
     std::vector<std::string> choices;
     std::vector<std::string> shortChoices;
     float dragDistance = 0.f;
+    bool locked() const { return metroModule && metroModule->ctrlOwner(paramId)>=0; }
 
     ValueCell() {
         box.size = Vec(40, 24);
@@ -204,7 +230,7 @@ struct ValueCell : app::Knob {
         font(args.vg);
         rect(args.vg, 0, 0, box.size.x, box.size.y, dark ? ink() : nvgRGB(244, 243, 235));
         line(args.vg, 2, box.size.y - 1, box.size.x - 2, box.size.y - 1, nvgRGB(190, 191, 184));
-        text(args.vg, box.size.x / 2, box.size.y / 2, valueText(), 10.5f,
+        text(args.vg, box.size.x / 2, box.size.y / 2, locked()?string::f("C%d ",metroModule->ctrlOwner(paramId)+1)+valueText():valueText(), 10.5f,
              dark ? paper() : ink(), NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
     }
     bool toggleCell() const {
@@ -217,11 +243,13 @@ struct ValueCell : app::Knob {
         return metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE)) == metro::ModGate
             || metro::modGateDestination(static_cast<metro::ModDestination>(metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
     }
-    void onDragStart(const event::DragStart& e) override { dragDistance = 0.f; app::Knob::onDragStart(e); }
-    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); app::Knob::onDragMove(e); }
-    void onDragEnd(const event::DragEnd& e) override { app::Knob::onDragEnd(e); }
+    void onDragStart(const event::DragStart& e) override { dragDistance = 0.f; if(!locked())app::Knob::onDragStart(e); }
+    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(!locked())app::Knob::onDragMove(e); }
+    void onDragEnd(const event::DragEnd& e) override { if(!locked())app::Knob::onDragEnd(e); }
+    void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onAction(const event::Action&) override {
+        if(locked())return;
         if (dragDistance >= 3.f) return;
         if (toggleCell()) {
             if (auto* q = getParamQuantity()) {
@@ -241,7 +269,12 @@ struct ValueCell : app::Knob {
             return;
         }
     }
-    void onButton(const event::Button& e) override { app::ParamWidget::onButton(e); }
+    void onButton(const event::Button& e) override {
+        if(locked() && e.button==GLFW_MOUSE_BUTTON_RIGHT && e.action==GLFW_PRESS) {
+            appendCtrlMenu(createMenu(),metroModule,metroModule->ctrlOwner(paramId));e.consume(this);return;
+        }
+        app::ParamWidget::onButton(e);
+    }
 };
 
 struct PitchFader : app::Knob {

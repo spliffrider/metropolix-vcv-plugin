@@ -70,8 +70,26 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         knob->bind();button->bind();
     }
     for(int i=0;i<2;++i) {
-        placeholder(string::f("CTRL %d",i+1),31+i*72,252,41,HardwareControl::WHITE_KNOB);
-        placeholder(string::f("CTRL %d assignment",i+1),67+i*72,229,15,HardwareControl::DARK_BUTTON);
+        auto open=[m,i]{if(m){m->selectedCtrl.store(i);screenPage(m,Metropolix::CTRL_PAGE);}};
+        auto menu=[m,i](ui::Menu* menu){appendCtrlMenu(menu,m,i);};
+        auto detail=[m,i]{
+            if(!m)return std::string();
+            auto d=static_cast<metro::CtrlDestination>(m->integer(Metropolix::ctrlParam(i,Metropolix::CTRL_DESTINATION)));
+            int target=m->integer(Metropolix::ctrlParam(i,Metropolix::CTRL_ASSIGNMENT));
+            return Metropolix::ctrlDestinations()[d]+" / "+((d==metro::CtrlTempo || d==metro::CtrlOutputSwap)?std::string("Global"):
+                target==2?std::string("Both tracks"):string::f("Track %d",target+1))+
+                (metro::ctrlDirect(d)?"\nDirect control: changes the panel setting.":"\nNoon = programmed value. Turn left/right for variation.");
+        };
+        auto* knob=control(string::f("CTRL %d",i+1),31+i*72,252,41,HardwareControl::WHITE_KNOB);
+        knob->binding=[i]{return Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE);};
+        knob->action=open;knob->extraMenu=menu;knob->detailHelp=detail;
+        knob->help="Assignable performance control. The adjacent black button opens its destination and track assignment. Right-click for assignments and exact centre.";
+        auto* button=control(string::f("CTRL %d assignment",i+1),67+i*72,229,15,HardwareControl::DARK_BUTTON);
+        button->binding=[i]{return Metropolix::ctrlParam(i,Metropolix::CTRL_DESTINATION);};
+        button->action=open;button->dragAction=open;button->extraMenu=menu;button->detailHelp=detail;
+        button->rightAction=[m,i,open]{if(m){open();appendCtrlMenu(createMenu(),m,i);}};
+        button->help="Click to edit destination. Click encoder to switch to target tracks. Drag up/down to change the selected value. Right-click for named choices.";
+        knob->bind();button->bind();
     }
     for(int s=0;s<8;++s) {
         const int ids[]={Metropolix::PITCH+s,Metropolix::PULSES+s,Metropolix::GATES+s};
@@ -92,7 +110,10 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->binding=[m] { return screenParam(m); };
     display->help="HOME: drag or click to browse four overviews. Editing: drag the active value; click performs the encoder action. Right-click for direct access.";
     display->action=[m] { encoderPress(m); };
-    display->extraMenu=[m](ui::Menu* menu) { if(m && m->uiPage.load()==Metropolix::AUX_PAGE)appendAuxMenu(menu,m,m->selectedAux.load()); };
+    display->extraMenu=[m](ui::Menu* menu) {
+        if(m && m->uiPage.load()==Metropolix::AUX_PAGE)appendAuxMenu(menu,m,m->selectedAux.load());
+        if(m && m->uiPage.load()==Metropolix::CTRL_PAGE)appendCtrlMenu(menu,m,m->selectedCtrl.load());
+    };
     display->navigationMode=[m] { return m && m->uiPage.load()==Metropolix::HOME && !m->uiChooseFunction.load(); };
     display->navigationTurn=[m](int d) { if(m)m->uiHome.store(metro::modulo(m->uiHome.load()+d,4)); };
     display->rightAction=[display,stageEditor,laneMenu,m] {

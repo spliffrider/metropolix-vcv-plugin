@@ -1,4 +1,4 @@
-# Metropolix Lab 2.5.0 — Windows alpha quick start
+# Metropolix Lab 2.6.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,9 +6,9 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/MetropolixLab-2.5.0-win-x64.vcvplugin)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.6.0/MetropolixLab-2.6.0-win-x64.vcvplugin)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.5.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.6.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -22,7 +22,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.5.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.6.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -62,6 +62,14 @@ If there is no sound, check AUDIO's device/output selection, RUN, and the Scope.
 Moving Scope traces with silent audio generally point to audio-device or
 downstream patch routing rather than a stopped sequencer.
 
+## Try the performance knobs
+
+Download [CTRL-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.6.0/CTRL-performance.vcv).
+CTRL 1 changes Track 2 pulse counts; CTRL 2 adds ratchet fills. Both start at
+noon, preserving the original evolving arrangement. Right-click either for
+assignments and exact centre. See the [CTRL guide](CTRL-KNOBS.md) for ranges,
+direct parameter ownership, and six unavailable destinations.
+
 ## Compare accumulator modes
 
 Download [Accumulator-modes.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/Accumulator-modes.vcv).
@@ -85,6 +93,8 @@ Accumulator mode, or use ALT → LIM. See the
 - Stop, restart, reset, and try an external clock if you have a familiar patch.
 - Right-click an AUX assignment button to change destination/track. Try
   positive/negative knob amounts, noon, unplugging, clear assignment, and undo.
+- Try CTRL knob dragging, track assignment, clear assignment, and undo. Check
+  that direct destinations show their owner and offsets return to normal at noon.
 - Save a new patch, close/reopen it, and confirm the programmed settings survive.
   Playback position/random state starts afresh by design.
 
@@ -92,8 +102,7 @@ Accumulator mode, or use ALT → LIM. See the
 
 ## Known limitations
 
-**Currently inactive or incomplete:** additional AUX destinations, CTRL knob
-assignments, Loopy, swing, stage pitch/gate-length overrides, most remaining MOD
+**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy, swing, stage pitch/gate-length overrides, most remaining MOD
 destinations, the full scale library/user scales, hardware preset banks/chains,
 remaining accumulator reset/routing options, MIDI, MX, and SysEx.
 

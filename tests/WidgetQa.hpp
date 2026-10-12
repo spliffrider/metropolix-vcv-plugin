@@ -6,6 +6,18 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_CTRL_QA")) {
+            if(qaFrame==90)m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_VALUE)].setValue(2.f/7);
+            if(qaFrame==180)m->params[Metropolix::ctrlParam(1,Metropolix::CTRL_VALUE)].setValue(3.f/7);
+            if(qaFrame==270) {
+                bool good=m->integer(Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION))==metro::CtrlPulseCount
+                    && m->integer(Metropolix::ctrlParam(1,Metropolix::CTRL_DESTINATION))==metro::CtrlRatchet
+                    && m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_VALUE)].getValue()>0
+                    && m->params[Metropolix::ctrlParam(1,Metropolix::CTRL_VALUE)].getValue()>0;
+                std::ofstream log(dir+"/report.txt",std::ios::app);log<<(good?"PASS ":"FAIL ")<<"CTRL PERFORMANCE COMPLETE\n";
+                for(int k=0;k<2;++k)m->params[Metropolix::ctrlParam(k,Metropolix::CTRL_VALUE)].setValue(0);
+            }
+        }
         if(std::getenv("METROPOLIX_AUX_QA")) {
             static float minimum[3]={100,100,100},maximum[3]={-100,-100,-100};
             for(int i=0;i<3;++i){float v=m->auxVoltage[i].load();minimum[i]=std::min(minimum[i],v);maximum[i]=std::max(maximum[i],v);}

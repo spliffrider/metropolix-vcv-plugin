@@ -10,6 +10,7 @@
 #include "GateTiming.hpp"
 #include "Accumulator.hpp"
 #include "Modulation.hpp"
+#include "Controls.hpp"
 
 namespace metro {
 
@@ -62,6 +63,7 @@ struct Settings {
     std::array<Track, 2> tracks;
     std::array<ModLane, 8> modLanes;
     std::array<AuxInput, 3> auxInputs;
+    std::array<Control,2> controls;
     std::array<int, 2> outputSources{{0,1}}; // 0/1 = track CV, 2..9 = MOD 1..8
 };
 
@@ -106,6 +108,7 @@ struct TrackState {
     int divider = 0;
     int totalPulses = 0;
     int windowOffset = -1;
+    bool skipInverted = false;
     PlayOrder playOrder;
     std::array<int, 8> accumulator{};
     std::array<int, 8> accumDirection{{1,1,1,1,1,1,1,1}};
@@ -133,6 +136,7 @@ public:
     Settings settings;
     std::array<TrackState, 2> tracks;
     Modulation modulation;
+    ControlRoutes controls;
     std::array<float, 2> aux{};
     bool running = false;
     float clock = 0.f;
@@ -163,6 +167,7 @@ public:
     // One external edge is one sixteenth-note pulse in this first version.
     void process(double dt, bool run, bool external, bool edge, bool resetEdge) {
         dt = clamp(dt, 1e-7, 0.1);
+        controls.read(settings.controls);
         const double internalPeriod = 15.0 / clamp(settings.bpm, 0.1f, 400.f);
         if (external != previousExternal) {
             haveExternalEdge = false;
@@ -204,6 +209,13 @@ public:
                 for (int t = 0; t < 2; ++t) {
                     auto& state = tracks[t];
                     const auto& config = settings.tracks[t];
+                    bool invert=controls.values[t][CtrlSkipInvert]>0;
+                    if(state.skipInverted!=invert) {
+                        // Restart traversal on the next base clock, preserving
+                        // accumulated offsets. No synthetic clock/gate is emitted.
+                        state.skipInverted=invert;state.stage=state.position=-1;
+                        state.pulse=state.divider=state.totalPulses=0;state.playOrder.reset();
+                    }
                     int division = clamp(config.division, 1, 64);
                     if (state.divider == 0 || state.divider >= division)
                         trackTick(t, period * division);
@@ -222,6 +234,7 @@ public:
         resetIgnore = std::max(0.0, resetIgnore - dt);
         for (int output = 0; output < 2; ++output) {
             int source = clamp(settings.outputSources[output], 0, 9);
+            if(controls.swap && source<2)source=1-source;
             aux[output] = !running ? 0.f : source < 2 ? tracks[source].cv : modulation.outputs[source - 2];
         }
     }
@@ -240,6 +253,12 @@ private:
     bool muted(int t) const {
         return settings.tracks[t].mute != (modulation.routes[t][ModMute] >= 1.5f);
     }
+    bool skipped(int t,int stage) const {
+        return settings.tracks[t].stages[stage].skip != tracks[t].skipInverted;
+    }
+    int pulses(int t,int stage) const {
+        return clamp(settings.stages[stage].pulses+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7)),1,8);
+    }
 
     bool nextStage(int t) {
         auto& state = tracks[t];
@@ -250,27 +269,33 @@ private:
             state.windowOffset = config.offset;
         }
         std::array<bool, 8> enabled{};
-        for (int i = 0; i < length; ++i) enabled[i] = !config.stages[modulo(i + config.offset, 8)].skip;
-        state.position = state.playOrder.next(length, config.order, config.reversed, enabled, random[t]);
+        for (int i = 0; i < length; ++i) enabled[i] = !skipped(t,modulo(i + config.offset, 8));
+        float direction=controls.values[t][CtrlDirection];
+        bool reversed=direction==0?config.reversed:direction<0;
+        state.position = state.playOrder.next(length, config.order, reversed, enabled, random[t]);
         state.stage = state.position < 0 ? -1 : modulo(state.position + config.offset, 8);
         return state.stage >= 0;
     }
 
     float stagePitch(int t) const {
         const auto& state = tracks[t];
-        int base = nearestDegree(clamp(settings.stages[state.stage].pitch, 0.f, 1.f)
-            * 12.f * clamp(settings.octaves, 1, 4) + modulation.routes[t][ModPitchPre] * 12.f, settings.scale);
+        const auto& ctrl=controls.values[t];
+        float slider=clamp(settings.stages[state.stage].pitch,0.f,1.f);
+        if(ctrl[CtrlSliderInvert]>0)slider=1-slider;
+        int base = nearestDegree(slider * 12.f * clamp(settings.octaves, 1, 4)
+            + (modulation.routes[t][ModPitchPre]+ctrl[CtrlPitchPre])*12.f, settings.scale);
         int note = degreeToSemitone(base + state.activeAccumulation, settings.scale);
         const auto& route = modulation.routes[t];
-        return (note + settings.root + settings.tracks[t].transpose + std::round(route[ModPitchPost] * 12.f)) / 12.f
-            + std::trunc(route[ModOctave]) + route[ModPitchOffset];
+        return (note + settings.root + settings.tracks[t].transpose + std::round(ctrl[CtrlRoot]*12.f)
+            + std::round((route[ModPitchPost]+ctrl[CtrlPitchPost])*12.f)) / 12.f
+            + std::trunc(route[ModOctave]) + std::round(ctrl[CtrlOctave]*2.f) + route[ModPitchOffset]+ctrl[CtrlPitchOffset];
     }
 
     void accumulate(int t) {
         auto& state = tracks[t];
         const auto& config = settings.tracks[t];
         const auto& edit = config.stages[state.stage];
-        const int amount = clamp(edit.accumulation, -28, 28);
+        const int amount = clamp(edit.accumulation, -28, 28)*(controls.values[t][CtrlAccumPolar]<0?-1:1);
         if (state.accumMode == TrackAccumulation) {
             // Zero-amount stages inherit the sounding track offset. They must
             // not consume the next offset: p127's first C D E F pass is neutral.
@@ -305,10 +330,12 @@ private:
             float pitch = state.pitch;
             bool hasPitch = state.hasPitch;
             int divider = state.divider;
+            bool skipInverted=state.skipInverted;
             state = TrackState();
             state.pitch = state.targetPitch = state.startPitch = pitch;
             state.hasPitch = hasPitch;
             state.divider = divider;
+            state.skipInverted=skipInverted;
             if (!config.autoAccumReset) {
                 state.accumulator = accumulator; state.accumDirection = accumDirection;
                 state.trackAccumulator = trackAccumulator;
@@ -329,11 +356,11 @@ private:
         state.duration = duration;
         state.age = 0.0;
         bool newStage = state.stage < 0 || state.position >= clamp(config.length, 1, 8)
-            || (state.stage >= 0 && (config.stages[state.stage].skip
+            || (state.stage >= 0 && (skipped(t,state.stage)
                 || state.stage != modulo(state.position + config.offset, 8)));
         if (!newStage) {
             ++state.pulse;
-            newStage = state.pulse >= clamp(settings.stages[state.stage].pulses, 1, 8);
+            newStage = state.pulse >= pulses(t,state.stage);
         }
         if (newStage) {
             // A length/offset edit starts a new traversal if the old position
@@ -353,7 +380,7 @@ private:
         }
         const auto& edit = config.stages[state.stage];
         if (newStage || edit.probabilityPerPulse) {
-            float probability = clamp(edit.probability + modulation.routes[t][ModProbability] * 20.f, 0.f, 100.f);
+            float probability = clamp(edit.probability + modulation.routes[t][ModProbability] * 20.f + controls.values[t][CtrlProbability]*100.f, 0.f, 100.f);
             state.allowed = probability >= 100.f || (probability > 0.f && random[t].percent() < probability);
         }
         const Gate gate = settings.stages[state.stage].gate;
@@ -375,9 +402,9 @@ private:
         const auto& edit = config.stages[state.stage];
         int eventId = -1;
         float gateLength = clamp(config.gateLength + modulation.routes[t][ModGateLength] * .2f, 0.f, .99f);
-        int ratchets = clamp(edit.ratchets + static_cast<int>(std::round(modulation.routes[t][ModRatchet] * 1.4f)), 1, 8);
+        int ratchets = clamp(edit.ratchets + static_cast<int>(std::round(modulation.routes[t][ModRatchet] * 1.4f + controls.values[t][CtrlRatchet]*7.f)), 1, 8);
         bool gate = !muted(t) && gateLength > 0.f && state.allowed && gateHigh(panel.gate, state.pulse,
-            state.age / state.duration, clamp(panel.pulses, 1, 8), clamp(config.pulseDivision, 1, 8),
+            state.age / state.duration, pulses(t,state.stage), clamp(config.pulseDivision, 1, 8),
             config.gateStretch, config.ratchetMode, ratchets,
             std::max(gateLength, .01f), state.duration, &eventId);
         if (gate && edit.accumTrigger == AccumRatchet && eventId != state.lastRatchetEvent) {
