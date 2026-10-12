@@ -40,6 +40,10 @@ void MetropolixWidget::qaStep() {
     auto closeMenus=[] {
         for(auto* w:APP->scene->children)if(w->visible && dynamic_cast<ui::MenuOverlay*>(w))w->requestDelete();
     };
+    if(std::getenv("METROPOLIX_DISPLAY_QA")) {
+        #include "DisplayQa.hpp"
+        return;
+    }
     if(qaFrame==6) {
         click(find("EDIT")); check(m->uiChooseFunction.load(),"EDIT arms function selection (manual p.85)");
         click(find("Stage 1 / SLIDE")); check(!m->uiChooseFunction.load() && m->selectedRow.load()==Metropolix::SLIDE,"EDIT plus SLIDE chooses the stage function");

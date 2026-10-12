@@ -1,12 +1,12 @@
 # Metropolix Lab for VCV Rack 2
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, a hardware-layout main panel, and optional stage and modulation editors. Version **2.2.0**, built and tested on **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, a hardware-layout main panel, and optional stage and modulation editors. Version **2.3.0**, built and tested on **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-Version 2.2.0 is the first working pass at the supplied hardware panel: silver artwork, the original control arrangement, and 34 HP width. Hold and drag upward to increase values; downward to decrease. Hover help, context menus, numeric entry, and Rack undo/redo work alongside the hardware layout. See **[docs/HARDWARE-UI.md](docs/HARDWARE-UI.md)** for operation and current limits. The exact visual target remains **[docs/UI-TARGET.md](docs/UI-TARGET.md)**; component detail and display/navigation fidelity still need refinement.
+Version 2.3.0 refines the supplied hardware panel's lettering, components, markings, and logo. Its 128 × 64 pixel display now includes all four HOME views and manual-based editing diagrams. Hold and drag upward to increase values; downward to decrease. Hover help, context menus, numeric entry, and Rack undo/redo work alongside the hardware layout. See **[docs/HARDWARE-UI.md](docs/HARDWARE-UI.md)** for operation and current limits. The exact visual target remains **[docs/UI-TARGET.md](docs/UI-TARGET.md)**; this revision is closer, with further visual and firmware details still to implement.
 
 ## Start here
 
-The ready-to-install package is `dist/MetropolixLab-2.2.0-win-x64.vcvplugin`. Close Rack and run:
+The ready-to-install package is `dist/MetropolixLab-2.3.0-win-x64.vcvplugin`. Close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -83,12 +83,13 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\build.ps1 -Test -Package
 .\scripts\test-rack.ps1
 .\scripts\test-ui.ps1
+.\scripts\test-ui.ps1 -Display
 .\scripts\test-ui.ps1 -Audio
 .\scripts\test-ui.ps1 -Modulation
 .\scripts\test-ui.ps1 -Hardware
 ```
 
-The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the new default demo and records both synthesizer voices and A/B through real Rack cables.
+The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 20 screen states in `tmp/display-qa`.
 
 Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Other platforms have not been built or tested.
 
@@ -99,6 +100,7 @@ The engine uses fixed-size state and performs no allocation, file I/O, or UI wor
 - `src/Sequencer.hpp`, `PlayOrder.hpp`, `GateTiming.hpp`, `Accumulator.hpp`, `Modulation.hpp`: independent musical engine.
 - `src/Metropolix.hpp`: Rack parameters, timing adapters, ports, and persistence.
 - `src/Metropolix.cpp`, `HardwareUI.hpp`, `HardwareLayout.hpp`: hardware artwork, interaction, and optional editors.
+- `src/HardwareDisplay.hpp`, `OledCanvas.hpp`: native-pixel screen views, diagrams, and lettering. `res/README.txt` records artwork/font provenance.
 - `tests/`: musical, manual-example, host integration, editor, and audio checks.
 - [VCV Rack manual](https://vcvrack.com/manual/), read excluding Licensing as requested.
 - [Metropolix manual 1.6, 2025-09-24](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf), cached locally in `reference/`.

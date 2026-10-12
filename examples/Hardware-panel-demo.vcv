@@ -10,7 +10,7 @@
       "id": 1,
       "plugin": "MetropolixLab",
       "model": "Metropolix",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "params": [
         {
           "id": 0,
@@ -586,7 +586,7 @@
         }
       ],
       "data": {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "expanded": false,
         "selectedTrack": 0,
         "selectedStage": 0,
@@ -595,6 +595,8 @@
         "selectedLane": 0,
         "uiPage": 0,
         "uiField": 0,
+        "uiHome": 0,
+        "uiStageDetail": false,
         "uiMod": false,
         "uiEdit": false
       },

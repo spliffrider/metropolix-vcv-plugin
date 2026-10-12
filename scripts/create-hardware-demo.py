@@ -8,8 +8,9 @@ patch['zoom'] = 1.15
 for module in patch['modules']:
     if module['plugin'] == 'MetropolixLab':
         module['version'] = json.loads((root / 'plugin.json').read_text())['version']
-        module['data'].update(schemaVersion=5, expanded=False, modEditor=False,
-                              uiPage=0, uiField=0, uiMod=False, uiEdit=False)
+        module['data'].update(schemaVersion=6, expanded=False, modEditor=False,
+                              uiPage=0, uiField=0, uiHome=0, uiStageDetail=False,
+                              uiMod=False, uiEdit=False)
     if module['id'] == 2:
         module['pos'] = [35, 0]
     if module['id'] == 10:

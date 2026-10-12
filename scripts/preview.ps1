@@ -10,6 +10,7 @@ if (Get-Process Rack -ErrorAction SilentlyContinue) {
 }
 New-Item -ItemType Directory -Force -Path $plugin | Out-Null
 Copy-Item -LiteralPath (Join-Path $projectRoot 'plugin.dll'), (Join-Path $projectRoot 'plugin.json'), (Join-Path $projectRoot 'README.md') -Destination $plugin -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot 'res') -Destination $plugin -Recurse -Force
 $settings = Join-Path $profile 'settings.json'
 if (!(Test-Path -LiteralPath $settings)) {
     '{"windowSize":[1500,780],"windowPos":[60,60],"showTipsOnLaunch":false,"autoCheckUpdates":false}' | Set-Content -LiteralPath $settings -Encoding utf8NoBOM

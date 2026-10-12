@@ -30,6 +30,8 @@ int main() {
         source.uiField.store(1);
         source.uiMod.store(true);
         source.uiEdit.store(true);
+        source.uiHome.store(3);
+        source.uiStageDetail.store(true);
         source.params[Metropolix::modParam(6, Metropolix::MOD_VALUE + 3)].setValue(-2.5f);
         source.params[Metropolix::modParam(6, Metropolix::MOD_RAMP + 3)].setValue(1.f);
         source.params[Metropolix::modParam(6, Metropolix::MOD_DESTINATION)].setValue(metro::ModPitchPre);
@@ -57,6 +59,7 @@ int main() {
             require(source.params[id].getValue() == restored.params[id].getValue(), "every parameter survives Rack serialization");
         require(restored.modEditor.load() && restored.selectedLane.load() == 6, "MOD editor state persists");
         require(restored.uiPage.load()==Metropolix::LENGTH_PAGE && restored.uiField.load()==1 && restored.uiMod.load() && restored.uiEdit.load(), "hardware UI page, field and edit target persist");
+        require(restored.uiHome.load()==3 && restored.uiStageDetail.load(), "OLED home and detail selection persist");
         require(restored.sequencer.settings.modLanes[6].ramps[3] && restored.sequencer.settings.modLanes[6].values[3] == -2.5f
             && restored.sequencer.settings.outputSources[0] == 8, "MOD lane and output routing reach the engine");
         const auto& restoredTrack = restored.sequencer.settings.tracks[1];
@@ -73,6 +76,9 @@ int main() {
         restored.dataFromJson(malformed);
         json_decref(malformed);
         require(restored.selectedTrack.load() == 1 && restored.selectedStage.load() == 0 && restored.selectedRow.load() == 5, "out-of-range saved UI state is clamped");
+        json_t* previousUi=json_pack("{s:i,s:i,s:i}","schemaVersion",5,"uiPage",Metropolix::LENGTH_PAGE,"uiField",1);
+        restored.dataFromJson(previousUi);json_decref(previousUi);
+        require(restored.uiField.load()==0 && restored.uiHome.load()==0, "old LEN offset selection migrates without selecting pulse length");
     }
     {
         Metropolix module;
@@ -127,6 +133,30 @@ int main() {
         require(module.outputs[Metropolix::B_OUT].getVoltage() == 4.5f, "actual Rack output B carries MOD 8 voltage");
         module.params[Metropolix::RUN].setValue(0.f); module.process(args);
         require(module.outputs[Metropolix::A_OUT].getVoltage() == 0.f && module.outputs[Metropolix::B_OUT].getVoltage() == 0.f, "Rack MOD outputs silence on stop");
+    }
+    {
+        Metropolix module;
+        Module::ProcessArgs args;args.sampleRate=48000.f;args.sampleTime=1.f/48000.f;
+        module.params[Metropolix::TEMPO].setValue(135.f);
+        module.params[Metropolix::stageParam(0,0,Metropolix::CV)].setValue(-2.5f);
+        module.params[Metropolix::modParam(0,Metropolix::MOD_VALUE)].setValue(.5f);
+        module.params[Metropolix::modParam(0,Metropolix::MOD_DESTINATION)].setValue(metro::ModPitchPre);
+        module.params[Metropolix::modParam(1,Metropolix::MOD_VALUE)].setValue(-.25f);
+        module.params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModPitchPost);
+        module.params[Metropolix::RUN].setValue(1.f);
+        for(int i=0;i<64;++i)module.process(args);
+        require(module.displayBpm.load()==135.f, "OLED internal tempo follows parameter");
+        require(module.playCv[0].load()==-2.5f && module.pitchPre[0].load()==.5f && module.pitchPost[0].load()==-.25f,
+            "OLED meters expose actual track CV and pre/post routes");
+        module.inputs[Metropolix::CLOCK_IN].channels=1;
+        module.inputs[Metropolix::CLOCK_IN].setVoltage(5.f);module.process(args);
+        module.inputs[Metropolix::CLOCK_IN].setVoltage(0.f);
+        for(int i=0;i<4799;++i)module.process(args);
+        module.inputs[Metropolix::CLOCK_IN].setVoltage(5.f);module.process(args);
+        require(std::abs(module.displayBpm.load()-150.f)<.01f,"OLED external tempo measures a 4800-sample sixteenth-note interval");
+        module.inputs[Metropolix::CLOCK_IN].channels=0;
+        for(int i=0;i<32;++i)module.process(args);
+        require(module.displayBpm.load()==135.f && !module.externalClock.load(),"OLED returns to internal tempo after unplugging clock");
     }
     delete context.engine;
     context.engine = nullptr;

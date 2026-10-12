@@ -1,4 +1,4 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
@@ -11,10 +11,11 @@ try {
     & "$env:LOCALAPPDATA\MetropolixDev\msys64\usr\bin\bash.exe" -lc 'make ui-test-build'
     if ($LASTEXITCODE -ne 0) { throw 'UI test build failed.' }
     $profile = Join-Path $projectRoot 'tmp\rack-qa'
-    $output = Join-Path $projectRoot $(if ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
+    $output = Join-Path $projectRoot $(if ($Display) { 'tmp\display-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
     $plugin = Join-Path $profile 'plugins-win-x64\MetropolixLab'
     New-Item -ItemType Directory -Force -Path $plugin, $output | Out-Null
     Copy-Item -LiteralPath 'build\ui-test\plugin.dll', 'plugin.json', 'README.md' -Destination $plugin -Force
+    Copy-Item -LiteralPath 'res' -Destination $plugin -Recurse -Force
     $manifest = Get-Content -LiteralPath 'plugin.json' -Raw | ConvertFrom-Json
     $manifest.modules += @{slug='AudioQA'; name='Internal audio test'}
     $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $plugin 'plugin.json') -Encoding utf8NoBOM
@@ -22,6 +23,16 @@ try {
     '' | Set-Content -LiteralPath (Join-Path $output 'report.txt') -Encoding utf8NoBOM
     $env:METROPOLIX_QA_DIR = $output.Replace('\', '/')
     $patch = Join-Path $projectRoot 'examples\Hybrid-demo.vcv'
+    if ($Display) {
+        $env:METROPOLIX_DISPLAY_QA = '1'
+        $displayPatch = Get-Content -LiteralPath 'examples\Hardware-panel-demo.vcv' -Raw | ConvertFrom-Json
+        $displayPatch.modules = @($displayPatch.modules | Where-Object plugin -eq 'MetropolixLab')
+        $displayPatch.cables = @()
+        $displayPatch.zoom = 2.0
+        $displayPatch.gridOffset = @(0,0)
+        $patch = Join-Path $output 'display-test.vcv'
+        $displayPatch | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $patch -Encoding utf8NoBOM
+    }
     if ($Audio) {
         $env:METROPOLIX_AUDIO_QA = '1'
         $audioExample = if ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
@@ -46,7 +57,7 @@ try {
     }
     $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
     Write-Output $report
-    $completion = if ($Audio) { 'PASS AUDIO QA COMPLETE' } else { 'PASS UI QA COMPLETE' }
+    $completion = if ($Display) { 'PASS DISPLAY QA COMPLETE' } elseif ($Audio) { 'PASS AUDIO QA COMPLETE' } else { 'PASS UI QA COMPLETE' }
     if ($process.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($completion)) {
         throw 'UI test failed; inspect tmp/rack-qa/log.txt and tmp/qa/report.txt.'
     }
@@ -54,5 +65,6 @@ try {
     Remove-Item Env:METROPOLIX_QA_DIR -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_MOD_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_DISPLAY_QA -ErrorAction SilentlyContinue
     Pop-Location
 }

@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.2.0
+# Validation and fidelity status — 2.3.0
 
 Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metropolix manual 1.6 (2025-09-24)](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf). Page numbers below are the printed page numbers; the PDF cover adds one to the file page index.
 
@@ -36,6 +36,18 @@ The updated Rack widget suite passes: 24 pitch/pulse/gate controls, compact 34 H
 `scripts/test-ui.ps1 -Hardware` passed using the new hardware demo through actual Rack cables at 48 kHz for 12 seconds. Channel 1 measured RMS 0.419756 V, peak 1.59967 V, DC 0.000037 V; channel 2 RMS 0.499084 V, peak 1.59992 V, DC -0.000244 V. A measured -2 to +2 V and B 0 to +5 V. The Rack integration suite passed again with all parameters and the new display state round-tripped.
 
 Rendered compact, expanded MOD, numeric-menu, and audio-demo screenshots were inspected. Automated UI checks invoke the actual Rack callbacks; physical mouse/focus testing of this new interface remains for user playtesting. The first panel pass matches the arrangement, not every photographic detail. Hardware home views, long-press gestures, secondary functions, and component typography/artwork need more work. `HARDWARE-UI.md` records control limitations; visually represented unfinished features are not counted as implemented engine functions.
+
+## Display refinement — 2.3.0
+
+The five musical engine headers remain byte-identical to the accepted 2.1.0 baseline. New host-side observers supply the display with stage CV, pitch pre/post routes, and measured external BPM without changing sequencer processing. Host tests verify those signals, a 4800-sample external interval at 48 kHz (150 BPM), clock unplugging, all 404 saved parameters, schema 6 HOME/detail persistence, and schema 5 LEN field migration.
+
+The original Rack widget suite passes on the revised controls. `test-ui.ps1 -Display` also passes HOME browsing in both drag directions, ORDER direction with undo, LEN pulse/offset selection, SCALE ALT selection, MOD lane selection and Step/Ramp, probability/accumulator trigger selection, and screen persistence. Twenty populated screen states and full-panel captures were inspected. These are captures of the actual production rendering component in an instrumented Rack build, not static design mockups.
+
+The 2.3.0 hardware demo passed the 12-second, 48 kHz Rack audio/CV check: channel 1 RMS 0.423473 V, peak 1.59967 V, DC -0.000545 V; channel 2 RMS 0.499084 V, peak 1.59992 V, DC -0.000244 V. A reached -2 to +2 V and B reached 0 to +5 V. Both voices remain active through actual Rack cables.
+
+The visual reference is the supplied photograph and native screen images from manual pp.28–31,60–62,70,75,77,80,82,85–104,115–117,137–141. Hardware artwork, lettering, switch grips, button colors, legends, logo, and socket detail were refined. Native-pixel OLED text/diagrams replace the earlier generic display. HOME now includes positions, notes, panel values, and CV/MOD activity.
+
+The display does not imply additional engine features: Tempo slide, 100% gate scale, and /1 external clock division are fixed readouts; CTRL remains unimplemented; MOD values still use volts rather than destination-specific units. A/B routing directly selects the available track-CV/MOD sources. Exact photographic materials, every glyph/animation, long-press gestures, and complete firmware navigation remain unverified or unfinished. Windows capture failed with `FrameArrived timed out: timed out waiting on channel`; native physical mouse testing remains separate from the successful callback checks.
 
 ## Interpretations and limits
 

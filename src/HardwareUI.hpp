@@ -2,7 +2,9 @@
 // Coordinates follow the supplied front-on panel photograph at 34 HP / 510 px.
 constexpr float HARDWARE_WIDTH = 510.f;
 constexpr float EDITOR_WIDTH = 480.f;
-NVGcolor oledInk() { return nvgRGB(163, 213, 233); }
+void stroke(NVGcontext* vg,float x,float y,float x2,float y2,NVGcolor color,float width=1.f) {
+    nvgBeginPath(vg);nvgMoveTo(vg,x,y);nvgLineTo(vg,x2,y2);nvgStrokeColor(vg,color);nvgStrokeWidth(vg,width);nvgStroke(vg);
+}
 
 void disc(NVGcontext* vg, float x, float y, float r, NVGcolor color) {
     nvgBeginPath(vg); nvgCircle(vg, x, y, r); nvgFillColor(vg, color); nvgFill(vg);
@@ -20,12 +22,21 @@ void socketDrawing(NVGcontext* vg, float x, float y) {
         if(i) nvgLineTo(vg,px,py); else nvgMoveTo(vg,px,py);
     }
     nvgClosePath(vg); nvgFillPaint(vg,nvgLinearGradient(vg,x-10,y-10,x+9,y+9,nvgRGB(233,226,205),nvgRGB(110,103,85))); nvgFill(vg);
-    metalDisc(vg,x,y,10,nvgRGB(250,248,231),nvgRGB(119,118,112));
-    disc(vg,x,y,8.7f,nvgRGB(37,35,27));
-    metalDisc(vg,x,y,7.8f,nvgRGB(207,186,140),nvgRGB(82,69,49));
-    disc(vg,x,y,6.6f,nvgRGB(11,12,12));
-    nvgBeginPath(vg); nvgArc(vg,x,y,7,-2.8f,-.5f,NVG_CW);
-    nvgStrokeWidth(vg,.7f); nvgStrokeColor(vg,nvgRGB(253,248,231)); nvgStroke(vg);
+    metalDisc(vg,x,y,10.6f,nvgRGB(250,248,231),nvgRGB(119,118,112));
+    disc(vg,x,y,9.8f,nvgRGB(61,57,46));
+    metalDisc(vg,x,y,9.3f,nvgRGB(243,237,215),nvgRGB(90,84,68));
+    // Narrow alternating reflections model the turned metal lip around the bore.
+    for(int i=0;i<48;++i) {
+        float a=i*2*M_PI/48.f,b=a+2*M_PI/48.f+.01f;
+        float shine=.5f+.5f*std::sin(a*2.0f+.8f);int v=110+static_cast<int>(125*shine);
+        nvgBeginPath(vg);nvgArc(vg,x,y,8.65f,a,b,NVG_CW);
+        nvgStrokeWidth(vg,.8f);nvgStrokeColor(vg,nvgRGB(v,std::max(0,v-8),std::max(0,v-27)));nvgStroke(vg);
+    }
+    disc(vg,x,y,7.8f,nvgRGB(36,33,25));
+    metalDisc(vg,x,y,7.2f,nvgRGB(171,156,117),nvgRGB(235,224,189));
+    disc(vg,x,y-.1f,6.45f,nvgRGB(8,10,9));
+    nvgBeginPath(vg);nvgArc(vg,x,y,10.1f,-2.8f,-.5f,NVG_CW);
+    nvgStrokeWidth(vg,.55f);nvgStrokeColor(vg,nvgRGB(255,252,238));nvgStroke(vg);
 }
 struct MetalPort : app::PortWidget {
     MetalPort() { box.size=Vec(24,24); }
@@ -38,14 +49,16 @@ int screenParam(Metropolix* m) {
     bool mod=m->uiMod.load();
     if(m->uiChooseFunction.load())return -1;
     switch(m->uiPage.load()) {
-        case Metropolix::BPM_PAGE: return Metropolix::TEMPO;
+        case Metropolix::BPM_PAGE: return m->externalClock.load()?-1:Metropolix::TEMPO;
         case Metropolix::SCALE_PAGE: return f ? Metropolix::SCALE : Metropolix::ROOT;
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
-        case Metropolix::LENGTH_PAGE: return mod ? Metropolix::modParam(l,f?Metropolix::MOD_OFFSET:Metropolix::MOD_LENGTH) : Metropolix::trackParam(t,f?Metropolix::OFFSET:Metropolix::LENGTH);
+        case Metropolix::LENGTH_PAGE:
+            if(m->uiAlt.load())return mod?Metropolix::modParam(l,Metropolix::MOD_OFFSET):Metropolix::trackParam(t,Metropolix::OFFSET);
+            return mod?Metropolix::modParam(l,f?Metropolix::MOD_PULSE_LIMIT:Metropolix::MOD_LENGTH):(f?Metropolix::extraParam(t,Metropolix::PULSE_LIMIT):Metropolix::trackParam(t,Metropolix::LENGTH));
         case Metropolix::DIV_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_DIVISION) : (f?Metropolix::extraParam(t,Metropolix::PULSE_DIV):Metropolix::trackParam(t,Metropolix::DIVISION));
         case Metropolix::SLIDE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::SLIDE_TIME);
         case Metropolix::GATE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
-        case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,(f?Metropolix::MOD_RAMP:Metropolix::MOD_VALUE)+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
+        case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
         case Metropolix::A_PAGE: return Metropolix::OUTPUT_SOURCE_A;
         case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
         case Metropolix::SETUP_PAGE: return Metropolix::RANGE;
@@ -59,9 +72,20 @@ void screenPage(Metropolix* m, int page) {
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
-    if(p==Metropolix::HOME) { screenPage(m,Metropolix::BPM_PAGE); return; }
+    if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
+    if(p==Metropolix::ORDER_PAGE) {
+        int id=m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_REVERSED):Metropolix::extraParam(m->selectedTrack.load(),Metropolix::REVERSED);
+        auto* q=m->getParamQuantity(id);setWithHistory(q,1-q->getValue());return;
+    }
+    if(p==Metropolix::STAGE_PAGE) {
+        int id=-1, count=2, t=m->selectedTrack.load(),s=m->selectedStage.load();
+        if(m->uiMod.load())id=Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_RAMP+s);
+        else if(m->selectedRow.load()==Metropolix::PROBABILITY)id=Metropolix::stageOption(t,s,Metropolix::PROB_TARGET);
+        else if(m->selectedRow.load()==Metropolix::ACCUMULATION){id=Metropolix::stageOption(t,s,Metropolix::ACCUM_TRIGGER);count=3;}
+        if(id>=0){auto* q=m->getParamQuantity(id);setWithHistory(q,(static_cast<int>(q->getValue())+1)%count);}return;
+    }
     if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE ||
-       (p==Metropolix::DIV_PAGE && !m->uiMod.load()) || (p==Metropolix::STAGE_PAGE && m->uiMod.load()))
+       (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
 }
 
@@ -76,20 +100,25 @@ struct HardwareTooltip : ui::Tooltip {
     }
 };
 struct HardwareControl : app::Knob {
-    enum Look { BUTTON, DARK_BUTTON, WHITE_KNOB, BLACK_KNOB, ENCODER, INVISIBLE, SOCKET };
+    enum Look { BUTTON, DARK_BUTTON, WHITE_KNOB, BLACK_KNOB, ENCODER, INVISIBLE, SOCKET, BLUE_BUTTON, CREAM_BUTTON };
     Look look=BUTTON;
     Metropolix* metroModule=nullptr;
     std::string name, help;
     std::function<int()> binding;
     std::function<void()> action, rightAction, dragAction;
+    std::function<bool()> navigationMode;
+    std::function<void(int)> navigationTurn;
     std::function<void(ui::Menu*)> extraMenu;
     std::function<bool()> active;
     std::function<NVGcolor()> activeColor;
     NVGcolor lightColor=nvgRGB(135,187,227);
     ui::Tooltip* tip=nullptr;
     bool dragging=false;
+    bool navigating=false;
+    float navigationDelta=0;
     float moved=0;
     float customSpeed=0;
+    bool doubleClickReset=true;
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
     ~HardwareControl() { clearTip(); }
     void bind() {
@@ -136,13 +165,21 @@ struct HardwareControl : app::Knob {
     }
     void onDragStart(const event::DragStart& e) override {
         bind(); dragging=true; moved=0; clearTip();
+        navigating=navigationMode && navigationMode(); navigationDelta=0;
         if(dragAction) dragAction();
         app::Knob::onDragStart(e);
     }
-    void onDragMove(const event::DragMove& e) override { moved+=e.mouseDelta.norm(); app::Knob::onDragMove(e); }
+    void onDragMove(const event::DragMove& e) override {
+        moved+=e.mouseDelta.norm();
+        if(navigating && navigationTurn) {
+            navigationDelta-=e.mouseDelta.y;
+            int turns=static_cast<int>(navigationDelta/22.f);
+            if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
+        } else app::Knob::onDragMove(e);
+    }
     void onDragEnd(const event::DragEnd& e) override { app::Knob::onDragEnd(e); dragging=false; }
     void onAction(const event::Action&) override { if(moved<3.f && action) action(); }
-    void onDoubleClick(const event::DoubleClick& e) override { if(getParamQuantity()) app::Knob::onDoubleClick(e); }
+    void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()) app::Knob::onDoubleClick(e); }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu); }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg; float x=box.size.x/2, y=box.size.y/2, r=std::min(x,y)-.7f;
@@ -151,26 +188,30 @@ struct HardwareControl : app::Knob {
         bool on=active && active();
         disc(vg,x+.4f,y+.9f,r+.4f,nvgRGBA(0,0,0,65));
         metalDisc(vg,x,y,r,nvgRGB(102,104,106),nvgRGB(212,213,211));
-        if(look==BUTTON || look==DARK_BUTTON) {
+        if(look==BUTTON || look==DARK_BUTTON || look==BLUE_BUTTON || look==CREAM_BUTTON) {
             NVGcolor top=look==DARK_BUTTON?nvgRGB(51,54,53):nvgRGB(249,249,248);
             NVGcolor bottom=look==DARK_BUTTON?nvgRGB(17,20,20):nvgRGB(198,202,209);
+            if(look==BLUE_BUTTON){top=nvgRGB(199,209,228);bottom=nvgRGB(137,155,184);}
+            if(look==CREAM_BUTTON){top=nvgRGB(249,247,234);bottom=nvgRGB(205,205,193);}
             if(on) { top=activeColor?activeColor():lightColor; bottom=color::mult(top,.77f); }
-            metalDisc(vg,x,y,r-1,top,bottom);
+            disc(vg,x,y,r-.7f,nvgRGB(232,234,231));metalDisc(vg,x,y,r-1.5f,top,bottom);
+            nvgBeginPath(vg);nvgArc(vg,x,y,r-2.1f,-2.8f,-.45f,NVG_CW);nvgStrokeWidth(vg,.45f);nvgStrokeColor(vg,nvgRGBA(255,255,255,145));nvgStroke(vg);
             return;
         }
-        metalDisc(vg,x,y,r-1,nvgRGB(77,78,76),nvgRGB(25,28,29));
-        for(int i=0;i<28;++i) {
-            float a=i*2*M_PI/28.f;
-            line(vg,x+std::cos(a)*(r-3),y+std::sin(a)*(r-3),x+std::cos(a)*(r-1),y+std::sin(a)*(r-1),nvgRGBA(178,180,180,70));
+        metalDisc(vg,x,y,r-1,nvgRGB(42,43,45),nvgRGB(93,95,98));
+        for(int i=0;i<60;++i) {
+            float a=i*2*M_PI/60.f;
+            stroke(vg,x+std::cos(a)*(r-3.3f),y+std::sin(a)*(r-3.3f),x+std::cos(a)*(r-1),y+std::sin(a)*(r-1),nvgRGBA(179,182,182,90),.45f);
         }
         bool white=look==WHITE_KNOB;
-        metalDisc(vg,x,y,r-4,white?nvgRGB(251,251,250):nvgRGB(65,67,66),white?nvgRGB(192,196,196):nvgRGB(30,33,34));
+        float cap=look==ENCODER?r-6.2f:white?r-5.5f:r-2.5f;
+        metalDisc(vg,x,y,cap+1.3f,nvgRGB(165,168,169),nvgRGB(25,27,29));
+        metalDisc(vg,x,y,cap,white?nvgRGB(253,253,251):nvgRGB(60,63,65),white?nvgRGB(213,216,216):nvgRGB(32,34,36));
         if(look!=ENCODER) {
             auto* q=getParamQuantity();
-            float v=q ? q->getScaledValue() : .12f;
+            float v=q ? q->getScaledValue() : .025f;
             float a=(-.83f + v*1.66f)*M_PI;
-            nvgStrokeWidth(vg,2);
-            line(vg,x+std::sin(a)*(r-8),y-std::cos(a)*(r-8),x+std::sin(a)*(r-3),y-std::cos(a)*(r-3),white?ink():nvgRGB(234,237,235));
+            stroke(vg,x+std::sin(a)*(cap*.45f),y-std::cos(a)*(cap*.45f),x+std::sin(a)*(cap-.5f),y-std::cos(a)*(cap-.5f),white?ink():nvgRGB(244,247,245),white?2.3f:1.8f);
         }
     }
 };
@@ -184,99 +225,56 @@ struct HardwareSlider : HardwareControl {
         auto* vg=args.vg;
         float x=box.size.x/2, h=box.size.y;
         auto* q=getParamQuantity(); float v=q?q->getScaledValue():.35f;
-        float handle=kind==PULSE_SWITCH?17.f:kind==GATE_SWITCH?12.f:11.f;
+        float handle=kind==PULSE_SWITCH?25.f:kind==GATE_SWITCH?16.f:16.f;
         float cy=handle/2+2+(1-v)*(h-handle-4);
-        rect(vg,x-6.6f,0,13.2f,h,nvgRGB(122,117,99),.8f);
-        rect(vg,x-5.5f,1,11,h-2,kind==PULSE_SWITCH?nvgRGB(75,53,28):nvgRGB(7,10,9),.5f);
-        line(vg,x-4.5f,2,x-4.5f,h-2,nvgRGB(158,142,110));
-        line(vg,x+4.5f,2,x+4.5f,h-2,nvgRGB(50,57,53));
-        if(kind==PULSE_SWITCH) line(vg,x,2,x,h-2,nvgRGB(137,106,60));
-        rect(vg,x-6,cy-handle/2,12,handle,nvgRGB(13,16,17),.6f);
+        float half=kind==PITCH_SLIDER?4.3f:6.5f;
+        rect(vg,x-half-.5f,0,half*2+1,h,nvgRGB(111,108,94),.7f);
+        rect(vg,x-half,1,half*2,h-2,kind==PULSE_SWITCH?nvgRGB(105,65,26):nvgRGB(7,10,8),.5f);
+        stroke(vg,x-half+.8f,2,x-half+.8f,h-2,nvgRGB(170,147,101),.6f);
+        stroke(vg,x+half-.6f,2,x+half-.6f,h-2,nvgRGB(44,50,43),.6f);
+        if(kind==PULSE_SWITCH) {stroke(vg,x-3,3,x-3,h-3,nvgRGB(146,100,54),.6f);stroke(vg,x+2,3,x+2,h-3,nvgRGB(154,117,71),.7f);}
+        else if(kind==PITCH_SLIDER) {
+            rect(vg,x-half+1,3,half*2-2,2,nvgRGB(56,92,70),0);
+            rect(vg,x-half+1,h-5,half*2-2,2,nvgRGB(56,92,70),0);
+            for(float y:{h*.27f,h*.65f})stroke(vg,x-half+1,y,x+half-1,y,nvgRGB(56,48,31),.5f);
+        }
+        rect(vg,x-half+.1f,cy-handle/2,half*2-.2f,handle,nvgRGB(13,16,17),.6f);
         if(kind==PITCH_SLIDER) {
-            rect(vg,x-3.5f,cy-5,7,10,nvgRGB(191,196,191),.4f);
+            nvgBeginPath(vg);nvgRect(vg,x-4.5f,cy-8,9,16);nvgFillPaint(vg,nvgLinearGradient(vg,x-4.5f,cy,x+4.5f,cy,nvgRGB(84,86,81),nvgRGB(214,215,208)));nvgFill(vg);
+            rect(vg,x-3.1f,cy-6.1f,6.2f,12.2f,nvgRGB(31,24,17),.3f);
             bool playing=metroModule && (metroModule->playStage[0].load()==stage || metroModule->playStage[1].load()==stage);
-            rect(vg,x-1.6f,cy-4.1f,3.2f,8.2f,playing?nvgRGB(255,55,22):nvgRGB(165,27,11),.4f);
-            line(vg,x-.6f,cy-3,x-.6f,cy+3,nvgRGB(255,164,106));
+            rect(vg,x-2,cy-5.1f,4,10.2f,playing?nvgRGB(255,51,13):nvgRGB(181,23,7),.5f);
+            stroke(vg,x-.8f,cy-4.5f,x-.8f,cy+4.2f,nvgRGB(255,174,95),.65f);
+            for(float yy:{cy-7,cy-5.9f,cy+6,cy+7.1f})stroke(vg,x-4.1f,yy,x+4.1f,yy,nvgRGB(222,227,223),.5f);
         } else {
-            rect(vg,x-5.6f,cy-handle/2+1,11.2f,handle-2,nvgRGB(155,161,161),.5f);
-            for(float yy=cy-handle/2+2;yy<cy+handle/2-1;yy+=2)
-                line(vg,x-5.5f,yy,x+5.5f,yy,nvgRGB(45,50,52));
+            rect(vg,x-5.6f,cy-handle/2+1,11.2f,handle-2,nvgRGB(61,66,71),.5f);
+            for(float yy=cy-handle/2+2;yy<cy+handle/2-1;yy+=2.2f) {
+                stroke(vg,x-5.5f,yy,x+5.5f,yy,nvgRGB(186,192,195),.7f);
+                stroke(vg,x-5.5f,yy+.9f,x+5.5f,yy+.9f,nvgRGB(23,27,29),.7f);
+            }
         }
     }
 };
 
-struct HardwareDisplay : HardwareControl {
-    void draw(const DrawArgs& args) override {
-        auto* vg=args.vg;
-        rect(vg,0,0,box.size.x,box.size.y,nvgRGB(39,43,43),1);
-        rect(vg,1,1,box.size.x-2,box.size.y-2,nvgRGB(1,7,10),.5f);
-        auto f=APP->window->loadFont(asset::system("res/fonts/ShareTechMono-Regular.ttf"));
-        if(f) nvgFontFaceId(vg,f->handle);
-        nvgSave(vg); nvgScissor(vg,3,3,box.size.x-6,box.size.y-6);
-        auto* m=metroModule;
-        int page=m?m->uiPage.load():Metropolix::HOME;
-        int t=m?m->selectedTrack.load():0, lane=m?m->selectedLane.load():0;
-        bool mod=m && m->uiMod.load();
-        std::string target=mod?string::f("MOD %d",lane+1):string::f("TRK %d",t+1);
-        if(m && m->uiChooseFunction.load()) {
-            text(vg,5,9,"EDIT FUNCTION",7,oledInk());
-            text(vg,5,22,"SLD SKP PIT GAT",6.5f,oledInk());
-            text(vg,5,31,"RAT PRB ACC CV",6.5f,oledInk());
-            text(vg,5,42,"PRESS STAGE BUTTON",5.3f,oledInk());
-        } else if(page==Metropolix::HOME) {
-            line(vg,5,4,22,4,oledInk());
-            for(int row=0;row<3;++row) {
-                int pos=m?(row<2?m->playStage[row].load():m->modStage[lane].load()):-1;
-                for(int s=0;s<8;++s) {
-                    float x=6+s*10.1f, y=8+row*10;
-                    nvgBeginPath(vg); nvgRect(vg,x,y,6,6);
-                    nvgStrokeColor(vg,oledInk()); nvgStrokeWidth(vg,.8f); nvgStroke(vg);
-                    if(pos==s) { nvgFillColor(vg,oledInk()); nvgFill(vg); }
-                    if(m && row<2 && m->integer(Metropolix::stageParam(row,s,Metropolix::SKIP))) {
-                        line(vg,x,y,x+6,y+6,oledInk()); line(vg,x+6,y,x,y+6,oledInk());
-                    }
-                }
-            }
-            text(vg,5,42,target+(mod?" - "+Metropolix::modDestinations()[m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION))]:"  "+std::string(rowNames[m?m->selectedRow.load():0])),5.4f,oledInk());
-        } else if(page==Metropolix::UNAVAILABLE_PAGE) {
-            text(vg,5,11,"NOT IMPLEMENTED",7,oledInk());
-            text(vg,5,24,"Hover for details",6,oledInk());
-            text(vg,5,41,"EXIT: return home",5.5f,oledInk());
-        } else {
-            auto* q=getParamQuantity();
-            const char* titles[]={"HOME","BPM","SCALE","ORDER","LENGTH","DIVISION","SLIDE TIME","GATE LENGTH","STAGE","OUT A","OUT B","PITCH RANGE"};
-            std::string title=titles[page];
-            if(page==Metropolix::STAGE_PAGE) title=mod?(m->uiField.load()?"STEP / RAMP":"MOD VOLTAGE"):rowNames[m->selectedRow.load()];
-            if(page==Metropolix::SCALE_PAGE) title=m->uiField.load()?"SCALE":"ROOT";
-            if(page==Metropolix::LENGTH_PAGE) title=m->uiField.load()?"OFFSET":"STAGES";
-            if(page==Metropolix::DIV_PAGE && !mod && m->uiField.load()) title="PULSE COUNT DIV";
-            text(vg,5,9,title,6.3f,oledInk());
-            std::string v=q?q->getDisplayValueString()+q->getUnit():"N/A";
-            float size=v.size()>17?6.f:v.size()>10?8.f:12.f;
-            text(vg,box.size.x/2,25,v,size,oledInk(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
-            text(vg,5,42,page==Metropolix::STAGE_PAGE?target+string::f(" / STAGE %d",m->selectedStage.load()+1):target+" / TURN TO EDIT",5.5f,oledInk());
-        }
-        nvgRestore(vg);
-    }
-};
+#include "HardwareDisplay.hpp"
 
 struct HardwarePanel : widget::Widget {
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg;
         nvgBeginPath(vg); nvgRect(vg,0,0,HARDWARE_WIDTH,380);
-        nvgFillPaint(vg,nvgLinearGradient(vg,0,0,510,370,nvgRGB(239,240,237),nvgRGB(193,196,197))); nvgFill(vg);
+        nvgFillPaint(vg,nvgLinearGradient(vg,0,0,510,370,nvgRGB(242,243,241),nvgRGB(221,223,222))); nvgFill(vg);
         // Fine horizontal grain, deterministic and independent of audio state.
         for(int y=0;y<760;++y) {
-            int a=(y*37+11)%17;
-            line(vg,0,y*.5f,510,y*.5f,nvgRGBA(y%2?255:67,y%2?255:70,y%2?255:72,a));
+            int a=(y*37+11)%13;
+            stroke(vg,0,y*.5f,510,y*.5f,nvgRGBA(y%2?255:67,y%2?255:70,y%2?255:72,a),.35f);
         }
         font(vg);
-        auto bold=APP->window->loadFont(asset::system("res/fonts/Nunito-Bold.ttf"));
+        auto bold=APP->window->loadFont(asset::plugin(pluginInstance,"res/Roboto-Bold.ttf"));
         if(bold) nvgFontFaceId(vg,bold->handle);
-        auto label=[&](float x,float y,const std::string& s,float size=7.3f) { text(vg,x,y,s,size,ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE); };
-        label(255,10,"Metropolix",14);
+        auto label=[&](float x,float y,const std::string& s,float size=7.3f) { text(vg,x,y,s,size*1.2f,ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE); };
+        label(255,10,"Metropolix",15.5f);
         for(float x:{22.f,488.f}) for(float y:{9.f,371.f}) rect(vg,x-9,y-3.8f,18,7.6f,nvgRGB(8,9,8),4);
-        label(171,26,"TRK 1",8); label(208,26,"TRK 2",8);
+        label(171,26,"TRK 1",8.2f); label(208,26,"TRK 2",8.2f);
         const float px[]={24,61,98,135.5f,171,208};
         const char* top[]={"A","B","CLK","CLK","PITCH","PITCH"};
         const char* bottom[]={"X","Y","Z","RESET","GATE","GATE"};
@@ -284,20 +282,20 @@ struct HardwarePanel : widget::Widget {
             bool output=i!=3;
             if(output) rect(vg,px[i]-14,33,28,34,nvgRGB(39,41,42),.4f);
             if(i>=4) rect(vg,px[i]-14,84,28,34,nvgRGB(39,41,42),.4f);
-            text(vg,px[i],62,top[i],7.4f,output?nvgRGB(244,244,239):ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
-            text(vg,px[i],113,bottom[i],7.4f,i>=4?nvgRGB(244,244,239):ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
+            text(vg,px[i],62,top[i],9.8f,output?nvgRGB(244,244,239):ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
+            text(vg,px[i],113,bottom[i],9.8f,i>=4?nvgRGB(244,244,239):ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
             metalDisc(vg,px[i],75,4.5f,nvgRGB(182,186,181),nvgRGB(233,234,229));
         }
         auto bracket=[&](float y,const std::string& title,float half) {
-            line(vg,244,y,371-half,y,ink()); line(vg,371+half,y,494,y,ink());
-            line(vg,244,y,244,y+5,ink()); line(vg,494,y,494,y+5,ink()); label(371,y,title,8);
+            stroke(vg,244,y,371-half,y,ink(),.8f); stroke(vg,371+half,y,494,y,ink(),.8f);
+            stroke(vg,244,y,244,y+5,ink(),.8f); stroke(vg,494,y,494,y+5,ink(),.8f); label(371,y,title,8.4f);
         };
         bracket(30,"PITCH",18); bracket(150,"PULSE COUNT",35); bracket(259,"GATE TYPE",29);
         for(int s=0;s<8;++s) {
             float x=244+s*35.7f;
-            label(x,136,std::to_string(s+1),7);
-            label(x,248,std::to_string(s+1),7);
-            if(s<7) for(int n=1;n<=8;++n) label(x+17.5f,229-(n-1)*8.8f,std::to_string(n),6.6f);
+            label(x,136,std::to_string(s+1),7.7f);
+            label(x,248,std::to_string(s+1),7.7f);
+            if(s<7) for(int n=1;n<=8;++n) label(x+17.5f,229-(n-1)*8.8f,std::to_string(n),7.2f);
             float symbols=x+11.5f;
             for(int g=0;s<7 && g<4;++g) {
                 float y=276+g*7.5f;
@@ -313,21 +311,39 @@ struct HardwarePanel : widget::Widget {
             line(vg,x,121,x,147,ink()); label(x-8,140,"−",7); label(x+8,140,"+",7);
             for(float y=173;y<185;y+=2.3f) disc(vg,x,y,.45f,ink());
         }
-        line(vg,135,228,166,211,ink()); line(vg,175.5f,184,175.5f,206,ink()); line(vg,68,228,43,244,ink());
-        line(vg,145,259,145,263,ink()); line(vg,145,255,207,255,ink()); line(vg,176,255,176,263,ink()); line(vg,207,255,207,263,ink());
-        label(31,278,"CTRL 1",7.5f); label(103,278,"CTRL 2",7.5f); label(213.5f,244,"EXIT",7.2f);
-        label(145,287,"TRK 1",6.8f); label(176,287,"TRK 2",6.8f); label(207,287,"MOD",6.8f);
+        stroke(vg,135,232,120,245,ink(),.7f); stroke(vg,175.5f,184,175.5f,206,ink(),.7f); stroke(vg,68,228,43,244,ink(),.7f);
+        for(float x=198;x<208;x+=2)disc(vg,x,229,.35f,ink());
+        stroke(vg,145,259,145,263,ink(),.7f);stroke(vg,152,255,207,255,ink(),.8f);stroke(vg,176,255,176,263,ink(),.7f);stroke(vg,207,255,207,263,ink(),.7f);
+        nvgBeginPath(vg);nvgRect(vg,140.5f,251,9,8);nvgStrokeColor(vg,ink());nvgStrokeWidth(vg,.45f);nvgStroke(vg);
+        for(int i=0;i<3;++i)stroke(vg,142,253+i*2,148,253+i*2,ink(),.5f);
+        label(31,278,"CTRL 1",8); label(103,278,"CTRL 2",8); label(213.5f,244,"EXIT",7.7f);
+        label(145,287,"TRK 1",7.5f); label(176,287,"TRK 2",7.5f); label(207,287,"MOD",7.5f);
         const char* upper[]={"RUN","∞","RESET","SETUP","BPM","SCALE","ALT"};
         const char* lower[]={"ORDER","LEN","DIV","SWING","SLIDE","GATE","EDIT"};
-        for(int i=0;i<7;++i) { float x=21+i*31.2f; label(x,321,upper[i],7); label(x,355,lower[i],7); }
+        for(int i=0;i<7;++i) { float x=21+i*31.2f; label(x,321,upper[i],7.5f); label(x,355,lower[i],7.7f); }
+        nvgBeginPath(vg);nvgRect(vg,200.8f,317,14.8f,8);nvgStrokeWidth(vg,.45f);nvgStrokeColor(vg,ink());nvgStroke(vg);
         const char* stage[]={"SLIDE","SKIP","PITCH","GATE","RATCH","PROB","ACCUM","CV"};
         const char* alt[]={"LOAD","SAVE","A","B","CLK","MX","LIM","TYPE"};
-        for(int i=0;i<8;++i) { float x=244+i*35.7f; label(x,355,stage[i],6.8f); label(x,321,alt[i],6.2f); }
-        line(vg,214,340,236,340,ink());
-        label(255,370,"intellijel",14);
+        const float labelWidths[]={20,21,8,8,16,13,15,19};
+        for(int i=0;i<8;++i) {
+            float x=244+i*35.7f,w=labelWidths[i];label(x,355,stage[i],7.6f);
+            if(i>=2 && i<=5)rect(vg,x-w/2,317,w,8,ink(),0);
+            else {nvgBeginPath(vg);nvgRect(vg,x-w/2,317,w,8);nvgStrokeWidth(vg,.45f);nvgStrokeColor(vg,ink());nvgStroke(vg);}
+            text(vg,x,321,alt[i],8.1f,i>=2&&i<=5?nvgRGB(243,243,238):ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE);
+            if(i>=6){nvgBeginPath(vg);nvgMoveTo(vg,x,327);nvgLineTo(vg,x-1.8f,330);nvgLineTo(vg,x+1.8f,330);nvgClosePath(vg);nvgFillColor(vg,ink());nvgFill(vg);}
+        }
+        for(float x=215;x<237;x+=2)disc(vg,x,340,.4f,ink());
+        stroke(vg,244,340,494,340,ink(),.65f);
+        auto logo=APP->window->loadSvg(asset::plugin(pluginInstance,"res/intellijel.svg"));
+        if(logo) {
+            nvgSave(vg);nvgTranslate(vg,230.5f,363.5f);nvgScale(vg,49.f/610.f,13.8f/172.f);
+            logo->draw(vg);nvgRestore(vg);
+        }
         for(float y:{138.f,324.f}) {
             metalDisc(vg,475,y,4.6f,nvgRGB(228,226,213),nvgRGB(93,91,85));
-            line(vg,472.8f,y-2,477.2f,y+2,nvgRGB(83,82,77)); line(vg,473,y+2.2f,477,y-2.2f,nvgRGB(83,82,77));
+            nvgBeginPath(vg);
+            for(int i=0;i<12;++i){float a=i*M_PI/6.f,r=i%2?1.6f:2.7f;float x=475+std::sin(a)*r,yy=y+std::cos(a)*r;if(i)nvgLineTo(vg,x,yy);else nvgMoveTo(vg,x,yy);}
+            nvgClosePath(vg);nvgFillColor(vg,nvgRGB(65,62,55));nvgFill(vg);nvgStrokeColor(vg,nvgRGB(235,230,211));nvgStrokeWidth(vg,.55f);nvgStroke(vg);
         }
     }
 };

@@ -1,0 +1,80 @@
+// Included in qaStep so this uses the same actual widget callbacks as UI QA.
+if(qaFrame==5) {
+    m->expanded.store(false);m->uiMod.store(false);m->uiAlt.store(false);m->uiHome.store(0);m->uiPage.store(Metropolix::HOME);
+    drag(find("Encoder"),-22);check(m->uiHome.load()==1,"HOME upward encoder drag advances the overview");
+    drag(find("Encoder"),22);check(m->uiHome.load()==0,"HOME downward encoder drag reverses the overview");
+    click(find("Metropolix display"));check(m->uiHome.load()==1,"display click also browses HOME");
+    click(find("ORDER"));int direction=Metropolix::extraParam(0,Metropolix::REVERSED);int before=m->integer(direction);
+    click(find("Encoder"));check(m->integer(direction)==1-before,"ORDER encoder press toggles direction (p.70)");
+    APP->history->undo();check(m->integer(direction)==before,"direction toggle supports undo");
+    click(find("LEN"));click(find("Encoder"));check(screenParam(m)==Metropolix::extraParam(0,Metropolix::PULSE_LIMIT),"LEN press selects pulse length (p.75)");
+    click(find("ALT"));check(screenParam(m)==Metropolix::trackParam(0,Metropolix::OFFSET),"LEN ALT selects stage offset");click(find("ALT"));
+    click(find("SCALE"));click(find("ALT"));check(screenParam(m)==Metropolix::ROOT && !m->uiAlt.load(),"SCALE ALT switches to root without latching stage actions");
+    click(find("MOD"));click(find("EDIT"));click(find("Stage 3 / PITCH"));
+    check(m->selectedLane.load()==2 && !m->uiChooseFunction.load(),"MOD EDIT + stage selects that MOD lane (p.137)");
+    click(find("Stage 4 / GATE"));int ramp=Metropolix::modParam(2,Metropolix::MOD_RAMP+3);before=m->integer(ramp);
+    click(find("Encoder"));check(m->integer(ramp)==1-before,"MOD encoder press toggles Step/Ramp (p.139)");APP->history->undo();
+    check(screenParam(m)==Metropolix::modParam(2,Metropolix::MOD_VALUE+3),"MOD turn remains voltage editing after transition toggle");
+    click(find("TRK 1"));m->selectedRow.store(Metropolix::PROBABILITY);m->uiPage.store(Metropolix::STAGE_PAGE);
+    click(find("Encoder"));check(m->integer(Metropolix::stageOption(0,3,Metropolix::PROB_TARGET))==1,"PROB encoder toggles Stage/Pulse (p.98)");APP->history->undo();
+    m->selectedRow.store(Metropolix::ACCUMULATION);click(find("Encoder"));check(m->integer(Metropolix::stageOption(0,3,Metropolix::ACCUM_TRIGGER))==1,"ACCUM encoder cycles triggers (p.100)");APP->history->undo();
+    m->uiHome.store(3);m->uiStageDetail.store(true);
+    json_t* data=APP->engine->moduleToJson(m);m->uiHome.store(0);m->uiStageDetail.store(false);APP->engine->moduleFromJson(m,data);json_decref(data);
+    check(m->uiHome.load()==3 && m->uiStageDetail.load(),"home view and stage-detail selection survive patch load");
+    m->uiMod.store(false);m->uiEdit.store(false);m->uiHome.store(0);m->uiPage.store(Metropolix::HOME);
+    m->selectedRow.store(Metropolix::SLIDE);
+}
+if(qaFrame==12)APP->window->screenshot(dir+"/panel.png");
+if(qaFrame==13) {
+    const float pitch[]={0.f,.28f,.58f,.85f,.85f,.65f,.5f,0.f};
+    for(int s=0;s<8;++s){m->params[Metropolix::PITCH+s].setValue(pitch[s]);m->params[Metropolix::PULSES+s].setValue(1);m->params[Metropolix::GATES+s].setValue(1);}
+    m->uiMod.store(true);m->selectedLane.store(0);m->uiHome.store(0);
+}
+if(qaFrame==17)APP->window->screenshot(dir+"/reference-pose.png");
+if(qaFrame==18) {
+    const int ratchets[]={1,7,4,1,2,1,3,1},prob[]={100,75,58,100,25,100,50,100},accum[]={0,2,7,-3,0,-5,1,4};
+    for(int s=0;s<8;++s){m->params[Metropolix::stageParam(0,s,Metropolix::RATCHETS)].setValue(ratchets[s]);m->params[Metropolix::stageParam(0,s,Metropolix::PROBABILITY)].setValue(prob[s]);m->params[Metropolix::stageParam(0,s,Metropolix::ACCUMULATION)].setValue(accum[s]);}
+}
+// Screen states are rendered by the production component. Full-panel captures
+// make visual comparisons possible without relying on Windows capture.
+struct DisplayCase { const char* name; int page; int field; int home; int row; bool mod; };
+const DisplayCase cases[]={
+    {"home-positions",Metropolix::HOME,0,0,0,false},
+    {"home-notes",Metropolix::HOME,0,1,0,false},
+    {"home-panel",Metropolix::HOME,0,2,0,false},
+    {"home-mod",Metropolix::HOME,0,3,0,true},
+    {"bpm",Metropolix::BPM_PAGE,0,0,0,false},
+    {"scale",Metropolix::SCALE_PAGE,1,0,0,false},
+    {"order",Metropolix::ORDER_PAGE,0,0,0,false},
+    {"length",Metropolix::LENGTH_PAGE,0,0,0,false},
+    {"division",Metropolix::DIV_PAGE,1,0,0,false},
+    {"slide-time",Metropolix::SLIDE_PAGE,0,0,0,false},
+    {"gate-length",Metropolix::GATE_PAGE,0,0,0,false},
+    {"stage-slide",Metropolix::STAGE_PAGE,0,0,Metropolix::SLIDE,false},
+    {"stage-skip",Metropolix::STAGE_PAGE,0,0,Metropolix::SKIP,false},
+    {"stage-ratchet",Metropolix::STAGE_PAGE,0,0,Metropolix::RATCHETS,false},
+    {"stage-probability",Metropolix::STAGE_PAGE,0,0,Metropolix::PROBABILITY,false},
+    {"stage-accumulator",Metropolix::STAGE_PAGE,0,0,Metropolix::ACCUMULATION,false},
+    {"stage-cv",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+    {"mod-voltage",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"output-a",Metropolix::A_PAGE,0,0,0,false},
+    {"output-b",Metropolix::B_PAGE,0,0,0,false},
+};
+const int count=sizeof(cases)/sizeof(cases[0]);
+int index=(qaFrame-20)/6;
+if(qaFrame>=20 && index<count) {
+    const auto& test=cases[index];
+    if((qaFrame-20)%6==0) {
+        m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
+        m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+    }
+    if((qaFrame-20)%6==3) {
+        APP->window->screenshot(dir+"/"+test.name+".png");
+        auto* screen=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));
+        OledCanvas c=screen->render();int lit=0;for(auto& row:c.pixels)for(uint8_t v:row)lit+=v>0;
+        check(lit>40 && lit<6000,std::string(test.name)+" renders a populated display");
+        // Native pixel map for compact contact sheets / regression inspection.
+        std::ofstream pgm(dir+"/"+test.name+".pgm",std::ios::binary);pgm<<"P5\n128 64\n255\n";pgm.write(reinterpret_cast<char*>(c.pixels),128*64);
+    }
+}
+if(qaFrame==20+count*6+3){check(!qaFailed,"DISPLAY QA COMPLETE");APP->window->close();}

@@ -79,6 +79,8 @@ struct Metropolix : Module {
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
+    std::atomic<int> uiHome{0};
+    std::atomic<bool> uiStageDetail{false};
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
     std::atomic<bool> uiChooseFunction{false};
     std::atomic<int> modStage[8];
@@ -86,6 +88,10 @@ struct Metropolix : Module {
     std::atomic<int> playStage[2];
     std::atomic<int> playPulse[2];
     std::atomic<float> playPitch[2];
+    std::atomic<float> playCv[2], pitchPre[2], pitchPost[2];
+    std::atomic<float> displayBpm{120.f};
+    double meterClockElapsed=0.0;
+    bool meterClockSeen=false, meterWasExternal=false;
 
     Metropolix() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -106,6 +112,7 @@ struct Metropolix : Module {
             playStage[t].store(-1);
             playPulse[t].store(0);
             playPitch[t].store(0.f);
+            playCv[t].store(0.f); pitchPre[t].store(0.f); pitchPost[t].store(0.f);
             std::string name = "Track " + std::to_string(t + 1) + " ";
             configParam(trackParam(t, LENGTH), 1, 8, 8, name + "length", " stages")->snapEnabled = true;
             configParam(trackParam(t, OFFSET), 0, 7, 0, name + "offset", " stages")->snapEnabled = true;
@@ -252,6 +259,15 @@ struct Metropolix : Module {
         bool resetEdge = resetTrigger.process(inputs[RESET_IN].getVoltage(), 0.1f, 1.5f);
         bool button = resetButton.process(params[RESET].getValue());
         bool external = inputs[CLOCK_IN].isConnected();
+        if(!external || !meterWasExternal){meterClockSeen=false;meterClockElapsed=0.0;}
+        if(external) {
+            meterClockElapsed+=args.sampleTime;
+            if(clockEdge) {
+                if(meterClockSeen)displayBpm.store(static_cast<float>(15.0/metro::clamp(meterClockElapsed,0.001,150.0)),std::memory_order_relaxed);
+                meterClockElapsed=0.0;meterClockSeen=true;
+            }
+        }
+        meterWasExternal=external;
         sequencer.process(args.sampleTime, params[RUN].getValue() > 0.5f, external, clockEdge, resetEdge || button);
         for (int t = 0; t < 2; ++t) {
             const auto& state = sequencer.tracks[t];
@@ -262,6 +278,9 @@ struct Metropolix : Module {
                 playStage[t].store(state.stage, std::memory_order_relaxed);
                 playPulse[t].store(state.pulse, std::memory_order_relaxed);
                 playPitch[t].store(state.pitch, std::memory_order_relaxed);
+                playCv[t].store(state.cv, std::memory_order_relaxed);
+                pitchPre[t].store(sequencer.modulation.routes[t][metro::ModPitchPre], std::memory_order_relaxed);
+                pitchPost[t].store(sequencer.modulation.routes[t][metro::ModPitchPost], std::memory_order_relaxed);
                 for (int s = 0; s < 8; ++s)
                     lights[POSITION_1 + t * 8 + s].setBrightness(sequencer.running && state.stage == s ? 1.f : 0.f);
             }
@@ -271,7 +290,10 @@ struct Metropolix : Module {
             modStage[lane].store(sequencer.running ? sequencer.modulation.lanes[lane].stage : -1, std::memory_order_relaxed);
             modVoltage[lane].store(sequencer.modulation.outputs[lane], std::memory_order_relaxed);
         }
-        if (update) externalClock.store(external, std::memory_order_relaxed);
+        if (update) {
+            externalClock.store(external, std::memory_order_relaxed);
+            if(!external)displayBpm.store(params[TEMPO].getValue(),std::memory_order_relaxed);
+        }
         // Avoid signed counter overflow in patches left running for days.
         controlCounter &= 31;
     }
@@ -283,7 +305,9 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(5));
+        json_object_set_new(root, "schemaVersion", json_integer(6));
+        json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
+        json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
         json_object_set_new(root, "uiPage", json_integer(uiPage.load()));
         json_object_set_new(root, "uiField", json_integer(uiField.load()));
         json_object_set_new(root, "uiMod", json_boolean(uiMod.load()));
@@ -320,6 +344,9 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
         uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(UNAVAILABLE_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, 1));
+        uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
+        uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<6 && uiPage.load()==LENGTH_PAGE)uiField.store(0);
         uiMod.store(json_is_true(json_object_get(root, "uiMod")));
         uiEdit.store(json_is_true(json_object_get(root, "uiEdit")));
         uiChooseFunction.store(json_is_true(json_object_get(root, "uiChooseFunction")));
