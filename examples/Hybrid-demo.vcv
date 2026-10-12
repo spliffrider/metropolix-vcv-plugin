@@ -1,0 +1,73 @@
+{
+  "version": "2.6.6",
+  "zoom": 1.0,
+  "gridOffset": [
+    -1.0,
+    -0.1
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "plugin": "MetropolixLab",
+      "model": "Metropolix",
+      "version": "2.0.1",
+      "params": [
+        {
+          "id": 1,
+          "value": 1.0
+        },
+        {
+          "id": 45,
+          "value": 3.0
+        },
+        {
+          "id": 92,
+          "value": 62.0
+        },
+        {
+          "id": 89,
+          "value": 2.0
+        }
+      ],
+      "data": {
+        "schemaVersion": 3,
+        "expanded": true,
+        "selectedTrack": 0,
+        "selectedStage": 0,
+        "selectedRow": 0
+      },
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "plugin": "Fundamental",
+      "model": "Scope",
+      "version": "2.6.4",
+      "pos": [
+        73,
+        0
+      ]
+    }
+  ],
+  "cables": [
+    {
+      "id": 1,
+      "outputModuleId": 1,
+      "outputId": 0,
+      "inputModuleId": 2,
+      "inputId": 0,
+      "color": "#d76737"
+    },
+    {
+      "id": 2,
+      "outputModuleId": 1,
+      "outputId": 1,
+      "inputModuleId": 2,
+      "inputId": 1,
+      "color": "#2d8c89"
+    }
+  ]
+}

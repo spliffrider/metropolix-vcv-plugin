@@ -1,0 +1,11 @@
+.tools/
+build/
+dist/
+tmp/
+plugin.dll
+plugin.so
+plugin.dylib
+*.vcvplugin
+reference/*.pdf
+reference/*_pages.json
+

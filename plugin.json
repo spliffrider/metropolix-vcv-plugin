@@ -1,0 +1,21 @@
+{
+  "slug": "MetropolixLab",
+  "name": "Metropolix Lab",
+  "version": "2.0.1",
+  "license": "proprietary",
+  "brand": "Local",
+  "author": "Local development",
+  "modules": [
+    {
+      "slug": "Metropolix",
+      "name": "Metropolix Lab",
+      "description": "Two-track sequencer with 21 play orders, ratchets, accumulators, and a collapsible stage editor.",
+      "tags": [
+        "Sequencer",
+        "Clock generator",
+        "Random",
+        "Sample and hold"
+      ]
+    }
+  ]
+}
