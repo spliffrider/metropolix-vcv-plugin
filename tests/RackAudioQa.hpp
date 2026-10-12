@@ -14,15 +14,29 @@ struct RackAudioQa : Module {
                         std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
     std::vector<float> samples;
     std::vector<float> cvSamples;
+    const bool performance = std::getenv("METROPOLIX_PERFORMANCE_VIDEO") != nullptr;
+    std::vector<float> trace;
+    float tracePeak[10] = {};
     bool cvConnected = false;
     int cursor = 0;
     std::atomic<bool> ready{false};
-    RackAudioQa() : samples(frames * 2, 0.f), cvSamples(frames * 2, 0.f) { config(0, 4, 0); }
+    RackAudioQa() : samples(frames * 2, 0.f), cvSamples(frames * 2, 0.f),
+        trace(performance ? frames / 480 * 10 : 0, 0.f) { config(0, 12, 0); }
     void process(const ProcessArgs& args) override {
         if (video && !metrovideo::armed.load(std::memory_order_acquire)) return;
         if (ready.load(std::memory_order_relaxed) || !inputs[0].isConnected() || !inputs[1].isConnected()) return;
         samples[cursor * 2] = inputs[0].getVoltage();
         samples[cursor * 2 + 1] = inputs[1].getVoltage();
+        if (performance) {
+            for (int i = 0; i < 10; ++i) {
+                float v = inputs[i + 2].getVoltage();
+                tracePeak[i] = (i == 0 || i == 2) ? v : std::max(tracePeak[i], std::abs(v));
+                if (cursor % 480 == 479) {
+                    trace[(cursor / 480) * 10 + i] = tracePeak[i];
+                    tracePeak[i] = 0.f;
+                }
+            }
+        }
         cvConnected = inputs[2].isConnected() && inputs[3].isConnected();
         if (cvConnected) {
             cvSamples[cursor * 2] = inputs[2].getVoltage();
@@ -38,10 +52,8 @@ struct RackAudioQaWidget : ModuleWidget {
     RackAudioQaWidget(RackAudioQa* module) {
         setModule(module);
         box.size = Vec(30, 380);
-        addInput(createInputCentered<PJ301MPort>(Vec(15, 40), module, 0));
-        addInput(createInputCentered<PJ301MPort>(Vec(15, 80), module, 1));
-        addInput(createInputCentered<PJ301MPort>(Vec(15, 120), module, 2));
-        addInput(createInputCentered<PJ301MPort>(Vec(15, 160), module, 3));
+        for (int i = 0; i < 12; ++i)
+            addInput(createInputCentered<PJ301MPort>(Vec(15, 20 + i * 28), module, i));
     }
     void step() override {
         ModuleWidget::step();
@@ -79,6 +91,17 @@ struct RackAudioQaWidget : ModuleWidget {
         }
         wav.close();
         good &= !wav.fail();
+        if (m->performance) {
+            std::ofstream trace(std::string(directory) + "/signals.csv");
+            trace << "seconds,pitch1,gate1,pitch2,gate2,kick,snare,hat,bass_peak,lead_peak,drum_peak\n";
+            for (int block = 0; block < m->frames / 480; ++block) {
+                trace << (block + 1) / 100.0;
+                for (int i = 0; i < 10; ++i) trace << ',' << m->trace[block * 10 + i];
+                trace << '\n';
+            }
+            trace.close();
+            good &= !trace.fail();
+        }
         if (std::getenv("METROPOLIX_MOD_QA")) {
             double minimum[2] = {100,100}, maximum[2] = {-100,-100};
             int changes[2] = {};
