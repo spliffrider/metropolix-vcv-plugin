@@ -1,8 +1,13 @@
-# Hardware panel and desktop interaction — 2.4.0
+# Hardware panel and desktop interaction — 2.4.1
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
 The panel follows the supplied photograph at 34 HP. This revision refines lettering, component proportions, slider grips, button colors, metal sockets, secondary legends, mounting details, and the logo. The display uses a native 128 × 64 pixel canvas with lettering and diagrams based on the manual's screen images. Further comparison is still needed before calling it an exact recreation.
+
+The bottom credit reads **sensiburner <3 intellijel** at the user's request.
+sensiburner uses matching bold lowercase lettering and a red i dot; the red
+<3 separates the creator's name from the original hardware maker. Rack's brand
+and author metadata also identify sensiburner. This is an independent homage.
 
 ## Using the controls
 

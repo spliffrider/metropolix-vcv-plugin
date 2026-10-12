@@ -4,11 +4,16 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.4.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.4.1 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.0/MetropolixLab-2.4.0-win-x64.vcvplugin)** · **[AUX demo patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.0/Aux-inputs-demo.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.4.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/MetropolixLab-2.4.1-win-x64.vcvplugin)** · **[AUX demo patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.4.1)**
 
-2.4.0 makes X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). macOS/Linux plugin downloads are not available yet. The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
+2.4.0 made X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). macOS/Linux plugin downloads are not available yet. The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
+
+2.4.1 replaces the standalone manufacturer logo with **sensiburner <3 intellijel**,
+using matching bold lowercase lettering and red accents. Rack identifies
+sensiburner as the creator. This is a visual/metadata update; musical behavior
+and demo patches are unchanged.
 
 Version 2.3.0 refines the supplied hardware panel's lettering, components, markings, and logo. Its 128 × 64 pixel display now includes all four HOME views and manual-based editing diagrams. Hold and drag upward to increase values; downward to decrease. Hover help, context menus, numeric entry, and Rack undo/redo work alongside the hardware layout. See **[docs/HARDWARE-UI.md](docs/HARDWARE-UI.md)** for operation and current limits. The exact visual target remains **[docs/UI-TARGET.md](docs/UI-TARGET.md)**; this revision is closer, with further visual and firmware details still to implement.
 
@@ -16,7 +21,7 @@ Version 2.3.0 refines the supplied hardware panel's lettering, components, marki
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.4.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.4.1-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1

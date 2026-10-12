@@ -4,6 +4,11 @@ User direction, 2026-10-12: the finished plugin UI must look exactly like the re
 
 Additional user requirement: add computer/VCV interaction conveniences to that matching design, including mouseover text and right-click menus on appropriate buttons. Visual fidelity must coexist with practical desktop operation.
 
+Branding exception requested by the user: the bottom wordmark reads
+**sensiburner <3 intellijel**, with matching lettering and red accents on
+sensiburner, so the creator's independent homage is visible on the panel.
+Keep this credit instead of restoring the standalone manufacturer logo.
+
 ![User-supplied Metropolix panel reference](../reference/metropolix-panel-user-reference.png)
 
 The reference image is saved in the project so it survives deletion of the temporary clipboard attachment. Use the supplied firmware 1.6 manual to resolve control functions and display states. The photograph establishes the visual target; it is not evidence that our engine behaves identically to the hardware.

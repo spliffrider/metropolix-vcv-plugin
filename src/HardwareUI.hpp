@@ -337,9 +337,10 @@ struct HardwarePanel : widget::Widget {
         }
         for(float x=215;x<237;x+=2)disc(vg,x,340,.4f,ink());
         stroke(vg,244,340,494,340,ink(),.65f);
-        auto logo=APP->window->loadSvg(asset::plugin(pluginInstance,"res/intellijel.svg"));
+        auto logo=APP->window->loadSvg(asset::plugin(pluginInstance,"res/sensiburner-intellijel.svg"));
         if(logo) {
-            nvgSave(vg);nvgTranslate(vg,230.5f,363.5f);nvgScale(vg,49.f/610.f,13.8f/172.f);
+            float scale=13.8f/logo->getSize().y;
+            nvgSave(vg);nvgTranslate(vg,(HARDWARE_WIDTH-logo->getSize().x*scale)/2,363.5f);nvgScale(vg,scale,scale);
             logo->draw(vg);nvgRestore(vg);
         }
         for(float y:{138.f,324.f}) {

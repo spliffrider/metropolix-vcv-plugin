@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.4.0
+# Validation and fidelity status — 2.4.1
 
 Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metropolix manual 1.6 (2025-09-24)](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf). Page numbers below are the printed page numbers; the PDF cover adds one to the file page index.
 
@@ -76,6 +76,15 @@ peak 1.59994 V, DC -0.000233547 V. A/B retained their -2..+2 V and 0..+5 V range
 Run `scripts/test-ui.ps1 -Aux` to reproduce; evidence is in `tmp/aux-qa`.
 The older UI-only revisions below retain their historical validation results;
 2.4.0 intentionally extends the engine and is not byte-identical to 2.1.0.
+
+## Independent creator wordmark — 2.4.1
+
+The bottom panel credit is now `sensiburner <3 intellijel`, with matching bold
+lowercase letters and red accents. It is a vector asset centered at the same
+height as the old logo. Rack's brand/author fields now identify sensiburner.
+The production build and Rack display suite pass; the actual rendered panel was
+inspected for fit, readability, clipping, and overlap. The engine, parameter
+IDs, ports, settings schema, and example patches are unchanged from 2.4.0.
 
 ## Interpretations and limits
 
