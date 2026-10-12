@@ -1,9 +1,10 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
 if ($Aux) { $Modulation = $true }
 if ($Modulation) { $Audio = $true }
+if ($Variations) { $Musical = $true }
 if ($Musical) { $Audio = $true }
 if (Get-Process Rack -ErrorAction SilentlyContinue) { throw 'Close Rack before the UI test.' }
 $env:CHERE_INVOKING = 'yes'
@@ -13,7 +14,7 @@ try {
     & "$env:LOCALAPPDATA\MetropolixDev\msys64\usr\bin\bash.exe" -lc 'make ui-test-build'
     if ($LASTEXITCODE -ne 0) { throw 'UI test build failed.' }
     $profile = Join-Path $projectRoot 'tmp\rack-qa'
-    $output = Join-Path $projectRoot $(if ($Display) { 'tmp\display-qa' } elseif ($Musical) { 'tmp\musical-qa' } elseif ($Aux) { 'tmp\aux-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
+    $output = Join-Path $projectRoot $(if ($Display) { 'tmp\display-qa' } elseif ($Variations) { 'tmp\variations-qa' } elseif ($Musical) { 'tmp\musical-qa' } elseif ($Aux) { 'tmp\aux-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
     $plugin = Join-Path $profile 'plugins-win-x64\MetropolixLab'
     New-Item -ItemType Directory -Force -Path $plugin, $output | Out-Null
     Copy-Item -LiteralPath 'build\ui-test\plugin.dll', 'plugin.json', 'README.md' -Destination $plugin -Force
@@ -38,8 +39,9 @@ try {
     if ($Audio) {
         $env:METROPOLIX_AUDIO_QA = '1'
         if ($Musical) { $env:METROPOLIX_MUSICAL_QA = '1' }
+        if ($Variations) { $env:METROPOLIX_VARIATIONS_QA = '1' }
         if ($Aux) { $env:METROPOLIX_AUX_QA = '1' }
-        $audioExample = if ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
+        $audioExample = if ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
         $audioPatch = Get-Content -LiteralPath $audioExample -Raw | ConvertFrom-Json
         $audioPatch.modules += @{id=100; plugin='MetropolixLab'; model='AudioQA'; pos=@(100,1)}
         # Record exactly what reaches AUDIO, including the musical demo's stereo mix.
@@ -59,9 +61,13 @@ try {
     $system = Split-Path -Parent $RackPath
     $arguments = @('-u', ('"' + $profile + '"'), '-s', ('"' + $system + '"'), ('"' + $patch + '"'))
     $process = Start-Process -FilePath $RackPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
-    if (!$process.WaitForExit($(if ($Musical) { 60000 } else { 45000 }))) {
-        Stop-Process -Id $process.Id
-        throw 'UI test timed out; test Rack process stopped.'
+    $timeout = if ($Variations) { 180 } elseif ($Musical) { 60 } else { 45 }
+    $elapsed = [System.Diagnostics.Stopwatch]::StartNew()
+    while (!$process.WaitForExit(1000)) {
+        if ($elapsed.Elapsed.TotalSeconds -gt $timeout) {
+            Stop-Process -Id $process.Id
+            throw 'UI test timed out; test Rack process stopped.'
+        }
     }
     $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
     Write-Output $report
@@ -74,6 +80,7 @@ try {
     Remove-Item Env:METROPOLIX_QA_DIR -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_MUSICAL_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_VARIATIONS_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_MOD_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_DISPLAY_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_AUX_QA -ErrorAction SilentlyContinue

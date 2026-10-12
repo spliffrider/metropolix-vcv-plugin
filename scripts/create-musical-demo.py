@@ -5,9 +5,13 @@ Fundamental parameter/port mappings match its official v2.6.4 sources.
 """
 import json
 import math
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--variations', action='store_true', help='Write the evolving performance version')
+VARIATIONS = parser.parse_args().variations
 VERSION = json.loads((ROOT / 'plugin.json').read_text())['version']
 BPM = 108
 modules, cables = [], []
@@ -62,6 +66,37 @@ for lane, values in enumerate([[0, .25, .65, 1.1, 1.25, .8, .35, 0], [0] * 8]):
     for stage, value in enumerate(values):
         params[base + 10 + stage] = value
         params[base + 18 + stage] = 1
+
+if VARIATIONS:
+    # The lead traverses forward and backward at eighth-note speed. Its 54-tick
+    # pendulum cycle crosses the bass's 16-tick bar, continually moving pickups.
+    params[87 + 2] = 2
+    params[87 + 3] = 2
+    params[4] = 2  # Natural minor: keep all harmonic and melodic shifts in key.
+    # Eight independent lanes make phrases, not just a repeated one-bar loop.
+    # The Am / F / C / G root movement changes every two bars. A three-bar
+    # melody-shaping lane moves passing notes within the same diatonic scale.
+    # Over 32 bars: introduce, lift register, return, bass break, rebuild, settle.
+    lanes = [
+        # lane, division, destination, CV type, assignment, eight voltages
+        (1, 32, 2, 0, 2, [0, -4/12, 3/12, -2/12, 0, -4/12, 3/12, -2/12]),
+        (2, 6, 2, 0, 1, [0, 0, 2/12, 0, -2/12, 0, 3/12, -2/12]),
+        (3, 64, 1, 1, 1, [0, 0, 1, 0, 0, 1, 0, 0]),
+        (4, 4, 7, 1, 1, [0, 0, 0, 0, 0, 5/7, 0, 5/7]),
+        (5, 16, 5, 0, 1, [0, -1, -.6, .3, 0, -.8, .6, -1.4]),
+        (6, 8, 8, 2, 1, [0, 0, 0, 5, 0, 0, 5, 0]),
+        (7, 64, 8, 2, 0, [0, 0, 0, 0, 5, 0, 0, 0]),
+    ]
+    for lane, division, destination, cv_type, assignment, values in lanes:
+        base = 194 + lane * 26
+        params.update({base: 8, base + 2: division, base + 6: cv_type,
+                       base + 7: destination, base + 8: assignment})
+        for stage, value in enumerate(values):
+            params[base + 10 + stage] = value
+            params[base + 18 + stage] = 0
+    # A brief slide into the descending E gives that one gesture a softer edge.
+    params[87 + 6] = 35
+    params[87 + 9 + 3 * 8 + 4] = 1
 module(1, 'Metropolix', [0, 0], params, plugin='MetropolixLab',
        data=dict(schemaVersion=7, expanded=False, modEditor=False, selectedTrack=1,
                  uiPage=0, uiHome=0, uiField=0, uiStageDetail=False, uiMod=False, uiEdit=False))
@@ -112,6 +147,6 @@ cable(1, 5, 11, 0, '#8a72aa')
 
 patch = dict(version='2.6.6', zoom=1.1, gridOffset=[-1, -.05],
              modules=modules, cables=cables)
-path = ROOT / 'examples/Musical-demo.vcv'
+path = ROOT / ('examples/Musical-variations.vcv' if VARIATIONS else 'examples/Musical-demo.vcv')
 path.write_text(json.dumps(patch, indent=2) + '\n')
-print(f'Wrote {path.name}: Night Current, {BPM} BPM, A minor pentatonic')
+print(f'Wrote {path.name}: Night Current{" / Variations" if VARIATIONS else ""}, {BPM} BPM, A minor{"" if VARIATIONS else " pentatonic"}')

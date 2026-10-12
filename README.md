@@ -19,6 +19,42 @@ Version 2.3.0 refines the supplied hardware panel's lettering, components, marki
 
 ## Start here
 
+For the evolving performance, open **[Night Current / Variations](examples/Musical-variations.vcv)**.
+It uses the same voices at 108 BPM, with A natural minor quantization and
+Am–F–C–G root movement every two bars. The melody runs forward and backward
+at /2 against the bass at /4; its 54-tick cycle moves across bar lines.
+Passing-note shifts run on a separate three-bar cycle. The result develops
+across phrases instead of repeating the same one-bar melody.
+
+The 32-bar arrangement lasts about 71 seconds: bars 1–8 introduce the voices,
+9–12 lift the melody an octave, 13–16 return it, 17–20 drop the bass for a
+break, 21–24 bring bass and high melody back, and 25–32 settle down. Half-bar
+melody gaps, double ratchets, gate-length changes, and a brief slide into stage
+5 add variation throughout. The arrangement repeats, while the different
+melodic cycle lengths continue changing its details.
+
+**[Download the performance patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Musical-variations.vcv)**
+· **[Listen to the full 80-second preview](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Musical-variations-preview.wav)**.
+These are additional demo files for the existing 2.4.1 plugin; the plugin
+download itself has not changed. The preview has only short boundary fades.
+
+Select **MOD** to explore what each lane does:
+
+| Lane | Role | Destination |
+| --- | --- | --- |
+| 1 | Eight-bar filter swell | Output A → melody VCF |
+| 2 | Am/F/C/G movement, two bars per root | Pitch Pre, both tracks |
+| 3 | Three-bar passing-note pattern | Pitch Pre, Track 2 |
+| 4 | Register lifts in the 32-bar arrangement | Octave, Track 2 |
+| 5 | Double-note fills in alternate bars | Ratchet, Track 2 |
+| 6 | Shorter and longer articulation | Gate Length, Track 2 |
+| 7 | Half-bar breathing spaces | Mute, Track 2 |
+| 8 | Four-bar bass breakdown | Mute, Track 1 |
+
+The public patches start running after loading. Select your AUDIO device;
+press RESET to hear the arrangement from the start. Mute individual MOD lanes
+in the modulation editor to hear their contribution.
+
 **Night Current** is the new musical demo: **108 BPM, A minor pentatonic**,
 with a repeating A1/E2 bass, a plucked answering melody, an eight-bar filter
 movement, and quiet stereo echoes. Open **[examples/Musical-demo.vcv](examples/Musical-demo.vcv)**
@@ -132,9 +168,12 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-ui.ps1 -Modulation
 .\scripts\test-ui.ps1 -Hardware
 .\scripts\test-ui.ps1 -Musical
+.\scripts\test-ui.ps1 -Variations
 ```
 
 Regenerate the musical patch with `python scripts/create-musical-demo.py`.
+Add `--variations` to regenerate the evolving version. `-Variations` records
+80 seconds in Rack to cover the complete 32-bar arrangement and its return.
 The musical check records 24 seconds from the actual stereo mix in Rack at
 48 kHz, covering the eight-bar filter cycle, and checks signal levels,
 DC offset, and finite samples. These are technical checks; listening feedback

@@ -6,7 +6,8 @@
 #include <cmath>
 
 struct RackAudioQa : Module {
-    const int frames = (std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
+    const int frames = (std::getenv("METROPOLIX_VARIATIONS_QA") ? 80 :
+                        std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
     std::vector<float> samples;
     std::vector<float> cvSamples;
     bool cvConnected = false;
