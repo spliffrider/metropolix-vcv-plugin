@@ -1,5 +1,5 @@
-// Build interactive components over the 34 HP artwork. The musical engine and
-// parameter/port IDs remain the same as the accepted 2.1.0 build.
+// Build interactive components over the 34 HP artwork. Existing parameter and
+// port IDs are preserved; AUX IDs are appended.
 void MetropolixWidget::buildHardware(Metropolix* m) {
     auto control=[&](const std::string& name, float x,float y,float size,HardwareControl::Look look) {
         auto* c=new HardwareControl;
@@ -46,9 +46,28 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     addInput(createInputCentered<MetalPort>(Vec(135.5f,96),m,Metropolix::RESET_IN));
     for(int i=0;i<3;++i) {
         std::string name=std::string("AUX ")+char('X'+i);
-        placeholder(name+" input",24+i*37,96,24,HardwareControl::SOCKET);
-        placeholder(name+" attenuverter",24+i*37,159,20,HardwareControl::BLACK_KNOB);
-        placeholder(name+" assignment",24+i*37,193,15,HardwareControl::DARK_BUTTON);
+        addInput(createInputCentered<MetalPort>(Vec(24+i*37,96),m,Metropolix::AUX_X_IN+i));
+        auto open=[m,i] { if(m) { m->selectedAux.store(i);screenPage(m,Metropolix::AUX_PAGE); } };
+        auto menu=[m,i](ui::Menu* menu) { appendAuxMenu(menu,m,i); };
+        auto detail=[m,i] {
+            if(!m)return std::string();
+            int dest=m->integer(Metropolix::auxParam(i,Metropolix::AUX_DESTINATION));
+            int target=m->integer(Metropolix::auxParam(i,Metropolix::AUX_ASSIGNMENT));
+            return Metropolix::modDestinations()[dest]+" / "+(target==2?std::string("Both tracks"):string::f("Track %d",target+1))
+                +string::f("\nEffective input: %+.2f V",m->auxVoltage[i].load());
+        };
+        auto* knob=control(name+" attenuverter",24+i*37,159,20,HardwareControl::BLACK_KNOB);
+        knob->binding=[i] { return Metropolix::auxParam(i,Metropolix::AUX_AMOUNT); };
+        knob->action=open;knob->dragAction=open;knob->extraMenu=menu;knob->detailHelp=detail;
+        knob->help="CV: noon = zero; clockwise adds, counterclockwise inverts. Mute: clockwise follows gates (>=1.5 V), counterclockwise inverts gate logic. Unpatched Mute: clockwise = on, counterclockwise = off.";
+        auto* button=control(name+" assignment",24+i*37,193,15,HardwareControl::DARK_BUTTON);
+        button->binding=[m,i] { return m && !m->uiAlt.load()?Metropolix::auxParam(i,Metropolix::AUX_DESTINATION):-1; };
+        button->action=[m,open,unavailable] { if(m && m->uiAlt.load())unavailable("AUX selective randomization");else open(); };
+        button->dragAction=[m,open] { if(m && !m->uiAlt.load())open(); };
+        button->extraMenu=menu;button->detailHelp=detail;
+        button->rightAction=[m,i,open] { if(m){open();appendAuxMenu(createMenu(),m,i);} };
+        button->help="Click to edit AUX destination; click the encoder to switch to track assignment. Drag this button to change destination. Right-click for named choices. ALT selective randomization is not implemented.";
+        knob->bind();button->bind();
     }
     for(int i=0;i<2;++i) {
         placeholder(string::f("CTRL %d",i+1),31+i*72,252,41,HardwareControl::WHITE_KNOB);
@@ -73,6 +92,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->binding=[m] { return screenParam(m); };
     display->help="HOME: drag or click to browse four overviews. Editing: drag the active value; click performs the encoder action. Right-click for direct access.";
     display->action=[m] { encoderPress(m); };
+    display->extraMenu=[m](ui::Menu* menu) { if(m && m->uiPage.load()==Metropolix::AUX_PAGE)appendAuxMenu(menu,m,m->selectedAux.load()); };
     display->navigationMode=[m] { return m && m->uiPage.load()==Metropolix::HOME && !m->uiChooseFunction.load(); };
     display->navigationTurn=[m](int d) { if(m)m->uiHome.store(metro::modulo(m->uiHome.load()+d,4)); };
     display->rightAction=[display,stageEditor,laneMenu,m] {
@@ -84,6 +104,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     encoder->binding=[m] { return screenParam(m); };
     encoder->help="Drag up/down to edit. At HOME, drag or click to browse four overviews. Click switches fields or toggles the screen's secondary setting.";
     encoder->action=[m] { encoderPress(m); };
+    encoder->extraMenu=display->extraMenu;
     encoder->navigationMode=display->navigationMode;encoder->navigationTurn=display->navigationTurn;
     auto* exit=control("EXIT",214,229,15,HardwareControl::DARK_BUTTON);
     exit->help="Return to the home overview. Right-click for optional editors.";

@@ -60,6 +60,7 @@ struct Settings {
     std::array<Stage, 8> stages;
     std::array<Track, 2> tracks;
     std::array<ModLane, 8> modLanes;
+    std::array<AuxInput, 3> auxInputs;
     std::array<int, 2> outputSources{{0,1}}; // 0/1 = track CV, 2..9 = MOD 1..8
 };
 
@@ -191,7 +192,7 @@ public:
                 phase = firstTick ? 0.0 : std::fmod(phase, period);
             }
             if (tick) modulation.tick(settings.modLanes, period);
-            modulation.render(settings.modLanes, dt);
+            modulation.render(settings.modLanes, dt, settings.auxInputs);
             if (tick) {
                 firstTick = false;
                 clockRemaining = 0.001;

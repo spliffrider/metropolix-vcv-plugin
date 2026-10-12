@@ -136,6 +136,23 @@ void modSettingsMenu(Metropolix* m, int lane) {
     menu->addChild(createMenuLabel("Each MOD stage lasts one divided clock pulse."));
 }
 
+void appendAuxMenu(ui::Menu* menu, Metropolix* m, int input) {
+    if(!m) return;
+    menu->addChild(new ui::MenuSeparator);
+    menu->addChild(createMenuLabel(string::f("AUX %c",'X'+input)));
+    auto choice=[menu,m,input](const std::string& label,int property,std::vector<std::string> values) {
+        auto* q=m->getParamQuantity(Metropolix::auxParam(input,property));
+        menu->addChild(createIndexSubmenuItem(label,values,
+            [q] { return static_cast<size_t>(q->getValue()); },
+            [q](size_t value) { setWithHistory(q,static_cast<float>(value)); }));
+    };
+    choice("Destination",Metropolix::AUX_DESTINATION,Metropolix::modDestinations());
+    choice("Target tracks",Metropolix::AUX_ASSIGNMENT,{"Track 1","Track 2","Both tracks"});
+    menu->addChild(createMenuItem("Clear assignment","",[m,input] {
+        setWithHistory(m->getParamQuantity(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION)),0.f);
+    }));
+}
+
 // All views bind to the same ParamQuantity, preserving Rack automation, reset,
 // numeric entry, patch serialization, and undo in both compact and open views.
 struct ValueCell : app::Knob {

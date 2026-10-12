@@ -61,6 +61,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
         case Metropolix::A_PAGE: return Metropolix::OUTPUT_SOURCE_A;
         case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
+        case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::SETUP_PAGE: return Metropolix::RANGE;
         default: return -1;
     }
@@ -84,7 +85,7 @@ void encoderPress(Metropolix* m) {
         else if(m->selectedRow.load()==Metropolix::ACCUMULATION){id=Metropolix::stageOption(t,s,Metropolix::ACCUM_TRIGGER);count=3;}
         if(id>=0){auto* q=m->getParamQuantity(id);setWithHistory(q,(static_cast<int>(q->getValue())+1)%count);}return;
     }
-    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE ||
+    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE ||
        (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
 }
@@ -110,6 +111,7 @@ struct HardwareControl : app::Knob {
     std::function<void(int)> navigationTurn;
     std::function<void(ui::Menu*)> extraMenu;
     std::function<bool()> active;
+    std::function<std::string()> detailHelp;
     std::function<NVGcolor()> activeColor;
     NVGcolor lightColor=nvgRGB(135,187,227);
     ui::Tooltip* tip=nullptr;
@@ -132,6 +134,7 @@ struct HardwareControl : app::Knob {
         auto* q=getParamQuantity();
         std::string s=q ? q->getString() : name;
         if(!help.empty()) s += "\n"+help;
+        if(detailHelp) s += "\n"+detailHelp();
         if(q) s += "\nHold + drag up/down to increase/decrease. Ctrl = fine. Right-click = values/reset.";
         return s;
     }

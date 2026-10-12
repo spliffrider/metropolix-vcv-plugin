@@ -1,4 +1,4 @@
-# Metropolix Lab 2.3.1 — Windows alpha quick start
+# Metropolix Lab 2.4.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,9 +6,9 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.3.1/MetropolixLab-2.3.1-win-x64.vcvplugin)
-- [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.3.1/Hardware-panel-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.3.1)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.0/MetropolixLab-2.4.0-win-x64.vcvplugin)
+- [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.0/Aux-inputs-demo.vcv)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.4.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -22,7 +22,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.3.1-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.4.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -32,7 +32,7 @@ There is no separate installer or GitHub account requirement to download.
 ## Hear something immediately
 
 1. Ensure **VCV Free** modules are installed; the demo uses VCV Free and Core.
-2. Download and open `Hardware-panel-demo.vcv` using Rack's **File → Open**.
+2. Download and open `Aux-inputs-demo.vcv` using Rack's **File → Open**.
 3. In its AUDIO module, select your audio driver, device, and output channels.
    The portable demo deliberately has no device selected.
 4. The demo starts running. Begin at a comfortable listening level. Save a copy
@@ -41,6 +41,10 @@ There is no separate installer or GitHub account requirement to download.
 Metropolix Lab generates pitch, gates, and modulation, not audio by itself. The
 demo's oscillators, envelopes, and VCAs turn its signals into two audible voices.
 The A/B Scope shows a stepped signal from -2 to +2 V and a ramp from 0 to +5 V.
+In the AUX demo, A also feeds X to transpose Track 1, B feeds Y to transpose
+Track 2 downward, and Track 1's gate feeds Z to mask Track 2. Turn X/Y to noon
+or clear Z's assignment to hear the difference. See the
+[AUX guide](https://github.com/spliffrider/metropolix-vcv-plugin/blob/main/docs/AUX-INPUTS.md).
 
 If there is no sound, check AUDIO's device/output selection, RUN, and the Scope.
 Moving Scope traces with silent audio generally point to audio-device or
@@ -59,6 +63,8 @@ downstream patch routing rather than a stopped sequencer.
 - Select MOD, choose a lane, and change a voltage or Step/Ramp setting. Watch
   the Scope and listen for the result.
 - Stop, restart, reset, and try an external clock if you have a familiar patch.
+- Right-click an AUX assignment button to change destination/track. Try
+  positive/negative knob amounts, noon, unplugging, clear assignment, and undo.
 - Save a new patch, close/reopen it, and confirm the programmed settings survive.
   Playback position/random state starts afresh by design.
 
@@ -66,7 +72,7 @@ downstream patch routing rather than a stopped sequencer.
 
 ## Known limitations
 
-**Currently inactive or incomplete:** AUX X/Y/Z sockets and routing, CTRL knob
+**Currently inactive or incomplete:** additional AUX destinations, CTRL knob
 assignments, Loopy, swing, stage pitch/gate-length overrides, most remaining MOD
 destinations, the full scale library/user scales, hardware preset banks/chains,
 track-wide accumulator options, MIDI, MX, and SysEx.

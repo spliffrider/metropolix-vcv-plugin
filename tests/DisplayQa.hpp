@@ -59,6 +59,8 @@ const DisplayCase cases[]={
     {"mod-voltage",Metropolix::STAGE_PAGE,0,0,0,true},
     {"output-a",Metropolix::A_PAGE,0,0,0,false},
     {"output-b",Metropolix::B_PAGE,0,0,0,false},
+    {"aux-cv",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
+    {"aux-gate",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -67,10 +69,17 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+        if(test.page==Metropolix::AUX_PAGE) {
+            m->selectedAux.store(test.field);
+            m->params[Metropolix::auxParam(test.field,Metropolix::AUX_AMOUNT)].setValue(1);
+            m->params[Metropolix::auxParam(test.field,Metropolix::AUX_DESTINATION)].setValue(test.field?metro::ModMute:metro::ModPitchPre);
+            m->params[Metropolix::auxParam(test.field,Metropolix::AUX_ASSIGNMENT)].setValue(test.field?2:0);
+        }
     }
     if((qaFrame-20)%6==3) {
         APP->window->screenshot(dir+"/"+test.name+".png");
         auto* screen=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));
+        if(test.page==Metropolix::AUX_PAGE && !test.field)m->auxVoltage[0].store(2.5f);
         OledCanvas c=screen->render();int lit=0;for(auto& row:c.pixels)for(uint8_t v:row)lit+=v>0;
         check(lit>40 && lit<6000,std::string(test.name)+" renders a populated display");
         // Native pixel map for compact contact sheets / regression inspection.
