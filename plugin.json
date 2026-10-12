@@ -1,7 +1,7 @@
 {
   "slug": "MetropolixLab",
   "name": "Metropolix Lab",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "license": "proprietary",
   "brand": "Local",
   "author": "Local development",
@@ -9,7 +9,7 @@
     {
       "slug": "Metropolix",
       "name": "Metropolix Lab",
-      "description": "Two-track sequencer with 21 play orders, ratchets, accumulators, and a collapsible stage editor.",
+      "description": "Two-track sequencer with eight MOD lanes, assignable CV outputs, ratchets, accumulators, and expanded editors.",
       "tags": [
         "Sequencer",
         "Clock generator",

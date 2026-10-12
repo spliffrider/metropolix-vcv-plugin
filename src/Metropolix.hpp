@@ -3,6 +3,24 @@
 #include "Sequencer.hpp"
 #include <atomic>
 
+struct ModVoltageQuantity : ParamQuantity {
+    int typeParam = -1;
+    int destinationParam = -1;
+    float getMinValue() override {
+        if (module && typeParam >= 0 && destinationParam >= 0) {
+            bool positive = module->params[typeParam].getValue() > .5f;
+            bool gate = metro::modGateDestination(static_cast<metro::ModDestination>(static_cast<int>(module->params[destinationParam].getValue())));
+            if (positive || gate) return 0.f;
+        }
+        return -5.f;
+    }
+    float getValue() override {
+        // Keep numeric editing and drag origins aligned with the effective
+        // voltage when a bipolar lane changes to a positive-only CV type.
+        return metro::clamp(ParamQuantity::getValue(), getMinValue(), 5.f);
+    }
+};
+
 struct Metropolix : Module {
     enum ParamIds {
         TEMPO, RUN, RESET, ROOT, SCALE, RANGE,
@@ -15,13 +33,19 @@ struct Metropolix : Module {
         ACCUM_OPTIONS = EXTRA_TRACK + 2 * EXTRA_STRIDE,
         ACCUM_OPTIONS_STRIDE = 3,
         STAGE_OPTIONS = ACCUM_OPTIONS + 2 * ACCUM_OPTIONS_STRIDE,
-        NUM_PARAMS = STAGE_OPTIONS + 2 * 8 * 2
+        MOD_LANE = STAGE_OPTIONS + 2 * 8 * 2,
+        MOD_STRIDE = 26,
+        OUTPUT_SOURCE_A = MOD_LANE + 8 * MOD_STRIDE,
+        OUTPUT_SOURCE_B,
+        NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV };
     enum ExtraTrackParams { REVERSED, PULSE_DIV, PULSE_LIMIT, GATE_STRETCH, RATCHET_MODE, ACCUM_AUTO_RESET };
     enum AccumOptions { NEGATIVE_LIMIT, BIPOLAR, ACCUM_ORDER };
     enum StageOptions { PROB_TARGET, ACCUM_TRIGGER };
+    enum ModParams { MOD_LENGTH, MOD_OFFSET, MOD_DIVISION, MOD_ORDER, MOD_REVERSED, MOD_PULSE_LIMIT,
+        MOD_TYPE, MOD_DESTINATION, MOD_ASSIGNMENT, MOD_MUTE, MOD_VALUE = 10, MOD_RAMP = 18 };
     enum InputIds { CLOCK_IN, RESET_IN, NUM_INPUTS };
     enum OutputIds { PITCH_1, GATE_1, PITCH_2, GATE_2, CLOCK_OUT, A_OUT, B_OUT, NUM_OUTPUTS };
     enum LightIds { POSITION_1, POSITION_2 = POSITION_1 + 8, NUM_LIGHTS = POSITION_2 + 8 };
@@ -30,6 +54,13 @@ struct Metropolix : Module {
     static int extraParam(int t, int p) { return EXTRA_TRACK + t * EXTRA_STRIDE + p; }
     static int accumParam(int t, int p) { return ACCUM_OPTIONS + t * ACCUM_OPTIONS_STRIDE + p; }
     static int stageOption(int t, int s, int p) { return STAGE_OPTIONS + t * 16 + p * 8 + s; }
+    static int modParam(int lane, int p) { return MOD_LANE + lane * MOD_STRIDE + p; }
+    static std::vector<std::string> modDestinations() {
+        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute"};
+    }
+    static std::vector<std::string> outputSources() {
+        return {"Track 1 CV", "Track 2 CV", "MOD 1", "MOD 2", "MOD 3", "MOD 4", "MOD 5", "MOD 6", "MOD 7", "MOD 8"};
+    }
     static std::vector<std::string> orderLabels() {
         return {"Linear", "Ping Pong", "Pendulum", "Odd / Even", "Jump by 2", "Jump by 3", "Jump by 4", "Jump by 5",
             "Hopscotch", "Arp 3 Shift -1", "Arp 4 Shift -2", "Arp 4 Shift -1", "Converge", "Diverge",
@@ -41,6 +72,10 @@ struct Metropolix : Module {
     int controlCounter = 0;
     std::atomic<int> selectedTrack{0}, selectedStage{0}, selectedRow{0};
     std::atomic<bool> expanded{false}, externalClock{false};
+    std::atomic<bool> modEditor{false};
+    std::atomic<int> selectedLane{0};
+    std::atomic<int> modStage[8];
+    std::atomic<float> modVoltage[8];
     std::atomic<int> playStage[2];
     std::atomic<int> playPulse[2];
     std::atomic<float> playPitch[2];
@@ -95,6 +130,30 @@ struct Metropolix : Module {
                 configSwitch(stageOption(t, s, ACCUM_TRIGGER), 0, 2, 0, prefix + "accumulator trigger", {"Stage", "Pulse", "Ratchet"});
             }
         }
+        for (int lane = 0; lane < 8; ++lane) {
+            modStage[lane].store(-1);
+            modVoltage[lane].store(0.f);
+            std::string name = "MOD " + std::to_string(lane + 1) + " ";
+            configParam(modParam(lane, MOD_LENGTH), 1, 8, 8, name + "length", " stages")->snapEnabled = true;
+            configParam(modParam(lane, MOD_OFFSET), 0, 7, 0, name + "offset", " stages")->snapEnabled = true;
+            configParam(modParam(lane, MOD_DIVISION), 1, 64, 1, name + "clock division")->snapEnabled = true;
+            configSwitch(modParam(lane, MOD_ORDER), 0, 20, 0, name + "play order", orderLabels());
+            configSwitch(modParam(lane, MOD_REVERSED), 0, 1, 0, name + "direction", {"Forward", "Reverse"});
+            configParam(modParam(lane, MOD_PULSE_LIMIT), 0, 64, 0, name + "pulse length (0 = Auto)")->snapEnabled = true;
+            configSwitch(modParam(lane, MOD_TYPE), 0, 2, 0, name + "CV type", {"Bipolar", "Unipolar", "Gate"});
+            configSwitch(modParam(lane, MOD_DESTINATION), 0, metro::ModDestinationCount - 1, 0, name + "internal destination", modDestinations());
+            configSwitch(modParam(lane, MOD_ASSIGNMENT), 0, 2, 0, name + "destination tracks", {"Track 1", "Track 2", "Both tracks"});
+            configSwitch(modParam(lane, MOD_MUTE), 0, 1, 0, name + "mute", {"Off", "On"});
+            for (int stage = 0; stage < 8; ++stage) {
+                std::string prefix = name + "stage " + std::to_string(stage + 1) + " ";
+                auto* voltage = configParam<ModVoltageQuantity>(modParam(lane, MOD_VALUE + stage), -5, 5, 0, prefix + "voltage", " V");
+                voltage->typeParam = modParam(lane, MOD_TYPE);
+                voltage->destinationParam = modParam(lane, MOD_DESTINATION);
+                configSwitch(modParam(lane, MOD_RAMP + stage), 0, 1, 0, prefix + "transition", {"Step", "Ramp"});
+            }
+        }
+        configSwitch(OUTPUT_SOURCE_A, 0, 9, 0, "Output A source", outputSources());
+        configSwitch(OUTPUT_SOURCE_B, 0, 9, 1, "Output B source", outputSources());
         configInput(CLOCK_IN, "Clock (one pulse per sixteenth note)");
         configInput(RESET_IN, "Reset");
         configOutput(PITCH_1, "Track 1 pitch (1 V/oct)");
@@ -102,8 +161,8 @@ struct Metropolix : Module {
         configOutput(PITCH_2, "Track 2 pitch (1 V/oct)");
         configOutput(GATE_2, "Track 2 gate (5 V)");
         configOutput(CLOCK_OUT, "Clock (5 V, 1 ms)");
-        configOutput(A_OUT, "A: track 1 stage CV");
-        configOutput(B_OUT, "B: track 2 stage CV");
+        configOutput(A_OUT, "Assignable A: track CV or MOD lane");
+        configOutput(B_OUT, "Assignable B: track CV or MOD lane");
         sequencer.seed(random::u32());
         readSettings();
     }
@@ -111,6 +170,25 @@ struct Metropolix : Module {
     int integer(int id) { return static_cast<int>(std::round(params[id].getValue())); }
     void readSettings() {
         auto& c = sequencer.settings;
+        c.outputSources[0] = integer(OUTPUT_SOURCE_A);
+        c.outputSources[1] = integer(OUTPUT_SOURCE_B);
+        for (int lane = 0; lane < 8; ++lane) {
+            auto& mod = c.modLanes[lane];
+            mod.length = integer(modParam(lane, MOD_LENGTH));
+            mod.offset = integer(modParam(lane, MOD_OFFSET));
+            mod.division = integer(modParam(lane, MOD_DIVISION));
+            mod.order = static_cast<metro::Order>(integer(modParam(lane, MOD_ORDER)));
+            mod.reversed = integer(modParam(lane, MOD_REVERSED)) != 0;
+            mod.pulseLimit = integer(modParam(lane, MOD_PULSE_LIMIT));
+            mod.type = static_cast<metro::ModType>(integer(modParam(lane, MOD_TYPE)));
+            mod.destination = static_cast<metro::ModDestination>(integer(modParam(lane, MOD_DESTINATION)));
+            mod.assignment = integer(modParam(lane, MOD_ASSIGNMENT));
+            mod.mute = integer(modParam(lane, MOD_MUTE)) != 0;
+            for (int stage = 0; stage < 8; ++stage) {
+                mod.values[stage] = params[modParam(lane, MOD_VALUE + stage)].getValue();
+                mod.ramps[stage] = integer(modParam(lane, MOD_RAMP + stage)) != 0;
+            }
+        }
         c.bpm = params[TEMPO].getValue();
         c.root = integer(ROOT);
         c.scale = integer(SCALE);
@@ -166,7 +244,7 @@ struct Metropolix : Module {
             const auto& state = sequencer.tracks[t];
             outputs[PITCH_1 + 2 * t].setVoltage(state.pitch);
             outputs[GATE_1 + 2 * t].setVoltage(state.gate);
-            outputs[A_OUT + t].setVoltage(state.cv);
+            outputs[A_OUT + t].setVoltage(sequencer.aux[t]);
             if (update) {
                 playStage[t].store(state.stage, std::memory_order_relaxed);
                 playPulse[t].store(state.pulse, std::memory_order_relaxed);
@@ -176,6 +254,10 @@ struct Metropolix : Module {
             }
         }
         outputs[CLOCK_OUT].setVoltage(sequencer.clock);
+        if (update) for (int lane = 0; lane < 8; ++lane) {
+            modStage[lane].store(sequencer.running ? sequencer.modulation.lanes[lane].stage : -1, std::memory_order_relaxed);
+            modVoltage[lane].store(sequencer.modulation.outputs[lane], std::memory_order_relaxed);
+        }
         if (update) externalClock.store(external, std::memory_order_relaxed);
         // Avoid signed counter overflow in patches left running for days.
         controlCounter &= 31;
@@ -188,7 +270,9 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(3));
+        json_object_set_new(root, "schemaVersion", json_integer(4));
+        json_object_set_new(root, "modEditor", json_boolean(modEditor.load()));
+        json_object_set_new(root, "selectedLane", json_integer(selectedLane.load()));
         json_object_set_new(root, "expanded", json_boolean(expanded.load()));
         json_object_set_new(root, "selectedTrack", json_integer(selectedTrack.load()));
         json_object_set_new(root, "selectedStage", json_integer(selectedStage.load()));
@@ -211,6 +295,8 @@ struct Metropolix : Module {
                 params[accumParam(t, NEGATIVE_LIMIT)].setValue(params[trackParam(t, ACCUM_LIMIT)].getValue());
         }
         expanded.store(json_is_true(json_object_get(root, "expanded")));
+        modEditor.store(json_is_true(json_object_get(root, "modEditor")));
+        selectedLane.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedLane"))), 0, 7));
         selectedTrack.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedTrack"))), 0, 1));
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));

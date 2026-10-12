@@ -1,6 +1,7 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+if ($Modulation) { $Audio = $true }
 if (Get-Process Rack -ErrorAction SilentlyContinue) { throw 'Close Rack before the UI test.' }
 $env:CHERE_INVOKING = 'yes'
 $env:MSYSTEM = 'MINGW64'
@@ -9,7 +10,7 @@ try {
     & "$env:LOCALAPPDATA\MetropolixDev\msys64\usr\bin\bash.exe" -lc 'make ui-test-build'
     if ($LASTEXITCODE -ne 0) { throw 'UI test build failed.' }
     $profile = Join-Path $projectRoot 'tmp\rack-qa'
-    $output = Join-Path $projectRoot $(if ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
+    $output = Join-Path $projectRoot $(if ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
     $plugin = Join-Path $profile 'plugins-win-x64\MetropolixLab'
     New-Item -ItemType Directory -Force -Path $plugin, $output | Out-Null
     Copy-Item -LiteralPath 'build\ui-test\plugin.dll', 'plugin.json', 'README.md' -Destination $plugin -Force
@@ -22,10 +23,16 @@ try {
     $patch = Join-Path $projectRoot 'examples\Hybrid-demo.vcv'
     if ($Audio) {
         $env:METROPOLIX_AUDIO_QA = '1'
-        $audioPatch = Get-Content -LiteralPath 'examples\Two-voice-demo.vcv' -Raw | ConvertFrom-Json
+        $audioExample = if ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
+        $audioPatch = Get-Content -LiteralPath $audioExample -Raw | ConvertFrom-Json
         $audioPatch.modules += @{id=100; plugin='MetropolixLab'; model='AudioQA'; pos=@(100,1)}
         $audioPatch.cables += @{id=100; outputModuleId=5; outputId=0; inputModuleId=100; inputId=0; color='#777777'}
         $audioPatch.cables += @{id=101; outputModuleId=8; outputId=0; inputModuleId=100; inputId=1; color='#777777'}
+        if ($Modulation) {
+            $env:METROPOLIX_MOD_QA = '1'
+            $audioPatch.cables += @{id=102; outputModuleId=1; outputId=5; inputModuleId=100; inputId=2; color='#d76737'}
+            $audioPatch.cables += @{id=103; outputModuleId=1; outputId=6; inputModuleId=100; inputId=3; color='#2d8c89'}
+        }
         $patch = Join-Path $output 'audio-test.vcv'
         $audioPatch | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $patch -Encoding utf8NoBOM
     }
@@ -45,5 +52,6 @@ try {
 } finally {
     Remove-Item Env:METROPOLIX_QA_DIR -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_AUDIO_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_MOD_QA -ErrorAction SilentlyContinue
     Pop-Location
 }

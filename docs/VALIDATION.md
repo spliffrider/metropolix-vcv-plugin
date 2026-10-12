@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.0.1
+# Validation and fidelity status — 2.1.0
 
 Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metropolix manual 1.6 (2025-09-24)](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf). Page numbers below are the printed page numbers; the PDF cover adds one to the file page index.
 
@@ -14,11 +14,14 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Accumulator triggers, p.102 | All twelve combinations of four gate types and Stage/Pulse/Ratchet trigger, through the complete sequencer at 48 kHz |
 | Probability, pp.98, 102 | Stage decisions remain consistent across a stage; Pulse decisions produce partially played stages; rejected pulses do not accumulate |
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
-| Rack host | All 194 parameters round-trip through Rack serialization; UI state restores; legacy order/limit migration; internal/external transport, Schmitt edges, and reset priority |
-| Rack UI | Shared parameter bindings, independent tracks, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, and patch restoration |
+| MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
+| MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
+| Rack host | All 404 parameters round-trip through Rack serialization; note/MOD UI state restores; legacy order/limit migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, and actual assignable A/B voltages |
+| Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
+| MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
 
-The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, and 73,157 accumulator/probability assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
+The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 73,157 accumulator/probability assertions, and 119 MOD assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
 
 Actual Rack renderer images of both views were inspected. Windows Computer Use capture repeatedly failed with `window capture timed out: timed out waiting on channel`; native capture attempts were stopped. Editor tests dispatch Rack widget events from a dedicated test build, and image capture uses Rack's own renderer. Physical mouse/drag behavior and operating-system focus handling remain unverified in that session.
 
@@ -34,12 +37,16 @@ Actual Rack renderer images of both views were inspected. Windows Computer Use c
 - **Gate duration.** Gate tests reproduce the printed 50% ratchet examples and 75% stretch examples. Gated-ratchet behavior at other gate lengths is inferred. The nominal minimum high duration is 333 microseconds, capped below the ratchet interval to preserve edges at unusually fast external clocks.
 - **Clock input.** One edge is a sixteenth note. Hardware input-mode/PPQN options and swing are absent. The first external period is estimated from internal tempo until two edges arrive.
 - **Pitch on rests.** Rest/rejected stages hold pitch. CV lanes still follow the selected stage unless muted/stopped. Hardware configuration alternatives are not implemented.
+- **MOD timing.** Each lane advances one stage per divided base-clock pulse, independently of note-stage pulse counts. Ramps interpolate from the previous voltage to the new stage's target over that whole stage; the initial voltage after reset is zero. A ramp uses the most recently estimated clock period and holds its target if the clock stalls. Exact first-ramp and abrupt external-tempo-change behavior has not been compared with hardware.
+- **MOD pitch scaling.** Octave uses whole-volt thresholds at 1 V/oct, truncating toward zero. Pitch Pre adds 1 V/oct before scale quantization; Pitch Post rounds to chromatic semitones at 1 V/oct; Pitch Offset adds continuous voltage after quantization. Mute toggles the programmed mute while its route is at least 1.5 V. Gate-type lanes use 0/5 V and ignore ramps.
+- **Inferred MOD gains.** Gate Length and Probability add 20 percentage points per volt; Ratchets adds a rounded 1.4 counts per volt. Thus ±5 V spans ±100 percentage points or ±7 ratchets before the destination's final range limit. The manual describes the direction and parameter bounds but does not provide these exact numeric gains. These mappings are implementation choices pending better reference evidence.
+- **Combining MOD lanes.** Voltages from lanes targeting the same track and destination are summed, then clamped to ±5 V before mapping to the parameter. Gate/mute routes use the resulting threshold. This combination rule is inferred; the manual does not specify it in sufficient detail. Muting a lane removes its contribution without changing saved base settings or stopping that lane's position.
 - **Persistence.** Rack saves configuration, not a running transport snapshot or the random generator state. Loading starts a fresh traversal and accumulator state.
 
 ## Next feature work
 
-MOD lanes and routing; AUX/CTRL assignment; stage pitch and gate-length overrides; Loopy; swing; full scale selection; track-wide accumulation; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD destinations; AUX/CTRL assignment; stage pitch and gate-length overrides; Loopy; swing; full scale selection; track-wide accumulation; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 
-Run the commands in README. Test reports and renderer images are written to `tmp/qa`; the audio report and recording go to `tmp/audio-qa`. Rack logs are in `tmp/rack-qa/log.txt`. The release package contains no QA module, environment-variable test entry point, or test recorder.
+Run the commands in README. Test reports and renderer images are written to `tmp/qa`; the earlier audio report and recording go to `tmp/audio-qa`. The MOD audio report, recording, 100 Hz CV trace (`mod-cv.csv`), and rendered patch image go to `tmp/mod-qa`. Rack logs are in `tmp/rack-qa/log.txt`. The release package contains no QA module, environment-variable test entry point, or test recorder.

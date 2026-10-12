@@ -9,6 +9,7 @@
 #include "PlayOrder.hpp"
 #include "GateTiming.hpp"
 #include "Accumulator.hpp"
+#include "Modulation.hpp"
 
 namespace metro {
 
@@ -58,6 +59,8 @@ struct Settings {
     int octaves = 3;
     std::array<Stage, 8> stages;
     std::array<Track, 2> tracks;
+    std::array<ModLane, 8> modLanes;
+    std::array<int, 2> outputSources{{0,1}}; // 0/1 = track CV, 2..9 = MOD 1..8
 };
 
 struct Scale {
@@ -123,6 +126,8 @@ class Sequencer {
 public:
     Settings settings;
     std::array<TrackState, 2> tracks;
+    Modulation modulation;
+    std::array<float, 2> aux{};
     bool running = false;
     float clock = 0.f;
 
@@ -130,6 +135,7 @@ public:
         random[0].state = value ? value : 1;
         random[1].state = value ^ 0x9e3779b9u;
         if (!random[1].state) random[1].state = 1;
+        modulation.seed(value);
     }
 
     void reset() {
@@ -144,6 +150,8 @@ public:
         firstTick = true;
         clockRemaining = 0.0;
         clock = 0.f;
+        modulation.reset();
+        aux.fill(0.f);
     }
 
     // One external edge is one sixteenth-note pulse in this first version.
@@ -182,6 +190,8 @@ public:
                 tick = true;
                 phase = firstTick ? 0.0 : std::fmod(phase, period);
             }
+            if (tick) modulation.tick(settings.modLanes, period);
+            modulation.render(settings.modLanes, dt);
             if (tick) {
                 firstTick = false;
                 clockRemaining = 0.001;
@@ -198,11 +208,16 @@ public:
             phase += dt;
         } else {
             for (auto& state : tracks) { state.gate = 0.f; state.cv = 0.f; }
+            modulation.silence();
             clockRemaining = 0.0;
         }
         clock = running && clockRemaining > 0.0 ? 5.f : 0.f;
         clockRemaining -= dt;
         resetIgnore = std::max(0.0, resetIgnore - dt);
+        for (int output = 0; output < 2; ++output) {
+            int source = clamp(settings.outputSources[output], 0, 9);
+            aux[output] = !running ? 0.f : source < 2 ? tracks[source].cv : modulation.outputs[source - 2];
+        }
     }
 
 private:
@@ -215,6 +230,10 @@ private:
     double clockRemaining = 0.0;
     double resetIgnore = 0.0;
     RandomSource random[2];
+
+    bool muted(int t) const {
+        return settings.tracks[t].mute != (modulation.routes[t][ModMute] >= 1.5f);
+    }
 
     bool nextStage(int t) {
         auto& state = tracks[t];
@@ -234,9 +253,11 @@ private:
     float stagePitch(int t) const {
         const auto& state = tracks[t];
         int base = nearestDegree(clamp(settings.stages[state.stage].pitch, 0.f, 1.f)
-            * 12.f * clamp(settings.octaves, 1, 4), settings.scale);
+            * 12.f * clamp(settings.octaves, 1, 4) + modulation.routes[t][ModPitchPre] * 12.f, settings.scale);
         int note = degreeToSemitone(base + state.activeAccumulation, settings.scale);
-        return (note + settings.root + settings.tracks[t].transpose) / 12.f;
+        const auto& route = modulation.routes[t];
+        return (note + settings.root + settings.tracks[t].transpose + std::round(route[ModPitchPost] * 12.f)) / 12.f
+            + std::trunc(route[ModOctave]) + route[ModPitchOffset];
     }
 
     void accumulate(int t) {
@@ -297,15 +318,15 @@ private:
         }
         const auto& edit = config.stages[state.stage];
         if (newStage || edit.probabilityPerPulse) {
-            float probability = clamp(edit.probability, 0.f, 100.f);
+            float probability = clamp(edit.probability + modulation.routes[t][ModProbability] * 20.f, 0.f, 100.f);
             state.allowed = probability >= 100.f || (probability > 0.f && random[t].percent() < probability);
         }
         const Gate gate = settings.stages[state.stage].gate;
-        if (state.allowed && gate != Rest && !config.mute) {
+        if (state.allowed && gate != Rest && !muted(t)) {
             if ((edit.accumTrigger == AccumStage && newStage)
                 || (edit.accumTrigger == AccumPulse && (newStage || gate == Multi))) accumulate(t);
         }
-        if (state.allowed && settings.stages[state.stage].gate != Rest && !config.mute) {
+        if (state.allowed && settings.stages[state.stage].gate != Rest && !muted(t)) {
             state.targetPitch = stagePitch(t);
             state.hasPitch = true;
         }
@@ -318,20 +339,22 @@ private:
         const auto& panel = settings.stages[state.stage];
         const auto& edit = config.stages[state.stage];
         int eventId = -1;
-        bool gate = !config.mute && state.allowed && gateHigh(panel.gate, state.pulse,
+        float gateLength = clamp(config.gateLength + modulation.routes[t][ModGateLength] * .2f, 0.f, .99f);
+        int ratchets = clamp(edit.ratchets + static_cast<int>(std::round(modulation.routes[t][ModRatchet] * 1.4f)), 1, 8);
+        bool gate = !muted(t) && gateLength > 0.f && state.allowed && gateHigh(panel.gate, state.pulse,
             state.age / state.duration, clamp(panel.pulses, 1, 8), clamp(config.pulseDivision, 1, 8),
-            config.gateStretch, config.ratchetMode, clamp(edit.ratchets, 1, 8),
-            clamp(config.gateLength, 0.01f, 0.99f), state.duration, &eventId);
+            config.gateStretch, config.ratchetMode, ratchets,
+            std::max(gateLength, .01f), state.duration, &eventId);
         if (gate && edit.accumTrigger == AccumRatchet && eventId != state.lastRatchetEvent) {
             accumulate(t);
             state.lastRatchetEvent = eventId;
         }
-        if (state.allowed && panel.gate != Rest && !config.mute)
+        if (state.allowed && panel.gate != Rest && !muted(t))
             state.targetPitch = stagePitch(t);
         double mix = state.slideDuration > 0.0 ? std::min(1.0, state.slideAge / state.slideDuration) : 1.0;
         state.pitch = static_cast<float>(state.startPitch + (state.targetPitch - state.startPitch) * mix);
         state.slideAge += dt;
-        state.cv = config.mute ? 0.f : clamp(edit.cv, -5.f, 5.f);
+        state.cv = muted(t) ? 0.f : clamp(edit.cv, -5.f, 5.f);
         state.gate = gate ? 5.f : 0.f;
         state.age += dt;
     }

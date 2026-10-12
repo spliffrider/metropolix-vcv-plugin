@@ -123,7 +123,58 @@ void MetropolixWidget::qaStep() {
         check(m->expanded.load() && m->selectedTrack.load() == 0, "host roundtrip restores interface state");
         check(m->params[Metropolix::stageParam(0, 4, Metropolix::RATCHETS)].getValue() == 4.f, "host roundtrip retains stage values");
     }
-    if (qaFrame == 70) {
+    if (qaFrame == 70) click(findButton("MOD LANES"));
+    if (qaFrame == 75) {
+        check(modPanel->visible && !editor->visible && box.size.x == 1080, "MOD editor replaces stage editor at the same width");
+        m->selectedLane.store(3);
+    }
+    if (qaFrame == 80) {
+        for (auto* child : modPanel->children) {
+            auto* c = dynamic_cast<ValueCell*>(child);
+            if (!c) continue;
+            if (c->modProperty == Metropolix::MOD_VALUE + 2) {
+                check(c->paramId == Metropolix::modParam(3, Metropolix::MOD_VALUE + 2), "MOD value rebinds to selected lane");
+                setWithHistory(c->getParamQuantity(), -2.5f);
+                check(c->getParamQuantity()->getValue() == -2.5f, "MOD value edit applies");
+                APP->history->undo();
+                check(c->getParamQuantity()->getValue() == 0.f, "MOD value supports undo");
+                APP->history->redo();
+            }
+            if (c->modProperty == Metropolix::MOD_RAMP + 2) {
+                click(c);
+                check(c->getParamQuantity()->getValue() == 1.f, "MOD transition toggles to ramp");
+            }
+        }
+        check(m->params[Metropolix::modParam(0, Metropolix::MOD_VALUE + 2)].getValue() == 0.f, "editing MOD 4 leaves MOD 1 unchanged");
+        setWithHistory(m->getParamQuantity(Metropolix::OUTPUT_SOURCE_A), 5.f);
+        json_t* data = APP->engine->moduleToJson(m);
+        m->modEditor.store(false); m->selectedLane.store(0);
+        APP->engine->moduleFromJson(m, data);
+        json_decref(data);
+        check(m->modEditor.load() && m->selectedLane.load() == 3, "MOD selection and view survive host save/load");
+        check(m->params[Metropolix::OUTPUT_SOURCE_A].getValue() == 5.f, "A output assignment survives host save/load");
+    }
+    if (qaFrame == 85) {
+        APP->window->screenshot(dir + "/mod-editor.png");
+        setWithHistory(m->getParamQuantity(Metropolix::modParam(3, Metropolix::MOD_TYPE)), metro::ModGate);
+    }
+    if (qaFrame == 90) {
+        for (auto* child : modPanel->children) {
+            auto* c = dynamic_cast<ValueCell*>(child);
+            if (c && c->modProperty == Metropolix::MOD_VALUE + 2) {
+                check(c->modGateCell(), "gate-type MOD values become toggles");
+                click(c);
+                check(c->getParamQuantity()->getValue() == 5.f, "gate toggle emits a 5 V value");
+            }
+        }
+        click(findButton("MOD LANES"));
+    }
+    if (qaFrame == 95) {
+        check(box.size.x == 600 && !modPanel->visible && !editor->visible, "MOD editor can close to compact width");
+        click(findButton("OPEN STAGE EDITOR"));
+    }
+    if (qaFrame == 100) {
+        check(editor->visible && !modPanel->visible, "stage editor can reopen after MOD editor");
         check(!qaFailed, "UI QA COMPLETE");
         APP->window->close();
     }

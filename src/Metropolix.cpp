@@ -104,6 +104,23 @@ void stageSettingsMenu(Metropolix* m, int stage) {
         [accum](size_t value) { setWithHistory(accum, static_cast<float>(value)); }));
 }
 
+void modSettingsMenu(Metropolix* m, int lane) {
+    if (!m) return;
+    auto* menu = createMenu();
+    menu->addChild(createMenuLabel(string::f("MOD lane %d", lane + 1)));
+    auto* direction = m->getParamQuantity(Metropolix::modParam(lane, Metropolix::MOD_REVERSED));
+    menu->addChild(createIndexSubmenuItem("Direction", {"Forward", "Reverse"},
+        [direction] { return static_cast<size_t>(direction->getValue()); },
+        [direction](size_t value) { setWithHistory(direction, static_cast<float>(value)); }));
+    std::vector<std::string> values = {"Auto"};
+    for (int i = 1; i <= 64; ++i) values.push_back(std::to_string(i) + " pulses");
+    auto* pulses = m->getParamQuantity(Metropolix::modParam(lane, Metropolix::MOD_PULSE_LIMIT));
+    menu->addChild(createIndexSubmenuItem("Sequence length in pulses", values,
+        [pulses] { return static_cast<size_t>(pulses->getValue()); },
+        [pulses](size_t value) { setWithHistory(pulses, static_cast<float>(value)); }));
+    menu->addChild(createMenuLabel("Each MOD stage lasts one divided clock pulse."));
+}
+
 // All views bind to the same ParamQuantity, preserving Rack automation, reset,
 // numeric entry, patch serialization, and undo in both compact and open views.
 struct ValueCell : app::Knob {
@@ -111,6 +128,7 @@ struct ValueCell : app::Knob {
     int trackProperty = -1;
     int stageColumn = -1;
     int stageRow = -1;
+    int modProperty = -1;
     bool compact = false;
     bool dark = false;
     int decimals = 0;
@@ -130,12 +148,15 @@ struct ValueCell : app::Knob {
             if (stageRow >= 0) paramId = Metropolix::stageParam(t, stageColumn, stageRow);
             if (compact) paramId = Metropolix::stageParam(t,
                 metroModule->selectedStage.load(), metroModule->selectedRow.load());
+            if (modProperty >= 0) paramId = Metropolix::modParam(metroModule->selectedLane.load(), modProperty);
         }
         app::Knob::step();
     }
     std::string valueText() {
         auto* q = getParamQuantity();
         if (!q) return "--";
+        if (modProperty >= Metropolix::MOD_RAMP) return q->getValue() > .5f ? "RAMP" : "STEP";
+        if (modGateCell()) return q->getValue() >= 1.5f ? "ON" : "OFF";
         int row = compact && metroModule ? metroModule->selectedRow.load() : stageRow;
         if (row == Metropolix::SLIDE || row == Metropolix::SKIP) return q->getValue() > 0.5f ? "ON" : "OFF";
         const auto& labels = shortChoices.empty() ? choices : shortChoices;
@@ -152,7 +173,13 @@ struct ValueCell : app::Knob {
     }
     bool toggleCell() const {
         int row = compact && metroModule ? metroModule->selectedRow.load() : stageRow;
-        return row == Metropolix::SLIDE || row == Metropolix::SKIP;
+        return row == Metropolix::SLIDE || row == Metropolix::SKIP || modProperty >= Metropolix::MOD_RAMP || modGateCell();
+    }
+    bool modGateCell() const {
+        if (!metroModule || modProperty < Metropolix::MOD_VALUE || modProperty >= Metropolix::MOD_RAMP) return false;
+        int lane = metroModule->selectedLane.load();
+        return metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE)) == metro::ModGate
+            || metro::modGateDestination(static_cast<metro::ModDestination>(metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
     }
     void onDragStart(const event::DragStart& e) override { if (!toggleCell() && choices.empty()) app::Knob::onDragStart(e); }
     void onDragMove(const event::DragMove& e) override { if (!toggleCell() && choices.empty()) app::Knob::onDragMove(e); }
@@ -160,7 +187,10 @@ struct ValueCell : app::Knob {
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onButton(const event::Button& e) override {
         if (e.button == GLFW_MOUSE_BUTTON_LEFT && e.action == GLFW_PRESS && toggleCell()) {
-            if (auto* q = getParamQuantity()) setWithHistory(q, q->getValue() > 0.5f ? 0.f : 1.f);
+            if (auto* q = getParamQuantity()) {
+                bool gate = modGateCell();
+                setWithHistory(q, q->getValue() >= (gate ? 1.5f : .5f) ? 0.f : gate ? 5.f : 1.f);
+            }
             e.consume(this);
             return;
         }
@@ -256,12 +286,13 @@ struct MainDisplay : widget::Widget {
 };
 
 struct Panel : widget::Widget {
+    Metropolix* module = nullptr;
     void draw(const DrawArgs& args) override {
         font(args.vg);
         rect(args.vg, 0, 0, box.size.x, box.size.y, paper(), 0);
         rect(args.vg, 0, 0, 600, 34, ink(), 0);
         text(args.vg, 18, 18, "METROPOLIX", 18, paper());
-        text(args.vg, 584, 18, "LAB  /  02", 10, nvgRGB(220, 167, 100), NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+        text(args.vg, 584, 18, "LAB  /  03", 10, nvgRGB(220, 167, 100), NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
         line(args.vg, 385, 44, 385, 306, nvgRGB(176, 180, 173));
         text(args.vg, 18, 44, "SHARED STAGES", 8, muted());
         text(args.vg, 18, 202, "PULSE COUNT", 8, muted());
@@ -275,13 +306,33 @@ struct Panel : widget::Widget {
         text(args.vg, 519, 251, "ORDER", 8, muted());
         line(args.vg, 18, 317, 582, 317, nvgRGB(176, 180, 173));
         const float xs[] = {31, 84, 182, 229, 291, 338, 413, 488, 550};
-        const char* labels[] = {"CLK IN", "RESET", "PITCH 1", "GATE 1", "PITCH 2", "GATE 2", "CLK OUT", "A / CV 1", "B / CV 2"};
+        const char* labels[] = {"CLK IN", "RESET", "PITCH 1", "GATE 1", "PITCH 2", "GATE 2", "CLK OUT", "OUT A", "OUT B"};
         for (int i = 0; i < 9; ++i)
             text(args.vg, xs[i], 357, labels[i], 8, i >= 2 && i < 4 ? orange() : i >= 4 && i < 6 ? teal() : ink(), NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         text(args.vg, 300, 373, "TWO TRACKS  /  ONE SET OF EIGHT STAGES", 7.5f, muted(), NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         if (box.size.x > 600) {
             rect(args.vg, 600, 0, 480, 380, nvgRGB(215, 218, 208), 0);
             rect(args.vg, 600, 0, 480, 34, nvgRGB(50, 62, 61), 0);
+            if (module && module->modEditor.load()) {
+                int lane = module->selectedLane.load();
+                text(args.vg, 620, 18, "MOD LANES", 14, paper());
+                text(args.vg, 1060, 18, string::f("MOD %d  /  %+.2f V", lane + 1, module->modVoltage[lane].load()), 10, paper(), NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+                const float xs[] = {620,680,740,800,934,994};
+                const char* labels[] = {"LENGTH","OFFSET","DIVIDE","PLAY ORDER","MUTE","CV TYPE"};
+                for (int i = 0; i < 6; ++i) text(args.vg, xs[i], 81, labels[i], 8, muted());
+                for (int s = 0; s < 8; ++s) {
+                    bool playing = module->modStage[lane].load() == s;
+                    text(args.vg, 644 + 55 * s, 137, std::to_string(s + 1), 10, playing ? orange() : muted(), NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+                }
+                text(args.vg, 620, 122, "STAGE VOLTAGES / GATES", 8, muted());
+                text(args.vg, 620, 177, "TRANSITION INTO EACH STAGE", 8, muted());
+                text(args.vg, 620, 279, "INTERNAL DESTINATION", 8, muted());
+                text(args.vg, 854, 279, "APPLY TO", 8, muted());
+                text(args.vg, 620, 326, "OUTPUT A SOURCE", 8, muted());
+                text(args.vg, 848, 326, "OUTPUT B SOURCE", 8, muted());
+                text(args.vg, 620, 370, "Right-click a lane number for direction and pulse length.", 8.5f, muted());
+                return;
+            }
             text(args.vg, 620, 18, "STAGE EDITOR", 14, paper());
             text(args.vg, 1060, 18, "SELECTED TRACK", 9, nvgRGB(177, 202, 190), NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
             const float positions[] = {620, 680, 740, 800, 934};
@@ -298,11 +349,41 @@ struct Panel : widget::Widget {
         }
     }
 };
+
+struct ModGraph : widget::Widget {
+    Metropolix* module = nullptr;
+    void draw(const DrawArgs& args) override {
+        rect(args.vg, 0, 0, box.size.x, box.size.y, ink());
+        line(args.vg, 0, 25, box.size.x, 25, nvgRGB(92, 102, 99));
+        if (!module) return;
+        int lane = module->selectedLane.load();
+        int stage = module->modStage[lane].load();
+        int type = module->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE));
+        bool gated = type == metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(module->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
+        float lastY = 25;
+        for (int s = 0; s < 8; ++s) {
+            float value = module->params[Metropolix::modParam(lane, Metropolix::MOD_VALUE + s)].getValue();
+            if (type == metro::ModUnipolar) value = std::max(0.f, value);
+            if (gated) value = value >= 1.5f ? 5.f : 0.f;
+            float y = 25 - value * 4;
+            float x = s * 55;
+            bool ramp = !gated && module->integer(Metropolix::modParam(lane, Metropolix::MOD_RAMP + s));
+            if (stage == s) rect(args.vg, x, 1, 54, 48, nvgRGBA(215, 103, 55, 35), 0);
+            if (ramp) line(args.vg, x, lastY, x + 54, y, paper());
+            else {
+                line(args.vg, x, lastY, x, y, teal());
+                line(args.vg, x, y, x + 54, y, teal());
+            }
+            lastY = y;
+        }
+    }
+};
 } // namespace
 
 struct MetropolixWidget : ModuleWidget {
     Panel* panel;
     widget::Widget* editor;
+    widget::Widget* modPanel;
     bool isExpanded = false;
 #ifdef METROPOLIX_QA
     int qaFrame = 0;
@@ -330,6 +411,7 @@ struct MetropolixWidget : ModuleWidget {
     explicit MetropolixWidget(Metropolix* module) {
         setModule(module);
         panel = new Panel;
+        panel->module = module;
         panel->box.size = Vec(600, RACK_GRID_HEIGHT);
         setPanel(panel);
         for (int s = 0; s < 8; ++s) {
@@ -388,9 +470,20 @@ struct MetropolixWidget : ModuleWidget {
         }
         cell(this, module, Metropolix::ROOT, 18, 294, 55)->choices = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
         cell(this, module, Metropolix::SCALE, 82, 294, 113)->choices = {"Chromatic", "Major", "Minor", "Dorian", "Mixolydian", "Major pent.", "Minor pent."};
-        button(this, 215, 294, 158, [module] { return module && module->expanded.load() ? "CLOSE STAGE EDITOR" : "OPEN STAGE EDITOR"; },
-            [module] { if (module) module->expanded.store(!module->expanded.load()); });
-        button(this, 399, 294, 184, [] { return "TRACK SETTINGS"; }, [module] { trackSettingsMenu(module); });
+        button(this, 215, 294, 158, [module] { return module && module->expanded.load() && !module->modEditor.load() ? "CLOSE STAGE EDITOR" : "OPEN STAGE EDITOR"; },
+            [module] { if (module) {
+                bool open = !module->expanded.load() || module->modEditor.load();
+                module->modEditor.store(false);
+                module->expanded.store(open);
+            } });
+        auto* modButton = button(this, 399, 294, 76, [] { return "MOD LANES"; }, [module] {
+            if (!module) return;
+            bool open = !module->expanded.load() || !module->modEditor.load();
+            module->modEditor.store(true);
+            module->expanded.store(open);
+        });
+        modButton->active = [module] { return module && module->expanded.load() && module->modEditor.load(); };
+        button(this, 483, 294, 100, [] { return "TRACK SETUP"; }, [module] { trackSettingsMenu(module); });
         addInput(createInputCentered<PJ301MPort>(Vec(31, 336), module, Metropolix::CLOCK_IN));
         addInput(createInputCentered<PJ301MPort>(Vec(84, 336), module, Metropolix::RESET_IN));
         const float positions[] = {182, 229, 291, 338, 413, 488, 550};
@@ -421,6 +514,39 @@ struct MetropolixWidget : ModuleWidget {
             }
         }
         editor->visible = false;
+        modPanel = new widget::Widget;
+        modPanel->box = Rect(Vec(600, 0), Vec(480, 380));
+        addChild(modPanel);
+        for (int lane = 0; lane < 8; ++lane) {
+            auto* b = button(modPanel, 20 + lane * 55, 46, 48, [lane] { return "MOD " + std::to_string(lane + 1); },
+                [module, lane] { if (module) module->selectedLane.store(lane); });
+            b->active = [module, lane] { return module && module->selectedLane.load() == lane; };
+            b->rightAction = [module, lane] { if (module) { module->selectedLane.store(lane); modSettingsMenu(module, lane); } };
+        }
+        auto modCell = [&](int property, float x, float y, float width) {
+            auto* c = cell(modPanel, module, Metropolix::modParam(0, property), x, y, width);
+            c->modProperty = property;
+            return c;
+        };
+        modCell(Metropolix::MOD_LENGTH, 20, 90, 49);
+        modCell(Metropolix::MOD_OFFSET, 80, 90, 49);
+        modCell(Metropolix::MOD_DIVISION, 140, 90, 49);
+        modCell(Metropolix::MOD_ORDER, 200, 90, 120)->choices = Metropolix::orderLabels();
+        modCell(Metropolix::MOD_MUTE, 334, 90, 49)->choices = {"OFF", "ON"};
+        modCell(Metropolix::MOD_TYPE, 394, 90, 66)->choices = {"Bipolar", "Unipolar", "Gate"};
+        for (int stage = 0; stage < 8; ++stage) {
+            modCell(Metropolix::MOD_VALUE + stage, 20 + stage * 55, 147, 48)->decimals = 2;
+            modCell(Metropolix::MOD_RAMP + stage, 20 + stage * 55, 185, 48);
+        }
+        auto* graph = new ModGraph;
+        graph->module = module;
+        graph->box = Rect(Vec(20,217), Vec(440,50));
+        modPanel->addChild(graph);
+        modCell(Metropolix::MOD_DESTINATION, 20, 289, 220)->choices = Metropolix::modDestinations();
+        modCell(Metropolix::MOD_ASSIGNMENT, 254, 289, 206)->choices = {"Track 1", "Track 2", "Both tracks"};
+        cell(modPanel, module, Metropolix::OUTPUT_SOURCE_A, 20, 336, 212)->choices = Metropolix::outputSources();
+        cell(modPanel, module, Metropolix::OUTPUT_SOURCE_B, 248, 336, 212)->choices = Metropolix::outputSources();
+        modPanel->visible = false;
     }
 
     void step() override {
@@ -430,10 +556,11 @@ struct MetropolixWidget : ModuleWidget {
             isExpanded = expanded;
             box.size.x = expanded ? 1080 : 600;
             panel->box.size.x = box.size.x;
-            editor->visible = expanded;
             if (parent && APP->scene && APP->scene->rack)
                 APP->scene->rack->setModulePosNearest(this, box.pos);
         }
+        editor->visible = expanded && m && !m->modEditor.load();
+        modPanel->visible = expanded && m && m->modEditor.load();
         ModuleWidget::step();
 #ifdef METROPOLIX_QA
         qaStep();
@@ -447,7 +574,9 @@ struct MetropolixWidget : ModuleWidget {
             [m] { return m->expanded.load(); }, [m] { m->expanded.store(!m->expanded.load()); }));
         menu->addChild(createMenuItem("Selected track settings", "", [m] { trackSettingsMenu(m); }));
         menu->addChild(createMenuItem("Selected stage settings", "", [m] { stageSettingsMenu(m, m->selectedStage.load()); }));
-        menu->addChild(createMenuLabel("A = track 1 CV, B = track 2 CV. External clock = 1 pulse / 16th."));
+        menu->addChild(createMenuItem("Open MOD lanes", "", [m] { m->expanded.store(true); m->modEditor.store(true); }));
+        menu->addChild(createMenuItem("Selected MOD lane settings", "", [m] { modSettingsMenu(m, m->selectedLane.load()); }));
+        menu->addChild(createMenuLabel("Assign A/B sources in MOD lanes. External clock = 1 pulse / 16th."));
     }
 };
 

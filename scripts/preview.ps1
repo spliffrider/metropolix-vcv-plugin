@@ -1,5 +1,5 @@
 param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe',
-      [ValidateSet('Hybrid-demo', 'Two-voice-demo')][string]$Example = 'Two-voice-demo')
+      [ValidateSet('Hybrid-demo', 'Two-voice-demo', 'Modulation-demo')][string]$Example = 'Modulation-demo')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $profile = Join-Path $projectRoot 'tmp\rack-user'

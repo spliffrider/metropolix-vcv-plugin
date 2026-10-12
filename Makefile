@@ -13,6 +13,8 @@ test:
 	./build/tests/manual-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/AccumulatorTests.cpp -o build/tests/accumulator-tests.exe
 	./build/tests/accumulator-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/ModulationTests.cpp -o build/tests/modulation-tests.exe
+	./build/tests/modulation-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:
