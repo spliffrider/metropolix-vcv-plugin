@@ -19,6 +19,14 @@ Version 2.3.0 refines the supplied hardware panel's lettering, components, marki
 
 ## Start here
 
+**[Watch Patches in Motion (72 seconds, 1080p)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Patches-in-Motion.mp4)**
+shows Metropolix driving complete synth and drum patches. Live pitch traces,
+gate indicators, scopes, and close-ups follow the recorded signals. Two
+contrasting performances use **Audible Instruments**, **Befaco**, and **VCV Free**:
+[Neon Transit](examples/Neon-Transit.vcv) (124 BPM) and
+[Broken Orbit](examples/Broken-Orbit.vcv) (100 BPM).
+See [patch routing and requirements](docs/PERFORMANCE-PATCHES.md).
+
 **[Watch the 80-second demonstration (1080p MP4)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Demo-1080p.mp4)**
 — actual Rack playback, with captions, display close-ups, and the MOD editor.
 The soundtrack uses the evolving performance below. [Capture and editing workflow](docs/DEMO-VIDEO.md).

@@ -19,6 +19,24 @@ void MetropolixWidget::videoStep() {
         timeline.flush();
         lastCaptured = previousSample;
     }
+    if (std::getenv("METROPOLIX_PERFORMANCE_VIDEO")) {
+        if (qaFrame == 30) {
+            for (auto* cw : APP->scene->rack->getCompleteCables())
+                if (cw->getCable()->inputModule->id == 100) cw->hide();
+        }
+        m->uiPage.store(Metropolix::HOME);
+        m->uiHome.store(1);
+        m->uiMod.store(false);
+        m->expanded.store(false);
+        if (qaFrame == 30) APP->scene->rackScroll->setZoom(1.f);
+        APP->scene->rackScroll->setGridOffset(Vec(-1.f, -.05f));
+        previousSample = sample;
+        if (!metrovideo::armed.load(std::memory_order_relaxed)) {
+            m->params[Metropolix::RUN].setValue(1.f);
+            metrovideo::armed.store(true, std::memory_order_release);
+        }
+        return;
+    }
     bool wide = seconds >= 17.777778 && seconds < 44.444444;
     m->expanded.store(wide);
     m->modEditor.store(wide);
