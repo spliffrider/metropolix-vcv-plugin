@@ -1,10 +1,10 @@
 {
   "slug": "MetropolixLab",
   "name": "Metropolix Lab",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "license": "proprietary",
-  "brand": "Local",
-  "author": "Local development",
+  "brand": "sensiburner",
+  "author": "sensiburner",
   "modules": [
     {
       "slug": "Metropolix",

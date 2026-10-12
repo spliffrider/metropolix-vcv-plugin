@@ -1,8 +1,11 @@
-# Feature status — 2.4.0 public alpha
+# Feature status — 2.4.1 public alpha
 
 Assessment date: 2026-10-12. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
+
+2.4.1 changes the creator wordmark and Rack brand/author metadata only. Its
+functionality and completeness estimates remain those of 2.4.0.
 
 Our engineering estimate is **75–85% of the core sequencing functions** and
 **45–55% of the full hardware feature set**. These are broad judgment ranges,
