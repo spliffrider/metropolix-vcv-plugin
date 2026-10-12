@@ -6,6 +6,7 @@
 namespace metro {
 enum AccumOrder { AccumWrap, AccumPendulum, AccumRandom, AccumHold };
 enum AccumTrigger { AccumStage, AccumPulse, AccumRatchet };
+enum AccumMode { StageAccumulation, TrackAccumulation };
 
 // The caller plays the current value before advancing it. Limits include their
 // endpoints, as in the printed sequences on manual pp.128-133.

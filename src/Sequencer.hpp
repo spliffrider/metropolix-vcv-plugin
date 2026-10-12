@@ -49,6 +49,7 @@ struct Track {
     int accumNegativeLimit = 9;
     bool accumBipolar = false;
     AccumOrder accumOrder = AccumWrap;
+    AccumMode accumMode = StageAccumulation;
     bool mute = false;
     std::array<StageEdit, 8> stages;
 };
@@ -108,6 +109,10 @@ struct TrackState {
     PlayOrder playOrder;
     std::array<int, 8> accumulator{};
     std::array<int, 8> accumDirection{{1,1,1,1,1,1,1,1}};
+    int trackAccumulator = 0;
+    int trackAccumulation = 0;
+    int trackAccumDirection = 1;
+    AccumMode accumMode = StageAccumulation;
     int activeAccumulation = 0;
     int lastRatchetEvent = -1;
     bool allowed = true;
@@ -265,10 +270,23 @@ private:
         auto& state = tracks[t];
         const auto& config = settings.tracks[t];
         const auto& edit = config.stages[state.stage];
-        state.activeAccumulation = state.accumulator[state.stage];
-        state.accumulator[state.stage] = advanceAccumulator(state.activeAccumulation,
-            clamp(edit.accumulation, -28, 28), config.accumLimit, config.accumNegativeLimit,
-            config.accumBipolar, config.accumOrder, state.accumDirection[state.stage], random[t]);
+        const int amount = clamp(edit.accumulation, -28, 28);
+        if (state.accumMode == TrackAccumulation) {
+            // Zero-amount stages inherit the sounding track offset. They must
+            // not consume the next offset: p127's first C D E F pass is neutral.
+            if (amount != 0) {
+                state.trackAccumulation = state.trackAccumulator;
+                state.trackAccumulator = advanceAccumulator(state.trackAccumulation,
+                    amount, config.accumLimit, config.accumNegativeLimit,
+                    config.accumBipolar, config.accumOrder, state.trackAccumDirection, random[t]);
+            }
+            state.activeAccumulation = state.trackAccumulation;
+        } else {
+            state.activeAccumulation = state.accumulator[state.stage];
+            state.accumulator[state.stage] = advanceAccumulator(state.activeAccumulation,
+                amount, config.accumLimit, config.accumNegativeLimit,
+                config.accumBipolar, config.accumOrder, state.accumDirection[state.stage], random[t]);
+        }
         state.startPitch = state.pitch;
         state.slideAge = 0.0;
         state.slideDuration = edit.slide && state.hasPitch
@@ -281,6 +299,9 @@ private:
         if (config.pulseLimit > 0 && state.totalPulses >= clamp(config.pulseLimit, 1, 64)) {
             auto accumulator = state.accumulator;
             auto accumDirection = state.accumDirection;
+            int trackAccumulator = state.trackAccumulator;
+            int trackAccumulation = state.trackAccumulation;
+            int trackAccumDirection = state.trackAccumDirection;
             float pitch = state.pitch;
             bool hasPitch = state.hasPitch;
             int divider = state.divider;
@@ -288,7 +309,19 @@ private:
             state.pitch = state.targetPitch = state.startPitch = pitch;
             state.hasPitch = hasPitch;
             state.divider = divider;
-            if (!config.autoAccumReset) { state.accumulator = accumulator; state.accumDirection = accumDirection; }
+            if (!config.autoAccumReset) {
+                state.accumulator = accumulator; state.accumDirection = accumDirection;
+                state.trackAccumulator = trackAccumulator;
+                state.trackAccumulation = trackAccumulation;
+                state.trackAccumDirection = trackAccumDirection;
+            }
+        }
+        // Apply mode edits at a track-clock boundary, keeping both banks until
+        // reset. A mode switch cannot create an extra ratchet halfway through a pulse.
+        if (state.accumMode != config.accumMode) {
+            state.accumMode = config.accumMode;
+            state.activeAccumulation = state.accumMode == TrackAccumulation
+                ? state.trackAccumulation : (state.stage >= 0 ? state.accumulator[state.stage] : 0);
         }
         ++state.totalPulses;
         // Auto sequences can run indefinitely without overflowing a counter.
@@ -311,7 +344,8 @@ private:
             state.pulse = 0;
             state.lastRatchetEvent = -1;
             const auto& edit = config.stages[state.stage];
-            state.activeAccumulation = state.accumulator[state.stage];
+            state.activeAccumulation = state.accumMode == TrackAccumulation
+                ? state.trackAccumulation : state.accumulator[state.stage];
             state.startPitch = state.pitch;
             state.slideAge = 0.0;
             state.slideDuration = edit.slide && state.hasPitch

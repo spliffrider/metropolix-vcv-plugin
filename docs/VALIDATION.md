@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.4.1
+# Validation and fidelity status — 2.5.0
 
 Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metropolix manual 1.6 (2025-09-24)](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf). Page numbers below are the printed page numbers; the PDF cover adds one to the file page index.
 
@@ -10,18 +10,20 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Random orders, p.73 | Shuffle visits every stage and repeats its permutation until reset; Quasi Random avoids consecutive repeats where required; fixed-seed Brownian distribution checks |
 | Sequence length, pp.75–76 | Literal fixed-pulse examples, including restart partway through a stage; Auto does not clear accumulated transpositions |
 | Gates, pp.94–97, 166–167 | Thirteen literal timing diagrams sampled across pulse-count division, stretching, and all three ratchet modes; partial groups truncate before the next stage |
+| Accumulator modes, pp.126–127 | Literal Stage and Track four-note phrases at 44.1/48/96 kHz and actual Rack pitch/gate outputs; zero-amount stages inherit track transposition; modes and tracks stay independent |
+| Skip + accumulation, pp.88, 102 | 672 seeded scenarios (2 modes × 21 orders × 16 seeds), 64 clock ticks each, randomized lengths/offsets/pulse counts/signed increments, live skip masks, all-skip silence/recovery, no skipped-stage increments; technical invariants, not musical-quality or hardware-equivalence judgments |
 | Accumulator, pp.128–133 | Literal unipolar/bipolar wrap and pendulum sequences; positive/negative Hold limits; Random direction proportions and step bounds; large increments inside narrow limits |
-| Accumulator triggers, p.102 | All twelve combinations of four gate types and Stage/Pulse/Ratchet trigger, through the complete sequencer at 48 kHz |
+| Accumulator triggers, p.102 | Both accumulator modes across all twelve combinations of four gate types and Stage/Pulse/Ratchet trigger, through the complete sequencer at 48 kHz |
 | Probability, pp.98, 102 | Stage decisions remain consistent across a stage; Pulse decisions produce partially played stages; rejected pulses do not accumulate |
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
 | MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
 | MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
-| Rack host | All 413 parameters round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
+| Rack host | All 415 parameters round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
 | Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
 | MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
 
-The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 73,157 accumulator/probability assertions, and 119 MOD assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
+The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 395,400 accumulator/probability assertions, 119 MOD assertions, and 53,903 AUX assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
 
 Actual Rack renderer images of both views were inspected. Windows Computer Use capture repeatedly failed with `window capture timed out: timed out waiting on channel`; native capture attempts were stopped. Editor tests dispatch Rack widget events from a dedicated test build, and image capture uses Rack's own renderer. Physical mouse/drag behavior and operating-system focus handling remain unverified in that session.
 
@@ -104,9 +106,40 @@ IDs, ports, settings schema, and example patches are unchanged from 2.4.0.
 - **Combining MOD lanes.** Voltages from lanes targeting the same track and destination are summed, then clamped to ±5 V before mapping to the parameter. Gate/mute routes use the resulting threshold. This combination rule is inferred; the manual does not specify it in sufficient detail. Muting a lane removes its contribution without changing saved base settings or stopping that lane's position.
 - **Persistence.** Rack saves configuration, not a running transport snapshot or the random generator state. Loading starts a fresh traversal and accumulator state.
 
+## Track accumulation release (2.5.0)
+
+The Stage/Track examples from pp.126–127 pass through the complete engine and
+Rack's actual pitch and gate ports. Tests cover positive/negative contributors,
+all four orders, zero-amount stages, Stage/Pulse/Ratchet triggers, skipped
+sources, live skips, rest/probability/mute suppression, manual reset and fixed
+pulse-length Auto/Manual behavior. All previous engine suites pass unchanged.
+Host tests verify mode persistence, old-preset migration over a configured
+module, unchanged IDs, and all six LIM fields. Widget/display tests cover
+ALT → LIM, named mode choices, both drag directions, undo, independent tracks,
+and 25 populated native-pixel screen states.
+
+**Implementation interpretations:** Track mode uses one shared bank per track.
+At each eligible nonzero trigger it plays the bank's pending value, then
+computes the next value using that stage's increment. Zero-amount stages keep
+the sounding offset without consuming the pending value; skipped/rest/rejected
+events do not advance it. This reproduces the manual's neutral first pass.
+The same rule for multiple contributors, asymmetric limits with mixed signs,
+and generative orders needs physical reference evidence. Stage and Track
+banks are retained separately on mode changes, applied at the next track-clock
+boundary. Global reset clears both; fixed-length Auto resets both, Manual
+retains both. These live-switch rules are explicit implementation choices.
+Skip does not retroactively remove an already accumulated track offset.
+
+The comparison patch is a functional demonstration, not a new composed song.
+The release does not add preset banks/chaining or accumulator MOD destinations.
+Its 12-second, 48 kHz Rack recording passes both stereo signal checks: RMS
+0.261/0.435 V, peaks 1.579/1.600 V, DC below 0.0005 V. These measurements
+confirm the patched signal path; they do not rate the musical result.
+Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
+
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; CTRL assignment; ALT+AUX selective randomization; stage pitch and gate-length overrides; Loopy; swing; full scale selection; track-wide accumulation; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; CTRL assignment; ALT+AUX selective randomization; stage pitch and gate-length overrides; Loopy; swing; full scale selection; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 

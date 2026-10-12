@@ -39,7 +39,8 @@ struct Metropolix : Module {
         OUTPUT_SOURCE_B,
         AUX_PARAMS = OUTPUT_SOURCE_B + 1,
         AUX_STRIDE = 3,
-        NUM_PARAMS = AUX_PARAMS + 3 * AUX_STRIDE
+        ACCUM_MODE = AUX_PARAMS + 3 * AUX_STRIDE,
+        NUM_PARAMS = ACCUM_MODE + 2
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV };
@@ -59,6 +60,12 @@ struct Metropolix : Module {
     static int stageOption(int t, int s, int p) { return STAGE_OPTIONS + t * 16 + p * 8 + s; }
     static int modParam(int lane, int p) { return MOD_LANE + lane * MOD_STRIDE + p; }
     static int auxParam(int input, int p) { return AUX_PARAMS + input * AUX_STRIDE + p; }
+    static int accumModeParam(int t) { return ACCUM_MODE + t; }
+    static int accumScreenParam(int t, int field) {
+        const int ids[] = {trackParam(t, ACCUM_LIMIT), accumParam(t, NEGATIVE_LIMIT),
+            accumModeParam(t), accumParam(t, ACCUM_ORDER), accumParam(t, BIPOLAR), extraParam(t, ACCUM_AUTO_RESET)};
+        return ids[metro::clamp(field, 0, 5)];
+    }
     static std::vector<std::string> modDestinations() {
         return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute"};
     }
@@ -83,7 +90,7 @@ struct Metropolix : Module {
     // Presentation only: the hardware panel and optional grids share all
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
-        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE };
+        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -133,6 +140,7 @@ struct Metropolix : Module {
             configParam(accumParam(t, NEGATIVE_LIMIT), 1, 28, 9, name + "negative accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(accumParam(t, BIPOLAR), 0, 1, 0, name + "accumulator polarity", {"Unipolar", "Bipolar"});
             configSwitch(accumParam(t, ACCUM_ORDER), 0, 3, 0, name + "accumulator order", {"Wrap", "Pendulum", "Random", "Hold"});
+            configSwitch(accumModeParam(t), 0, 1, 0, name + "accumulator mode", {"Stage", "Track"});
             configParam(trackParam(t, TRANSPOSE), -24, 24, 0, name + "transpose", " semitones")->snapEnabled = true;
             configParam(trackParam(t, GATE_LENGTH), 1, 99, 50, name + "gate length", "%");
             configParam(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide time", "% of a pulse");
@@ -197,6 +205,8 @@ struct Metropolix : Module {
         }
         paramQuantities[RUN]->description = "Click to start or stop. Stopping silences gates and modulation; pitch holds.";
         paramQuantities[RESET]->description = "Press to restart note tracks, MOD lanes, and accumulators.";
+        for (int t=0; t<2; ++t)
+            paramQuantities[accumModeParam(t)]->description = "Stage changes each stage independently. Track carries accumulation across the whole phrase. Takes effect on the next track clock pulse.";
         sequencer.seed(random::u32());
         readSettings();
     }
@@ -257,6 +267,7 @@ struct Metropolix : Module {
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
             track.accumBipolar = integer(accumParam(t, BIPOLAR)) != 0;
             track.accumOrder = static_cast<metro::AccumOrder>(integer(accumParam(t, ACCUM_ORDER)));
+            track.accumMode = static_cast<metro::AccumMode>(integer(accumModeParam(t)));
             track.mute = integer(trackParam(t, MUTE)) != 0;
             for (int s = 0; s < 8; ++s) {
                 auto& edit = track.stages[s];
@@ -331,7 +342,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(7));
+        json_object_set_new(root, "schemaVersion", json_integer(8));
         json_object_set_new(root, "selectedAux", json_integer(selectedAux.load()));
         json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
         json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
@@ -352,7 +363,9 @@ struct Metropolix : Module {
         // Old module presets may be loaded over an already configured module.
         // Missing AUX parameters must restore the original, unassigned sound.
         if(json_integer_value(json_object_get(root,"schemaVersion"))<7)
-            for(int id=AUX_PARAMS;id<NUM_PARAMS;++id)params[id].setValue(0.f);
+            for(int id=AUX_PARAMS;id<ACCUM_MODE;++id)params[id].setValue(0.f);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<8)
+            for(int t=0;t<2;++t)params[accumModeParam(t)].setValue(0.f);
         // Preserve the original prototype's ORDER=1 (Reverse) after ORDER=1
         // becomes Ping Pong. All existing parameter IDs remain unchanged.
         if (json_integer_value(json_object_get(root, "schemaVersion")) < 2) {
@@ -374,8 +387,8 @@ struct Metropolix : Module {
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(AUX_PAGE)));
-        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, 1));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(ACCUM_PAGE)));
+        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));
         if(json_integer_value(json_object_get(root,"schemaVersion"))<6 && uiPage.load()==LENGTH_PAGE)uiField.store(0);

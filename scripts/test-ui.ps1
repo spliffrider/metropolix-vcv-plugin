@@ -1,4 +1,4 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
@@ -6,6 +6,7 @@ if ($Aux) { $Modulation = $true }
 if ($Modulation) { $Audio = $true }
 if ($Variations) { $Musical = $true }
 if ($Musical) { $Audio = $true }
+if ($Accumulator) { $Audio = $true }
 if (Get-Process Rack -ErrorAction SilentlyContinue) { throw 'Close Rack before the UI test.' }
 $env:CHERE_INVOKING = 'yes'
 $env:MSYSTEM = 'MINGW64'
@@ -14,7 +15,7 @@ try {
     & "$env:LOCALAPPDATA\MetropolixDev\msys64\usr\bin\bash.exe" -lc 'make ui-test-build'
     if ($LASTEXITCODE -ne 0) { throw 'UI test build failed.' }
     $profile = Join-Path $projectRoot 'tmp\rack-qa'
-    $output = Join-Path $projectRoot $(if ($Display) { 'tmp\display-qa' } elseif ($Variations) { 'tmp\variations-qa' } elseif ($Musical) { 'tmp\musical-qa' } elseif ($Aux) { 'tmp\aux-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
+    $output = Join-Path $projectRoot $(if ($Display) { 'tmp\display-qa' } elseif ($Accumulator) { 'tmp\accumulator-qa' } elseif ($Variations) { 'tmp\variations-qa' } elseif ($Musical) { 'tmp\musical-qa' } elseif ($Aux) { 'tmp\aux-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
     $plugin = Join-Path $profile 'plugins-win-x64\MetropolixLab'
     New-Item -ItemType Directory -Force -Path $plugin, $output | Out-Null
     Copy-Item -LiteralPath 'build\ui-test\plugin.dll', 'plugin.json', 'README.md' -Destination $plugin -Force
@@ -41,7 +42,7 @@ try {
         if ($Musical) { $env:METROPOLIX_MUSICAL_QA = '1' }
         if ($Variations) { $env:METROPOLIX_VARIATIONS_QA = '1' }
         if ($Aux) { $env:METROPOLIX_AUX_QA = '1' }
-        $audioExample = if ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
+        $audioExample = if ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
         $audioPatch = Get-Content -LiteralPath $audioExample -Raw | ConvertFrom-Json
         $audioPatch.modules += @{id=100; plugin='MetropolixLab'; model='AudioQA'; pos=@(100,1)}
         # Record exactly what reaches AUDIO, including the musical demo's stereo mix.

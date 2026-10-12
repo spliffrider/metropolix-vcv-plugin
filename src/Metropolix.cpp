@@ -82,6 +82,7 @@ void trackSettingsMenu(Metropolix* m) {
     choice("Gate stretching", Metropolix::extraParam(t, Metropolix::GATE_STRETCH), {"Off", "On"});
     choice("Ratchet mode (stretching on)", Metropolix::extraParam(t, Metropolix::RATCHET_MODE), {"Multiply", "Pulse", "Gated"});
     choice("Accumulator reset", Metropolix::extraParam(t, Metropolix::ACCUM_AUTO_RESET), {"Manual", "Auto (at fixed pulse length)"});
+    choice("Accumulator mode", Metropolix::accumModeParam(t), {"Stage", "Track"});
     choice("Accumulator order", Metropolix::accumParam(t, Metropolix::ACCUM_ORDER), {"Wrap", "Pendulum", "Random", "Hold"});
     choice("Accumulator polarity", Metropolix::accumParam(t, Metropolix::BIPOLAR), {"Unipolar", "Bipolar"});
     std::vector<std::string> limits;
