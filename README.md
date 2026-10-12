@@ -1,12 +1,16 @@
 # Metropolix Lab for VCV Rack 2
 
+[![Engine tests](https://github.com/spliffrider/metropolix-vcv-plugin/actions/workflows/engine-tests.yml/badge.svg)](https://github.com/spliffrider/metropolix-vcv-plugin/actions/workflows/engine-tests.yml)
+
+Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
+
 A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, a hardware-layout main panel, and optional stage and modulation editors. Version **2.3.0**, built and tested on **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
 Version 2.3.0 refines the supplied hardware panel's lettering, components, markings, and logo. Its 128 × 64 pixel display now includes all four HOME views and manual-based editing diagrams. Hold and drag upward to increase values; downward to decrease. Hover help, context menus, numeric entry, and Rack undo/redo work alongside the hardware layout. See **[docs/HARDWARE-UI.md](docs/HARDWARE-UI.md)** for operation and current limits. The exact visual target remains **[docs/UI-TARGET.md](docs/UI-TARGET.md)**; this revision is closer, with further visual and firmware details still to implement.
 
 ## Start here
 
-The ready-to-install package is `dist/MetropolixLab-2.3.0-win-x64.vcvplugin`. Close Rack and run:
+The local development build produces `dist/MetropolixLab-2.3.0-win-x64.vcvplugin`. Generated packages are not stored in Git; after cloning, use the build instructions below. Once the package exists, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1

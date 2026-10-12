@@ -1,0 +1,17 @@
+# Keep text consistent across Windows and Linux builds.
+* text=auto eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.svg text eol=lf
+*.vcv text eol=lf
+Makefile text eol=lf
+*.png binary
+*.wav binary
+*.ttf binary
+*.zip binary
+*.vcvplugin binary

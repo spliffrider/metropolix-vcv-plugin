@@ -1,11 +1,28 @@
-.tools/
-build/
-dist/
-tmp/
+# Downloaded SDK/toolchain, dependencies, and generated files
+/.tools/
+/dep/
+/build/
+/dist/
+/tmp/
+/checkpoints/
+/docs/RESUME.md
 plugin.dll
 plugin.so
 plugin.dylib
 *.vcvplugin
 reference/*.pdf
 reference/*_pages.json
+
+# Local credentials, editor settings, and caches
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.vs/
+.vscode/
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
 
