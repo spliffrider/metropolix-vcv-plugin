@@ -196,6 +196,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             return m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s):Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load());
         };
         c->help="EDIT then a function, then select a stage. Hold + drag edits this stage. Slide/Skip clicks toggle. Right-click for values.";
+        if(s==6)c->help+=" ALT + this button opens LIM: click the encoder to select Mode, then drag to choose Stage or Track.";
         c->dragAction=[m,s] { if(m && !m->uiAlt.load() && !m->uiChooseFunction.load()) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
         int row=rows[s];
         c->action=[this,m,s,row,unavailable] {
@@ -206,7 +207,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 else if(s==1) saveDialog();
                 else if(s==2)screenPage(m,Metropolix::A_PAGE);
                 else if(s==3)screenPage(m,Metropolix::B_PAGE);
-                else if(s==6)trackSettingsMenu(m);
+                else if(s==6){m->uiMod.store(false);screenPage(m,Metropolix::ACCUM_PAGE);}
                 else if(s==7)modSettingsMenu(m,m->selectedLane.load());
                 else unavailable(s==4?"Clock output configuration":"MX expander");
                 return;

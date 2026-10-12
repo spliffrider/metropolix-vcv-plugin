@@ -4,9 +4,16 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.4.1 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.5.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/MetropolixLab-2.4.1-win-x64.vcvplugin)** · **[AUX demo patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.4.1)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/MetropolixLab-2.5.0-win-x64.vcvplugin)** · **[Stage/Track comparison patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/Accumulator-modes.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.5.0)**
+
+2.5.0 adds **Track accumulation** alongside the original Stage mode. Select a
+track, then **ALT → LIM → Mode**, or right-click **TRK 1/2 → Accumulator mode**.
+The LIM display also exposes limits, order, polarity, and reset. Old patches
+retain Stage mode and their existing parameter/cable IDs. Preset chaining is
+still unimplemented; this release focuses on accumulation and skip interactions.
+See [accumulator operation and comparison](docs/HARDWARE-UI.md#accumulator-modes).
 
 2.4.0 made X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). macOS/Linux plugin downloads are not available yet. The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
 
@@ -92,7 +99,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.4.1-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.5.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -155,7 +162,7 @@ The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 - Two independent tracks, with length, offset, all 21 play orders and reverse direction, division 1–64, fixed pulse length 1–64 or Auto, transpose, gate length, and mute.
 - Pulse-count division 1–8; gate stretching; Multiply, Pulse, and Gated ratchet modes; ratchet counts 1–8.
 - Per-stage probability with Stage/Pulse targeting; skip; a linear, tempo-relative slide; bipolar CV.
-- Per-stage accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
+- Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
 - Seven scales: chromatic, major, minor, Dorian, Mixolydian, major and minor pentatonic; chromatic root; slider range 1–4 octaves.
 - Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, eight internal destinations, track assignment, and assignable A/B outputs.
 - Three AUX CV/gate inputs, attenuverters, the same eight destinations, per-input track assignments, live meters, and logical gate inversion.
@@ -163,7 +170,7 @@ The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX destinations, CTRL assignments, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, track-wide accumulator mode, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware preset banks/chains, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX destinations, CTRL assignments, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware preset banks/chains, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 

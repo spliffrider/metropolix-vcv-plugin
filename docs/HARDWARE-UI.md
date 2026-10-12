@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.4.1
+# Hardware panel and desktop interaction — 2.5.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -23,9 +23,45 @@ and author metadata also identify sensiburner. This is an independent homage.
 - **ALT** enables the secondary stage-button actions. LOAD/SAVE use Rack module presets; A/B select output assignment on the display. EXIT returns to the overview.
 - **Optional grids** remain available through menus. They share parameters with the panel and preserve undo/redo. The hardware panel is 34 HP; opening a grid expands the module to 66 HP. Rack moves it to available space if needed.
 
-## Scope of this pass
+## Accumulator modes
 
-The existing 404 parameter IDs and nine patchable ports retain their identities. AUX adds nine parameters and three inputs. Older patches keep their cables/settings and load with AUX unassigned. Schema 7 also saves the selected AUX screen/input, alongside HOME and stage-detail selection; temporary ALT state clears on load. The old LEN field selection migrates safely.
+Select **TRK 1** or **TRK 2**, click **ALT**, then **LIM** (stage button 7).
+Click the encoder twice to select **Mode**, then drag upward for **Track** or
+downward for **Stage**. The display itself is also draggable; right-click the
+active value for named choices. Alternatively, right-click a track button and
+choose **Accumulator mode**. Each track has its own mode and Rack saves it.
+
+Encoder clicks cycle Positive Limit, Negative Limit, Mode, Order, Polarity,
+and Reset. The display scrolls between two groups of three settings. These
+edits support undo. EXIT returns to HOME. Accumulator *mode* is different from
+the per-stage Stage/Pulse/Ratchet *trigger* edited through EDIT → ACCUM.
+
+`examples/Accumulator-modes.vcv` compares the manual's four-note C-major
+example: Track 1 uses Stage mode and Track 2 uses Track mode. Only stage 1 has
+an increment (+1). With Stage mode, only that note changes each pass; Track
+mode shifts the entire phrase. Limits are +3/-3 for a short repeating test.
+The two Scopes show each track's pitch/gate. Select an AUDIO device to hear it.
+
+Try skipping stage 1 before RESET: neither track should accumulate. Unskip it
+and reset, let the phrase rise, then skip it during playback: Track mode holds
+the transposition already reached. Try moving the +1 to a different stage,
+changing pulse counts, or choosing a generative order. These are comparison
+exercises, not claims of hardware-verified behavior. Please include the patch,
+mode, order, skip positions, and a hardware recording when reporting a mismatch.
+
+Mode edits take effect on the next track-clock pulse. The two modes retain
+separate runtime counters until reset; returning to a mode resumes its stored
+state. Loading a patch restarts both. Older patches default to Stage mode.
+The manual does not fully specify live switching or multiple accumulator
+sources; see [the documented interpretations](VALIDATION.md).
+
+## Compatibility and remaining controls
+
+All 413 previous parameter IDs and all ports retain their identities. Two mode
+parameters append at IDs 413/414. Schema 8 saves the LIM page and its selected
+field. Older patches load in Stage mode, including presets loaded over an
+already configured module. Existing AUX migration is preserved. Temporary ALT
+state clears on load; the old LEN field selection still migrates safely.
 
 AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). CTRL assignments, Loopy, swing, stage pitch/gate overrides, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
 
@@ -35,4 +71,4 @@ Some visible readouts describe fixed behavior: slide type is Tempo, gate scale i
 
 ## Verification
 
-The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/navigation actions and renders 20 screen states for inspection. The hardware demo also runs through the stereo audio and A/B CV recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 25 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.

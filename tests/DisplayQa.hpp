@@ -18,6 +18,23 @@ if(qaFrame==5) {
     click(find("TRK 1"));m->selectedRow.store(Metropolix::PROBABILITY);m->uiPage.store(Metropolix::STAGE_PAGE);
     click(find("Encoder"));check(m->integer(Metropolix::stageOption(0,3,Metropolix::PROB_TARGET))==1,"PROB encoder toggles Stage/Pulse (p.98)");APP->history->undo();
     m->selectedRow.store(Metropolix::ACCUMULATION);click(find("Encoder"));check(m->integer(Metropolix::stageOption(0,3,Metropolix::ACCUM_TRIGGER))==1,"ACCUM encoder cycles triggers (p.100)");APP->history->undo();
+    click(find("ALT"));click(find("Stage 7 / ACCUM"));
+    check(m->uiPage.load()==Metropolix::ACCUM_PAGE && !m->uiAlt.load() && !m->uiMod.load(),"ALT LIM opens accumulator options");
+    click(find("Encoder"));click(find("Encoder"));
+    check(screenParam(m)==Metropolix::accumModeParam(0),"LIM third field is Stage/Track mode");
+    drag(find("Encoder"),-80);check(m->integer(Metropolix::accumModeParam(0))==1,"upward mode drag selects Track");
+    APP->history->undo();check(m->integer(Metropolix::accumModeParam(0))==0,"accumulator mode supports undo");
+    drag(find("Metropolix display"),-80);drag(find("Metropolix display"),80);
+    check(m->integer(Metropolix::accumModeParam(0))==0,"downward display drag selects Stage");
+    click(find("TRK 2"));check(screenParam(m)==Metropolix::accumModeParam(1),"LIM follows selected track");
+    drag(find("Encoder"),-80);
+    check(m->integer(Metropolix::accumModeParam(0))==0 && m->integer(Metropolix::accumModeParam(1))==1,"LIM modes edit independently");
+    press(find("Encoder"),GLFW_MOUSE_BUTTON_RIGHT);
+    auto* trackChoice=seek(APP->scene,[](widget::Widget* w){auto* item=dynamic_cast<ui::MenuItem*>(w);return item && item->text=="Track";});
+    check(trackChoice!=nullptr,"mode context menu offers named Track choice");closeMenus();
+    for(int i=0;i<4;++i)click(find("Encoder"));
+    check(m->uiField.load()==0,"LIM cycles six fields and wraps");
+    click(find("TRK 1"));
     m->uiHome.store(3);m->uiStageDetail.store(true);
     json_t* data=APP->engine->moduleToJson(m);m->uiHome.store(0);m->uiStageDetail.store(false);APP->engine->moduleFromJson(m,data);json_decref(data);
     check(m->uiHome.load()==3 && m->uiStageDetail.load(),"home view and stage-detail selection survive patch load");
@@ -61,6 +78,9 @@ const DisplayCase cases[]={
     {"output-b",Metropolix::B_PAGE,0,0,0,false},
     {"aux-cv",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
     {"aux-gate",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
+    {"accum-stage",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
+    {"accum-track",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
+    {"accum-options",Metropolix::ACCUM_PAGE,4,0,Metropolix::ACCUMULATION,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -69,6 +89,7 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+        if(test.page==Metropolix::ACCUM_PAGE)m->params[Metropolix::accumModeParam(0)].setValue(std::string(test.name)=="accum-stage"?0:1);
         if(test.page==Metropolix::AUX_PAGE) {
             m->selectedAux.store(test.field);
             m->params[Metropolix::auxParam(test.field,Metropolix::AUX_AMOUNT)].setValue(1);

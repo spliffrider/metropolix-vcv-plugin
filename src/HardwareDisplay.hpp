@@ -21,14 +21,14 @@ struct HardwareDisplay : HardwareControl {
         auto* m=metroModule;
         std::string left=m && m->uiMod.load()?string::f("MOD %d",m->selectedLane.load()+1):string::f("TRK %d",m?m->selectedTrack.load()+1:1);
         if(detailed && m)left+=string::f(":%d",m->selectedStage.load()+1);
-        std::string right=functionName();
+        std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":functionName();
         if(m && m->uiMod.load()) {
             int source=m->selectedLane.load()+2;
             bool a=integer(Metropolix::OUTPUT_SOURCE_A)==source,b=integer(Metropolix::OUTPUT_SOURCE_B)==source;
             if(a || b)right+=a?(b?":AB":":A"):":B";
         }
         int edge=127;
-        if(m && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE) {
+        if(m && m->uiPage.load()!=Metropolix::ACCUM_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE) {
             c.line(120,61,120,56);c.line(120,56,123,56);c.line(123,56,123,61);c.line(123,61,127,61);edge=117;
         }
         while(c.width(left)+c.width(right)+8>edge && !right.empty())right.pop_back();
@@ -237,6 +237,21 @@ struct HardwareDisplay : HardwareControl {
                 if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
             }
             field(c,29,"AUX ASSIGN",string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
+        } else if(page==Metropolix::ACCUM_PAGE) {
+            const char* labels[]={"Positive Limit","Negative Limit","Mode","Order","Polarity","Reset"};
+            int first=metro::clamp(f,0,5)/3*3;
+            for(int i=first;i<first+3;++i) {
+                int id=Metropolix::accumScreenParam(t,i),n=integer(id,i<2?9:0);
+                std::string v;
+                if(i<2)v=string::f("%c%d",i?'-':'+',n);
+                else if(i==2)v=n?"Track":"Stage";
+                else if(i==3){const char* orders[]={"Wrap","Pendulum","Random","Hold"};v=orders[metro::clamp(n,0,3)];}
+                else if(i==4)v=n?"Bipolar":"Unipolar";
+                else v=n?"Auto":"Manual";
+                int y=(i-first)*17;
+                c.text(13,y+5,labels[i]);c.right(126,y+5,v);
+                if(i==f){c.corners(0,y,128,16);c.turn(1,y+5);}
+            }
         } else if(page==Metropolix::SETUP_PAGE)field(c,0,"SLIDER OCTAVES",std::to_string(integer(Metropolix::RANGE,3)),true);
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
         footer(c);return c;

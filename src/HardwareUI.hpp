@@ -63,6 +63,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
         case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::SETUP_PAGE: return Metropolix::RANGE;
+        case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
     }
 }
@@ -74,6 +75,7 @@ void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
+    if(p==Metropolix::ACCUM_PAGE) { m->uiField.store((m->uiField.load()+1)%6); return; }
     if(p==Metropolix::ORDER_PAGE) {
         int id=m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_REVERSED):Metropolix::extraParam(m->selectedTrack.load(),Metropolix::REVERSED);
         auto* q=m->getParamQuantity(id);setWithHistory(q,1-q->getValue());return;

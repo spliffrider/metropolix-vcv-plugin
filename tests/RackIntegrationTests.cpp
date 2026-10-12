@@ -12,7 +12,7 @@ void require(bool value, const char* message) {
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
-    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::NUM_PARAMS==413,"AUX parameters append to the old 404");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::NUM_PARAMS==415,"mode appends after all existing parameters");
     static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
@@ -50,6 +50,7 @@ int main() {
         source.params[Metropolix::accumParam(1, Metropolix::NEGATIVE_LIMIT)].setValue(5.f);
         source.params[Metropolix::accumParam(1, Metropolix::BIPOLAR)].setValue(1.f);
         source.params[Metropolix::accumParam(1, Metropolix::ACCUM_ORDER)].setValue(metro::AccumPendulum);
+        source.params[Metropolix::accumModeParam(1)].setValue(metro::TrackAccumulation);
         source.params[Metropolix::stageOption(1, 4, Metropolix::PROB_TARGET)].setValue(1.f);
         source.params[Metropolix::stageOption(1, 4, Metropolix::ACCUM_TRIGGER)].setValue(metro::AccumRatchet);
         json_t* params = source.paramsToJson();
@@ -74,6 +75,11 @@ int main() {
             && restored.sequencer.settings.outputSources[0] == 8, "MOD lane and output routing reach the engine");
         const auto& restoredTrack = restored.sequencer.settings.tracks[1];
         require(restoredTrack.accumNegativeLimit == 5 && restoredTrack.accumBipolar && restoredTrack.accumOrder == metro::AccumPendulum, "accumulator options reach the engine");
+        require(restoredTrack.accumMode == metro::TrackAccumulation && restored.sequencer.settings.tracks[0].accumMode == metro::StageAccumulation, "independent accumulator modes survive save/load");
+        json_t* oldMode = json_pack("{s:i}", "schemaVersion", 7);
+        restored.dataFromJson(oldMode); json_decref(oldMode);
+        require(restored.sequencer.settings.tracks[1].accumMode == metro::StageAccumulation, "2.4 preset loaded over Track mode restores Stage mode");
+        require(restored.params[Metropolix::auxParam(2,Metropolix::AUX_AMOUNT)].getValue()==.25f, "mode migration preserves existing AUX settings");
         require(restoredTrack.stages[4].probabilityPerPulse && restoredTrack.stages[4].accumTrigger == metro::AccumRatchet, "stage trigger options reach the engine");
         restored.params[Metropolix::trackParam(0, Metropolix::ACCUM_LIMIT)].setValue(7.f);
         restored.params[Metropolix::trackParam(0, Metropolix::ORDER)].setValue(1.f);
@@ -197,6 +203,32 @@ int main() {
         require(restored.uiPage.load()==Metropolix::AUX_PAGE && restored.uiField.load()==1 && restored.selectedAux.load()==1,"AUX display state roundtrip");
         json_t* previous=json_pack("{s:i}","schemaVersion",6);module.dataFromJson(previous);json_decref(previous);
         for(int id=Metropolix::AUX_PARAMS;id<Metropolix::NUM_PARAMS;++id)require(module.params[id].getValue()==0,"2.3.x preset clears AUX with no change to old IDs");
+    }
+    {
+        Metropolix module;
+        Module::ProcessArgs args; args.sampleRate=48000; args.sampleTime=1.f/48000;
+        const int notes[]={0,2,4,5};
+        for(int s=0;s<4;++s)module.params[Metropolix::PITCH+s].setValue(notes[s]/36.f);
+        for(int t=0;t<2;++t) {
+            module.params[Metropolix::trackParam(t,Metropolix::LENGTH)].setValue(4);
+            module.params[Metropolix::stageParam(t,0,Metropolix::ACCUMULATION)].setValue(1);
+        }
+        module.params[Metropolix::accumModeParam(1)].setValue(metro::TrackAccumulation);
+        module.params[Metropolix::RUN].setValue(1);
+        module.inputs[Metropolix::CLOCK_IN].channels=1;
+        const int expectedStage[]={0,2,4,5,2,2,4,5,4,2,4,5,5,2,4,5};
+        const int expectedTrack[]={0,2,4,5,2,4,5,7,4,5,7,9,5,7,9,11};
+        for(int pulse=0;pulse<16;++pulse) {
+            module.inputs[Metropolix::CLOCK_IN].setVoltage(0);
+            for(int i=0;i<6000;++i)module.process(args);
+            module.inputs[Metropolix::CLOCK_IN].setVoltage(5);module.process(args);
+            require(std::abs(module.outputs[Metropolix::PITCH_1].getVoltage()*12-expectedStage[pulse])<.0001f,"p126 Stage mode actual Rack output");
+            require(std::abs(module.outputs[Metropolix::PITCH_2].getVoltage()*12-expectedTrack[pulse])<.0001f,"p127 Track mode actual Rack output");
+            require(module.outputs[Metropolix::GATE_1].getVoltage()==5 && module.outputs[Metropolix::GATE_2].getVoltage()==5,"accumulator modes preserve actual gate outputs");
+        }
+        module.uiPage.store(Metropolix::ACCUM_PAGE);module.uiField.store(5);
+        json_t* data=module.dataToJson();module.dataFromJson(data);json_decref(data);
+        require(module.uiPage.load()==Metropolix::ACCUM_PAGE && module.uiField.load()==5,"LIM page and all six fields survive save/load");
     }
     delete context.engine;
     context.engine = nullptr;

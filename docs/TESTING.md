@@ -1,4 +1,4 @@
-# Metropolix Lab 2.4.1 — Windows alpha quick start
+# Metropolix Lab 2.5.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,9 +6,9 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/MetropolixLab-2.4.1-win-x64.vcvplugin)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/MetropolixLab-2.5.0-win-x64.vcvplugin)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.4.1)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.5.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -22,7 +22,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.4.1-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.5.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -62,6 +62,14 @@ If there is no sound, check AUDIO's device/output selection, RUN, and the Scope.
 Moving Scope traces with silent audio generally point to audio-device or
 downstream patch routing rather than a stopped sequencer.
 
+## Compare accumulator modes
+
+Download [Accumulator-modes.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/Accumulator-modes.vcv).
+It presents Stage mode on Track 1 and Track mode on Track 2, with the same
+four-note phrase and a +1 increment on stage 1. Right-click TRK 1/2 to change
+Accumulator mode, or use ALT → LIM. See the
+[step-by-step comparison and skip exercises](HARDWARE-UI.md#accumulator-modes).
+
 ## A useful 15-minute test
 
 - Move pitch sliders, pulse-count switches, and gate switches. Check that the
@@ -87,7 +95,7 @@ downstream patch routing rather than a stopped sequencer.
 **Currently inactive or incomplete:** additional AUX destinations, CTRL knob
 assignments, Loopy, swing, stage pitch/gate-length overrides, most remaining MOD
 destinations, the full scale library/user scales, hardware preset banks/chains,
-track-wide accumulator options, MIDI, MX, and SysEx.
+remaining accumulator reset/routing options, MIDI, MX, and SysEx.
 
 **Fixed options:** Tempo slide, 100% gate scale, and /1 external input clock
 division. Each incoming clock edge is one sixteenth note. Some internal MOD
