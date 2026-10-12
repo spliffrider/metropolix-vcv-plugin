@@ -3,6 +3,7 @@
 #include <window/Window.hpp>
 #undef PRIVATE
 #include <fstream>
+#include "../tests/VideoCaptureState.hpp"
 #endif
 #include "Metropolix.hpp"
 #ifdef METROPOLIX_QA
@@ -420,6 +421,7 @@ struct MetropolixWidget : ModuleWidget {
     int qaFrame = 0;
     bool qaFailed = false;
     void qaStep();
+    void videoStep();
 #endif
 
     ValueCell* cell(widget::Widget* parent, Metropolix* module, int id, float x, float y, float width) {
@@ -541,6 +543,7 @@ struct MetropolixWidget : ModuleWidget {
 #include "HardwareLayout.hpp"
 
 #ifdef METROPOLIX_QA
+#include "../tests/RackVideoQa.hpp"
 #include "../tests/WidgetQa.hpp"
 #endif
 

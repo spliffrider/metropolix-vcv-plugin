@@ -4,6 +4,7 @@ void MetropolixWidget::qaStep() {
     const char* directory=std::getenv("METROPOLIX_QA_DIR");
     auto* m=getModule<Metropolix>(); if(!directory || !m)return;
     ++qaFrame; const std::string dir(directory);
+    if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
         if(std::getenv("METROPOLIX_AUX_QA")) {
             static float minimum[3]={100,100,100},maximum[3]={-100,-100,-100};

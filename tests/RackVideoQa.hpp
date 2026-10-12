@@ -1,0 +1,43 @@
+// Captures actual Rack front-buffer frames, not a recreation of the panel.
+// Camera and page selection affect presentation only, never the musical patch.
+void MetropolixWidget::videoStep() {
+    auto* m = getModule<Metropolix>();
+    const char* directory = std::getenv("METROPOLIX_QA_DIR");
+    if (!m || !directory) return;
+    static int shot = 0, previousSample = 0, lastCaptured = -48000;
+    static bool previousWide = false;
+    static std::ofstream timeline(std::string(directory) + "/frames.csv");
+    if (qaFrame == 1) timeline << "file,seconds,wide\n";
+    if (qaFrame < 30) return; // Let fonts, assets and layout settle first.
+    int sample = metrovideo::samples.load(std::memory_order_acquire);
+    double seconds = sample / 48000.0;
+    // screenshot() reads the front buffer: it contains the previous UI step.
+    if (previousSample - lastCaptured >= 2400 || shot == 0) {
+        std::string file = string::f("frame-%05d.png", shot++);
+        APP->window->screenshot(std::string(directory) + "/" + file);
+        timeline << file << ',' << previousSample / 48000.0 << ',' << previousWide << '\n';
+        timeline.flush();
+        lastCaptured = previousSample;
+    }
+    bool wide = seconds >= 17.777778 && seconds < 44.444444;
+    m->expanded.store(wide);
+    m->modEditor.store(wide);
+    m->uiMod.store(wide);
+    m->uiPage.store(Metropolix::HOME);
+    m->uiHome.store(seconds < 8.888889 ? 0 : seconds < 17.777778 ? 1 : wide ? 3 : 0);
+    m->selectedTrack.store(seconds < 8.888889 ? 0 : 1);
+    m->selectedLane.store(seconds < 26.666667 ? 3 : seconds < 35.555556 ? 2 : 7);
+    m->selectedRow.store(seconds >= 53.333333 && seconds < 62.222222 ? Metropolix::RATCHETS : Metropolix::SLIDE);
+    if (qaFrame == 30 || isExpanded != previousWide) {
+        APP->scene->rackScroll->setZoom(isExpanded ? 1.65f : 2.25f);
+    }
+    // Parent RackScrollWidget finishes its layout after this child step.
+    // Reapply the offset on subsequent frames after a zoom change settles.
+    APP->scene->rackScroll->setGridOffset(Vec(-1.f, -.05f));
+    previousWide = isExpanded;
+    previousSample = sample;
+    if (!metrovideo::armed.load(std::memory_order_relaxed)) {
+        m->params[Metropolix::RUN].setValue(1.f);
+        metrovideo::armed.store(true, std::memory_order_release);
+    }
+}
