@@ -143,6 +143,18 @@ void MetropolixWidget::qaStep() {
             APP->history->undo(); check(slide->getParamQuantity()->getValue()==1,"grid drag supports undo");
         }
         check(box.size.x==990 && editor->visible,"optional editor opens at 66 HP total");
+        for(auto* w:editor->children)if(auto* c=dynamic_cast<ValueCell*>(w))if(c->trackProperty==Metropolix::GATE_LENGTH) {
+            int dest=Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION);
+            widget::EventContext ctx;event::DragStart start;start.context=&ctx;start.button=GLFW_MOUSE_BUTTON_LEFT;
+            event::DragEnd end;end.context=&ctx;end.button=GLFW_MOUSE_BUTTON_LEFT;
+            c->onDragStart(start);
+            m->params[dest].setValue(metro::CtrlGateLength);
+            c->onDragEnd(end);
+            check(!c->dragStarted && !APP->window->isCursorLocked(),"CTRL assignment during grid drag releases cursor capture");
+            c->onDragStart(start);check(!c->dragStarted,"owned grid value does not start a gesture");
+            m->params[dest].setValue(metro::CtrlNone);c->onDragEnd(end);
+            check(!c->dragStarted && !APP->window->isCursorLocked(),"clearing CTRL during blocked drag creates no unfinished gesture");
+        }
         bool overlap=false; for(auto* w:parent->children)if(w!=this && dynamic_cast<ModuleWidget*>(w) && box.intersects(w->box))overlap=true;
         check(!overlap,"expanded editor does not overlap other modules");
         click(find("TRK 2"));

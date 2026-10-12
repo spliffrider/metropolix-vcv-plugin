@@ -194,6 +194,7 @@ struct ValueCell : app::Knob {
     std::vector<std::string> choices;
     std::vector<std::string> shortChoices;
     float dragDistance = 0.f;
+    bool dragStarted = false;
     bool locked() const { return metroModule && metroModule->ctrlOwner(paramId)>=0; }
 
     ValueCell() {
@@ -243,9 +244,14 @@ struct ValueCell : app::Knob {
         return metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE)) == metro::ModGate
             || metro::modGateDestination(static_cast<metro::ModDestination>(metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
     }
-    void onDragStart(const event::DragStart& e) override { dragDistance = 0.f; if(!locked())app::Knob::onDragStart(e); }
-    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(!locked())app::Knob::onDragMove(e); }
-    void onDragEnd(const event::DragEnd& e) override { if(!locked())app::Knob::onDragEnd(e); }
+    void onDragStart(const event::DragStart& e) override { dragDistance = 0.f; dragStarted=!locked(); if(dragStarted)app::Knob::onDragStart(e); }
+    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(dragStarted && !locked())app::Knob::onDragMove(e); }
+    void onDragEnd(const event::DragEnd& e) override {
+        // Automation may assign a CTRL while this drag is active. Always finish
+        // a started Rack gesture so cursor capture and history are released.
+        if(dragStarted)app::Knob::onDragEnd(e);
+        dragStarted=false;
+    }
     void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onAction(const event::Action&) override {
