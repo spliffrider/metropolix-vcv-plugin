@@ -1,4 +1,4 @@
-// A test-only sink records the actual Fundamental VCO -> ADSR/VCA signal path.
+// A test-only sink records the actual stereo signal sent to Rack's AUDIO module.
 // It is absent from production builds and distributable manifests.
 #include <atomic>
 #include <fstream>
@@ -6,7 +6,7 @@
 #include <cmath>
 
 struct RackAudioQa : Module {
-    static constexpr int frames = 12 * 48000;
+    const int frames = (std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
     std::vector<float> samples;
     std::vector<float> cvSamples;
     bool cvConnected = false;
@@ -45,12 +45,12 @@ struct RackAudioQaWidget : ModuleWidget {
         std::ofstream wav(std::string(directory) + "/two-track-demo.wav", std::ios::binary);
         auto u16 = [&](uint16_t n) { char bytes[] = {char(n), char(n >> 8)}; wav.write(bytes, 2); };
         auto u32 = [&](uint32_t n) { u16(n & 65535); u16(n >> 16); };
-        wav.write("RIFF", 4); u32(36 + RackAudioQa::frames * 4); wav.write("WAVEfmt ", 8);
+        wav.write("RIFF", 4); u32(36 + m->frames * 4); wav.write("WAVEfmt ", 8);
         u32(16); u16(1); u16(2); u32(48000); u32(48000 * 4); u16(4); u16(16);
-        wav.write("data", 4); u32(RackAudioQa::frames * 4);
+        wav.write("data", 4); u32(m->frames * 4);
         double energy[2] = {}, mean[2] = {}, peak[2] = {};
         bool finite = true;
-        for (int frame = 0; frame < RackAudioQa::frames; ++frame) for (int ch = 0; ch < 2; ++ch) {
+        for (int frame = 0; frame < m->frames; ++frame) for (int ch = 0; ch < 2; ++ch) {
             float sample = m->samples[frame * 2 + ch];
             finite &= std::isfinite(sample);
             if (!std::isfinite(sample)) sample = 0.f;
@@ -62,8 +62,8 @@ struct RackAudioQaWidget : ModuleWidget {
         }
         bool good = finite;
         for (int ch = 0; ch < 2; ++ch) {
-            double rms = std::sqrt(energy[ch] / RackAudioQa::frames);
-            double dc = mean[ch] / RackAudioQa::frames;
+            double rms = std::sqrt(energy[ch] / m->frames);
+            double dc = mean[ch] / m->frames;
             bool channelGood = rms > .05 && peak[ch] < 4 && std::abs(dc) < .05;
             good &= channelGood;
             report << (channelGood ? "PASS " : "FAIL ") << "channel " << ch + 1
@@ -77,7 +77,7 @@ struct RackAudioQaWidget : ModuleWidget {
             bool cvFinite = true;
             std::ofstream csv(std::string(directory) + "/mod-cv.csv");
             csv << "seconds,out_a_volts,out_b_volts\n";
-            for (int frame = 0; frame < RackAudioQa::frames; ++frame) {
+            for (int frame = 0; frame < m->frames; ++frame) {
                 for (int ch = 0; ch < 2; ++ch) {
                     float value = m->cvSamples[frame * 2 + ch];
                     cvFinite &= std::isfinite(value);
@@ -96,7 +96,7 @@ struct RackAudioQaWidget : ModuleWidget {
             report << (cvGood ? "PASS " : "FAIL ") << "Rack cable CV: A=[" << minimum[0] << ',' << maximum[0]
                 << "] V, B=[" << minimum[1] << ',' << maximum[1] << "] V; changes=" << changes[0] << '/' << changes[1] << '\n';
         }
-        report << (good ? "PASS " : "FAIL ") << "AUDIO QA COMPLETE (12 seconds at 48 kHz)\n";
+        report << (good ? "PASS " : "FAIL ") << "AUDIO QA COMPLETE (" << m->frames / 48000 << " seconds at 48 kHz)\n";
         report.close();
         APP->window->close();
     }
