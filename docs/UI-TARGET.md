@@ -49,7 +49,7 @@ Continue describing the plugin as an independent implementation in the project d
 
 The default panel now uses the 34 HP hardware proportions and photographed arrangement, with interactive vector jacks, faders, switches, knobs, display, and buttons. Optional grids open through menus and expand to 66 HP. Existing parameter/port IDs remain unchanged. Hover help, contextual settings, direct numeric entry, vertical dragging, and undo/redo are implemented for current engine features. See `HARDWARE-UI.md` for operation and scope.
 
-This is not yet a pixel-perfect recreation. Typography, component artwork, display pages, hardware long-press navigation, and secondary functions remain subjects for refinement. Unimplemented engine features are represented by controls with explicit status help; X/Y/Z are visual sockets until AUX routing exists. The earlier 2.1.0 user acceptance applies to the musical baseline, not to this new interface.
+This is not yet a pixel-perfect recreation. Typography, component artwork, display pages, hardware long-press navigation, and secondary functions remain subjects for refinement. Unimplemented engine features are represented by controls with explicit status help. As of 2.4.0, X/Y/Z are patchable AUX inputs with working knobs, assignment buttons, and manual-based display meters. The earlier 2.1.0 user acceptance applies to the musical baseline, not to each later interface addition.
 
 ## Display and component refinement — 2.3.0
 

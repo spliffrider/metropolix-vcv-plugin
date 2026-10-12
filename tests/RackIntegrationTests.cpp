@@ -11,6 +11,9 @@ void require(bool value, const char* message) {
 }
 
 int main() {
+    static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::NUM_PARAMS==413,"AUX parameters append to the old 404");
+    static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
     rack::contextSet(&context);
@@ -32,6 +35,12 @@ int main() {
         source.uiEdit.store(true);
         source.uiHome.store(3);
         source.uiStageDetail.store(true);
+        source.selectedAux.store(2);
+        for(int input=0;input<3;++input) {
+            source.params[Metropolix::auxParam(input,Metropolix::AUX_AMOUNT)].setValue(-.75f+input*.5f);
+            source.params[Metropolix::auxParam(input,Metropolix::AUX_DESTINATION)].setValue(metro::ModPitchPost+input);
+            source.params[Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT)].setValue(input);
+        }
         source.params[Metropolix::modParam(6, Metropolix::MOD_VALUE + 3)].setValue(-2.5f);
         source.params[Metropolix::modParam(6, Metropolix::MOD_RAMP + 3)].setValue(1.f);
         source.params[Metropolix::modParam(6, Metropolix::MOD_DESTINATION)].setValue(metro::ModPitchPre);
@@ -58,6 +67,7 @@ int main() {
         for (int id = 0; id < Metropolix::NUM_PARAMS; ++id)
             require(source.params[id].getValue() == restored.params[id].getValue(), "every parameter survives Rack serialization");
         require(restored.modEditor.load() && restored.selectedLane.load() == 6, "MOD editor state persists");
+        require(restored.selectedAux.load()==2 && restored.sequencer.settings.auxInputs[2].amount==.25f,"AUX selection and parameters survive serialization");
         require(restored.uiPage.load()==Metropolix::LENGTH_PAGE && restored.uiField.load()==1 && restored.uiMod.load() && restored.uiEdit.load(), "hardware UI page, field and edit target persist");
         require(restored.uiHome.load()==3 && restored.uiStageDetail.load(), "OLED home and detail selection persist");
         require(restored.sequencer.settings.modLanes[6].ramps[3] && restored.sequencer.settings.modLanes[6].values[3] == -2.5f
@@ -72,6 +82,8 @@ int main() {
         json_decref(legacy);
         require(restored.sequencer.settings.tracks[0].order == metro::Forward && restored.sequencer.settings.tracks[0].reversed, "legacy Reverse order is migrated without changing playback");
         require(restored.sequencer.settings.tracks[0].accumNegativeLimit == 7, "legacy shared accumulator limit migrates to negative limit");
+        for(int id=Metropolix::AUX_PARAMS;id<Metropolix::NUM_PARAMS;++id)
+            require(restored.params[id].getValue()==0.f,"loading old preset over existing module clears AUX routing");
         json_t* malformed = json_pack("{s:i, s:i, s:i}", "selectedTrack", 100, "selectedStage", -20, "selectedRow", 77);
         restored.dataFromJson(malformed);
         json_decref(malformed);
@@ -157,6 +169,34 @@ int main() {
         module.inputs[Metropolix::CLOCK_IN].channels=0;
         for(int i=0;i<32;++i)module.process(args);
         require(module.displayBpm.load()==135.f && !module.externalClock.load(),"OLED returns to internal tempo after unplugging clock");
+    }
+    {
+        Metropolix module;Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;
+        auto process=[&](int count=32) { for(int i=0;i<count;++i)module.process(args); };
+        module.params[Metropolix::RUN].setValue(1);
+        module.params[Metropolix::auxParam(0,Metropolix::AUX_AMOUNT)].setValue(.5f);
+        module.params[Metropolix::auxParam(0,Metropolix::AUX_DESTINATION)].setValue(metro::ModPitchOffset);
+        module.inputs[Metropolix::AUX_X_IN].channels=2;
+        module.inputs[Metropolix::AUX_X_IN].setVoltage(1.f,0);
+        module.inputs[Metropolix::AUX_X_IN].setVoltage(4.f,1);
+        process();
+        require(module.outputs[Metropolix::PITCH_1].getVoltage()==.5f && module.outputs[Metropolix::PITCH_2].getVoltage()==0,"Rack AUX reads first channel and affects assigned output only");
+        module.inputs[Metropolix::AUX_X_IN].setVoltage(-2.f);process(1);
+        require(module.outputs[Metropolix::PITCH_1].getVoltage()==-1.f,"Rack AUX voltage is read every sample");
+        module.inputs[Metropolix::AUX_X_IN].channels=0;process(1);
+        require(module.outputs[Metropolix::PITCH_1].getVoltage()==0,"Rack cable disconnect immediately restores base pitch");
+        module.params[Metropolix::auxParam(1,Metropolix::AUX_AMOUNT)].setValue(.1f);
+        module.params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModMute);
+        module.params[Metropolix::auxParam(1,Metropolix::AUX_ASSIGNMENT)].setValue(2);
+        process();
+        require(module.auxVoltage[1].load()==5 && module.outputs[Metropolix::GATE_1].getVoltage()==0 && module.outputs[Metropolix::GATE_2].getVoltage()==0,"unpatched AUX knob is a manual gate for both tracks");
+        module.params[Metropolix::RUN].setValue(0);process();
+        require(module.auxVoltage[1].load()==5,"AUX meter remains live while transport is stopped");
+        module.uiPage.store(Metropolix::AUX_PAGE);module.uiField.store(1);module.selectedAux.store(1);
+        json_t* data=module.dataToJson();Metropolix restored;restored.dataFromJson(data);json_decref(data);
+        require(restored.uiPage.load()==Metropolix::AUX_PAGE && restored.uiField.load()==1 && restored.selectedAux.load()==1,"AUX display state roundtrip");
+        json_t* previous=json_pack("{s:i}","schemaVersion",6);module.dataFromJson(previous);json_decref(previous);
+        for(int id=Metropolix::AUX_PARAMS;id<Metropolix::NUM_PARAMS;++id)require(module.params[id].getValue()==0,"2.3.x preset clears AUX with no change to old IDs");
     }
     delete context.engine;
     context.engine = nullptr;

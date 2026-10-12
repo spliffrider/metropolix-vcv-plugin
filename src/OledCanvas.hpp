@@ -38,6 +38,7 @@ struct OledCanvas {
             case '/':return {3,"11244"}; case ':':return {1,"01010"}; case '.':return {1,"00001"};
             case '%':return {3,"51245"}; case '#':return {5,"AVAVA"}; case '?':return {3,"61202"};
             case '(':return {2,"12221"};case ')':return {2,"21112"};case '=':return {3,"07070"};
+            case '>':return {3,"42124"};
             default:return {2,"00000"};
         }
     }
@@ -58,6 +59,7 @@ struct OledCanvas {
             case '9':return "EHHF124"; case '.':return "0000066"; case '-':return "000V000";
             case '+':return "004E400"; case '/':return "112488G"; case '%':return "PI248J3";
             case '#':return "AAVA VAA"; case ':':return "0660660";
+            case '>':return "0842480";
             case 'a':return "00E1FHF";case 'b':return "GGUHHHU";case 'c':return "00FGGGF";
             case 'd':return "11FHHHF";case 'e':return "00EHVGF";case 'f':return "648U888";
             case 'g':return "00FHHF1";case 'h':return "GGUHHHH";case 'i':return "404444E";

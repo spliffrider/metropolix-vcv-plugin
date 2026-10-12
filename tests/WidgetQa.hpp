@@ -5,6 +5,16 @@ void MetropolixWidget::qaStep() {
     auto* m=getModule<Metropolix>(); if(!directory || !m)return;
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_AUX_QA")) {
+            static float minimum[3]={100,100,100},maximum[3]={-100,-100,-100};
+            for(int i=0;i<3;++i){float v=m->auxVoltage[i].load();minimum[i]=std::min(minimum[i],v);maximum[i]=std::max(maximum[i],v);}
+            if(qaFrame==180) {
+                bool good=minimum[0]==-.5f && maximum[0]==.5f && minimum[1]<-.3f && maximum[1]<=0 && minimum[2]==0 && maximum[2]==5;
+                std::ofstream log(dir+"/report.txt",std::ios::app);
+                for(int i=0;i<3;++i)log<<"AUX "<<char('X'+i)<<" effective range: "<<minimum[i]<<".."<<maximum[i]<<" V\n";
+                log<<(good?"PASS ":"FAIL ")<<"AUX WIRING COMPLETE\n";
+            }
+        }
         if(qaFrame==180)APP->window->screenshot(dir+"/two-voice.png");
         return;
     }
@@ -61,7 +71,11 @@ void MetropolixWidget::qaStep() {
         int counts[3]={0,0,0}; int ports=0;
         for(auto* w:children) { if(auto* f=dynamic_cast<HardwareSlider*>(w))counts[f->kind]++; if(dynamic_cast<MetalPort*>(w))ports++; }
         check(counts[0]==8 && counts[1]==8 && counts[2]==8,"eight interactive pitch, pulse and gate sliders");
-        check(ports==9,"existing nine patchable ports preserved");
+        check(ports==12,"nine existing ports plus three patchable AUX inputs");
+        for(int input=0;input<3;++input) {
+            int found=0;for(auto* w:children)if(auto* p=dynamic_cast<MetalPort*>(w))if(p->type==engine::Port::INPUT && p->portId==Metropolix::AUX_X_IN+input)++found;
+            check(found==1,"each AUX input has one real Rack jack");
+        }
         APP->window->screenshot(dir+"/compact.png");
         auto* c=find("BPM"); click(c);
         check(m->uiPage.load()==Metropolix::BPM_PAGE,"BPM click selects display page");
@@ -163,6 +177,37 @@ void MetropolixWidget::qaStep() {
         check(box.size.x==510 && !editor->visible && !modPanel->visible,"optional editors close to hardware width");
         check(m->uiPage.load()==Metropolix::HOME && !m->uiAlt.load(),"EXIT returns to home");
         auto* stub=find("SWING"); check(stub && stub->tooltipText().find("not implemented")!=std::string::npos,"unfinished hardware control explains its status");
-        check(!qaFailed,"UI QA COMPLETE"); APP->window->close();
+        auto* knob=find("AUX X attenuverter");auto* q=m->getParamQuantity(Metropolix::auxParam(0,Metropolix::AUX_AMOUNT));
+        drag(knob,-100);check(q->getValue()>0,"AUX knob upward drag increases amount");
+        APP->history->undo();check(q->getValue()==0,"AUX knob drag is one undo");
+        drag(knob,100);check(q->getValue()<0,"AUX knob downward drag inverts amount");APP->history->undo();
+        click(find("AUX X assignment"));check(m->selectedAux.load()==0 && m->uiPage.load()==Metropolix::AUX_PAGE,"AUX button opens correct screen");
+        drag(find("AUX X assignment"),-100);check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_DESTINATION))>0,"held AUX assignment button changes destination");APP->history->undo();
+        click(find("Encoder"));check(screenParam(m)==Metropolix::auxParam(0,Metropolix::AUX_ASSIGNMENT),"AUX encoder click switches to target tracks");
+        drag(find("Encoder"),-100);check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_ASSIGNMENT))>0,"AUX encoder edits target tracks");APP->history->undo();
+        check(knob->tooltipText().find("Effective input")!=std::string::npos,"AUX hover includes live voltage and route");
+        press(find("AUX Y assignment"),GLFW_MOUSE_BUTTON_RIGHT);
+    }
+    if(qaFrame==74) {
+        auto* item=dynamic_cast<ui::MenuItem*>(seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Destination";}));
+        check(item!=nullptr,"AUX menu offers named destinations");
+        if(item) {
+            auto* submenu=item->createChildMenu();
+            auto* mute=dynamic_cast<ui::MenuItem*>(seek(submenu,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Mute";}));
+            check(mute!=nullptr,"AUX destination submenu contains Mute");
+            if(mute){event::Action e;mute->onAction(e);}
+            delete submenu;
+            check(m->integer(Metropolix::auxParam(1,Metropolix::AUX_DESTINATION))==metro::ModMute,"AUX menu changes Y destination");
+            check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_DESTINATION))==0,"AUX menu leaves X unchanged");
+        }
+        auto* clear=dynamic_cast<ui::MenuItem*>(seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Clear assignment";}));
+        check(clear!=nullptr,"AUX clear assignment is available");
+        if(clear){event::Action e;clear->onAction(e);check(m->integer(Metropolix::auxParam(1,Metropolix::AUX_DESTINATION))==0,"clear removes route");APP->history->undo();check(m->integer(Metropolix::auxParam(1,Metropolix::AUX_DESTINATION))==metro::ModMute,"clear assignment supports undo");}
+        closeMenus();
+        json_t* data=APP->engine->moduleToJson(m);m->selectedAux.store(0);m->uiPage.store(0);APP->engine->moduleFromJson(m,data);json_decref(data);
+        check(m->selectedAux.load()==1 && m->uiPage.load()==Metropolix::AUX_PAGE,"AUX page and input survive patch reload");
+        click(find("ALT"));int before=m->integer(Metropolix::auxParam(1,Metropolix::AUX_DESTINATION));
+        drag(find("AUX Y assignment"),-100);check(m->integer(Metropolix::auxParam(1,Metropolix::AUX_DESTINATION))==before,"ALT AUX does not accidentally alter assignment");
+        check(!qaFailed,"UI QA COMPLETE");APP->window->close();
     }
 }

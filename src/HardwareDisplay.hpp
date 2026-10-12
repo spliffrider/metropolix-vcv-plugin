@@ -223,6 +223,20 @@ struct HardwareDisplay : HardwareControl {
             int source=integer(page==Metropolix::A_PAGE?Metropolix::OUTPUT_SOURCE_A:Metropolix::OUTPUT_SOURCE_B);
             c.text(2,2,page==Metropolix::A_PAGE?"OUTPUT A":"OUTPUT B");c.right(125,12,source<2?"CV":"Mod",false);
             field(c,29,"OUTPUT ASSIGN",source<2?string::f("Trk %d",source+1):string::f("Mod %d",source-1),true,128,1);
+        } else if(page==Metropolix::AUX_PAGE) {
+            int input=m?m->selectedAux.load():0;
+            int dest=integer(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION));
+            int target=integer(Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT));
+            float voltage=m?m->auxVoltage[input].load():0.f;
+            field(c,0,string::f("AUX %c PARAM",'X'+input),Metropolix::modDestinations()[dest],f==0,128,1);
+            if(metro::modGateDestination(static_cast<metro::ModDestination>(dest))) {
+                c.box(116,2,9,7);if(voltage>=1.5f)c.fill(118,4,5,3);
+            } else {
+                c.box(83,2,42,6);c.line(104,1,104,8);
+                int end=104+static_cast<int>(metro::clamp(voltage,-5.f,5.f)*3.7f);
+                if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
+            }
+            field(c,29,"AUX ASSIGN",string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
         } else if(page==Metropolix::SETUP_PAGE)field(c,0,"SLIDER OCTAVES",std::to_string(integer(Metropolix::RANGE,3)),true);
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
         footer(c);return c;

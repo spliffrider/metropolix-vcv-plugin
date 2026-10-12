@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.3.0
+# Validation and fidelity status — 2.4.0
 
 Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metropolix manual 1.6 (2025-09-24)](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf). Page numbers below are the printed page numbers; the PDF cover adds one to the file page index.
 
@@ -16,7 +16,7 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
 | MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
 | MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
-| Rack host | All 404 parameters round-trip through Rack serialization; note/MOD UI state restores; legacy order/limit migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, and actual assignable A/B voltages |
+| Rack host | All 413 parameters round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
 | Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
 | MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
@@ -49,6 +49,34 @@ The visual reference is the supplied photograph and native screen images from ma
 
 The display does not imply additional engine features: Tempo slide, 100% gate scale, and /1 external clock division are fixed readouts; CTRL remains unimplemented; MOD values still use volts rather than destination-specific units. A/B routing directly selects the available track-CV/MOD sources. Exact photographic materials, every glyph/animation, long-press gestures, and complete firmware navigation remain unverified or unfinished. Windows capture failed with `FrameArrived timed out: timed out waiting on channel`; native physical mouse testing remains separate from the successful callback checks.
 
+## AUX inputs — 2.4.0
+
+Three inputs, attenuverters, destination/track controls, and a live AUX display
+follow manual pp.154–156. All eight supported destinations share the existing
+MOD destination mappings. The engine reads external CV every sample; AUX and
+MOD contributions combine before destination saturation. Mute uses thresholded
+gates and logical inversion. See [AUX controls and assumptions](AUX-INPUTS.md).
+
+The five portable engine suites pass, including 53,903 new AUX assertions:
+voltage polarity/limits, the 1.5 V gate threshold, manual unpatched gates,
+track isolation, pitch/gate destinations, real ratchet edges, and AUX/MOD
+interaction at 44.1/48/96 kHz. Existing sequencing suites still pass unchanged.
+The Rack host verifies all 413 parameters, every-sample CV input, mono channel
+selection, unplugging, live stopped meters, schema 7 screen persistence, and
+old-preset loading over previously assigned AUX settings.
+
+The widget suite checks all three real jacks, knob/button/encoder drags, named
+destination menus, track isolation, clear assignment with undo, and patch
+reload. AUX adds continuous-CV and gate settings screens to the display suite.
+All 22 display states pass and their native-pixel renders were inspected. In
+the 12-second Rack AUX demo, observed effective X/Y/Z ranges were -0.5..+0.5 V,
+-0.497108..0 V, and 0..5 V. Both voices remained finite and active: channel 1
+RMS 0.418846 V, peak 1.59958 V, DC 0.00185187 V; channel 2 RMS 0.482742 V,
+peak 1.59994 V, DC -0.000233547 V. A/B retained their -2..+2 V and 0..+5 V ranges.
+Run `scripts/test-ui.ps1 -Aux` to reproduce; evidence is in `tmp/aux-qa`.
+The older UI-only revisions below retain their historical validation results;
+2.4.0 intentionally extends the engine and is not byte-identical to 2.1.0.
+
 ## Interpretations and limits
 
 - **No hardware comparison.** Passing a manual example establishes agreement with that example, not firmware equivalence.
@@ -69,7 +97,7 @@ The display does not imply additional engine features: Tempo slide, 100% gate sc
 
 ## Next feature work
 
-The remaining hardware MOD destinations; AUX/CTRL assignment; stage pitch and gate-length overrides; Loopy; swing; full scale selection; track-wide accumulation; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; CTRL assignment; ALT+AUX selective randomization; stage pitch and gate-length overrides; Loopy; swing; full scale selection; track-wide accumulation; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 

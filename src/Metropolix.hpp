@@ -37,7 +37,9 @@ struct Metropolix : Module {
         MOD_STRIDE = 26,
         OUTPUT_SOURCE_A = MOD_LANE + 8 * MOD_STRIDE,
         OUTPUT_SOURCE_B,
-        NUM_PARAMS
+        AUX_PARAMS = OUTPUT_SOURCE_B + 1,
+        AUX_STRIDE = 3,
+        NUM_PARAMS = AUX_PARAMS + 3 * AUX_STRIDE
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV };
@@ -46,7 +48,8 @@ struct Metropolix : Module {
     enum StageOptions { PROB_TARGET, ACCUM_TRIGGER };
     enum ModParams { MOD_LENGTH, MOD_OFFSET, MOD_DIVISION, MOD_ORDER, MOD_REVERSED, MOD_PULSE_LIMIT,
         MOD_TYPE, MOD_DESTINATION, MOD_ASSIGNMENT, MOD_MUTE, MOD_VALUE = 10, MOD_RAMP = 18 };
-    enum InputIds { CLOCK_IN, RESET_IN, NUM_INPUTS };
+    enum AuxParams { AUX_AMOUNT, AUX_DESTINATION, AUX_ASSIGNMENT };
+    enum InputIds { CLOCK_IN, RESET_IN, AUX_X_IN, AUX_Y_IN, AUX_Z_IN, NUM_INPUTS };
     enum OutputIds { PITCH_1, GATE_1, PITCH_2, GATE_2, CLOCK_OUT, A_OUT, B_OUT, NUM_OUTPUTS };
     enum LightIds { POSITION_1, POSITION_2 = POSITION_1 + 8, NUM_LIGHTS = POSITION_2 + 8 };
     static int trackParam(int t, int p) { return TRACK + t * TRACK_STRIDE + p; }
@@ -55,6 +58,7 @@ struct Metropolix : Module {
     static int accumParam(int t, int p) { return ACCUM_OPTIONS + t * ACCUM_OPTIONS_STRIDE + p; }
     static int stageOption(int t, int s, int p) { return STAGE_OPTIONS + t * 16 + p * 8 + s; }
     static int modParam(int lane, int p) { return MOD_LANE + lane * MOD_STRIDE + p; }
+    static int auxParam(int input, int p) { return AUX_PARAMS + input * AUX_STRIDE + p; }
     static std::vector<std::string> modDestinations() {
         return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute"};
     }
@@ -74,10 +78,12 @@ struct Metropolix : Module {
     std::atomic<bool> expanded{false}, externalClock{false};
     std::atomic<bool> modEditor{false};
     std::atomic<int> selectedLane{0};
+    std::atomic<int> selectedAux{0};
+    std::atomic<float> auxVoltage[3];
     // Presentation only: the hardware panel and optional grids share all
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
-        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE };
+        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -168,6 +174,14 @@ struct Metropolix : Module {
         }
         configSwitch(OUTPUT_SOURCE_A, 0, 9, 0, "Output A source", outputSources());
         configSwitch(OUTPUT_SOURCE_B, 0, 9, 1, "Output B source", outputSources());
+        for (int input = 0; input < 3; ++input) {
+            std::string name = std::string("AUX ") + char('X' + input) + " ";
+            auxVoltage[input].store(0.f);
+            configParam(auxParam(input,AUX_AMOUNT),-1.f,1.f,0.f,name+"attenuverter","%",0,100);
+            configSwitch(auxParam(input,AUX_DESTINATION),0,metro::ModDestinationCount-1,0,name+"destination",modDestinations());
+            configSwitch(auxParam(input,AUX_ASSIGNMENT),0,2,0,name+"target",{"Track 1","Track 2","Both tracks"});
+            configInput(AUX_X_IN+input,name+"CV / gate (channel 1; assign with the button below)");
+        }
         configInput(CLOCK_IN, "Clock (one pulse per sixteenth note)");
         configInput(RESET_IN, "Reset");
         configOutput(PITCH_1, "Track 1 pitch (1 V/oct)");
@@ -192,6 +206,12 @@ struct Metropolix : Module {
         auto& c = sequencer.settings;
         c.outputSources[0] = integer(OUTPUT_SOURCE_A);
         c.outputSources[1] = integer(OUTPUT_SOURCE_B);
+        for (int input=0; input<3; ++input) {
+            auto& aux = c.auxInputs[input];
+            aux.amount = params[auxParam(input,AUX_AMOUNT)].getValue();
+            aux.destination = static_cast<metro::ModDestination>(integer(auxParam(input,AUX_DESTINATION)));
+            aux.assignment = integer(auxParam(input,AUX_ASSIGNMENT));
+        }
         for (int lane = 0; lane < 8; ++lane) {
             auto& mod = c.modLanes[lane];
             mod.length = integer(modParam(lane, MOD_LENGTH));
@@ -255,6 +275,12 @@ struct Metropolix : Module {
     void process(const ProcessArgs& args) override {
         bool update = controlCounter++ % 32 == 0;
         if (update) readSettings();
+        for (int input=0; input<3; ++input) {
+            auto& aux = sequencer.settings.auxInputs[input];
+            aux.connected = inputs[AUX_X_IN+input].isConnected();
+            aux.voltage = inputs[AUX_X_IN+input].getVoltage();
+            if (update) auxVoltage[input].store(aux.effectiveVoltage(),std::memory_order_relaxed);
+        }
         bool clockEdge = clockTrigger.process(inputs[CLOCK_IN].getVoltage(), 0.1f, 1.5f);
         bool resetEdge = resetTrigger.process(inputs[RESET_IN].getVoltage(), 0.1f, 1.5f);
         bool button = resetButton.process(params[RESET].getValue());
@@ -305,7 +331,8 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(6));
+        json_object_set_new(root, "schemaVersion", json_integer(7));
+        json_object_set_new(root, "selectedAux", json_integer(selectedAux.load()));
         json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
         json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
         json_object_set_new(root, "uiPage", json_integer(uiPage.load()));
@@ -322,6 +349,10 @@ struct Metropolix : Module {
         return root;
     }
     void dataFromJson(json_t* root) override {
+        // Old module presets may be loaded over an already configured module.
+        // Missing AUX parameters must restore the original, unassigned sound.
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<7)
+            for(int id=AUX_PARAMS;id<NUM_PARAMS;++id)params[id].setValue(0.f);
         // Preserve the original prototype's ORDER=1 (Reverse) after ORDER=1
         // becomes Ping Pong. All existing parameter IDs remain unchanged.
         if (json_integer_value(json_object_get(root, "schemaVersion")) < 2) {
@@ -342,7 +373,8 @@ struct Metropolix : Module {
         selectedTrack.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedTrack"))), 0, 1));
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(UNAVAILABLE_PAGE)));
+        selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(AUX_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, 1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));

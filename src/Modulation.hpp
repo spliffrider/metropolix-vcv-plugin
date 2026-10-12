@@ -11,6 +11,28 @@ enum ModDestination { ModNone, ModOctave, ModPitchPre, ModPitchPost, ModPitchOff
 inline bool modGateDestination(ModDestination destination) { return destination == ModMute; }
 template <class T> T modClamp(T v, T lo, T hi) { return std::max(lo, std::min(hi, v)); }
 
+// AUX pp.154-156: continuous CV is attenuverted; a gate destination uses
+// logical inversion to the left of noon. Unpatched gate controls can be
+// operated manually (CW = high, CCW = low). Unpatched continuous CV is zero.
+struct AuxInput {
+    float voltage = 0.f, amount = 0.f;
+    bool connected = false;
+    ModDestination destination = ModNone;
+    int assignment = 0;
+
+    float effectiveVoltage() const {
+        if (!std::isfinite(amount) || (connected && !std::isfinite(voltage))) return 0.f;
+        float gain = modClamp(amount, -1.f, 1.f);
+        if (gain == 0.f) return 0.f;
+        if (modGateDestination(destination)) {
+            bool high = !connected || voltage >= 1.5f;
+            if (gain < 0.f) high = !high;
+            return high ? 5.f : 0.f;
+        }
+        return connected ? modClamp(voltage * gain, -5.f, 5.f) : 0.f;
+    }
+};
+
 struct ModLane {
     int length = 8, offset = 0, division = 1, pulseLimit = 0;
     Order order = Forward;
@@ -85,7 +107,8 @@ struct Modulation {
             state.divider = (state.divider + 1) % division;
         }
     }
-    void render(const std::array<ModLane, 8>& configs, double dt) {
+    void render(const std::array<ModLane, 8>& configs, double dt,
+                const std::array<AuxInput, 3>& auxInputs = std::array<AuxInput, 3>()) {
         for (auto& track : routes) track.fill(0.f);
         for (int i = 0; i < 8; ++i) {
             const auto& config = configs[i];
@@ -98,6 +121,15 @@ struct Modulation {
                 if (config.assignment == 2 || config.assignment == track)
                     routes[track][config.destination] += state.value;
             }
+        }
+        // Sum AUX and MOD contributions before destination saturation. This
+        // lets negative CV cancel a positive route even if MOD alone exceeds 5V.
+        for (const auto& input : auxInputs) {
+            if (input.destination <= ModNone || input.destination >= ModDestinationCount) continue;
+            float value = input.effectiveVoltage();
+            for (int track = 0; track < 2; ++track)
+                if (input.assignment == 2 || input.assignment == track)
+                    routes[track][input.destination] += value;
         }
         for (auto& track : routes) for (auto& value : track) value = modClamp(value, -5.f, 5.f);
     }

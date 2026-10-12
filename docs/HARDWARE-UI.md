@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.3.0
+# Hardware panel and desktop interaction — 2.4.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -20,9 +20,9 @@ The panel follows the supplied photograph at 34 HP. This revision refines letter
 
 ## Scope of this pass
 
-The tested 2.1.0 musical engine, all 404 parameter IDs, and nine existing patchable ports are retained. Older patches keep their cables and settings. Schema 6 saves the HOME view and stage-detail selection as well as the existing screen state; temporary ALT state clears on load. The old LEN field selection migrates safely.
+The existing 404 parameter IDs and nine patchable ports retain their identities. AUX adds nine parameters and three inputs. Older patches keep their cables/settings and load with AUX unassigned. Schema 7 also saves the selected AUX screen/input, alongside HOME and stage-detail selection; temporary ALT state clears on load. The old LEN field selection migrates safely.
 
-AUX X/Y/Z routing, CTRL assignments, Loopy, swing, stage pitch/gate overrides, and MX remain unimplemented. Their hardware controls are represented visually, with explanatory hover text and menus. The AUX sockets are not patchable until their routing is implemented. The new panel does not imply that these engine features have been added.
+AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). CTRL assignments, Loopy, swing, stage pitch/gate overrides, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 
