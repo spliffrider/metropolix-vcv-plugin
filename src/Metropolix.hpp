@@ -74,6 +74,13 @@ struct Metropolix : Module {
     std::atomic<bool> expanded{false}, externalClock{false};
     std::atomic<bool> modEditor{false};
     std::atomic<int> selectedLane{0};
+    // Presentation only: the hardware panel and optional grids share all
+    // existing Rack parameters. No engine parameter IDs change here.
+    enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
+        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE };
+    std::atomic<int> uiPage{HOME}, uiField{0};
+    std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
+    std::atomic<bool> uiChooseFunction{false};
     std::atomic<int> modStage[8];
     std::atomic<float> modVoltage[8];
     std::atomic<int> playStage[2];
@@ -163,6 +170,12 @@ struct Metropolix : Module {
         configOutput(CLOCK_OUT, "Clock (5 V, 1 ms)");
         configOutput(A_OUT, "Assignable A: track CV or MOD lane");
         configOutput(B_OUT, "Assignable B: track CV or MOD lane");
+        for (auto* q : paramQuantities) {
+            if (dynamic_cast<SwitchQuantity*>(q)) q->snapEnabled = true;
+            q->description = "Hold and drag up to increase, down to decrease. Ctrl-drag for fine adjustment. Right-click for values and reset.";
+        }
+        paramQuantities[RUN]->description = "Click to start or stop. Stopping silences gates and modulation; pitch holds.";
+        paramQuantities[RESET]->description = "Press to restart note tracks, MOD lanes, and accumulators.";
         sequencer.seed(random::u32());
         readSettings();
     }
@@ -270,7 +283,12 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(4));
+        json_object_set_new(root, "schemaVersion", json_integer(5));
+        json_object_set_new(root, "uiPage", json_integer(uiPage.load()));
+        json_object_set_new(root, "uiField", json_integer(uiField.load()));
+        json_object_set_new(root, "uiMod", json_boolean(uiMod.load()));
+        json_object_set_new(root, "uiEdit", json_boolean(uiEdit.load()));
+        json_object_set_new(root, "uiChooseFunction", json_boolean(uiChooseFunction.load()));
         json_object_set_new(root, "modEditor", json_boolean(modEditor.load()));
         json_object_set_new(root, "selectedLane", json_integer(selectedLane.load()));
         json_object_set_new(root, "expanded", json_boolean(expanded.load()));
@@ -300,6 +318,12 @@ struct Metropolix : Module {
         selectedTrack.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedTrack"))), 0, 1));
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(UNAVAILABLE_PAGE)));
+        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, 1));
+        uiMod.store(json_is_true(json_object_get(root, "uiMod")));
+        uiEdit.store(json_is_true(json_object_get(root, "uiEdit")));
+        uiChooseFunction.store(json_is_true(json_object_get(root, "uiChooseFunction")));
+        uiAlt.store(false);
         sequencer.reset();
         readSettings();
     }

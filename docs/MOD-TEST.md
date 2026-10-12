@@ -1,6 +1,6 @@
-# Modulation playtest — 2.1.0
+# Modulation playtest — 2.2.0 interface / 2.1.0 musical baseline
 
-Open `examples/Modulation-demo.vcv` in Rack. It is already running and patched. Use **File > Save As** to keep your own test copy. Choose your output device in the AUDIO module to hear the two voices; start with your listening volume low. The patch's two VCAs are set to 32%.
+Open `examples/Hardware-panel-demo.vcv` in Rack. It is already running and patched. Right-click **MOD**, then choose **Open MOD editor** to expose the grid used in these checks. The older `Modulation-demo.vcv` uses the same musical settings. Use **File > Save As** to keep your own test copy. Choose your output device in the AUDIO module to hear the two voices. The patch's two VCAs are set to 32%.
 
 Metropolix Lab produces control voltages, not audio. Its pitch and gate outputs drive the oscillators, envelopes, and VCAs below it. The first Scope monitors OUT A and OUT B; the second monitors PITCH 1 and GATE 1. Signals should appear even without an audio device selected.
 
@@ -28,7 +28,7 @@ The active stage moves through the selected lane's graph. Its live voltage is sh
 7. **Output assignment.** Set OUTPUT A SOURCE to MOD 3. A should now show that lane's 0/+1/-1 V pattern, while MOD 3 continues to change track 1's octave internally. Return A to MOD 1. The two output selectors are independent.
 8. **Gate mode.** Use an unused lane, choose Gate as its CV type, and click stage values to toggle 0/5 V. Route B to that lane. It should emit low/high steps; gates do not ramp. Return B to MOD 2 afterward.
 9. **Save and reopen.** Save your test copy, close it, and reopen it. Check selected MOD lane, editor visibility, stage values, timing, destinations, and A/B assignments. Playback restarts rather than resuming at the exact saved clock position.
-10. **Earlier controls.** Open the stage editor and try pitch sliders, pulse counts, gate types, ratchets, probability, accumulation, skip, and slide on each track. Returning to MOD LANES should retain its settings. Try compact/expanded views with neighboring modules and ordinary mouse dragging.
+10. **Earlier controls.** Right-click EDIT to open the stage editor and try pitch sliders, pulse counts, gate types, ratchets, probability, accumulation, skip, and slide on each track. Reopen the MOD editor through MOD's right-click menu; it should retain its settings. Try compact/expanded views with neighboring modules and ordinary mouse dragging. The new panel workflow is detailed in `HARDWARE-UI.md`.
 
 If something behaves unexpectedly, save the patch and note the selected track/lane, control changed, expected result, and actual result. That gives us a reproducible case without needing the physical module.
 

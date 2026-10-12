@@ -1,6 +1,7 @@
 RACK_DIR ?= .tools/Rack-SDK
 SOURCES += $(wildcard src/*.cpp)
 DISTRIBUTABLES += README.md docs examples
+DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
 

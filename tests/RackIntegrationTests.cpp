@@ -26,6 +26,10 @@ int main() {
         source.expanded.store(true);
         source.modEditor.store(true);
         source.selectedLane.store(6);
+        source.uiPage.store(Metropolix::LENGTH_PAGE);
+        source.uiField.store(1);
+        source.uiMod.store(true);
+        source.uiEdit.store(true);
         source.params[Metropolix::modParam(6, Metropolix::MOD_VALUE + 3)].setValue(-2.5f);
         source.params[Metropolix::modParam(6, Metropolix::MOD_RAMP + 3)].setValue(1.f);
         source.params[Metropolix::modParam(6, Metropolix::MOD_DESTINATION)].setValue(metro::ModPitchPre);
@@ -52,6 +56,7 @@ int main() {
         for (int id = 0; id < Metropolix::NUM_PARAMS; ++id)
             require(source.params[id].getValue() == restored.params[id].getValue(), "every parameter survives Rack serialization");
         require(restored.modEditor.load() && restored.selectedLane.load() == 6, "MOD editor state persists");
+        require(restored.uiPage.load()==Metropolix::LENGTH_PAGE && restored.uiField.load()==1 && restored.uiMod.load() && restored.uiEdit.load(), "hardware UI page, field and edit target persist");
         require(restored.sequencer.settings.modLanes[6].ramps[3] && restored.sequencer.settings.modLanes[6].values[3] == -2.5f
             && restored.sequencer.settings.outputSources[0] == 8, "MOD lane and output routing reach the engine");
         const auto& restoredTrack = restored.sequencer.settings.tracks[1];

@@ -1,10 +1,12 @@
 # Metropolix Lab for VCV Rack 2
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, a hardware-style main panel, and expanded stage and modulation editors. Version **2.1.0**, built and tested on **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, a hardware-layout main panel, and optional stage and modulation editors. Version **2.2.0**, built and tested on **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+
+Version 2.2.0 is the first working pass at the supplied hardware panel: silver artwork, the original control arrangement, and 34 HP width. Hold and drag upward to increase values; downward to decrease. Hover help, context menus, numeric entry, and Rack undo/redo work alongside the hardware layout. See **[docs/HARDWARE-UI.md](docs/HARDWARE-UI.md)** for operation and current limits. The exact visual target remains **[docs/UI-TARGET.md](docs/UI-TARGET.md)**; component detail and display/navigation fidelity still need refinement.
 
 ## Start here
 
-The ready-to-install package is `dist/MetropolixLab-2.1.0-win-x64.vcvplugin`. Close Rack and run:
+The ready-to-install package is `dist/MetropolixLab-2.2.0-win-x64.vcvplugin`. Close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -12,7 +14,7 @@ The ready-to-install package is `dist/MetropolixLab-2.1.0-win-x64.vcvplugin`. Cl
 
 This copies the package to this computer's Rack user plugin folder. On the next launch, search for **Metropolix Lab** in the module browser. For another computer, use Rack's **Help > Open user folder**, place the package in `plugins-win-x64` (Rack 2.4 or later), and restart Rack.
 
-Open **examples/Modulation-demo.vcv** for the new test patch. The first Scope shows A stepping from -2 V to +2 V and B ramping from 0 V to +5 V. Other MOD lanes change track 1's octave, track 2's ratchets, and both tracks' gate length. The adjacent Scope monitors track 1 pitch and gate. See **[docs/MOD-TEST.md](docs/MOD-TEST.md)** for the complete playtest guide.
+Open **examples/Hardware-panel-demo.vcv** for the new panel with the accepted modulation demo's musical settings. The first Scope shows A stepping from -2 V to +2 V and B ramping from 0 V to +5 V. Other MOD lanes change track 1's octave, track 2's ratchets, and both tracks' gate length. The adjacent Scope monitors track 1 pitch and gate. See **[docs/MOD-TEST.md](docs/MOD-TEST.md)** for musical checks.
 
 The patch includes two synthesizer voices using only VCV Free and VCV Core: a triangle voice on the left and a slower sine voice on the right. It starts running, but its AUDIO module has no device selected. Select your output device there to hear it. The VCA levels are set to 32%. Metropolix Lab itself outputs pitch, gates, and modulation; the patched oscillators turn those signals into sound.
 
@@ -31,16 +33,15 @@ Rack must be closed first because its Windows version allows one running instanc
 ## Playing and editing
 
 1. **RUN** starts or stops playback. **RESET** returns to the starting position and clears accumulated transpositions.
-2. Drag the eight pitch sliders. Drag **PULSE COUNT** values to set stage durations from 1 to 8 pulses. Click a **GATE TYPE** to select REST, SINGLE, MULTI, or HOLD.
-3. Select **TRACK 1** or **TRACK 2**. Pitches, pulse counts, and gate types are shared; track settings and stage edits are independent.
-4. Click a numbered stage button. The selector below the transport chooses RATCHETS, PROBABILITY, ACCUM, SLIDE, SKIP, or CV; the adjacent value edits that stage.
-5. **OPEN STAGE EDITOR** shows every stage value for the selected track. Drag numeric cells vertically, right-click for numeric entry/reset, and click ON/OFF cells to toggle. Both views use the same Rack parameters and support undo/redo.
-6. **TRACK SETUP** exposes direction, pulse-count division, fixed pulse length, gate stretching, ratchet mode, and accumulator options. **ORDER** offers all 21 play orders.
-7. Right-click a numbered stage button for that stage's **probability target** (Stage/Pulse) and **accumulator trigger** (Stage/Pulse/Ratchet). These options are also available through the module's context menu.
-8. **MOD LANES** opens the modulation editor. Select MOD 1–8, set its eight voltages, and click STEP/RAMP to choose each stage's transition. Each lane has its own length, offset, division, play order, and mute. Right-click a MOD selector for reverse direction and fixed pulse length.
-9. Choose a MOD lane's **internal destination** and target track(s). Choose **OUTPUT A SOURCE** and **OUTPUT B SOURCE** independently: either track's stage CV or any MOD lane. A lane can drive both an internal destination and a physical output.
+2. Drag the pitch faders, **PULSE COUNT** switches (1–8), and **GATE TYPE** switches (Rest, Single, Multiple, Hold) vertically. Right-click for direct entry or named choices.
+3. Select **TRK 1** or **TRK 2**. Pitches, pulse counts, and gate types are shared; track settings and stage edits are independent. Right-click a track button for timing, ratchet, and accumulator settings.
+4. Click **EDIT**, choose the printed function on a stage button, then choose a stage. Drag the encoder, screen value, or held stage button to edit it. Slide/Skip stage clicks toggle the chosen stage. Stage pitch/gate-length overrides are still unimplemented.
+5. Right-click **EDIT** to open the stage grid. Numeric and toggle cells accept vertical dragging; a short click toggles ON/OFF. Right-click a stage button for its current value, function selection, and probability/accumulator trigger settings.
+6. Click **BPM**, **SCALE**, **ORDER**, **LEN**, **DIV**, **SLIDE**, or **GATE** for its display page. These value buttons also accept a held vertical drag. The encoder/display click switches fields where applicable. **EXIT** returns home.
+7. Click **MOD** for modulation. Right-click it to choose MOD 1–8, change lane settings/routing, or open the MOD grid. Each lane retains independent values, transitions, timing, destination, and mute.
+8. **ALT**, then **A** or **B**, selects the corresponding output assignment on the display. The optional MOD grid also exposes both output sources directly. A lane can drive an internal destination and a physical output simultaneously.
 
-Expanding changes the width from 40 HP to 72 HP. Rack finds an available position if the extra width would overlap a neighbor. Closing returns it to 40 HP. View state and musical parameters are saved with the Rack patch. Earlier development patches migrate their reverse-order setting and shared accumulation limit.
+Opening an optional grid changes the width from 34 HP to 66 HP. Rack finds an available position if that would overlap a neighbor. Closing returns it to 34 HP. View state and musical parameters are saved with the Rack patch. The 404 parameter IDs and nine existing patchable ports are preserved. Earlier development patches migrate their reverse-order setting and shared accumulation limit.
 
 ## Connections
 
@@ -84,9 +85,10 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-ui.ps1
 .\scripts\test-ui.ps1 -Audio
 .\scripts\test-ui.ps1 -Modulation
+.\scripts\test-ui.ps1 -Hardware
 ```
 
-The three UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The modulation test records both synthesizer voices and measures A/B through real Rack cables.
+The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the new default demo and records both synthesizer voices and A/B through real Rack cables.
 
 Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Other platforms have not been built or tested.
 
@@ -96,7 +98,7 @@ The engine uses fixed-size state and performs no allocation, file I/O, or UI wor
 
 - `src/Sequencer.hpp`, `PlayOrder.hpp`, `GateTiming.hpp`, `Accumulator.hpp`, `Modulation.hpp`: independent musical engine.
 - `src/Metropolix.hpp`: Rack parameters, timing adapters, ports, and persistence.
-- `src/Metropolix.cpp`: main panel and expanded editor.
+- `src/Metropolix.cpp`, `HardwareUI.hpp`, `HardwareLayout.hpp`: hardware artwork, interaction, and optional editors.
 - `tests/`: musical, manual-example, host integration, editor, and audio checks.
 - [VCV Rack manual](https://vcvrack.com/manual/), read excluding Licensing as requested.
 - [Metropolix manual 1.6, 2025-09-24](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf), cached locally in `reference/`.
