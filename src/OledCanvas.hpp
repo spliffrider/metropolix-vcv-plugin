@@ -2,7 +2,10 @@
 // Text and diagrams are pixels, so zooming never substitutes a desktop font.
 struct OledCanvas {
     uint8_t pixels[64][128] = {};
-    void dot(int x,int y,uint8_t v=255) { if(x>=0 && x<128 && y>=0 && y<64)pixels[y][x]=v; }
+    void dot(int x,int y,uint8_t v=255) {
+        if(static_cast<unsigned>(x)>=128 || static_cast<unsigned>(y)>=64)return;
+        pixels[y][x]=v;
+    }
     void fill(int x,int y,int w,int h,uint8_t v=255) { for(int j=0;j<h;++j)for(int i=0;i<w;++i)dot(x+i,y+j,v); }
     void line(int x,int y,int x2,int y2,uint8_t v=255) {
         int dx=std::abs(x2-x),sx=x<x2?1:-1,dy=-std::abs(y2-y),sy=y<y2?1:-1,e=dx+dy;

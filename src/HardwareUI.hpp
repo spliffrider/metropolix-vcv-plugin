@@ -62,6 +62,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::A_PAGE: return Metropolix::OUTPUT_SOURCE_A;
         case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
         case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
+        case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
         case Metropolix::SETUP_PAGE: return Metropolix::RANGE;
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
@@ -87,7 +88,7 @@ void encoderPress(Metropolix* m) {
         else if(m->selectedRow.load()==Metropolix::ACCUMULATION){id=Metropolix::stageOption(t,s,Metropolix::ACCUM_TRIGGER);count=3;}
         if(id>=0){auto* q=m->getParamQuantity(id);setWithHistory(q,(static_cast<int>(q->getValue())+1)%count);}return;
     }
-    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE ||
+    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE ||
        (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
 }
@@ -123,18 +124,21 @@ struct HardwareControl : app::Knob {
     float moved=0;
     float customSpeed=0;
     bool doubleClickReset=true;
+    int controllerOwner=-1;
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
     ~HardwareControl() { clearTip(); }
     void bind() {
         if(dragging) return;
         int id=binding ? binding() : -1;
-        module=(metroModule && id>=0) ? metroModule : nullptr;
+        controllerOwner=metroModule?metroModule->ctrlOwner(id):-1;
+        module=(metroModule && id>=0 && controllerOwner<0) ? metroModule : nullptr;
         paramId=id>=0 ? id : 0;
         if(auto* q=getParamQuantity()) speed=customSpeed>0?customSpeed:(q->snapEnabled?std::max(.7f,30.f/q->getRange()):.7f);
     }
     std::string tooltipText() {
         auto* q=getParamQuantity();
         std::string s=q ? q->getString() : name;
+        if(controllerOwner>=0 && metroModule) s=metroModule->getParamQuantity(paramId)->getString()+string::f("\nControlled by CTRL %d. Turn that knob; right-click to change its assignment.",controllerOwner+1);
         if(!help.empty()) s += "\n"+help;
         if(detailHelp) s += "\n"+detailHelp();
         if(q) s += "\nHold + drag up/down to increase/decrease. Ctrl = fine. Right-click = values/reset.";
@@ -161,7 +165,8 @@ struct HardwareControl : app::Knob {
         bind();
         if(e.button==GLFW_MOUSE_BUTTON_RIGHT && e.action==GLFW_PRESS) {
             clearTip();
-            if(rightAction) rightAction();
+            if(controllerOwner>=0)appendCtrlMenu(createMenu(),metroModule,controllerOwner);
+            else if(rightAction) rightAction();
             else if(getParamQuantity()) createContextMenu();
             else { auto* menu=createMenu(); menu->addChild(createMenuLabel(name)); menu->addChild(createMenuLabel(help)); }
             e.consume(this); return;

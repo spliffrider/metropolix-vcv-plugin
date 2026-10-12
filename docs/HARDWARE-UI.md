@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.5.0
+# Hardware panel and desktop interaction — 2.6.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -57,18 +57,18 @@ sources; see [the documented interpretations](VALIDATION.md).
 
 ## Compatibility and remaining controls
 
-All 413 previous parameter IDs and all ports retain their identities. Two mode
-parameters append at IDs 413/414. Schema 8 saves the LIM page and its selected
-field. Older patches load in Stage mode, including presets loaded over an
-already configured module. Existing AUX migration is preserved. Temporary ALT
-state clears on load; the old LEN field selection still migrates safely.
+All 415 previous parameter IDs and all ports retain their identities. Six CTRL
+parameters append at IDs 415–420. Schema 9 saves the CTRL page and selected
+knob. Older patches and presets clear CTRL assignments, preserving their
+existing panel values; previous AUX/mode migrations are unchanged. Temporary
+ALT state clears on load.
 
-AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). CTRL assignments, Loopy, swing, stage pitch/gate overrides, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
+AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). Loopy, swing, stage pitch/gate overrides, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 
-Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view remain static until CTRL routing exists. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. Hardware long-press shortcuts, preset banks, and the remaining secondary functions are still incomplete. Numeric editing and context menus are intentional computer conveniences.
+Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. Hardware long-press shortcuts, preset banks, and the remaining secondary functions are still incomplete. Numeric editing and context menus are intentional computer conveniences.
 
 ## Verification
 
-The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 25 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 28 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.

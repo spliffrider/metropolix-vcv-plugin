@@ -47,6 +47,30 @@ if(qaFrame==13) {
     for(int s=0;s<8;++s){m->params[Metropolix::PITCH+s].setValue(pitch[s]);m->params[Metropolix::PULSES+s].setValue(1);m->params[Metropolix::GATES+s].setValue(1);}
     m->uiMod.store(true);m->selectedLane.store(0);m->uiHome.store(0);
 }
+if(qaFrame==10) {
+    int value=Metropolix::ctrlParam(0,Metropolix::CTRL_VALUE),dest=Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION);
+    m->params[dest].setValue(metro::CtrlGateLength);m->params[value].setValue(0);
+    m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT)].setValue(2);
+    click(find("CTRL 1 assignment"));
+    check(m->uiPage.load()==Metropolix::CTRL_PAGE && m->selectedCtrl.load()==0 && screenParam(m)==dest,"CTRL 1 assignment opens its destination page");
+    drag(find("CTRL 1"),-80);check(m->params[value].getValue()>0,"CTRL upward knob drag increases value");
+    APP->history->undo();check(m->params[value].getValue()==0,"CTRL drag has Rack undo");
+    drag(find("CTRL 1"),80);check(m->params[value].getValue()<0,"CTRL downward knob drag decreases value");
+    APP->history->undo();
+    click(find("Encoder"));check(screenParam(m)==Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT),"CTRL encoder click selects track assignment");
+    drag(find("Encoder"),80);check(m->integer(Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT))<2,"CTRL target edits through encoder");APP->history->undo();
+    click(find("CTRL 2 assignment"));check(m->selectedCtrl.load()==1 && screenParam(m)==Metropolix::ctrlParam(1,Metropolix::CTRL_DESTINATION),"CTRL 2 has independent assignment page");
+    click(find("TRK 1"));click(find("GATE"));find("Encoder")->bind();
+    check(find("Encoder")->getParamQuantity()==nullptr && find("Encoder")->tooltipText().find("Controlled by CTRL 1")!=std::string::npos,"direct destination locks encoder and explains owner");
+    press(find("Encoder"),GLFW_MOUSE_BUTTON_RIGHT);
+    auto* clear=seek(APP->scene,[](widget::Widget* w){auto* item=dynamic_cast<ui::MenuItem*>(w);return item && item->text=="Clear assignment";});
+    check(clear!=nullptr,"locked field context menu offers controller reassignment");
+    if(clear){event::Action action;clear->onAction(action);}
+    check(m->integer(dest)==metro::CtrlNone,"clear assignment releases controller ownership");closeMenus();
+    APP->history->undo();check(m->integer(dest)==metro::CtrlGateLength,"clearing CTRL assignment supports undo");
+    m->params[dest].setValue(metro::CtrlNone);
+    find("Encoder")->bind();check(find("Encoder")->getParamQuantity()!=nullptr,"unassigned direct field becomes editable again");
+}
 if(qaFrame==17)APP->window->screenshot(dir+"/reference-pose.png");
 if(qaFrame==18) {
     const int ratchets[]={1,7,4,1,2,1,3,1},prob[]={100,75,58,100,25,100,50,100},accum[]={0,2,7,-3,0,-5,1,4};
@@ -81,6 +105,9 @@ const DisplayCase cases[]={
     {"accum-stage",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
     {"accum-track",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
     {"accum-options",Metropolix::ACCUM_PAGE,4,0,Metropolix::ACCUMULATION,false},
+    {"ctrl-gate",Metropolix::CTRL_PAGE,0,0,Metropolix::SLIDE,false},
+    {"ctrl-pulse-count",Metropolix::CTRL_PAGE,1,0,Metropolix::SLIDE,false},
+    {"ctrl-owned-accum",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -90,6 +117,13 @@ if(qaFrame>=20 && index<count) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
         if(test.page==Metropolix::ACCUM_PAGE)m->params[Metropolix::accumModeParam(0)].setValue(std::string(test.name)=="accum-stage"?0:1);
+        if(test.page==Metropolix::CTRL_PAGE) {
+            m->selectedCtrl.store(test.field);
+            m->params[Metropolix::ctrlParam(test.field,Metropolix::CTRL_DESTINATION)].setValue(test.field?metro::CtrlPulseCount:metro::CtrlGateLength);
+            m->params[Metropolix::ctrlParam(test.field,Metropolix::CTRL_VALUE)].setValue(test.field?.5f:.2f);
+            m->params[Metropolix::ctrlParam(test.field,Metropolix::CTRL_ASSIGNMENT)].setValue(test.field?1:2);
+        }
+        if(std::string(test.name)=="ctrl-owned-accum")m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION)].setValue(metro::CtrlAccumMode);
         if(test.page==Metropolix::AUX_PAGE) {
             m->selectedAux.store(test.field);
             m->params[Metropolix::auxParam(test.field,Metropolix::AUX_AMOUNT)].setValue(1);

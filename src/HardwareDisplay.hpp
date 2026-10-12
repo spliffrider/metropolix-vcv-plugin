@@ -3,6 +3,15 @@
 struct HardwareDisplay : HardwareControl {
     int integer(int id,int fallback=0) const { return metroModule?metroModule->integer(id):fallback; }
     float value(int id,float fallback=0.f) const { return metroModule?metroModule->params[id].getValue():fallback; }
+    bool effectiveSkip(int t,int s) const {
+        bool invert=false;
+        for(int k=0;k<2;++k) {
+            int target=integer(Metropolix::ctrlParam(k,Metropolix::CTRL_ASSIGNMENT),2);
+            if(integer(Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION))==metro::CtrlSkipInvert && (target==2 || target==t))
+                invert=value(Metropolix::ctrlParam(k,Metropolix::CTRL_VALUE))>0;
+        }
+        return bool(integer(Metropolix::stageParam(t,s,Metropolix::SKIP)))!=invert;
+    }
     bool used(int t,int s) const {
         int length=integer(Metropolix::trackParam(t,Metropolix::LENGTH),8);
         int offset=integer(Metropolix::trackParam(t,Metropolix::OFFSET));
@@ -21,14 +30,15 @@ struct HardwareDisplay : HardwareControl {
         auto* m=metroModule;
         std::string left=m && m->uiMod.load()?string::f("MOD %d",m->selectedLane.load()+1):string::f("TRK %d",m?m->selectedTrack.load()+1:1);
         if(detailed && m)left+=string::f(":%d",m->selectedStage.load()+1);
-        std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":functionName();
+        std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":
+            m && m->uiPage.load()==Metropolix::CTRL_PAGE?string::f("CTRL %d",m->selectedCtrl.load()+1):functionName();
         if(m && m->uiMod.load()) {
             int source=m->selectedLane.load()+2;
             bool a=integer(Metropolix::OUTPUT_SOURCE_A)==source,b=integer(Metropolix::OUTPUT_SOURCE_B)==source;
             if(a || b)right+=a?(b?":AB":":A"):":B";
         }
         int edge=127;
-        if(m && m->uiPage.load()!=Metropolix::ACCUM_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE) {
+        if(m && m->uiPage.load()!=Metropolix::ACCUM_PAGE && m->uiPage.load()!=Metropolix::CTRL_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE) {
             c.line(120,61,120,56);c.line(120,56,123,56);c.line(123,56,123,61);c.line(123,61,127,61);edge=117;
         }
         while(c.width(left)+c.width(right)+8>edge && !right.empty())right.pop_back();
@@ -41,7 +51,12 @@ struct HardwareDisplay : HardwareControl {
     void field(OledCanvas& c,int y,const std::string& name,const std::string& v,bool selected,int w=128,int size=2) const {
         c.text(2,y+2,name);
         c.fit(18,y+10,w-22,v,size);
-        if(selected){c.corners(0,y,w,27);c.turn(3,y+17);}
+        if(selected){
+            c.corners(0,y,w,27);
+            int owner=metroModule?metroModule->ctrlOwner(screenParam(metroModule)):-1;
+            if(owner>=0){c.circle(7,y+20,6);c.text(5,y+18,std::to_string(owner+1));}
+            else c.turn(3,y+17);
+        }
         else c.circle(5,y+21,2,true);
     }
     void home(OledCanvas& c) const {
@@ -57,7 +72,7 @@ struct HardwareDisplay : HardwareControl {
                 for(int s=0;s<8;++s) {
                     int x=2+16*s,y=7+16*row;
                     if(metro::modulo(s-offset,8)>=length){c.dot(x+5,y+5);continue;}
-                    if(!mod && integer(Metropolix::stageParam(row,s,Metropolix::SKIP))) {
+                    if(!mod && effectiveSkip(row,s)) {
                         c.line(x,y,x+9,y+9);c.line(x+9,y,x,y+9);
                     } else {
                         c.box(x,y,10,10);
@@ -80,7 +95,7 @@ struct HardwareDisplay : HardwareControl {
                     int deg=metro::nearestDegree(value(Metropolix::PITCH+s)*12*integer(Metropolix::RANGE,3),scale);
                     int note=metro::modulo(metro::degreeToSemitone(deg,scale)+root+integer(Metropolix::trackParam(t,Metropolix::TRANSPOSE)),12);
                     c.text(s*16,y+10,notes[note],false);
-                    if(used(t,s) && !integer(Metropolix::stageParam(t,s,Metropolix::SKIP))) {
+                    if(used(t,s) && !effectiveSkip(t,s)) {
                         bool playing=m && m->playStage[t].load()==s;
                         for(int x=s*16;x<s*16+11;++x)if(playing || x%2==0)c.dot(x,y+19);
                     }
@@ -89,7 +104,11 @@ struct HardwareDisplay : HardwareControl {
         } else if(h==2) {
             // Rack presets restore the physical controls themselves. There are
             // no separate hardware/preset values, so no override dots appear.
-            for(int i=0;i<2;++i){c.circle(8,14+i*25,6);c.line(8,14+i*25,4,18+i*25);c.text(7,22+i*25,std::to_string(i+1));}
+            for(int i=0;i<2;++i){
+                float a=value(Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE))*2.61f;
+                c.circle(8,14+i*25,6);c.line(8,14+i*25,8+std::round(std::sin(a)*5),14+i*25-std::round(std::cos(a)*5));
+                c.text(7,22+i*25,std::to_string(i+1));
+            }
             for(int s=0;s<8;++s) {
                 int x=30+s*13;c.text(x-2,4,std::to_string(s+1));
                 c.line(x,14,x,34);int y=34-static_cast<int>(value(Metropolix::PITCH+s)*20);c.line(x-3,y,x+3,y);
@@ -237,6 +256,15 @@ struct HardwareDisplay : HardwareControl {
                 if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
             }
             field(c,29,"AUX ASSIGN",string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
+        } else if(page==Metropolix::CTRL_PAGE) {
+            int knob=m?m->selectedCtrl.load():0;
+            int dest=integer(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION));
+            int target=integer(Metropolix::ctrlParam(knob,Metropolix::CTRL_ASSIGNMENT),2);
+            field(c,0,string::f("CTRL %d PARAM",knob+1),Metropolix::ctrlDestinations()[dest],f==0,128,1);
+            float a=value(Metropolix::ctrlParam(knob,Metropolix::CTRL_VALUE))*2.61f;
+            c.circle(118,5,4);c.line(118,5,118+std::round(std::sin(a)*3),5-std::round(std::cos(a)*3));
+            bool global=dest==metro::CtrlTempo || dest==metro::CtrlOutputSwap;
+            field(c,29,"CTRL ASSIGN",global?"Global":string::f("Ctrl %d > ",knob+1)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
         } else if(page==Metropolix::ACCUM_PAGE) {
             const char* labels[]={"Positive Limit","Negative Limit","Mode","Order","Polarity","Reset"};
             int first=metro::clamp(f,0,5)/3*3;
@@ -249,8 +277,10 @@ struct HardwareDisplay : HardwareControl {
                 else if(i==4)v=n?"Bipolar":"Unipolar";
                 else v=n?"Auto":"Manual";
                 int y=(i-first)*17;
-                c.text(13,y+5,labels[i]);c.right(126,y+5,v);
-                if(i==f){c.corners(0,y,128,16);c.turn(1,y+5);}
+                int owner=m?m->ctrlOwner(id):-1;
+                c.text(13,y+5,labels[i],true,1,owner>=0?150:255);c.right(126,y+5,v);
+                if(owner>=0){c.circle(6,y+8,6);c.text(4,y+6,std::to_string(owner+1));}
+                if(i==f){c.corners(0,y,128,16);if(owner<0)c.turn(1,y+5);}
             }
         } else if(page==Metropolix::SETUP_PAGE)field(c,0,"SLIDER OCTAVES",std::to_string(integer(Metropolix::RANGE,3)),true);
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}

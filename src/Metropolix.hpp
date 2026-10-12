@@ -40,7 +40,9 @@ struct Metropolix : Module {
         AUX_PARAMS = OUTPUT_SOURCE_B + 1,
         AUX_STRIDE = 3,
         ACCUM_MODE = AUX_PARAMS + 3 * AUX_STRIDE,
-        NUM_PARAMS = ACCUM_MODE + 2
+        CTRL_PARAMS = ACCUM_MODE + 2,
+        CTRL_STRIDE = 3,
+        NUM_PARAMS = CTRL_PARAMS + 2 * CTRL_STRIDE
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV };
@@ -50,6 +52,7 @@ struct Metropolix : Module {
     enum ModParams { MOD_LENGTH, MOD_OFFSET, MOD_DIVISION, MOD_ORDER, MOD_REVERSED, MOD_PULSE_LIMIT,
         MOD_TYPE, MOD_DESTINATION, MOD_ASSIGNMENT, MOD_MUTE, MOD_VALUE = 10, MOD_RAMP = 18 };
     enum AuxParams { AUX_AMOUNT, AUX_DESTINATION, AUX_ASSIGNMENT };
+    enum CtrlParams { CTRL_VALUE, CTRL_DESTINATION, CTRL_ASSIGNMENT };
     enum InputIds { CLOCK_IN, RESET_IN, AUX_X_IN, AUX_Y_IN, AUX_Z_IN, NUM_INPUTS };
     enum OutputIds { PITCH_1, GATE_1, PITCH_2, GATE_2, CLOCK_OUT, A_OUT, B_OUT, NUM_OUTPUTS };
     enum LightIds { POSITION_1, POSITION_2 = POSITION_1 + 8, NUM_LIGHTS = POSITION_2 + 8 };
@@ -61,6 +64,39 @@ struct Metropolix : Module {
     static int modParam(int lane, int p) { return MOD_LANE + lane * MOD_STRIDE + p; }
     static int auxParam(int input, int p) { return AUX_PARAMS + input * AUX_STRIDE + p; }
     static int accumModeParam(int t) { return ACCUM_MODE + t; }
+    static int ctrlParam(int knob, int p) { return CTRL_PARAMS + knob * CTRL_STRIDE + p; }
+    static std::vector<std::string> ctrlDestinations() {
+        return {"None", "Accum Mode", "Accum Polar", "Tempo", "Clock Div", "Direction",
+            "Gate Length", "Octave", "Pitch Offset", "Pitch Post", "Pitch Pre", "Play Order",
+            "Probability", "Pulse Count", "Pulse Div", "Pulses Len", "Ratchet", "Root",
+            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap"};
+    }
+    static int ctrlBaseParam(metro::CtrlDestination d, int t) {
+        switch(d) {
+            case metro::CtrlAccumMode: return accumModeParam(t);
+            case metro::CtrlAccumPolar: return accumParam(t,BIPOLAR);
+            case metro::CtrlTempo: return TEMPO;
+            case metro::CtrlClockDiv: return trackParam(t,DIVISION);
+            case metro::CtrlGateLength: return trackParam(t,GATE_LENGTH);
+            case metro::CtrlOrder: return trackParam(t,ORDER);
+            case metro::CtrlPulseDiv: return extraParam(t,PULSE_DIV);
+            case metro::CtrlPulsesLength: return extraParam(t,PULSE_LIMIT);
+            case metro::CtrlSlideAmount: return trackParam(t,SLIDE_TIME);
+            case metro::CtrlStagesLength: return trackParam(t,LENGTH);
+            case metro::CtrlStagesOffset: return trackParam(t,OFFSET);
+            default: return -1;
+        }
+    }
+    int ctrlOwner(int id) {
+        if(id<0) return -1;
+        for(int k=1;k>=0;--k) {
+            auto d=static_cast<metro::CtrlDestination>(static_cast<int>(std::round(params[ctrlParam(k,CTRL_DESTINATION)].getValue())));
+            int assignment=static_cast<int>(std::round(params[ctrlParam(k,CTRL_ASSIGNMENT)].getValue()));
+            for(int t=0;t<2;++t)
+                if((assignment==2 || assignment==t || d==metro::CtrlTempo) && ctrlBaseParam(d,t)==id) return k;
+        }
+        return -1;
+    }
     static int accumScreenParam(int t, int field) {
         const int ids[] = {trackParam(t, ACCUM_LIMIT), accumParam(t, NEGATIVE_LIMIT),
             accumModeParam(t), accumParam(t, ACCUM_ORDER), accumParam(t, BIPOLAR), extraParam(t, ACCUM_AUTO_RESET)};
@@ -86,11 +122,12 @@ struct Metropolix : Module {
     std::atomic<bool> modEditor{false};
     std::atomic<int> selectedLane{0};
     std::atomic<int> selectedAux{0};
+    std::atomic<int> selectedCtrl{0};
     std::atomic<float> auxVoltage[3];
     // Presentation only: the hardware panel and optional grids share all
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
-        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE };
+        SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -190,6 +227,12 @@ struct Metropolix : Module {
             configSwitch(auxParam(input,AUX_ASSIGNMENT),0,2,0,name+"target",{"Track 1","Track 2","Both tracks"});
             configInput(AUX_X_IN+input,name+"CV / gate (channel 1; assign with the button below)");
         }
+        for(int k=0;k<2;++k) {
+            std::string name="CTRL "+std::to_string(k+1)+" ";
+            configParam(ctrlParam(k,CTRL_VALUE),-1.f,1.f,k?-.5f:0.f,name+"position","%",0,50,50);
+            configSwitch(ctrlParam(k,CTRL_DESTINATION),0,metro::CtrlDestinationCount-1,k?metro::CtrlSlideAmount:metro::CtrlGateLength,name+"destination",ctrlDestinations())->randomizeEnabled=false;
+            configSwitch(ctrlParam(k,CTRL_ASSIGNMENT),0,2,2,name+"target",{"Track 1","Track 2","Both tracks"})->randomizeEnabled=false;
+        }
         configInput(CLOCK_IN, "Clock (one pulse per sixteenth note)");
         configInput(RESET_IN, "Reset");
         configOutput(PITCH_1, "Track 1 pitch (1 V/oct)");
@@ -214,6 +257,19 @@ struct Metropolix : Module {
     int integer(int id) { return static_cast<int>(std::round(params[id].getValue())); }
     void readSettings() {
         auto& c = sequencer.settings;
+        // Direct CTRL destinations own the panel parameter itself. Offsets are
+        // routed separately and never accumulate into saved base values.
+        for(int k=0;k<2;++k) {
+            auto& ctrl=c.controls[k];
+            ctrl.value=metro::ctrlClamp(params[ctrlParam(k,CTRL_VALUE)].getValue());
+            ctrl.destination=static_cast<metro::CtrlDestination>(metro::clamp(integer(ctrlParam(k,CTRL_DESTINATION)),0,int(metro::CtrlDestinationCount)-1));
+            ctrl.assignment=metro::clamp(integer(ctrlParam(k,CTRL_ASSIGNMENT)),0,2);
+            for(int t=0;t<2;++t) {
+                int id=ctrlBaseParam(ctrl.destination,t);
+                if(id>=0 && (ctrl.targets(t) || ctrl.destination==metro::CtrlTempo))
+                    params[id].setValue(metro::ctrlDirectValue(ctrl.destination,ctrl.value));
+            }
+        }
         c.outputSources[0] = integer(OUTPUT_SOURCE_A);
         c.outputSources[1] = integer(OUTPUT_SOURCE_B);
         for (int input=0; input<3; ++input) {
@@ -308,16 +364,17 @@ struct Metropolix : Module {
         sequencer.process(args.sampleTime, params[RUN].getValue() > 0.5f, external, clockEdge, resetEdge || button);
         for (int t = 0; t < 2; ++t) {
             const auto& state = sequencer.tracks[t];
-            outputs[PITCH_1 + 2 * t].setVoltage(state.pitch);
-            outputs[GATE_1 + 2 * t].setVoltage(state.gate);
+            int physical=sequencer.controls.swap?1-t:t;
+            outputs[PITCH_1 + 2 * physical].setVoltage(state.pitch);
+            outputs[GATE_1 + 2 * physical].setVoltage(state.gate);
             outputs[A_OUT + t].setVoltage(sequencer.aux[t]);
             if (update) {
                 playStage[t].store(state.stage, std::memory_order_relaxed);
                 playPulse[t].store(state.pulse, std::memory_order_relaxed);
                 playPitch[t].store(state.pitch, std::memory_order_relaxed);
                 playCv[t].store(state.cv, std::memory_order_relaxed);
-                pitchPre[t].store(sequencer.modulation.routes[t][metro::ModPitchPre], std::memory_order_relaxed);
-                pitchPost[t].store(sequencer.modulation.routes[t][metro::ModPitchPost], std::memory_order_relaxed);
+                pitchPre[t].store(sequencer.modulation.routes[t][metro::ModPitchPre]+sequencer.controls.values[t][metro::CtrlPitchPre], std::memory_order_relaxed);
+                pitchPost[t].store(sequencer.modulation.routes[t][metro::ModPitchPost]+sequencer.controls.values[t][metro::CtrlPitchPost], std::memory_order_relaxed);
                 for (int s = 0; s < 8; ++s)
                     lights[POSITION_1 + t * 8 + s].setBrightness(sequencer.running && state.stage == s ? 1.f : 0.f);
             }
@@ -342,7 +399,8 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(8));
+        json_object_set_new(root, "schemaVersion", json_integer(9));
+        json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
         json_object_set_new(root, "selectedAux", json_integer(selectedAux.load()));
         json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
         json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
@@ -360,6 +418,8 @@ struct Metropolix : Module {
         return root;
     }
     void dataFromJson(json_t* root) override {
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<9)
+            for(int id=CTRL_PARAMS;id<NUM_PARAMS;++id)params[id].setValue(0.f);
         // Old module presets may be loaded over an already configured module.
         // Missing AUX parameters must restore the original, unassigned sound.
         if(json_integer_value(json_object_get(root,"schemaVersion"))<7)
@@ -387,7 +447,8 @@ struct Metropolix : Module {
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(ACCUM_PAGE)));
+        selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CTRL_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));
