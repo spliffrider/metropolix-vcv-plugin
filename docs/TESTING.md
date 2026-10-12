@@ -31,6 +31,18 @@ There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
 
+For the evolving version, open [`Musical-variations.vcv`](../examples/Musical-variations.vcv).
+Its 32-bar arrangement demonstrates all eight MOD lanes: changing roots and
+melody, octave answers, ratchet fills, articulation, filter movement, and breaks.
+Press RESET and allow about 71 seconds to hear the whole arrangement.
+
+For a more structured musical example, open
+[`Musical-demo.vcv`](../examples/Musical-demo.vcv): **Night Current**, an original
+108 BPM A-minor-pentatonic groove with bass, melody, and stereo delay. It works
+with the existing 2.4.1 plugin and the same free dependencies. Select an AUDIO
+device to hear it. This patch is provided separately from the original 2.4.1
+package; no plugin update is required. The README explains its controls.
+
 1. Ensure **VCV Free** modules are installed; the demo uses VCV Free and Core.
 2. Download and open `Aux-inputs-demo.vcv` using Rack's **File → Open**.
 3. In its AUDIO module, select your audio driver, device, and output channels.
