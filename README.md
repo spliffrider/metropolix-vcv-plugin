@@ -19,6 +19,10 @@ Version 2.3.0 refines the supplied hardware panel's lettering, components, marki
 
 ## Start here
 
+**[Watch the 80-second demonstration (1080p MP4)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Demo-1080p.mp4)**
+— actual Rack playback, with captions, display close-ups, and the MOD editor.
+The soundtrack uses the evolving performance below. [Capture and editing workflow](docs/DEMO-VIDEO.md).
+
 For the evolving performance, open **[Night Current / Variations](examples/Musical-variations.vcv)**.
 It uses the same voices at 108 BPM, with A natural minor quantization and
 Am–F–C–G root movement every two bars. The melody runs forward and backward

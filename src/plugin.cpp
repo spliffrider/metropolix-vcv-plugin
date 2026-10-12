@@ -1,6 +1,10 @@
 #include "plugin.hpp"
 #ifdef METROPOLIX_QA
 #include "../tests/RackAudioQa.hpp"
+namespace metrovideo {
+std::atomic<int> samples{0};
+std::atomic<bool> armed{false};
+}
 #endif
 Plugin* pluginInstance;
 void init(Plugin* p) {

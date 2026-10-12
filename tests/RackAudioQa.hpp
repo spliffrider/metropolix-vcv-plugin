@@ -4,9 +4,13 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
+#include "VideoCaptureState.hpp"
 
 struct RackAudioQa : Module {
-    const int frames = (std::getenv("METROPOLIX_VARIATIONS_QA") ? 80 :
+    const bool video = std::getenv("METROPOLIX_VIDEO_QA") != nullptr;
+    const int frames = (video && std::getenv("METROPOLIX_VIDEO_SECONDS") ?
+                        clamp(std::atoi(std::getenv("METROPOLIX_VIDEO_SECONDS")), 1, 80) :
+                        std::getenv("METROPOLIX_VARIATIONS_QA") ? 80 :
                         std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
     std::vector<float> samples;
     std::vector<float> cvSamples;
@@ -15,6 +19,7 @@ struct RackAudioQa : Module {
     std::atomic<bool> ready{false};
     RackAudioQa() : samples(frames * 2, 0.f), cvSamples(frames * 2, 0.f) { config(0, 4, 0); }
     void process(const ProcessArgs& args) override {
+        if (video && !metrovideo::armed.load(std::memory_order_acquire)) return;
         if (ready.load(std::memory_order_relaxed) || !inputs[0].isConnected() || !inputs[1].isConnected()) return;
         samples[cursor * 2] = inputs[0].getVoltage();
         samples[cursor * 2 + 1] = inputs[1].getVoltage();
@@ -23,7 +28,9 @@ struct RackAudioQa : Module {
             cvSamples[cursor * 2] = inputs[2].getVoltage();
             cvSamples[cursor * 2 + 1] = inputs[3].getVoltage();
         }
-        if (++cursor == frames) ready.store(true, std::memory_order_release);
+        ++cursor;
+        if (video) metrovideo::samples.store(cursor, std::memory_order_release);
+        if (cursor == frames) ready.store(true, std::memory_order_release);
     }
 };
 struct RackAudioQaWidget : ModuleWidget {
