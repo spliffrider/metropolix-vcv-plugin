@@ -9,8 +9,19 @@ namespace metro {
 enum ModType { ModBipolar, ModUnipolar, ModGate };
 enum ModDestination { ModNone, ModOctave, ModPitchPre, ModPitchPost, ModPitchOffset,
     ModGateLength, ModProbability, ModRatchet, ModMute, ModSwing, ModUserScale, ModVelocity, ModOutputSwap,
-    ModAccumulate, ModAccumReverse, ModAccumInvert, ModAccumMode, ModAccumPolarity, ModAccumReset, ModDestinationCount };
-inline bool modGateDestination(ModDestination destination) { return destination == ModMute || destination==ModOutputSwap || (destination>=ModAccumulate && destination<ModDestinationCount); }
+    ModAccumulate, ModAccumReverse, ModAccumInvert, ModAccumMode, ModAccumPolarity, ModAccumReset,
+    ModTempo, ModClockDiv, ModDirection, ModGateScale, ModLoopy, ModLoopyPulses, ModLoopyOffset,
+    ModOrder, ModPulseCount, ModPulseDiv, ModPulsesLength, ModReset, ModRoot, ModSkipInvert,
+    ModSlide, ModSlideAmount, ModSliderInvert, ModSliderRange, ModStagesLength, ModStagesOffset, ModDestinationCount };
+inline bool modGateDestination(ModDestination destination) {
+    switch(destination){
+        case ModMute: case ModOutputSwap: case ModAccumulate: case ModAccumReverse: case ModAccumInvert:
+        case ModAccumMode: case ModAccumPolarity: case ModAccumReset: case ModDirection: case ModLoopy:
+        case ModReset: case ModSkipInvert: case ModSlide: case ModSliderInvert: return true;
+        default: return false;
+    }
+}
+inline bool modGlobalDestination(ModDestination destination){return destination==ModOutputSwap || destination==ModTempo || destination==ModLoopy || destination==ModLoopyPulses || destination==ModLoopyOffset;}
 template <class T> T modClamp(T v, T lo, T hi) { return std::max(lo, std::min(hi, v)); }
 
 // AUX pp.154-156: continuous CV is attenuverted; a gate destination uses
@@ -61,6 +72,7 @@ struct Modulation {
     std::array<float,8> clocks{};
     std::array<std::array<float, ModDestinationCount>, 2> routes{};
     std::array<std::array<bool,ModDestinationCount>,2> assigned{};
+    std::array<float,ModDestinationCount> globalRoutes{}; // Each source once, even when targeting both tracks.
     std::array<RandomSource, 8> random;
 
     void seed(uint32_t value) {
@@ -74,6 +86,7 @@ struct Modulation {
         silence();
     }
     void silence() {
+        globalRoutes.fill(0.f);
         outputs.fill(0.f);
         clocks.fill(0.f);for(auto& pulse:clockPulses)pulse.clear();
         for (auto& track : routes) track.fill(0.f);
@@ -117,6 +130,7 @@ struct Modulation {
     }
     void render(const std::array<ModLane, 8>& configs, double dt,
                 const std::array<AuxInput, 3>& auxInputs = std::array<AuxInput, 3>()) {
+        globalRoutes.fill(0.f);
         for (auto& track : routes) track.fill(0.f);
         for (auto& track : assigned) track.fill(false);
         for (int i = 0; i < 8; ++i) {
@@ -129,6 +143,7 @@ struct Modulation {
             if(config.destination>ModNone && config.destination<ModDestinationCount)
                 for(int t=0;t<2;++t)if(config.assignment==2 || config.assignment==t)assigned[t][config.destination]=true;
             if (config.mute || config.destination <= ModNone || config.destination >= ModDestinationCount) continue;
+            globalRoutes[config.destination]+=state.value;
             for (int track = 0; track < 2; ++track) {
                 if (config.assignment == 2 || config.assignment == track)
                     routes[track][config.destination] += state.value;
@@ -139,6 +154,7 @@ struct Modulation {
         for (const auto& input : auxInputs) {
             if (input.destination <= ModNone || input.destination >= ModDestinationCount) continue;
             float value = input.effectiveVoltage();
+            globalRoutes[input.destination]+=value;
             for (int track = 0; track < 2; ++track)
                 if (input.assignment == 2 || input.assignment == track) {
                     assigned[track][input.destination]=true;
@@ -146,6 +162,7 @@ struct Modulation {
                 }
         }
         for (auto& track : routes) for (auto& value : track) value = modClamp(value, -5.f, 5.f);
+        for(auto& value:globalRoutes)value=modClamp(value,-5.f,5.f);
     }
 };
 } // namespace metro

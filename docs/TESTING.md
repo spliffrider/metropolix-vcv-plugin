@@ -1,4 +1,4 @@
-# Metropolix Lab 2.18.0 — Windows alpha quick start
+# Metropolix Lab 2.19.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.18.0/MetropolixLab-2.18.0-win-x64.vcvplugin)
-- [Accumulator-routing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.18.0/Accumulator-routing-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.19.0/MetropolixLab-2.19.0-win-x64.vcvplugin)
+- [Complete-routing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.19.0/Complete-routing-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.18.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.19.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.18.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.19.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -227,3 +227,11 @@ Rev, Invert, Mode, Polar and Reset. Check that pauses keep the gate rhythm and
 that a brief reset waits for the next track pulse without restarting the pattern.
 Use [the guide](ACCUMULATOR-ROUTING.md) and the new percussion arrangement.
 Compare Rev versus Invert in unipolar mode, save/reopen and test undo.
+
+## Complete routing — new in 2.19.0
+
+Try [the twenty added routes](COMPLETE-ROUTING.md) on AUX and internal lanes.
+Compare direction versus slider inversion; clock division versus pulse division;
+track Reset versus Accum Reset. Gate-driven Loopy should return to the current
+background pattern on release. Check the live BPM readout, Global assignment
+fields, On/Off gate entry, undo and save/reopen. Gate Length CV now reaches Hold.

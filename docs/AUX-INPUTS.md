@@ -88,3 +88,6 @@ destination with the same gate inversion/threshold handling as Mute. See
 Version 2.18.0 adds six [accumulator routes](ACCUMULATOR-ROUTING.md), bringing the
 shared AUX/MOD count to 18. All six use gate logic; Accum Reset uses its rising
 edge. An assigned low Accumulate gate pauses rather than removing the route.
+
+Version 2.19.0 completes all 38 manual destinations; see [Complete routing](COMPLETE-ROUTING.md)
+for the added voltage/gate routes, Global scope, Loopy and targeted reset.

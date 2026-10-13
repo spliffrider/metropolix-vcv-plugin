@@ -152,6 +152,12 @@ const DisplayCase cases[]={
     {"output-a",Metropolix::A_PAGE,0,0,0,false},
     {"output-b",Metropolix::B_PAGE,0,0,0,false},
     {"aux-cv",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
+    {"aux-global-tempo",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
+    {"aux-loopy-offset",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
+    {"aux-track-reset",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
+    {"mod-extended-gate",Metropolix::STAGE_PAGE,0,0,Metropolix::SLIDE,true},
+    {"mod-global-home",Metropolix::HOME,0,3,Metropolix::SLIDE,true},
+    {"bpm-modulated",Metropolix::BPM_PAGE,0,0,Metropolix::SLIDE,false},
     {"aux-gate",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
     {"accum-stage",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
     {"accum-track",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
@@ -241,10 +247,16 @@ if(qaFrame>=20 && index<count) {
             if(std::string(test.name)=="aux-accum-reset" || std::string(test.name)=="aux-accumulate")m->params[Metropolix::auxParam(0,Metropolix::AUX_DESTINATION)].setValue(std::string(test.name)=="aux-accum-reset"?metro::ModAccumReset:metro::ModAccumulate);
         }
         if(std::string(test.name)=="mod-accum-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModAccumReset);
+        if(std::string(test.name)=="mod-extended-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModSlide);
+        if(std::string(test.name)=="mod-global-home")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModLoopy);
+        if(std::string(test.name)=="aux-global-tempo")m->params[Metropolix::auxParam(0,Metropolix::AUX_DESTINATION)].setValue(metro::ModTempo);
+        if(std::string(test.name)=="aux-loopy-offset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModLoopyOffset);
+        if(std::string(test.name)=="aux-track-reset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModReset);
     }
     if((qaFrame-20)%6==3) {
         APP->window->screenshot(dir+"/"+test.name+".png");
         auto* screen=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));
+        if(std::string(test.name)=="bpm-modulated")m->displayBpm.store(240);
         if(test.page==Metropolix::AUX_PAGE && !test.field)m->auxVoltage[0].store(2.5f);
         OledCanvas c=screen->render();int lit=0;for(auto& row:c.pixels)for(uint8_t v:row)lit+=v>0;
         check(lit>40 && lit<6000,std::string(test.name)+" renders a populated display");

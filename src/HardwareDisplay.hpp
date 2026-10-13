@@ -21,7 +21,7 @@ struct HardwareDisplay : HardwareControl {
             if(integer(Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION))==metro::CtrlSkipInvert && (target==2 || target==t))
                 invert=value(Metropolix::ctrlParam(k,Metropolix::CTRL_VALUE))>0;
         }
-        return bool(integer(Metropolix::stageParam(t,s,Metropolix::SKIP)))!=invert;
+        return bool(integer(Metropolix::stageParam(t,s,Metropolix::SKIP)))!=(invert || (metroModule && (metroModule->modSkipMask.load()&(1u<<t))));
     }
     bool used(int t,int s) const {
         int length=integer(Metropolix::trackParam(t,Metropolix::LENGTH),8);
@@ -142,7 +142,7 @@ struct HardwareDisplay : HardwareControl {
                 if(gate){c.box(x,35,7,7);if(v>=1.5f)c.fill(x+1,36,5,5);}
                 else { c.box(x,12,7,30);for(int k=1;k<6;k+=2)c.dot(x+k,26);int y=26-static_cast<int>(metro::clamp(v,-5.f,5.f)*2.7f);c.fill(x+2,std::min(y,26),3,std::max(1,std::abs(y-26))); }
                 if(j>=2 && integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))) {
-                    int target=integer(Metropolix::modParam(l,Metropolix::MOD_ASSIGNMENT));c.text(x,44,target==2?"12":std::to_string(target+1));
+                    int target=integer(Metropolix::modParam(l,Metropolix::MOD_ASSIGNMENT));c.text(x,44,metro::modGlobalDestination(static_cast<metro::ModDestination>(integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))))?"G":target==2?"12":std::to_string(target+1));
                 }
                 bool a=integer(Metropolix::OUTPUT_SOURCE_A)==j,b=integer(Metropolix::OUTPUT_SOURCE_B,1)==j;
                 c.text(x,50,a?(b?"AB":"A"):(b?"B":""));
@@ -256,6 +256,7 @@ struct HardwareDisplay : HardwareControl {
         if(page==Metropolix::BPM_PAGE) {
             bool ext=m && m->externalClock.load();
             field(c,0,ext?"EXTERNAL":"INTERNAL",string::f("%.1f",ext?m->displayBpm.load():value(Metropolix::TEMPO,120)),!ext);
+            if(!ext && m && std::abs(m->displayBpm.load()-value(Metropolix::TEMPO,120))>.05f){c.fill(15,9,111,16,0);c.text(17,12,string::f("%.1f",m->displayBpm.load()),true);c.text(17,20,"MOD",true);c.fit(58,10,67,string::f("%.1f",value(Metropolix::TEMPO,120)),2);}
             field(c,29,ext?"EXT CLOCK DIV":"TAP TEMPO",ext?"/1":"Tap BPM",false,128,1);
         } else if(page==Metropolix::CLOCK_OUT_PAGE) {
             field(c,0,"CLK OUT","/"+std::to_string(integer(Metropolix::CLOCK_OUT_DIV,1)),f==0);
@@ -343,7 +344,8 @@ struct HardwareDisplay : HardwareControl {
                 int end=104+static_cast<int>(metro::clamp(voltage,-5.f,5.f)*3.7f);
                 if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
             }
-            field(c,29,"AUX ASSIGN",string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
+            bool global=metro::modGlobalDestination(static_cast<metro::ModDestination>(dest));
+            field(c,29,"AUX ASSIGN",global?"Global":string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1 && !global,128,1);
         } else if(page==Metropolix::LOOPY_PAGE) {
             int count=integer(Metropolix::LOOPY_PULSES),both=integer(Metropolix::LOOPY_TARGET);
             field(c,0,"LOOP PULSES",count?std::to_string(count):"Auto",true,128,2);

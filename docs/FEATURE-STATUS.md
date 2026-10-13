@@ -1,10 +1,11 @@
-# Feature status — 2.18.0 public alpha
+# Feature status — 2.19.0 public alpha
 
 Assessment date: 2026-10-13. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
-2.18.0 adds all 29 CTRL destinations and six accumulator AUX/MOD routes; see [Accumulator routing](ACCUMULATOR-ROUTING.md).
+2.19.0 completes all 38 AUX/MOD destinations, including Loopy and targeted reset; see [Complete routing](COMPLETE-ROUTING.md).
+2.18.0 added all 29 CTRL destinations and six accumulator AUX/MOD routes; see [Accumulator routing](ACCUMULATOR-ROUTING.md).
 2.17.0 added ALT → TRK, pulse/gate sources, Rest Pitch, full transpose and track initialization; see [Track options](TRACK-OPTIONS.md).
 2.16.0 added all A/B functions, velocity, per-track slider range/direction, three CTRL and two AUX/MOD destinations; see [Output routing](OUTPUT-ROUTING.md).
 2.15.0 added global clock output division and offset; see the [clock guide](CLOCK-OUTPUT.md).
@@ -41,9 +42,9 @@ configuration, preset workflows, and external interfaces.
 | Gate/stage variation | Four gate types; three ratchet modes; stretching; Stage/Pulse probability; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate CV with Step/sRamp/pRamp; gate scaling and length Hold | Hardware comparison of live edits and mixed timing |
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
 | Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; legacy preset selector/global difference |
-| MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute | 18 internal destinations implemented; many further destinations and destination-specific display units remain |
-| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with 18 destinations; all 29 CTRL destinations | Additional AUX/MOD destinations, ALT+AUX selective randomization |
-| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching | Loopy AUX/MOD routing and Queue options, hardware copy/paste and selective randomization workflows |
+| MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute; all 38 hardware destinations; gate On/Off readouts and global scope | Continuous destination-specific display units and hardware comparisons |
+| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | ALT+AUX selective randomization and hardware comparisons |
+| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching and Loopy AUX/MOD routing | Queue options, hardware copy/paste and selective randomization workflows |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover help, context menus, vertical dragging, numeric entry, undo, optional grids | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains and Quick Chain | Custom Init, pickup, MIDI, MX expansion and SysEx interchange |
 
@@ -55,7 +56,7 @@ differ in edge cases or where the manual leaves details unspecified. See
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows testers**. The engine suites, Rack
-host/persistence checks, widget callback tests, 93 display states, and recorded
+host/persistence checks, widget callback tests, 99 display states, and recorded
 stereo/CV paths pass on the documented setup. The musical baseline also received
 an initial user playtest. Broad testing on other computers, long sessions,
 different zoom/DPI settings, and interactions with other plugins is still needed.

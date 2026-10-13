@@ -6,6 +6,11 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_EXTENDED_ROUTING_AUDIO_QA")) {
+            static unsigned routes=0;
+            for(int lane=0;lane<5;++lane){int d=m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION));if(d>=metro::ModTempo && d<metro::ModDestinationCount)routes|=1u<<(d-metro::ModTempo);}
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<(routes==1048575?"PASS ":"FAIL ")<<"EXTENDED ROUTING PERFORMANCE COMPLETE: all twenty new routes observed during actual bass/lead/percussion arrangement\n";}
+        }
         if(std::getenv("METROPOLIX_ACCUM_ROUTING_AUDIO_QA")) {
             static unsigned routes=0;static bool controls=true;
             for(int lane=0;lane<3;++lane){int dest=m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION));if(dest>=metro::ModAccumulate && dest<=metro::ModAccumReset)routes|=1u<<(dest-metro::ModAccumulate);}
@@ -181,6 +186,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_ACCUM_ROUTING_UI_QA")) {
         #include "AccumulatorRoutingWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_EXTENDED_ROUTING_UI_QA")) {
+        #include "ExtendedRoutingWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_OUTPUT_UI_QA")) {

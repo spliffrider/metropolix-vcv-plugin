@@ -68,7 +68,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::GATE_PAGE: return mod ? -1 : f?Metropolix::gateScaleParam(t):Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
         case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
         case Metropolix::A_PAGE: case Metropolix::B_PAGE: return -1; // Unconfirmed choices use navigation, not the audio parameter.
-        case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
+        case Metropolix::AUX_PAGE: return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::auxParam(m->selectedAux.load(),Metropolix::AUX_DESTINATION))))?-1:Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
         case Metropolix::SETUP_PAGE: return f==3?Metropolix::RANGE:-1;
         case Metropolix::PRESET_SETUP_PAGE: return Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
