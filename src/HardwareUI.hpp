@@ -64,6 +64,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
         case Metropolix::SETUP_PAGE: return Metropolix::RANGE;
+        case Metropolix::PRESET_SETUP_PAGE: return Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
     }
@@ -76,6 +77,9 @@ void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
+    if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%7); return; }
+    if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }
+    if(p==Metropolix::SAVE_PAGE) { m->presetSaveAction.store((m->presetSaveAction.load()+1)%3); return; }
     if(p==Metropolix::ACCUM_PAGE) { m->uiField.store((m->uiField.load()+1)%6); return; }
     if(p==Metropolix::ORDER_PAGE) {
         int id=m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_REVERSED):Metropolix::extraParam(m->selectedTrack.load(),Metropolix::REVERSED);
@@ -114,6 +118,7 @@ struct HardwareControl : app::Knob {
     std::function<void(int)> navigationTurn;
     std::function<void(ui::Menu*)> extraMenu;
     std::function<bool()> active;
+    std::function<bool()> dimActive;
     std::function<std::string()> detailHelp;
     std::function<NVGcolor()> activeColor;
     NVGcolor lightColor=nvgRGB(135,187,227);
@@ -204,6 +209,7 @@ struct HardwareControl : app::Knob {
             if(look==BLUE_BUTTON){top=nvgRGB(199,209,228);bottom=nvgRGB(137,155,184);}
             if(look==CREAM_BUTTON){top=nvgRGB(249,247,234);bottom=nvgRGB(205,205,193);}
             if(on) { top=activeColor?activeColor():lightColor; bottom=color::mult(top,.77f); }
+            else if(dimActive && dimActive()) { top=color::mult(activeColor?activeColor():lightColor,.42f);bottom=color::mult(top,.77f); }
             disc(vg,x,y,r-.7f,nvgRGB(232,234,231));metalDisc(vg,x,y,r-1.5f,top,bottom);
             nvgBeginPath(vg);nvgArc(vg,x,y,r-2.1f,-2.8f,-.45f,NVG_CW);nvgStrokeWidth(vg,.45f);nvgStrokeColor(vg,nvgRGBA(255,255,255,145));nvgStroke(vg);
             return;

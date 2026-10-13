@@ -363,6 +363,7 @@ struct MainDisplay : widget::Widget {
 };
 
 #include "HardwareUI.hpp"
+#include "PresetUI.hpp"
 
 struct Panel : widget::Widget {
     Metropolix* module = nullptr;
@@ -551,6 +552,7 @@ struct MetropolixWidget : ModuleWidget {
 
     void step() override {
         auto* m = getModule<Metropolix>();
+        if (m) pumpPresetUi(m);
         bool expanded = m && m->expanded.load();
         if (expanded != isExpanded) {
             isExpanded = expanded;
@@ -577,6 +579,7 @@ struct MetropolixWidget : ModuleWidget {
         menu->addChild(createMenuItem("Open MOD lanes", "", [m] { m->expanded.store(true); m->modEditor.store(true); m->uiMod.store(true); }));
         menu->addChild(createMenuItem("Selected MOD lane settings", "", [m] { modSettingsMenu(m, m->selectedLane.load()); }));
         menu->addChild(createMenuLabel("Assign A/B sources in MOD lanes. External clock = 1 pulse / 16th."));
+        appendPresetMenu(menu, m);
     }
 };
 

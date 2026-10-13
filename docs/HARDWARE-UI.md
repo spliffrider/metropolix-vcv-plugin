@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.6.0
+# Hardware panel and desktop interaction — 2.7.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -20,7 +20,7 @@ and author metadata also identify sensiburner. This is an independent homage.
 - **BPM:** the first click opens the tempo page. Subsequent BPM clicks tap an internal tempo. External clock shows measured tempo after two edges; the existing input convention remains one edge per sixteenth note.
 - **Select TRK 1 or TRK 2** before editing note-track settings. Select MOD for modulation; MOD → EDIT → a stage button chooses that MOD lane. Right-click MOD also provides direct lane selection.
 - **Stage editing:** press EDIT, choose the printed function with a stage button, then select a stage. Drag the encoder or hold and drag a stage button to edit its value. Slide/Skip stage clicks toggle that stage. Right-click a stage button for direct editing and related choices.
-- **ALT** enables the secondary stage-button actions. LOAD/SAVE use Rack module presets; A/B select output assignment on the display. EXIT returns to the overview.
+- **ALT** enables the secondary stage-button actions. LOAD/SAVE open the internal 8 × 8 preset banks ([guide](PRESETS.md)); A/B select output assignment on the display. EXIT returns to the overview.
 - **Optional grids** remain available through menus. They share parameters with the panel and preserve undo/redo. The hardware panel is 34 HP; opening a grid expands the module to 66 HP. Rack moves it to available space if needed.
 
 ## Accumulator modes
@@ -67,7 +67,7 @@ AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open de
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 
-Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. Hardware long-press shortcuts, preset banks, and the remaining secondary functions are still incomplete. Numeric editing and context menus are intentional computer conveniences.
+Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. Hardware long-press shortcuts, preset chains, and the remaining secondary functions are still incomplete. Numeric editing and context menus are intentional computer conveniences.
 
 ## Verification
 

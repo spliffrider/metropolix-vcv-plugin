@@ -6,6 +6,26 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_PRESET_AUDIO_QA")) {
+            if(qaFrame==2) {
+                // Compress the eight-bar demo to one bar for this short test.
+                json_t* json=APP->engine->moduleToJson(m);
+                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(json_object_get(json,"data"),"presets"),s),Metropolix::TOTAL_PULSES,json_integer(16));
+                APP->engine->moduleFromJson(m,json);json_decref(json);
+                m->params[Metropolix::TOTAL_PULSES].setValue(16);
+                m->requestPreset(1);
+            }
+            static int completed=0;
+            int slot=m->lastLoadedSlot.load();
+            if(completed==0 && slot==1){completed=1;m->requestPreset(2);}
+            else if(completed==1 && slot==2){completed=2;m->requestPreset(3);}
+            else if(completed==2 && slot==3){completed=3;m->requestPreset(0);}
+            else if(completed==3 && slot==0) {
+                completed=4;
+                std::ofstream log(dir+"/report.txt",std::ios::app);
+                log<<"PASS PRESET PERFORMANCE COMPLETE: 4 patch transitions reached their pulse boundaries\n";
+            }
+        }
         if(std::getenv("METROPOLIX_CTRL_QA")) {
             if(qaFrame==90)m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_VALUE)].setValue(2.f/7);
             if(qaFrame==180)m->params[Metropolix::ctrlParam(1,Metropolix::CTRL_VALUE)].setValue(3.f/7);
@@ -65,6 +85,10 @@ void MetropolixWidget::qaStep() {
     };
     if(std::getenv("METROPOLIX_DISPLAY_QA")) {
         #include "DisplayQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_PRESET_UI_QA")) {
+        #include "PresetWidgetQa.hpp"
         return;
     }
     if(qaFrame==6) {

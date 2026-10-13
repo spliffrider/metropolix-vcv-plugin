@@ -10,9 +10,11 @@ void require(bool value, const char* message) {
     if (!value) { std::cerr << "FAIL: " << message << '\n'; std::exit(1); }
 }
 
+#include "PresetRackTests.hpp"
+
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
-    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::NUM_PARAMS==421,"CTRL appends after all existing parameters");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::NUM_PARAMS==428,"presets append after all existing parameters");
     static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
@@ -88,7 +90,7 @@ int main() {
         json_decref(legacy);
         require(restored.sequencer.settings.tracks[0].order == metro::Forward && restored.sequencer.settings.tracks[0].reversed, "legacy Reverse order is migrated without changing playback");
         require(restored.sequencer.settings.tracks[0].accumNegativeLimit == 7, "legacy shared accumulator limit migrates to negative limit");
-        for(int id=Metropolix::AUX_PARAMS;id<Metropolix::NUM_PARAMS;++id)
+        for(int id=Metropolix::AUX_PARAMS;id<Metropolix::TOTAL_PULSES;++id)
             require(restored.params[id].getValue()==0.f,"loading old preset over existing module clears AUX routing");
         json_t* malformed = json_pack("{s:i, s:i, s:i}", "selectedTrack", 100, "selectedStage", -20, "selectedRow", 77);
         restored.dataFromJson(malformed);
@@ -202,7 +204,7 @@ int main() {
         json_t* data=module.dataToJson();Metropolix restored;restored.dataFromJson(data);json_decref(data);
         require(restored.uiPage.load()==Metropolix::AUX_PAGE && restored.uiField.load()==1 && restored.selectedAux.load()==1,"AUX display state roundtrip");
         json_t* previous=json_pack("{s:i}","schemaVersion",6);module.dataFromJson(previous);json_decref(previous);
-        for(int id=Metropolix::AUX_PARAMS;id<Metropolix::NUM_PARAMS;++id)require(module.params[id].getValue()==0,"2.3.x preset clears AUX with no change to old IDs");
+        for(int id=Metropolix::AUX_PARAMS;id<Metropolix::TOTAL_PULSES;++id)require(module.params[id].getValue()==0,"2.3.x preset clears AUX with no change to old IDs");
     }
     {
         Metropolix module;
@@ -268,6 +270,7 @@ int main() {
         json_t* old=json_pack("{s:i}","schemaVersion",8);m.dataFromJson(old);json_decref(old);
         require(m.sequencer.settings.controls[0].destination==metro::CtrlNone && m.sequencer.settings.controls[1].destination==metro::CtrlNone && m.params[Metropolix::trackParam(0,Metropolix::GATE_LENGTH)].getValue()==37,"2.5 patches clear CTRL without altering old panel values");
     }
+    presetRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

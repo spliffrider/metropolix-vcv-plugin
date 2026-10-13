@@ -113,11 +113,17 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->extraMenu=[m](ui::Menu* menu) {
         if(m && m->uiPage.load()==Metropolix::AUX_PAGE)appendAuxMenu(menu,m,m->selectedAux.load());
         if(m && m->uiPage.load()==Metropolix::CTRL_PAGE)appendCtrlMenu(menu,m,m->selectedCtrl.load());
+        if(m && (presetPage(m) || m->uiPage.load()==Metropolix::PRESET_SETUP_PAGE))appendPresetMenu(menu,m);
     };
-    display->navigationMode=[m] { return m && m->uiPage.load()==Metropolix::HOME && !m->uiChooseFunction.load(); };
-    display->navigationTurn=[m](int d) { if(m)m->uiHome.store(metro::modulo(m->uiHome.load()+d,4)); };
+    display->navigationMode=[m] { return m && (m->uiPage.load()==Metropolix::HOME || presetPage(m)) && !m->uiChooseFunction.load(); };
+    display->navigationTurn=[m](int d) {
+        if(!m)return;
+        if(presetPage(m)){m->presetBankIndex.store(metro::modulo(m->presetBankIndex.load()+d,8));m->presetNotice.store(0);}
+        else m->uiHome.store(metro::modulo(m->uiHome.load()+d,4));
+    };
     display->rightAction=[display,stageEditor,laneMenu,m] {
-        if(screenParam(m)>=0) display->createContextMenu();
+        if(presetPage(m))appendPresetMenu(createMenu(),m);
+        else if(screenParam(m)>=0) display->createContextMenu();
         else if(m && m->uiMod.load()) laneMenu(); else stageEditor();
     };
     display->bind(); addChild(display);
@@ -126,6 +132,11 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     encoder->help="Drag up/down to edit. At HOME, drag or click to browse four overviews. Click switches fields or toggles the screen's secondary setting.";
     encoder->action=[m] { encoderPress(m); };
     encoder->extraMenu=display->extraMenu;
+    encoder->rightAction=[encoder,m] {
+        if(presetPage(m))appendPresetMenu(createMenu(),m);
+        else if(encoder->getParamQuantity())encoder->createContextMenu();
+        else {auto* menu=createMenu();menu->addChild(createMenuLabel(encoder->help));}
+    };
     encoder->navigationMode=display->navigationMode;encoder->navigationTurn=display->navigationTurn;
     auto* exit=control("EXIT",214,229,15,HardwareControl::DARK_BUTTON);
     exit->help="Return to the home overview. Right-click for optional editors.";
@@ -170,6 +181,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     auto* setup=valueButton("SETUP",114.6f,306,Metropolix::SETUP_PAGE,[] { return Metropolix::RANGE; });
     setup->look=HardwareControl::CREAM_BUTTON;
     setup->extraMenu=[m,stageEditor,modEditor](ui::Menu* menu) {
+        appendPresetMenu(menu,m);
         menu->addChild(new ui::MenuSeparator);
         menu->addChild(createMenuItem("Selected track settings","",[m] { trackSettingsMenu(m); }));
         menu->addChild(createMenuItem("Open stage editor","",stageEditor));
@@ -192,7 +204,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     scale->action=[m] { screenPage(m,Metropolix::SCALE_PAGE); if(m)m->uiField.store(1); }; scale->dragAction=scale->action;
     scale->extraMenu=[choice,m](ui::Menu* menu) { menu->addChild(new ui::MenuSeparator); choice(menu,m,"Root",Metropolix::ROOT,{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"}); };
     auto* alt=control("ALT",208.2f,306,16,HardwareControl::DARK_BUTTON);
-    alt->help="Toggle secondary stage-button actions: Rack preset load/save, A/B assignment, and lane/accumulator settings.";
+    alt->help="Toggle secondary stage-button actions: internal preset LOAD/SAVE, A/B assignment, and lane/accumulator settings. Rack file presets remain in the module's right-click menu.";
     alt->action=[m] { if(m) { if(m->uiPage.load()==Metropolix::SCALE_PAGE)m->uiField.store(1-m->uiField.load());else m->uiAlt.store(!m->uiAlt.load()); } }; alt->active=[m] { return m && m->uiAlt.load(); };
     valueButton("ORDER",21,340,Metropolix::ORDER_PAGE,[trackOrMod] { return trackOrMod(Metropolix::ORDER,Metropolix::MOD_ORDER); });
     auto* len=valueButton("LEN",52.2f,340,Metropolix::LENGTH_PAGE,[trackOrMod] { return trackOrMod(Metropolix::LENGTH,Metropolix::MOD_LENGTH); });
@@ -213,19 +225,24 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     for(int s=0;s<8;++s) {
         auto* c=control(std::string("Stage ")+std::to_string(s+1)+" / "+names[s],244+s*35.7f,340,16,HardwareControl::BLUE_BUTTON);
         c->binding=[m,s] {
-            if(!m || m->uiAlt.load() || m->uiChooseFunction.load()) return -1;
+            if(!m || m->uiAlt.load() || m->uiChooseFunction.load() || presetPage(m)) return -1;
             return m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s):Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load());
         };
         c->help="EDIT then a function, then select a stage. Hold + drag edits this stage. Slide/Skip clicks toggle. Right-click for values.";
+        c->detailHelp=[m,s] {
+            if(!presetPage(m))return std::string();
+            int slot=m->presetBankIndex.load()*8+s;
+            return string::f("Preset %d-%d: %s. Click to load/save; right-click for slot actions. Turn encoder to change bank.",slot/8+1,slot%8+1,m->getPreset(slot).occupied?"saved":"empty");
+        };
         if(s==6)c->help+=" ALT + this button opens LIM: click the encoder to select Mode, then drag to choose Stage or Track.";
-        c->dragAction=[m,s] { if(m && !m->uiAlt.load() && !m->uiChooseFunction.load()) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
+        c->dragAction=[m,s] { if(m && !m->uiAlt.load() && !m->uiChooseFunction.load() && !presetPage(m)) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
         int row=rows[s];
         c->action=[this,m,s,row,unavailable] {
             if(!m)return;
             if(m->uiAlt.load()) {
                 m->uiAlt.store(false);
-                if(s==0) loadDialog();
-                else if(s==1) saveDialog();
+                if(s==0) openPresetPage(m,false);
+                else if(s==1) openPresetPage(m,true);
                 else if(s==2)screenPage(m,Metropolix::A_PAGE);
                 else if(s==3)screenPage(m,Metropolix::B_PAGE);
                 else if(s==6){m->uiMod.store(false);screenPage(m,Metropolix::ACCUM_PAGE);}
@@ -233,6 +250,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 else unavailable(s==4?"Clock output configuration":"MX expander");
                 return;
             }
+            if(presetPage(m) && !m->uiChooseFunction.load()) { activatePresetSlot(m,s);return; }
             if(m->uiChooseFunction.load()) {
                 m->uiChooseFunction.store(false);
                 if(m->uiMod.load()){m->selectedLane.store(s);m->uiStageDetail.store(false);screenPage(m,Metropolix::STAGE_PAGE);}
@@ -255,6 +273,12 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         c->active=[m,s] {
             if(!m)return false;
             if(m->uiChooseFunction.load())return true;
+            if(presetPage(m)) {
+                int slot=m->presetBankIndex.load()*8+s;
+                if(m->pendingSlot.load()==slot)return std::fmod(system::getTime(),.3)<.15;
+                if(m->lastLoadedSlot.load()==slot && m->uiPage.load()==Metropolix::LOAD_PAGE)return std::fmod(system::getTime(),.9)<.65;
+                return m->getPreset(slot).occupied;
+            }
             int row=m->selectedRow.load();
             if(m->uiPage.load()==Metropolix::STAGE_PAGE) {
                 if(m->uiStageDetail.load() && m->selectedStage.load()==s && (m->uiMod.load() || (row!=Metropolix::SLIDE && row!=Metropolix::SKIP)))return std::fmod(system::getTime(),.65)<.4;
@@ -268,11 +292,14 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             const NVGcolor colors[]={nvgRGB(235,54,46),nvgRGB(249,142,33),nvgRGB(241,220,63),nvgRGB(88,214,121),nvgRGB(76,222,233),nvgRGB(95,137,248),nvgRGB(218,82,222),nvgRGB(213,224,246)};
             if(!m)return colors[7];
             if(m->uiChooseFunction.load())return colors[s];
+            if(presetPage(m))return m->presetBankIndex.load()==7?nvgRGB(249,135,186):colors[m->presetBankIndex.load()];
             if(m->uiMod.load())return colors[7];
             const int map[]={4,5,6,0,1,7};return colors[map[m->selectedRow.load()]];
         };
+        c->dimActive=[m] { return presetPage(m) && !m->uiChooseFunction.load(); };
         c->rightAction=[c,m,s] {
             if(!m)return;
+            if(presetPage(m)){presetSlotMenu(m,s);return;}
             m->uiAlt.store(false); m->uiChooseFunction.store(false); m->uiEdit.store(true); m->uiStageDetail.store(true); m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE);
             c->bind(); c->createContextMenu();
         };
