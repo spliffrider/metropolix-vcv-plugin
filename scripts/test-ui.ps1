@@ -1,4 +1,4 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish, [switch]$Chains, [switch]$ChainAudio, [switch]$Swing, [switch]$SwingAudio, [switch]$Overrides, [switch]$OverrideAudio, [switch]$Loopy, [switch]$LoopyAudio, [switch]$Scales, [switch]$ScaleAudio, [switch]$Slides, [switch]$SlideAudio, [switch]$StageCv, [switch]$CvAudio, [switch]$Clock, [switch]$ClockAudio, [switch]$Outputs, [switch]$OutputAudio, [switch]$OutputArrangement, [switch]$Tracks, [switch]$TrackAudio)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish, [switch]$Chains, [switch]$ChainAudio, [switch]$Swing, [switch]$SwingAudio, [switch]$Overrides, [switch]$OverrideAudio, [switch]$Loopy, [switch]$LoopyAudio, [switch]$Scales, [switch]$ScaleAudio, [switch]$Slides, [switch]$SlideAudio, [switch]$StageCv, [switch]$CvAudio, [switch]$Clock, [switch]$ClockAudio, [switch]$Outputs, [switch]$OutputAudio, [switch]$OutputArrangement, [switch]$Tracks, [switch]$TrackAudio, [switch]$AccumRouting, [switch]$AccumAudio)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
@@ -13,6 +13,7 @@ if ($ChainAudio) { $Audio = $true }
 if ($LoopyAudio) { $Audio = $true }
 if ($ScaleAudio) { $Audio = $true }
 if ($SlideAudio) { $Audio = $true; $ChainAudio = $true }
+if ($AccumAudio) { $OutputArrangement = $true; $env:METROPOLIX_ACCUM_ROUTING_AUDIO_QA = '1' }
 if ($TrackAudio) { $OutputArrangement = $true; $env:METROPOLIX_TRACK_AUDIO_QA = '1' }
 if ($OutputArrangement) { $OutputAudio = $true; $ChainAudio = $true; $env:METROPOLIX_OUTPUT_ARRANGEMENT_QA = '1' }
 if ($OutputAudio) { $Audio = $true }
@@ -37,6 +38,8 @@ try {
     if ($ClockAudio) { $output = Join-Path $projectRoot 'tmp/clock-audio-qa'; $env:METROPOLIX_CLOCK_AUDIO_QA = '1' }
     if ($OutputAudio) { $output = Join-Path $projectRoot 'tmp/output-audio-qa'; $env:METROPOLIX_OUTPUT_AUDIO_QA = '1' }
     if ($OutputArrangement) { $output = Join-Path $projectRoot 'tmp/output-arrangement-qa' }
+    if ($AccumAudio) { $output = Join-Path $projectRoot 'tmp/accum-routing-audio-qa' }
+    if ($AccumRouting) { $output = Join-Path $projectRoot 'tmp/accum-routing-ui-qa'; $env:METROPOLIX_ACCUM_ROUTING_UI_QA = '1' }
     if ($TrackAudio) { $output = Join-Path $projectRoot 'tmp/track-audio-qa' }
     if ($Tracks) { $output = Join-Path $projectRoot 'tmp/track-ui-qa'; $env:METROPOLIX_TRACK_UI_QA = '1' }
     if ($Outputs) { $output = Join-Path $projectRoot 'tmp/output-ui-qa'; $env:METROPOLIX_OUTPUT_UI_QA = '1' }
@@ -88,7 +91,7 @@ try {
         if ($Aux) { $env:METROPOLIX_AUX_QA = '1' }
         if ($Controls) { $env:METROPOLIX_CTRL_QA = '1' }
         if ($PresetAudio) { $env:METROPOLIX_PRESET_AUDIO_QA = '1' }
-        $audioExample = if ($TrackAudio) { 'examples/Track-options-performance.vcv' } elseif ($OutputAudio) { 'examples/Output-routing-performance.vcv' } elseif ($ClockAudio) { 'examples/Clock-output-demo.vcv' } elseif ($CvAudio) { 'examples/Stage-CV-performance.vcv' } elseif ($SlideAudio) { 'examples/Slide-performance.vcv' } elseif ($ScaleAudio) { 'examples/Scale-progression.vcv' } elseif ($LoopyAudio) { 'examples/Loopy-performance.vcv' } elseif ($OverrideAudio) { 'examples/Stage-overrides-performance.vcv' } elseif ($SwingAudio) { 'examples\Swing-performance.vcv' } elseif ($ChainAudio) { 'examples\Chain-performance.vcv' } elseif ($PresetAudio) { 'examples\Preset-performance.vcv' } elseif ($Controls) { 'examples\CTRL-performance.vcv' } elseif ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
+        $audioExample = if ($AccumAudio) { 'examples/Accumulator-routing-performance.vcv' } elseif ($TrackAudio) { 'examples/Track-options-performance.vcv' } elseif ($OutputAudio) { 'examples/Output-routing-performance.vcv' } elseif ($ClockAudio) { 'examples/Clock-output-demo.vcv' } elseif ($CvAudio) { 'examples/Stage-CV-performance.vcv' } elseif ($SlideAudio) { 'examples/Slide-performance.vcv' } elseif ($ScaleAudio) { 'examples/Scale-progression.vcv' } elseif ($LoopyAudio) { 'examples/Loopy-performance.vcv' } elseif ($OverrideAudio) { 'examples/Stage-overrides-performance.vcv' } elseif ($SwingAudio) { 'examples\Swing-performance.vcv' } elseif ($ChainAudio) { 'examples\Chain-performance.vcv' } elseif ($PresetAudio) { 'examples\Preset-performance.vcv' } elseif ($Controls) { 'examples\CTRL-performance.vcv' } elseif ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
         $audioPatch = Get-Content -LiteralPath $audioExample -Raw | ConvertFrom-Json
         if ($OutputAudio -and !$OutputArrangement) {
             # Measure the first scene at a fixed 120 BPM without arrangement resets.
@@ -139,6 +142,7 @@ try {
     $completion = if ($Presets) { 'PASS PRESET UI QA COMPLETE' } elseif ($Display) { 'PASS DISPLAY QA COMPLETE' } elseif ($Audio) { 'PASS AUDIO QA COMPLETE' } else { 'PASS UI QA COMPLETE' }
     if ($Polish) { $completion = 'PASS UI POLISH QA COMPLETE' }
     if ($Chains) { $completion = 'PASS CHAIN UI QA COMPLETE' }
+    if ($AccumRouting) { $completion = 'PASS ACCUM ROUTING UI QA COMPLETE' }
     if ($Tracks) { $completion = 'PASS TRACK UI QA COMPLETE' }
     if ($Outputs) { $completion = 'PASS OUTPUT UI QA COMPLETE' }
     if ($Clock) { $completion = 'PASS CLOCK UI QA COMPLETE' }
@@ -151,9 +155,9 @@ try {
     if ($process.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($completion)) {
         throw 'UI test failed; inspect tmp/rack-qa/log.txt and tmp/qa/report.txt.'
     }
-    if ($Presets -or $Chains -or $Swing -or $Overrides -or $Loopy -or $Scales -or $Slides -or $StageCv -or $Clock -or $Outputs -or $Tracks) {
-        if ($Tracks) { $env:METROPOLIX_TRACK_REOPEN_QA = '1' } elseif ($Outputs) { $env:METROPOLIX_OUTPUT_REOPEN_QA = '1' } elseif ($Clock) { $env:METROPOLIX_CLOCK_REOPEN_QA = '1' } elseif ($StageCv) { $env:METROPOLIX_STAGE_CV_REOPEN_QA = '1' } elseif ($Slides) { $env:METROPOLIX_SLIDE_REOPEN_QA = '1' } elseif ($Scales) { $env:METROPOLIX_SCALE_REOPEN_QA = '1' } elseif ($Loopy) { $env:METROPOLIX_LOOPY_REOPEN_QA = '1' } elseif ($Overrides) { $env:METROPOLIX_OVERRIDE_REOPEN_QA = '1' } elseif ($Swing) { $env:METROPOLIX_SWING_REOPEN_QA = '1' } elseif ($Chains) { $env:METROPOLIX_CHAIN_REOPEN_QA = '1' } else { $env:METROPOLIX_PRESET_REOPEN_QA = '1' }
-        $arguments[-1] = '"' + (Join-Path $output $(if ($Tracks) { 'track-roundtrip.vcv' } elseif ($Outputs) { 'output-roundtrip.vcv' } elseif ($Clock) { 'clock-roundtrip.vcv' } elseif ($StageCv) { 'cv-roundtrip.vcv' } elseif ($Slides) { 'slide-roundtrip.vcv' } elseif ($Scales) { 'scale-roundtrip.vcv' } elseif ($Loopy) { 'loopy-roundtrip.vcv' } elseif ($Overrides) { 'override-roundtrip.vcv' } elseif ($Swing) { 'swing-roundtrip.vcv' } elseif ($Chains) { 'chain-roundtrip.vcv' } else { 'preset-roundtrip.vcv' })) + '"'
+    if ($Presets -or $Chains -or $Swing -or $Overrides -or $Loopy -or $Scales -or $Slides -or $StageCv -or $Clock -or $Outputs -or $Tracks -or $AccumRouting) {
+        if ($AccumRouting) { $env:METROPOLIX_ACCUM_ROUTING_REOPEN_QA = '1' } elseif ($Tracks) { $env:METROPOLIX_TRACK_REOPEN_QA = '1' } elseif ($Outputs) { $env:METROPOLIX_OUTPUT_REOPEN_QA = '1' } elseif ($Clock) { $env:METROPOLIX_CLOCK_REOPEN_QA = '1' } elseif ($StageCv) { $env:METROPOLIX_STAGE_CV_REOPEN_QA = '1' } elseif ($Slides) { $env:METROPOLIX_SLIDE_REOPEN_QA = '1' } elseif ($Scales) { $env:METROPOLIX_SCALE_REOPEN_QA = '1' } elseif ($Loopy) { $env:METROPOLIX_LOOPY_REOPEN_QA = '1' } elseif ($Overrides) { $env:METROPOLIX_OVERRIDE_REOPEN_QA = '1' } elseif ($Swing) { $env:METROPOLIX_SWING_REOPEN_QA = '1' } elseif ($Chains) { $env:METROPOLIX_CHAIN_REOPEN_QA = '1' } else { $env:METROPOLIX_PRESET_REOPEN_QA = '1' }
+        $arguments[-1] = '"' + (Join-Path $output $(if ($AccumRouting) { 'accum-routing-roundtrip.vcv' } elseif ($Tracks) { 'track-roundtrip.vcv' } elseif ($Outputs) { 'output-roundtrip.vcv' } elseif ($Clock) { 'clock-roundtrip.vcv' } elseif ($StageCv) { 'cv-roundtrip.vcv' } elseif ($Slides) { 'slide-roundtrip.vcv' } elseif ($Scales) { 'scale-roundtrip.vcv' } elseif ($Loopy) { 'loopy-roundtrip.vcv' } elseif ($Overrides) { 'override-roundtrip.vcv' } elseif ($Swing) { 'swing-roundtrip.vcv' } elseif ($Chains) { 'chain-roundtrip.vcv' } else { 'preset-roundtrip.vcv' })) + '"'
         $reopened = Start-Process -FilePath $RackPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
         $elapsed.Restart()
         while (!$reopened.WaitForExit(1000)) {
@@ -163,7 +167,7 @@ try {
             }
         }
         $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
-        $reopenCompletion = if ($Tracks) { 'PASS TRACK REOPEN QA COMPLETE' } elseif ($Outputs) { 'PASS OUTPUT REOPEN QA COMPLETE' } elseif ($Clock) { 'PASS CLOCK REOPEN QA COMPLETE' } elseif ($StageCv) { 'PASS STAGE CV REOPEN QA COMPLETE' } elseif ($Slides) { 'PASS SLIDE REOPEN QA COMPLETE' } elseif ($Scales) { 'PASS SCALE REOPEN QA COMPLETE' } elseif ($Loopy) { 'PASS LOOPY REOPEN QA COMPLETE' } elseif ($Overrides) { 'PASS OVERRIDE REOPEN QA COMPLETE' } elseif ($Swing) { 'PASS SWING REOPEN QA COMPLETE' } elseif ($Chains) { 'PASS CHAIN REOPEN QA COMPLETE' } else { 'PASS PRESET REOPEN QA COMPLETE' }
+        $reopenCompletion = if ($AccumRouting) { 'PASS ACCUM ROUTING REOPEN QA COMPLETE' } elseif ($Tracks) { 'PASS TRACK REOPEN QA COMPLETE' } elseif ($Outputs) { 'PASS OUTPUT REOPEN QA COMPLETE' } elseif ($Clock) { 'PASS CLOCK REOPEN QA COMPLETE' } elseif ($StageCv) { 'PASS STAGE CV REOPEN QA COMPLETE' } elseif ($Slides) { 'PASS SLIDE REOPEN QA COMPLETE' } elseif ($Scales) { 'PASS SCALE REOPEN QA COMPLETE' } elseif ($Loopy) { 'PASS LOOPY REOPEN QA COMPLETE' } elseif ($Overrides) { 'PASS OVERRIDE REOPEN QA COMPLETE' } elseif ($Swing) { 'PASS SWING REOPEN QA COMPLETE' } elseif ($Chains) { 'PASS CHAIN REOPEN QA COMPLETE' } else { 'PASS PRESET REOPEN QA COMPLETE' }
         if ($reopened.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($reopenCompletion)) {
             throw 'Preset banks did not survive an actual Rack file save/reopen.'
         }
@@ -179,11 +183,13 @@ try {
     if ($SwingAudio -and !$report.Contains('PASS SWING PERFORMANCE COMPLETE')) { throw 'Swing values were not observed in real playback.' }
     if ($Controls -and !$report.Contains('PASS CTRL PERFORMANCE COMPLETE')) { throw 'CTRL performance verification did not finish.' }
     if ($ClockAudio -and !$report.Contains('PASS CLOCK AUDIO TIMING')) { throw 'Clock output audio timing did not pass' }
+    if ($AccumAudio -and !$report.Contains('PASS ACCUM ROUTING PERFORMANCE COMPLETE')) { throw 'Accumulator routes were not observed in audio playback' }
     if ($TrackAudio -and !$report.Contains('PASS TRACK PERFORMANCE COMPLETE')) { throw 'Track options were not observed' }
     if ($OutputArrangement -and !$report.Contains('PASS OUTPUT ARRANGEMENT COMPLETE')) { throw 'Output scenes were not observed' }
     if ($OutputAudio -and !$report.Contains('PASS OUTPUT AUDIO ROUTING')) { throw 'Output routing audio timing did not pass' }
     if ($CvAudio -and !$report.Contains('PASS STAGE CV PERFORMANCE COMPLETE')) { throw 'Stage CV performance did not finish' }
 } finally {
+    Remove-Item Env:METROPOLIX_ACCUM_ROUTING_UI_QA, Env:METROPOLIX_ACCUM_ROUTING_REOPEN_QA, Env:METROPOLIX_ACCUM_ROUTING_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_TRACK_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_TRACK_UI_QA, Env:METROPOLIX_TRACK_REOPEN_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_OUTPUT_ARRANGEMENT_QA -ErrorAction SilentlyContinue

@@ -224,10 +224,6 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
     menu->addChild(createMenuItem("Clear assignment","",[m,knob] {
         setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION)),0.f);
     }));
-    menu->addChild(createSubmenuItem("Not implemented yet","",[](ui::Menu* sub) {
-        for(auto name:{"Accum Dir"})
-            sub->addChild(createMenuLabel(name));
-    }));
 }
 
 // All views bind to the same ParamQuantity, preserving Rack automation, reset,

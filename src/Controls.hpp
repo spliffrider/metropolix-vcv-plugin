@@ -11,7 +11,7 @@ enum CtrlDestination { CtrlNone, CtrlAccumMode, CtrlAccumPolar, CtrlTempo,
     CtrlPitchPost, CtrlPitchPre, CtrlOrder, CtrlProbability, CtrlPulseCount,
     CtrlPulseDiv, CtrlPulsesLength, CtrlRatchet, CtrlRoot, CtrlSkipInvert,
     CtrlSlideAmount, CtrlSliderInvert, CtrlStagesLength, CtrlStagesOffset,
-    CtrlOutputSwap, CtrlSwing, CtrlUserScale, CtrlVelocity, CtrlSliderRange, CtrlGateScale, CtrlDestinationCount };
+    CtrlOutputSwap, CtrlSwing, CtrlUserScale, CtrlVelocity, CtrlSliderRange, CtrlGateScale, CtrlAccumDir, CtrlDestinationCount };
 
 inline float ctrlClamp(float v) { return std::isfinite(v)?std::max(-1.f,std::min(1.f,v)):0.f; }
 struct Control {
@@ -60,7 +60,7 @@ struct ControlRoutes {
             if(c.destination==CtrlOutputSwap){swap=x>0;continue;}
             for(int t=0;t<2;++t)if(c.targets(t)) {
                 auto& v=values[t][c.destination];
-                if(c.destination==CtrlDirection || c.destination==CtrlSkipInvert || c.destination==CtrlSliderInvert || c.destination==CtrlAccumPolar)v=x;
+                if(c.destination==CtrlDirection || c.destination==CtrlSkipInvert || c.destination==CtrlSliderInvert || c.destination==CtrlAccumPolar || c.destination==CtrlAccumDir)v=x;
                 else v=ctrlClamp(v+x);
             }
         }

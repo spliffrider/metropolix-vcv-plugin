@@ -57,12 +57,10 @@ alongside CTRL. The HOME panel view now shows the actual knob positions.
 | Slider Invert | Right reverses the programmed track direction; left/noon retain it |
 | Track Out Swap | Right swaps physical Pitch/Gate 1 and 2 plus every track-based assignment at A/B; left/noon normal. MOD sources at A/B remain unchanged. Global. |
 
-There are 28 destinations plus None as of 2.16.0. Velocity adds −5…+5 V;
+There are 29 destinations plus None as of 2.18.0. Velocity adds −5…+5 V;
 Slider Range directly sets 1–4 octaves; Gate Scale directly sets 0–100%.
 See [Output routing](OUTPUT-ROUTING.md). Scale (User) moves within the
-locked user bank; see [Scales](SCALES.md). **Accum Dir** remains listed as not implemented in the menu.
-In particular, reversing an accumulated sequence requires more than changing
-the sign of its increments, so Accum Dir is not presented as available.
+locked user bank; see [Scales](SCALES.md). **Accum Dir** is available: clockwise forward, exact noon hold, counterclockwise reverse within the existing range. See [Accumulator routing](ACCUMULATOR-ROUTING.md).
 
 ## Try it
 

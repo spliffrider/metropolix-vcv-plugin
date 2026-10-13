@@ -8,8 +8,9 @@
 namespace metro {
 enum ModType { ModBipolar, ModUnipolar, ModGate };
 enum ModDestination { ModNone, ModOctave, ModPitchPre, ModPitchPost, ModPitchOffset,
-    ModGateLength, ModProbability, ModRatchet, ModMute, ModSwing, ModUserScale, ModVelocity, ModOutputSwap, ModDestinationCount };
-inline bool modGateDestination(ModDestination destination) { return destination == ModMute || destination==ModOutputSwap; }
+    ModGateLength, ModProbability, ModRatchet, ModMute, ModSwing, ModUserScale, ModVelocity, ModOutputSwap,
+    ModAccumulate, ModAccumReverse, ModAccumInvert, ModAccumMode, ModAccumPolarity, ModAccumReset, ModDestinationCount };
+inline bool modGateDestination(ModDestination destination) { return destination == ModMute || destination==ModOutputSwap || (destination>=ModAccumulate && destination<ModDestinationCount); }
 template <class T> T modClamp(T v, T lo, T hi) { return std::max(lo, std::min(hi, v)); }
 
 // AUX pp.154-156: continuous CV is attenuverted; a gate destination uses
@@ -59,6 +60,7 @@ struct Modulation {
     std::array<OutputPulse,8> clockPulses;
     std::array<float,8> clocks{};
     std::array<std::array<float, ModDestinationCount>, 2> routes{};
+    std::array<std::array<bool,ModDestinationCount>,2> assigned{};
     std::array<RandomSource, 8> random;
 
     void seed(uint32_t value) {
@@ -75,6 +77,7 @@ struct Modulation {
         outputs.fill(0.f);
         clocks.fill(0.f);for(auto& pulse:clockPulses)pulse.clear();
         for (auto& track : routes) track.fill(0.f);
+        for (auto& track : assigned) track.fill(false);
     }
     static float stageValue(const ModLane& lane, int stage) {
         float value = lane.values[stage];
@@ -115,6 +118,7 @@ struct Modulation {
     void render(const std::array<ModLane, 8>& configs, double dt,
                 const std::array<AuxInput, 3>& auxInputs = std::array<AuxInput, 3>()) {
         for (auto& track : routes) track.fill(0.f);
+        for (auto& track : assigned) track.fill(false);
         for (int i = 0; i < 8; ++i) {
             const auto& config = configs[i];
             auto& state = lanes[i];
@@ -122,6 +126,8 @@ struct Modulation {
             state.value = voltage(config, state);
             outputs[i] = config.mute ? 0.f : state.value;
             state.age = std::min(state.age + dt, state.duration);
+            if(config.destination>ModNone && config.destination<ModDestinationCount)
+                for(int t=0;t<2;++t)if(config.assignment==2 || config.assignment==t)assigned[t][config.destination]=true;
             if (config.mute || config.destination <= ModNone || config.destination >= ModDestinationCount) continue;
             for (int track = 0; track < 2; ++track) {
                 if (config.assignment == 2 || config.assignment == track)
@@ -134,8 +140,10 @@ struct Modulation {
             if (input.destination <= ModNone || input.destination >= ModDestinationCount) continue;
             float value = input.effectiveVoltage();
             for (int track = 0; track < 2; ++track)
-                if (input.assignment == 2 || input.assignment == track)
+                if (input.assignment == 2 || input.assignment == track) {
+                    assigned[track][input.destination]=true;
                     routes[track][input.destination] += value;
+                }
         }
         for (auto& track : routes) for (auto& value : track) value = modClamp(value, -5.f, 5.f);
     }

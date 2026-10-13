@@ -99,10 +99,15 @@ struct TrackState {
     bool skipInverted = false;
     PlayOrder playOrder;
     std::array<int, 8> accumulator{};
+    std::array<int,8> accumulatorPlayed{}; // Last emitted offset, distinct from the next counter.
+    std::array<bool,8> accumulatorHasPlayed{}, accumulatorReversed{}, accumulatorInverted{};
+    std::array<int,8> accumulatorPlayedDirection{{1,1,1,1,1,1,1,1}};
     std::array<int, 8> accumDirection{{1,1,1,1,1,1,1,1}};
     int trackAccumulator = 0;
     int trackAccumulation = 0;
     int trackAccumDirection = 1;
+    int trackPlayedDirection = 1;
+    bool trackAccumulatorHasPlayed = false, trackAccumulatorReversed = false, trackAccumulatorInverted = false;
     AccumMode accumMode = StageAccumulation;
     int activeAccumulation = 0;
     int lastRatchetEvent = -1;
@@ -217,6 +222,7 @@ public:
     }
 
     void reset(bool manual=false) {
+        pendingAccumReset.fill(false);accumResetHigh.fill(false);
         for (auto& state : tracks) {
             // CV pitch holds on reset until the next played note.
             float pitch = state.pitch;
@@ -298,6 +304,7 @@ public:
                 modulation.tick(settings.modLanes, period);
             }
             modulation.render(settings.modLanes, dt, settings.auxInputs);
+            readAccumulatorReset();
             // Pending track pulses use the same sample clock as gates/slides.
             // Reset/recall above cancels them before any new pattern is played.
             for (int t = 0; t < 2; ++t)
@@ -339,6 +346,7 @@ public:
         } else {
             for (auto& state : tracks) { state.gate = 0.f; state.cv = 0.f; }
             modulation.silence();
+            readAccumulatorReset(true);
             // External pitch routing is available to stopped Stage Player notes.
             if(loopy.stages & 255u)modulation.render(settings.modLanes, 0.0, settings.auxInputs);
             modulation.outputs.fill(0.f);
@@ -369,6 +377,7 @@ private:
     RandomSource random[2], loopRandom[2];
     std::array<float,2> playerCv{};
     int voiceMode=0;
+    std::array<bool,2> pendingAccumReset{},accumResetHigh{};
     std::array<unsigned,2> loopMasks{}, playerMasks{};
     std::array<int,2> loopCounts{}, loopLimits{};
     TrackState& voice(int t) { return voiceMode==1?loopTracks[t]:voiceMode==2?playerTracks[t]:tracks[t]; }
@@ -381,6 +390,26 @@ private:
         float direction=controls.values[t][CtrlDirection];
         return direction==0?settings.tracks[t].reversed:direction<0;
     }
+    bool accumulationEnabled(int t) const {
+        for(const auto& control:settings.controls)if(control.destination==CtrlAccumDir && control.targets(t) && controls.values[t][CtrlAccumDir]==0)return false;
+        return !modulation.assigned[t][ModAccumulate] || modulation.routes[t][ModAccumulate]>=1.5f;
+    }
+    bool accumulationReverse(int t) const {return controls.values[t][CtrlAccumDir]<0 || modulation.routes[t][ModAccumReverse]>=1.5f;}
+    AccumMode effectiveAccumMode(int t) const {return AccumMode(int(settings.tracks[t].accumMode)^(modulation.routes[t][ModAccumMode]>=1.5f));}
+    void readAccumulatorReset(bool stopped=false) {
+        for(int t=0;t<2;++t){float voltage=modulation.routes[t][ModAccumReset];
+            if(stopped){voltage=0;for(const auto& input:settings.auxInputs)if(input.destination==ModAccumReset && (input.assignment==2 || input.assignment==t))voltage+=input.effectiveVoltage();}
+            bool high=voltage>=1.5f;if(high && !accumResetHigh[t])pendingAccumReset[t]=true;accumResetHigh[t]=high;
+        }
+    }
+    void clearAccumulator(int t) {
+        for(auto* state:{&tracks[t],&loopTracks[t],&playerTracks[t]}){
+            state->accumulator.fill(0);state->accumulatorPlayed.fill(0);state->accumDirection.fill(1);
+            state->accumulatorHasPlayed.fill(false);state->accumulatorReversed.fill(false);state->accumulatorInverted.fill(false);state->accumulatorPlayedDirection.fill(1);
+            state->trackAccumulator=state->trackAccumulation=state->activeAccumulation=0;state->trackAccumDirection=1;
+            state->trackPlayedDirection=1;state->trackAccumulatorHasPlayed=state->trackAccumulatorReversed=state->trackAccumulatorInverted=false;
+        }
+    }
     void stagePlayer(double dt) {
         for(int t=0;t<2;++t) {
             loopPlaying[t]=false; loopMasks[t]=0;
@@ -390,7 +419,7 @@ private:
                 float from=playerPlaying[t]?state.pitch:tracks[t].pitch;
                 state=tracks[t];state.stage=lower();
                 state.outputEvents=TrackOutputEvents();state.outputEvents.firstDue=false;
-                state.activeAccumulation=state.accumMode==TrackAccumulation?state.trackAccumulation:state.accumulator[state.stage];
+                state.activeAccumulation=state.accumMode==TrackAccumulation?state.trackAccumulation:accumulationEnabled(t)?state.accumulator[state.stage]:state.accumulatorPlayed[state.stage];
                 voiceMode=2;state.targetPitch=stagePitch(t);voiceMode=0;
                 const auto& config=settings.tracks[t];
                 state.slideDuration=config.slideType==AnalogSlide && config.stages[state.stage].slide && have?analogSlideTime(config.slideTime):0;
@@ -405,6 +434,7 @@ private:
         }
     }
     void performTick(int t,double duration) {
+        if(pendingAccumReset[t]){clearAccumulator(t);pendingAccumReset[t]=false;}
         trackTick(t,duration);
         if(!requested(t)){loopPlaying[t]=false;loopMasks[t]=0;return;}
         voiceMode=1;
@@ -486,25 +516,46 @@ private:
     }
 
     void accumulate(int t) {
+        if(!accumulationEnabled(t))return;
         auto& state = voice(t);
         const auto& config = settings.tracks[t];
         const auto& edit = config.stages[state.stage];
-        const int amount = clamp(edit.accumulation, -28, 28)*(controls.values[t][CtrlAccumPolar]<0?-1:1);
+        bool invert=(controls.values[t][CtrlAccumPolar]<0)!=(modulation.routes[t][ModAccumInvert]>=1.5f);
+        const int amount = clamp(edit.accumulation, -28, 28)*(invert?-1:1);
+        bool bipolar=config.accumBipolar!=(modulation.routes[t][ModAccumPolarity]>=1.5f);
+        bool reverseAccum=accumulationReverse(t);
+        const int low=bipolar || amount<0?-clamp(config.accumNegativeLimit,1,28):0;
+        const int high=bipolar || amount>0?clamp(config.accumLimit,1,28):0;
         if (state.accumMode == TrackAccumulation) {
             // Zero-amount stages inherit the sounding track offset. They must
             // not consume the next offset: p127's first C D E F pass is neutral.
             if (amount != 0) {
-                state.trackAccumulation = state.trackAccumulator;
+                if(state.trackAccumulatorHasPlayed && (state.trackAccumulatorReversed!=reverseAccum || state.trackAccumulatorInverted!=invert)) {
+                    state.trackAccumDirection=state.trackPlayedDirection;
+                    state.trackAccumulator=advanceAccumulator(state.trackAccumulation,amount,config.accumLimit,config.accumNegativeLimit,bipolar,config.accumOrder,state.trackAccumDirection,dice(t),reverseAccum,state.trackAccumulatorInverted!=invert);
+                }
+                state.trackAccumulatorHasPlayed=true;state.trackAccumulatorReversed=reverseAccum;state.trackAccumulatorInverted=invert;
+                state.trackPlayedDirection=state.trackAccumDirection;
+                state.trackAccumulation = clamp(state.trackAccumulator,low,high);
                 state.trackAccumulator = advanceAccumulator(state.trackAccumulation,
                     amount, config.accumLimit, config.accumNegativeLimit,
-                    config.accumBipolar, config.accumOrder, state.trackAccumDirection, dice(t));
+                    bipolar, config.accumOrder, state.trackAccumDirection, dice(t),reverseAccum);
             }
             state.activeAccumulation = state.trackAccumulation;
         } else {
-            state.activeAccumulation = state.accumulator[state.stage];
+            if(amount!=0 && state.accumulatorHasPlayed[state.stage] && (state.accumulatorReversed[state.stage]!=reverseAccum || state.accumulatorInverted[state.stage]!=invert)) {
+                state.accumDirection[state.stage]=state.accumulatorPlayedDirection[state.stage];
+                state.accumulator[state.stage]=advanceAccumulator(state.accumulatorPlayed[state.stage],amount,config.accumLimit,config.accumNegativeLimit,bipolar,config.accumOrder,state.accumDirection[state.stage],dice(t),reverseAccum,state.accumulatorInverted[state.stage]!=invert);
+            }
+            if(amount!=0)state.accumulatorHasPlayed[state.stage]=true;
+            state.accumulatorReversed[state.stage]=reverseAccum;
+            state.accumulatorInverted[state.stage]=invert;
+            state.accumulatorPlayedDirection[state.stage]=state.accumDirection[state.stage];
+            state.activeAccumulation = amount?clamp(state.accumulator[state.stage],low,high):state.accumulator[state.stage];
+            state.accumulatorPlayed[state.stage]=state.activeAccumulation;
             state.accumulator[state.stage] = advanceAccumulator(state.activeAccumulation,
                 amount, config.accumLimit, config.accumNegativeLimit,
-                config.accumBipolar, config.accumOrder, state.accumDirection[state.stage], dice(t));
+                bipolar, config.accumOrder, state.accumDirection[state.stage], dice(t),reverseAccum);
         }
         beginSlide(t);
     }
@@ -518,10 +569,15 @@ private:
         }
         if (voiceMode==0 && config.pulseLimit > 0 && state.totalPulses >= clamp(config.pulseLimit, 1, 64)) {
             auto accumulator = state.accumulator;
+            auto accumulatorPlayed=state.accumulatorPlayed;
+            auto accumulatorHasPlayed=state.accumulatorHasPlayed, accumulatorReversed=state.accumulatorReversed, accumulatorInverted=state.accumulatorInverted;
+            auto accumulatorPlayedDirection=state.accumulatorPlayedDirection;
             auto accumDirection = state.accumDirection;
             int trackAccumulator = state.trackAccumulator;
             int trackAccumulation = state.trackAccumulation;
             int trackAccumDirection = state.trackAccumDirection;
+            int trackPlayedDirection=state.trackPlayedDirection;
+            bool trackAccumulatorHasPlayed=state.trackAccumulatorHasPlayed,trackAccumulatorReversed=state.trackAccumulatorReversed,trackAccumulatorInverted=state.trackAccumulatorInverted;
             float pitch = state.pitch;
             float cvValue=state.cvValue;
             bool hasPitch = state.hasPitch;
@@ -534,10 +590,14 @@ private:
             state.divider = divider;
             state.skipInverted=skipInverted;
             if (!config.autoAccumReset) {
-                state.accumulator = accumulator; state.accumDirection = accumDirection;
+                state.accumulator = accumulator; state.accumulatorPlayed=accumulatorPlayed;state.accumDirection = accumDirection;
+                state.accumulatorHasPlayed=accumulatorHasPlayed;state.accumulatorReversed=accumulatorReversed;state.accumulatorPlayedDirection=accumulatorPlayedDirection;
+                state.accumulatorInverted=accumulatorInverted;
                 state.trackAccumulator = trackAccumulator;
                 state.trackAccumulation = trackAccumulation;
                 state.trackAccumDirection = trackAccumDirection;
+                state.trackPlayedDirection=trackPlayedDirection;state.trackAccumulatorHasPlayed=trackAccumulatorHasPlayed;state.trackAccumulatorReversed=trackAccumulatorReversed;
+                state.trackAccumulatorInverted=trackAccumulatorInverted;
             }
         }
         if(voiceMode==0) {
@@ -546,10 +606,10 @@ private:
         }
         // Apply mode edits at a track-clock boundary, keeping both banks until
         // reset. A mode switch cannot create an extra ratchet halfway through a pulse.
-        if (state.accumMode != config.accumMode) {
-            state.accumMode = config.accumMode;
+        if (state.accumMode != effectiveAccumMode(t)) {
+            state.accumMode = effectiveAccumMode(t);
             state.activeAccumulation = state.accumMode == TrackAccumulation
-                ? state.trackAccumulation : (state.stage >= 0 ? state.accumulator[state.stage] : 0);
+                ? state.trackAccumulation : (state.stage >= 0 ? accumulationEnabled(t)?state.accumulator[state.stage]:state.accumulatorPlayed[state.stage] : 0);
         }
         ++state.totalPulses;
         if(voiceMode==1)loopCounts[t]=loopLimits[t]>0?loopCounts[t]+1:0;
@@ -575,7 +635,7 @@ private:
             state.pulse = 0;
             state.lastRatchetEvent = -1;
             state.activeAccumulation = state.accumMode == TrackAccumulation
-                ? state.trackAccumulation : state.accumulator[state.stage];
+                ? state.trackAccumulation : accumulationEnabled(t)?state.accumulator[state.stage]:state.accumulatorPlayed[state.stage];
             beginSlide(t);
             state.cvFrom=state.cvValue;
         }

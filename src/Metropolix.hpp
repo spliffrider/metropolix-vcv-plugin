@@ -170,7 +170,7 @@ struct Metropolix : Module {
         return {"None", "Accum Mode", "Accum Polar", "Tempo", "Clock Div", "Direction",
             "Gate Length", "Octave", "Pitch Offset", "Pitch Post", "Pitch Pre", "Play Order",
             "Probability", "Pulse Count", "Pulse Div", "Pulses Len", "Ratchet", "Root",
-            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing", "Scale (User)", "Velocity", "Slider Range", "Gate Scale"};
+            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing", "Scale (User)", "Velocity", "Slider Range", "Gate Scale", "Accum Dir"};
     }
     static int ctrlBaseParam(metro::CtrlDestination d, int t) {
         switch(d) {
@@ -220,7 +220,7 @@ struct Metropolix : Module {
         return ids[metro::clamp(field, 0, 5)];
     }
     static std::vector<std::string> modDestinations() {
-        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)", "Velocity", "Track Out Swap"};
+        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)", "Velocity", "Track Out Swap", "Accumulate", "Accum Rev", "Accum Invert", "Accum Mode", "Accum Polar", "Accum Reset"};
     }
     static std::vector<std::string> outputSources() {
         std::vector<std::string> names;for(int source=0;source<metro::OutputSourceCount;++source)names.push_back(metro::outputLabel(source));return names;
@@ -619,7 +619,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(20));
+        json_object_set_new(root, "schemaVersion", json_integer(21));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(7));
