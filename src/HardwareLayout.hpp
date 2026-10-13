@@ -47,7 +47,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             if(!m)return std::string();
             int dest=m->integer(Metropolix::auxParam(i,Metropolix::AUX_DESTINATION));
             int target=m->integer(Metropolix::auxParam(i,Metropolix::AUX_ASSIGNMENT));
-            return Metropolix::modDestinations()[dest]+" / "+(target==2?std::string("Both tracks"):string::f("Track %d",target+1))
+            return Metropolix::modDestinations()[dest]+" / "+(metro::modGlobalDestination(static_cast<metro::ModDestination>(dest))?std::string("Global"):target==2?std::string("Both tracks"):string::f("Track %d",target+1))
                 +string::f("\nEffective input: %+.2f V",m->auxVoltage[i].load());
         };
         auto* knob=control(name+" attenuverter",24+i*37,159,20,HardwareControl::BLACK_KNOB);

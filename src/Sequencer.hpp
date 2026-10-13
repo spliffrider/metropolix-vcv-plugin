@@ -142,7 +142,7 @@ public:
     std::array<bool, 2> loopPlaying{{false,false}}, playerPlaying{{false,false}};
     // The normal track remains the transport/chain clock and advances underneath.
     const TrackState& sounding(int t) const {
-        if (loopy.stages && (loopy.targets & (1u<<t))) {
+        if (routedLoopy.stages && (routedLoopy.targets & (1u<<t))) {
             if (running && loopPlaying[t]) return loopTracks[t];
             if (!running && playerPlaying[t]) return playerTracks[t];
         }
@@ -161,12 +161,12 @@ public:
         for(const auto& input:settings.auxInputs)if(input.destination==ModOutputSwap && input.effectiveVoltage()>=1.5f)return true;
         return false;
     }
-    int sliderOctaves(int t) const {return clamp(settings.tracks[t].sliderOctaves?settings.tracks[t].sliderOctaves:settings.octaves,1,4);}
+    int sliderOctaves(int t) const {return clamp((settings.tracks[t].sliderOctaves?settings.tracks[t].sliderOctaves:settings.octaves)+int(std::round(modulation.routes[t][ModSliderRange]*.6f)),1,4);}
     float sliderPosition(int t,int stage,bool orient=true) const {
         if(stage<0 || stage>7)return 0;
         float value=clamp(settings.stages[stage].pitch,0.f,1.f);
         float invert=controls.values[t][CtrlSliderInvert];
-        if(orient && (settings.tracks[t].sliderInverted!=(invert>0)))value=1-value;
+        if(orient && (settings.tracks[t].sliderInverted!=((invert>0)!=(modulation.routes[t][ModSliderInvert]>=1.5f))))value=1-value;
         return value;
     }
     float velocity(int t) const {
@@ -208,8 +208,11 @@ public:
         int index=scaleIndex(t);return userScale(index)?scaleFromMask(settings.userScales[index-FactoryScaleCount].mask):scaleAt(index);
     }
     int scaleRoot(int t) const {
-        int index=scaleIndex(t);return userScale(index)?clamp(settings.userScales[index-FactoryScaleCount].root,0,11):settings.root;
+        int index=scaleIndex(t);return (userScale(index)?clamp(settings.userScales[index-FactoryScaleCount].root,0,11):settings.root)+clamp(int(std::round(modulation.routes[t][ModRoot]*12.f)),-12,12);
     }
+
+    float effectiveTempo() const {return clamp(settings.bpm+modulation.globalRoutes[ModTempo]*80.f,.1f,400.f);}
+    const LoopyRequest& currentLoopy() const {return routedLoopy;}
 
     void seed(uint32_t value) {
         random[0].state = value ? value : 1;
@@ -222,7 +225,7 @@ public:
     }
 
     void reset(bool manual=false) {
-        pendingAccumReset.fill(false);accumResetHigh.fill(false);
+        pendingAccumReset.fill(false);accumResetHigh.fill(false);trackResetHigh.fill(false);
         for (auto& state : tracks) {
             // CV pitch holds on reset until the next played note.
             float pitch = state.pitch;
@@ -261,7 +264,7 @@ public:
     void process(double dt, bool run, bool external, bool edge, bool resetEdge, BeforeClock beforeClock) {
         dt = clamp(dt, 1e-7, 0.1);
         controls.read(settings.controls);
-        const double internalPeriod = 15.0 / clamp(settings.bpm, 0.1f, 400.f);
+        const double internalPeriod = 15.0 / effectiveTempo();
         if (external != previousExternal) {
             haveExternalEdge = false;
             externalElapsed = 0.0;
@@ -289,6 +292,10 @@ public:
         double period = external ? externalPeriod : internalPeriod;
         bool tick = false;
         if (running) {
+            // Read live AUX tempo before deciding whether a master pulse is due.
+            // Zero dt refreshes routes without advancing ramps or pulse timers.
+            modulation.render(settings.modLanes,0.0,settings.auxInputs);
+            if(!external)period=15.0/effectiveTempo();
             if (external) {
                 tick = edge && resetIgnore <= 0.0;
             } else if (firstTick || phase >= period) {
@@ -300,10 +307,12 @@ public:
                 controls.read(settings.controls);
                 // A recalled direct CTRL assignment can change internal tempo.
                 // The first note's gate/slide timing uses that new tempo too.
-                if (!external) period = 15.0 / clamp(settings.bpm, 0.1f, 400.f);
+                if (!external) period = 15.0 / effectiveTempo();
                 modulation.tick(settings.modLanes, period);
             }
             modulation.render(settings.modLanes, dt, settings.auxInputs);
+            if(!external)period=15.0/effectiveTempo();
+            routeLoopy();readTrackReset();
             readAccumulatorReset();
             // Pending track pulses use the same sample clock as gates/slides.
             // Reset/recall above cancels them before any new pattern is played.
@@ -315,7 +324,7 @@ public:
                 for (int t = 0; t < 2; ++t) {
                     auto& state = tracks[t];
                     const auto& config = settings.tracks[t];
-                    bool invert=controls.values[t][CtrlSkipInvert]>0;
+                    bool invert=controls.values[t][CtrlSkipInvert]>0 || modulation.routes[t][ModSkipInvert]>=1.5f;
                     if(state.skipInverted!=invert) {
                         // Restart traversal on the next base clock, preserving
                         // accumulated offsets. No synthetic clock/gate is emitted.
@@ -323,7 +332,7 @@ public:
                         state.pulse=state.divider=state.totalPulses=0;state.playOrder.reset();
                         state.outputEvents.firstDue=true;
                     }
-                    int division = clamp(config.division, 1, 64);
+                    int division = trackDivision(t);
                     if (state.divider == 0 || state.divider >= division) {
                         auto& timing = swingTiming[t];
                         if (timing.pending) {
@@ -346,9 +355,11 @@ public:
         } else {
             for (auto& state : tracks) { state.gate = 0.f; state.cv = 0.f; }
             modulation.silence();
+            modulation.render(std::array<ModLane,8>(),0.0,settings.auxInputs);
+            routeLoopy();readTrackReset(true);
             readAccumulatorReset(true);
             // External pitch routing is available to stopped Stage Player notes.
-            if(loopy.stages & 255u)modulation.render(settings.modLanes, 0.0, settings.auxInputs);
+            if(routedLoopy.stages & 255u)modulation.render(settings.modLanes, 0.0, settings.auxInputs);
             modulation.outputs.fill(0.f);
             stagePlayer(dt);
         }
@@ -377,18 +388,49 @@ private:
     RandomSource random[2], loopRandom[2];
     std::array<float,2> playerCv{};
     int voiceMode=0;
+    std::array<bool,2> trackResetHigh{};
+    LoopyRequest routedLoopy;
     std::array<bool,2> pendingAccumReset{},accumResetHigh{};
     std::array<unsigned,2> loopMasks{}, playerMasks{};
     std::array<int,2> loopCounts{}, loopLimits{};
     TrackState& voice(int t) { return voiceMode==1?loopTracks[t]:voiceMode==2?playerTracks[t]:tracks[t]; }
     const TrackState& voice(int t) const { return voiceMode==1?loopTracks[t]:voiceMode==2?playerTracks[t]:tracks[t]; }
     RandomSource& dice(int t) { return voiceMode?loopRandom[t]:random[t]; }
-    bool requested(int t) const {return (loopy.stages & 255u) && (loopy.targets & (1u<<t));}
-    int lower() const {for(int s=0;s<8;++s)if(loopy.stages&(1u<<s))return s;return 0;}
-    int upper() const {for(int s=7;s>=0;--s)if(loopy.stages&(1u<<s))return s;return 0;}
+    bool requested(int t) const {return (routedLoopy.stages & 255u) && (routedLoopy.targets & (1u<<t));}
+    int lower() const {for(int s=0;s<8;++s)if(routedLoopy.stages&(1u<<s))return s;return 0;}
+    int upper() const {for(int s=7;s>=0;--s)if(routedLoopy.stages&(1u<<s))return s;return 0;}
     bool reverse(int t) const {
         float direction=controls.values[t][CtrlDirection];
-        return direction==0?settings.tracks[t].reversed:direction<0;
+        return (direction==0?settings.tracks[t].reversed:direction<0)!=(modulation.routes[t][ModDirection]>=1.5f);
+    }
+    int trackDivision(int t) const {return clamp(settings.tracks[t].division+int(std::round(modulation.routes[t][ModClockDiv]*12.6f)),1,64);}
+    int trackLength(int t) const {return clamp(settings.tracks[t].length+int(std::round(modulation.routes[t][ModStagesLength]*1.4f)),1,8);}
+    int trackOffset(int t) const {return clamp(settings.tracks[t].offset+int(std::round(modulation.routes[t][ModStagesOffset]*1.4f)),0,7);}
+    int pulseDivision(int t) const {return clamp(settings.tracks[t].pulseDivision+int(std::round(modulation.routes[t][ModPulseDiv]*1.4f)),1,8);}
+    int pulseLimit(int t) const {int base=settings.tracks[t].pulseLimit;return clamp(base+int(std::round(modulation.routes[t][ModPulsesLength]*12.8f)),base?1:0,64);}
+    Order trackOrder(int t) const {return Order(clamp(int(settings.tracks[t].order)+int(std::round(modulation.routes[t][ModOrder]*4.f)),0,20));}
+    float slideTime(int t) const {return clamp(settings.tracks[t].slideTime+modulation.routes[t][ModSlideAmount]*.2f,0.f,1.f);}
+    float gateScale(int t) const {return clamp(settings.tracks[t].gateScale+modulation.routes[t][ModGateScale]*.2f,0.f,1.f);}
+    bool slideEnabled(int t,int stage) const {return settings.tracks[t].stages[stage].slide || modulation.routes[t][ModSlide]>=1.5f;}
+    void routeLoopy(){
+        routedLoopy=loopy;
+        if(!routedLoopy.stages && modulation.globalRoutes[ModLoopy]>=1.5f)routedLoopy.stages=1;
+        int shift=int(std::round(modulation.globalRoutes[ModLoopyOffset]*1.4f));
+        if(routedLoopy.stages && shift){int lo=lower(),hi=upper();shift=clamp(shift,-lo,7-hi);routedLoopy.stages=shift>=0?routedLoopy.stages<<shift:routedLoopy.stages>>(-shift);}
+        if(modulation.globalRoutes[ModLoopyPulses]!=0)routedLoopy.pulses=clamp(routedLoopy.pulses+int(std::round(modulation.globalRoutes[ModLoopyPulses]*12.8f)),1,64);
+    }
+    void readTrackReset(bool stopped=false){
+        for(int t=0;t<2;++t){float voltage=modulation.routes[t][ModReset];
+            if(stopped){voltage=0;for(const auto& input:settings.auxInputs)if(input.destination==ModReset && (input.assignment==2 || input.assignment==t))voltage+=input.effectiveVoltage();}
+            bool high=voltage>=1.5f;
+            if(high && !trackResetHigh[t]){
+                float pitch=tracks[t].pitch;tracks[t]=TrackState();tracks[t].pitch=tracks[t].targetPitch=pitch;
+                tracks[t].outputEvents.pulses[TrackOutputEvents::First].fire();tracks[t].outputEvents.firstDue=false;
+                loopTracks[t]=playerTracks[t]=tracks[t];loopPlaying[t]=playerPlaying[t]=false;loopMasks[t]=playerMasks[t]=0;loopCounts[t]=0;
+                swingTiming[t].reset();pendingAccumReset[t]=false;resetPulse.fire();
+            }
+            trackResetHigh[t]=high;
+        }
     }
     bool accumulationEnabled(int t) const {
         for(const auto& control:settings.controls)if(control.destination==CtrlAccumDir && control.targets(t) && controls.values[t][CtrlAccumDir]==0)return false;
@@ -414,7 +456,7 @@ private:
         for(int t=0;t<2;++t) {
             loopPlaying[t]=false; loopMasks[t]=0;
             if(!requested(t)) {playerPlaying[t]=false;playerMasks[t]=0;continue;}
-            if(!playerPlaying[t] || playerMasks[t]!=(loopy.stages&255u)) {
+            if(!playerPlaying[t] || playerMasks[t]!=(routedLoopy.stages&255u)) {
                 auto& state=playerTracks[t];bool have=state.hasPitch || tracks[t].hasPitch;
                 float from=playerPlaying[t]?state.pitch:tracks[t].pitch;
                 state=tracks[t];state.stage=lower();
@@ -422,10 +464,10 @@ private:
                 state.activeAccumulation=state.accumMode==TrackAccumulation?state.trackAccumulation:accumulationEnabled(t)?state.accumulator[state.stage]:state.accumulatorPlayed[state.stage];
                 voiceMode=2;state.targetPitch=stagePitch(t);voiceMode=0;
                 const auto& config=settings.tracks[t];
-                state.slideDuration=config.slideType==AnalogSlide && config.stages[state.stage].slide && have?analogSlideTime(config.slideTime):0;
+                state.slideDuration=config.slideType==AnalogSlide && slideEnabled(t,state.stage) && have?analogSlideTime(slideTime(t)):0;
                 state.pitch=state.slideDuration>0?from:state.targetPitch;state.hasPitch=true;
                 state.cv=playerCv[t]=trackCvVoltage(settings.tracks[t].stages[state.stage].cv,config.cvType);
-                playerMasks[t]=loopy.stages&255u;playerPlaying[t]=true;
+                playerMasks[t]=routedLoopy.stages&255u;playerPlaying[t]=true;
             }
             // Freeze the note/CV until a fresh stage press; Gate Type is ignored.
             playerTracks[t].pitch=slewPitch(playerTracks[t].pitch,playerTracks[t].targetPitch,dt,playerTracks[t].slideDuration);
@@ -438,14 +480,14 @@ private:
         trackTick(t,duration);
         if(!requested(t)){loopPlaying[t]=false;loopMasks[t]=0;return;}
         voiceMode=1;
-        if(!loopPlaying[t] || loopMasks[t]!=(loopy.stages&255u)) {
+        if(!loopPlaying[t] || loopMasks[t]!=(routedLoopy.stages&255u)) {
             loopTracks[t]=tracks[t];loopTracks[t].stage=loopTracks[t].position=-1;
             loopTracks[t].pulse=0;loopTracks[t].lastRatchetEvent=-1;
             loopTracks[t].outputEvents=TrackOutputEvents();
-            loopCounts[t]=0;loopMasks[t]=loopy.stages&255u;
+            loopCounts[t]=0;loopMasks[t]=routedLoopy.stages&255u;
         }
         loopPlaying[t]=true;
-        loopLimits[t]=clamp(loopy.pulses,0,64);
+        loopLimits[t]=clamp(routedLoopy.pulses,0,64);
         trackTick(t,duration);voiceMode=0;
     }
     std::array<SwingTiming, 2> swingTiming;
@@ -458,44 +500,41 @@ private:
     }
     int pulses(int t,int stage) const {
         int source=settings.tracks[t].pulseSource;
-        return clamp((source?clamp(source,1,8):settings.stages[stage].pulses)+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7)),1,8);
+        return clamp((source?clamp(source,1,8):settings.stages[stage].pulses)+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7+modulation.routes[t][ModPulseCount]*1.4f)),1,8);
     }
     Gate panelGate(int t,int stage) const {
         Gate gate=settings.stages[stage].gate;
         int source=clamp(settings.tracks[t].gateSource,0,6);
         if(source && !(source%2==0 && gate==Rest))gate=source<=2?Single:source<=4?Multi:Hold;
-        return settings.tracks[t].slideType==AcidSlide && settings.tracks[t].stages[stage].slide?Hold:gate;
+        return settings.tracks[t].slideType==AcidSlide && slideEnabled(t,stage)?Hold:gate;
     }
     void beginSlide(int t) {
         auto& state=voice(t);const auto& config=settings.tracks[t];
         state.startPitch=state.pitch;state.slideAge=0;
         state.slideType=config.slideType;
-        state.slideActive=state.hasPitch && (config.slideType==AcidSlide?state.slideFromPrevious:config.stages[state.stage].slide);
-        state.slideDuration=state.slideActive && config.slideType==TempoSlide?slideAmount(config.slideTime)*state.duration:0;
+        state.slideActive=state.hasPitch && (config.slideType==AcidSlide?state.slideFromPrevious:slideEnabled(t,state.stage));
+        state.slideDuration=state.slideActive && config.slideType==TempoSlide?slideAmount(slideTime(t))*state.duration:0;
     }
 
     bool nextStage(int t) {
         auto& state = voice(t);
         if(voiceMode==1) {
-            int lo=lower(),hi=upper();bool bounded=lo!=hi || loopy.pulses==0;
+            int lo=lower(),hi=upper();bool bounded=lo!=hi || routedLoopy.pulses==0;
             if(state.stage<0)state.stage=reverse(t)?hi:lo;
             else if(bounded)state.stage=reverse(t)?(state.stage<=lo?hi:state.stage-1):(state.stage>=hi?lo:state.stage+1);
             else state.stage=modulo(state.stage+(reverse(t)?-1:1),8);
             state.position=state.stage;
             return true; // Loopy ignores Skip, Length, Offset and play order.
         }
-        const auto& config = settings.tracks[t];
-        int length = clamp(config.length, 1, 8);
-        if (state.windowOffset != config.offset) {
+        int length = trackLength(t),offset=trackOffset(t);
+        if (state.windowOffset != offset) {
             state.playOrder.reset();
-            state.windowOffset = config.offset;
+            state.windowOffset = offset;
         }
         std::array<bool, 8> enabled{};
-        for (int i = 0; i < length; ++i) enabled[i] = !skipped(t,modulo(i + config.offset, 8));
-        float direction=controls.values[t][CtrlDirection];
-        bool reversed=direction==0?config.reversed:direction<0;
-        state.position = state.playOrder.next(length, config.order, reversed, enabled, dice(t));
-        state.stage = state.position < 0 ? -1 : modulo(state.position + config.offset, 8);
+        for (int i = 0; i < length; ++i) enabled[i] = !skipped(t,modulo(i + offset, 8));
+        state.position = state.playOrder.next(length, trackOrder(t), reverse(t), enabled, dice(t));
+        state.stage = state.position < 0 ? -1 : modulo(state.position + offset, 8);
         return state.stage >= 0;
     }
 
@@ -567,7 +606,8 @@ private:
         if(voiceMode==1 && loopLimits[t]>0 && loopCounts[t]>=loopLimits[t]) {
             state.stage=state.position=-1;state.pulse=0;loopCounts[t]=0;
         }
-        if (voiceMode==0 && config.pulseLimit > 0 && state.totalPulses >= clamp(config.pulseLimit, 1, 64)) {
+        int limit=pulseLimit(t),length=trackLength(t),offset=trackOffset(t);
+        if (voiceMode==0 && limit > 0 && state.totalPulses >= limit) {
             auto accumulator = state.accumulator;
             auto accumulatorPlayed=state.accumulatorPlayed;
             auto accumulatorHasPlayed=state.accumulatorHasPlayed, accumulatorReversed=state.accumulatorReversed, accumulatorInverted=state.accumulatorInverted;
@@ -602,7 +642,7 @@ private:
         }
         if(voiceMode==0) {
             if(state.outputEvents.firstDue){state.outputEvents.pulses[TrackOutputEvents::First].fire();state.outputEvents.firstDue=false;}
-            if(config.pulseLimit>0 && state.totalPulses+1>=clamp(config.pulseLimit,1,64))state.outputEvents.pulses[TrackOutputEvents::Last].fire();
+            if(limit>0 && state.totalPulses+1>=limit)state.outputEvents.pulses[TrackOutputEvents::Last].fire();
         }
         // Apply mode edits at a track-clock boundary, keeping both banks until
         // reset. A mode switch cannot create an extra ratchet halfway through a pulse.
@@ -614,12 +654,12 @@ private:
         ++state.totalPulses;
         if(voiceMode==1)loopCounts[t]=loopLimits[t]>0?loopCounts[t]+1:0;
         // Auto sequences can run indefinitely without overflowing a counter.
-        if (config.pulseLimit <= 0 || voiceMode==1) state.totalPulses = 0;
+        if (limit <= 0 || voiceMode==1) state.totalPulses = 0;
         state.duration = duration;
         state.age = 0.0;
-        bool newStage = state.stage < 0 || (voiceMode==0 && (state.position >= clamp(config.length, 1, 8)
+        bool newStage = state.stage < 0 || (voiceMode==0 && (state.position >= length
             || (state.stage >= 0 && (skipped(t,state.stage)
-                || state.stage != modulo(state.position + config.offset, 8)))));
+                || state.stage != modulo(state.position + offset, 8)))));
         if (!newStage) {
             ++state.pulse;
             newStage = state.pulse >= pulses(t,state.stage);
@@ -627,11 +667,11 @@ private:
         if (newStage) {
             // A length/offset edit starts a new traversal if the old position
             // is no longer part of the selected stage window.
-            if (voiceMode==0 && state.stage >= 0 && state.stage != modulo(state.position + config.offset, 8))
+            if (voiceMode==0 && state.stage >= 0 && state.stage != modulo(state.position + offset, 8))
                 state.position = -1;
             if (!nextStage(t)) { state.gate = 0.f; state.cv = 0.f; return; }
             state.outputEvents.pulses[TrackOutputEvents::NewStage].fire();
-            state.slideFromPrevious=precedingStage>=0 && config.stages[precedingStage].slide;
+            state.slideFromPrevious=precedingStage>=0 && slideEnabled(t,precedingStage);
             state.pulse = 0;
             state.lastRatchetEvent = -1;
             state.activeAccumulation = state.accumMode == TrackAccumulation
@@ -664,21 +704,21 @@ private:
         int eventId = -1;
         // Stage Rest affects only the output, never the accumulator clock.
         // Preserve the unoverridden ratchet events for its accumulation.
-        float inherited=clamp(config.gateLength + modulation.routes[t][ModGateLength]*.2f,0.f,config.gateLength>=1.f?1.f:.99f);
+        float inherited=clamp(config.gateLength + modulation.routes[t][ModGateLength]*.2f,0.f,1.f);
         // Keep pre-2.10 modulation's 1% positive minimum, then apply Scale.
         if(inherited>0.f)inherited=std::max(.01f,inherited);
         float source=edit.gateOverride<0?inherited:clamp(edit.gateOverride,0,100)*.01f;
-        float gateLength=source*clamp(config.gateScale,0.f,1.f);
-        float accumLength=inherited*clamp(config.gateScale,0.f,1.f);
+        float gateLength=source*gateScale(t);
+        float accumLength=inherited*gateScale(t);
         int ratchets = clamp(edit.ratchets + static_cast<int>(std::round(modulation.routes[t][ModRatchet] * 1.4f + controls.values[t][CtrlRatchet]*7.f)), 1, 8);
         bool accumulationGate = !muted(t) && accumLength > 0.f && state.allowed && gateHigh(
             physical==Rest?Rest:accumLength>=1.f?Hold:physical, state.pulse,
-            state.age / state.duration, pulses(t,state.stage), clamp(config.pulseDivision, 1, 8),
+            state.age / state.duration, pulses(t,state.stage), pulseDivision(t),
             config.gateStretch, config.ratchetMode, ratchets,
             accumLength, state.duration, &eventId);
         bool gate = edit.gateOverride==0?false:
             !muted(t) && gateLength>0.f && state.allowed && gateHigh(physical==Rest?Rest:gateLength>=1.f?Hold:physical,
-                state.pulse,state.age/state.duration,pulses(t,state.stage),clamp(config.pulseDivision,1,8),
+                state.pulse,state.age/state.duration,pulses(t,state.stage),pulseDivision(t),
                 config.gateStretch,config.ratchetMode,ratchets,gateLength,state.duration);
         if (accumulationGate && edit.accumTrigger == AccumRatchet && eventId != state.lastRatchetEvent) {
             accumulate(t);
@@ -687,7 +727,7 @@ private:
         if (state.allowed && (physical != Rest || config.restPitchUpdate) && !muted(t))
             state.targetPitch = stagePitch(t);
         double mix = state.slideDuration > 0.0 ? std::min(1.0, state.slideAge / state.slideDuration) : 1.0;
-        if(state.slideType!=TempoSlide && state.slideActive)state.pitch=slewPitch(state.pitch,state.targetPitch,dt,analogSlideTime(config.slideTime));
+        if(state.slideType!=TempoSlide && state.slideActive)state.pitch=slewPitch(state.pitch,state.targetPitch,dt,analogSlideTime(slideTime(t)));
         else state.pitch = static_cast<float>(state.startPitch + (state.targetPitch - state.startPitch) * mix);
         state.slideAge += dt;
         state.cvValue=stageCvValue(state.cvFrom,edit.cv,config.cvType,edit.cvRamp,

@@ -19,6 +19,7 @@ struct ClockDivisionQuantity : ParamQuantity {
 struct ModVoltageQuantity : ParamQuantity {
     int typeParam = -1;
     int destinationParam = -1;
+    bool gate() const {return module && typeParam>=0 && destinationParam>=0 && (module->params[typeParam].getValue()==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue()))));}
     float getMinValue() override {
         if (module && typeParam >= 0 && destinationParam >= 0) {
             bool positive = module->params[typeParam].getValue() > .5f;
@@ -32,6 +33,16 @@ struct ModVoltageQuantity : ParamQuantity {
         // voltage when a bipolar lane changes to a positive-only CV type.
         return metro::clamp(ParamQuantity::getValue(), getMinValue(), 5.f);
     }
+    std::string getDisplayValueString() override {return gate()?(getValue()>=1.5f?"On":"Off"):ParamQuantity::getDisplayValueString();}
+    std::string getUnit() override {return gate()?"":unit;}
+    void setDisplayValueString(std::string s) override {if(gate() && (s=="On" || s=="on"))setValue(5);else if(gate() && (s=="Off" || s=="off"))setValue(0);else ParamQuantity::setDisplayValueString(s);}
+};
+struct RoutingAssignmentQuantity : SwitchQuantity {
+    int destinationParam=-1;
+    bool global() const {return module && destinationParam>=0 && metro::modGlobalDestination(static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue())));}
+    std::string getDisplayValueString() override {return global()?"Global":SwitchQuantity::getDisplayValueString();}
+    std::string getDescription() override {return global()?"Global destination. The saved track assignment becomes active again for a track destination.":SwitchQuantity::getDescription();}
+    void setValue(float value) override {if(!global())SwitchQuantity::setValue(value);}
 };
 struct TrackCvQuantity : ParamQuantity {
     int typeParam=-1;
@@ -220,7 +231,7 @@ struct Metropolix : Module {
         return ids[metro::clamp(field, 0, 5)];
     }
     static std::vector<std::string> modDestinations() {
-        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)", "Velocity", "Track Out Swap", "Accumulate", "Accum Rev", "Accum Invert", "Accum Mode", "Accum Polar", "Accum Reset"};
+        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)", "Velocity", "Track Out Swap", "Accumulate", "Accum Rev", "Accum Invert", "Accum Mode", "Accum Polar", "Accum Reset", "BPM (INT)", "Clock In Div", "Direction", "Gate Scale", "Loopy", "Loopy Pulses", "Loopy Offset", "Play Order", "Pulse Count", "Pulse Div", "Pulses Len", "Reset", "Root", "Skip Invert", "Slide", "Slide Amount", "Slider Invert", "Slider Range", "Stages Len", "Stages Offset"};
     }
     static std::vector<std::string> outputSources() {
         std::vector<std::string> names;for(int source=0;source<metro::OutputSourceCount;++source)names.push_back(metro::outputLabel(source));return names;
@@ -241,6 +252,7 @@ struct Metropolix : Module {
     std::atomic<int> selectedAux{0};
     std::atomic<int> selectedCtrl{0};
     std::atomic<float> auxVoltage[3];
+    std::atomic<unsigned> modSkipMask{0};
     // Presentation only: the hardware panel and optional grids share all
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
@@ -385,7 +397,7 @@ struct Metropolix : Module {
             configParam(modParam(lane, MOD_PULSE_LIMIT), 0, 64, 0, name + "pulse length (0 = Auto)")->snapEnabled = true;
             configSwitch(modParam(lane, MOD_TYPE), 0, 2, 0, name + "CV type", {"Bipolar", "Unipolar", "Gate"});
             configSwitch(modParam(lane, MOD_DESTINATION), 0, metro::ModDestinationCount - 1, 0, name + "internal destination", modDestinations());
-            configSwitch(modParam(lane, MOD_ASSIGNMENT), 0, 2, 0, name + "destination tracks", {"Track 1", "Track 2", "Both tracks"});
+            auto* assignment=configSwitch<RoutingAssignmentQuantity>(modParam(lane, MOD_ASSIGNMENT), 0, 2, 0, name + "destination tracks", {"Track 1", "Track 2", "Both tracks"});assignment->destinationParam=modParam(lane,MOD_DESTINATION);
             configSwitch(modParam(lane, MOD_MUTE), 0, 1, 0, name + "mute", {"Off", "On"});
             for (int stage = 0; stage < 8; ++stage) {
                 std::string prefix = name + "stage " + std::to_string(stage + 1) + " ";
@@ -402,7 +414,7 @@ struct Metropolix : Module {
             auxVoltage[input].store(0.f);
             configParam(auxParam(input,AUX_AMOUNT),-1.f,1.f,0.f,name+"attenuverter","%",0,100);
             configSwitch(auxParam(input,AUX_DESTINATION),0,metro::ModDestinationCount-1,0,name+"destination",modDestinations());
-            configSwitch(auxParam(input,AUX_ASSIGNMENT),0,2,0,name+"target",{"Track 1","Track 2","Both tracks"});
+            auto* assignment=configSwitch<RoutingAssignmentQuantity>(auxParam(input,AUX_ASSIGNMENT),0,2,0,name+"target",{"Track 1","Track 2","Both tracks"});assignment->destinationParam=auxParam(input,AUX_DESTINATION);
             configInput(AUX_X_IN+input,name+"CV / gate (channel 1; assign with the button below)");
         }
         for(int k=0;k<2;++k) {
@@ -601,7 +613,8 @@ struct Metropolix : Module {
         }
         if (update) {
             externalClock.store(external, std::memory_order_relaxed);
-            if(!external)displayBpm.store(params[TEMPO].getValue(),std::memory_order_relaxed);
+            modSkipMask.store((sequencer.modulation.routes[0][metro::ModSkipInvert]>=1.5f?1u:0u)|(sequencer.modulation.routes[1][metro::ModSkipInvert]>=1.5f?2u:0u),std::memory_order_relaxed);
+            if(!external)displayBpm.store(sequencer.effectiveTempo(),std::memory_order_relaxed);
         }
         // Avoid signed counter overflow in patches left running for days.
         controlCounter &= 31;
@@ -619,7 +632,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(21));
+        json_object_set_new(root, "schemaVersion", json_integer(22));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(7));

@@ -165,15 +165,15 @@ void modSettingsMenu(Metropolix* m, int lane) {
     if (!m) return;
     auto* menu = createMenu();
     menu->addChild(createMenuLabel(string::f("MOD lane %d", lane + 1)));
-    auto choice=[menu,m,lane](const std::string& label,int property,std::vector<std::string> values) {
+    auto choice=[menu,m,lane](const std::string& label,int property,std::vector<std::string> values,bool disabled=false) {
         auto* q=m->getParamQuantity(Metropolix::modParam(lane,property));
         menu->addChild(createIndexSubmenuItem(label,values,
             [q] { return static_cast<size_t>(q->getValue()); },
-            [q](size_t i) { setWithHistory(q,static_cast<float>(i)); }));
+            [q](size_t i) { setWithHistory(q,static_cast<float>(i)); },disabled));
     };
     choice("CV type",Metropolix::MOD_TYPE,{"Bipolar","Unipolar","Gate"});
     choice("Internal destination",Metropolix::MOD_DESTINATION,Metropolix::modDestinations());
-    choice("Destination tracks",Metropolix::MOD_ASSIGNMENT,{"Track 1","Track 2","Both tracks"});
+    choice("Destination tracks",Metropolix::MOD_ASSIGNMENT,{"Track 1","Track 2","Both tracks"},metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION)))));
     choice("Mute",Metropolix::MOD_MUTE,{"Off","On"});
     menu->addChild(new ui::MenuSeparator);
     auto* direction = m->getParamQuantity(Metropolix::modParam(lane, Metropolix::MOD_REVERSED));
@@ -193,14 +193,14 @@ void appendAuxMenu(ui::Menu* menu, Metropolix* m, int input) {
     if(!m) return;
     menu->addChild(new ui::MenuSeparator);
     menu->addChild(createMenuLabel(string::f("AUX %c",'X'+input)));
-    auto choice=[menu,m,input](const std::string& label,int property,std::vector<std::string> values) {
+    auto choice=[menu,m,input](const std::string& label,int property,std::vector<std::string> values,bool disabled=false) {
         auto* q=m->getParamQuantity(Metropolix::auxParam(input,property));
         menu->addChild(createIndexSubmenuItem(label,values,
             [q] { return static_cast<size_t>(q->getValue()); },
-            [q](size_t value) { setWithHistory(q,static_cast<float>(value)); }));
+            [q](size_t value) { setWithHistory(q,static_cast<float>(value)); },disabled));
     };
     choice("Destination",Metropolix::AUX_DESTINATION,Metropolix::modDestinations());
-    choice("Target tracks",Metropolix::AUX_ASSIGNMENT,{"Track 1","Track 2","Both tracks"});
+    choice("Target tracks",Metropolix::AUX_ASSIGNMENT,{"Track 1","Track 2","Both tracks"},metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION)))));
     menu->addChild(createMenuItem("Clear assignment","",[m,input] {
         setWithHistory(m->getParamQuantity(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION)),0.f);
     }));
@@ -269,6 +269,7 @@ struct ValueCell : ValueKnob {
     std::string valueText() {
         auto* q = getParamQuantity();
         if (!q) return "--";
+        if(auto* assignment=dynamic_cast<RoutingAssignmentQuantity*>(q))if(assignment->global())return "Global";
         if (modProperty >= Metropolix::MOD_RAMP) return q->getValue() > .5f ? "RAMP" : "STEP";
         if (modGateCell()) return q->getValue() >= 1.5f ? "ON" : "OFF";
         int row = compact && metroModule ? metroModule->selectedRow.load() : stageRow;

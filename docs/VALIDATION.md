@@ -1,4 +1,16 @@
-# Validation and fidelity status — 2.18.0
+# Validation and fidelity status — 2.19.0
+
+## Complete AUX/MOD routing — 2.19.0
+
+The nineteen portable suites pass. ExtendedRoutingTests adds 3,287,240 checks
+against independently programmed endpoints, all 21 orders, three slide types,
+three-rate tempo timing, targeted reset, hands-free Loopy and Gate Length Hold.
+Native Rack tests check actual CLK and pitch ports, live BPM, all 20 new adapter
+IDs, Global fields, On/Off entry and unchanged 719 parameters/format 7 persistence.
+Widget/save-reopen, 99 OLED states and Bloom/zoom checks pass. The real four-scene
+seven-link recording exercises all 20 added routes and preserves bass/percussion
+connections; exact waveform measurements are saved with the release checkpoint.
+See [Complete routing](COMPLETE-ROUTING.md) for gain and collision interpretations.
 
 ## Accumulator routing — 2.18.0
 
@@ -23,7 +35,7 @@ uniform pulse/gate sources match equivalently programmed switches across all
 21 orders, skipped stages, accumulation, fixed lengths, stretching and ratchets;
 shared switches remain unchanged. Rest Pitch Hold/Update, silent rests, all slide
 types, CTRL pulse offsets and every transpose value −60…+60 are covered.
-Rack host checks independent actual gates/traversal, native values, format7
+Rack host checks independent actual gates/traversal, native values, format 7
 persistence and format6 migration. Callback tests cover ALT → TRK, browsing,
 upward dragging, binary toggles, numeric endpoints, one-action long reset and
 whole-track init/undo, then save/reopen with cursor and bank preserved.

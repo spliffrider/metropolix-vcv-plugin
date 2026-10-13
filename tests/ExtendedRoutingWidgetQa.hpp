@@ -1,0 +1,14 @@
+if(std::getenv("METROPOLIX_EXTENDED_ROUTING_REOPEN_QA")){
+    if(qaFrame==6){check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_DESTINATION))==metro::ModStagesOffset,"saved patch preserves final destination ID38");for(int lane=0;lane<8;++lane)check(m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION))==31+lane,"saved patch preserves the last eight native routes");check(m->getPreset(0).occupied,"internal bank persists complete routes");check(true,"EXTENDED ROUTING REOPEN QA COMPLETE");APP->window->close();}return;
+}
+if(qaFrame==6){
+    using M=Metropolix;m->params[M::RUN].setValue(0);m->expanded.store(false);m->uiMod.store(false);
+    click(find("AUX X assignment"));drag(find("Encoder"),-2000);check(m->integer(M::auxParam(0,M::AUX_DESTINATION))==38,"encoder reaches final Stages Offset destination");APP->history->undo();
+    m->params[M::auxParam(0,M::AUX_DESTINATION)].setValue(metro::ModTempo);m->params[M::auxParam(0,M::AUX_ASSIGNMENT)].setValue(1);m->uiField.store(1);find("Encoder")->bind();check(screenParam(m)<0 && !find("Encoder")->getParamQuantity(),"global AUX assignment is displayed without a misleading track edit");check(find("AUX X assignment")->tooltipText().find("Global")!=std::string::npos,"global AUX hover explains scope");
+    m->uiMod.store(true);m->selectedLane.store(0);m->params[M::modParam(0,M::MOD_DESTINATION)].setValue(metro::ModLoopy);auto* assignment=m->getParamQuantity(M::modParam(0,M::MOD_ASSIGNMENT));check(assignment->getDisplayValueString()=="Global","global internal lane assignment reports Global");assignment->setValue(2);check(m->integer(M::modParam(0,M::MOD_ASSIGNMENT))==0,"global lane editing preserves its inactive track assignment");
+    for(int d=metro::ModTempo;d<metro::ModDestinationCount;++d){m->params[M::modParam(0,M::MOD_DESTINATION)].setValue(d);auto* value=m->getParamQuantity(M::modParam(0,M::MOD_VALUE));value->setDisplayValueString(metro::modGateDestination(static_cast<metro::ModDestination>(d))?"On":"2.5");check(value->getDisplayValueString()==(metro::modGateDestination(static_cast<metro::ModDestination>(d))?"On":"2.5"),"new route stage entry matches gate or continuous units");}
+    for(int lane=0;lane<8;++lane)m->params[M::modParam(lane,M::MOD_DESTINATION)].setValue(31+lane);
+    m->params[M::auxParam(0,M::AUX_DESTINATION)].setValue(38);m->putPreset(0,m->capturePreset());m->uiMod.store(false);m->selectedAux.store(0);m->uiPage.store(M::AUX_PAGE);m->uiField.store(0);APP->patch->save(dir+"/extended-routing-roundtrip.vcv");
+}
+if(qaFrame==8)APP->window->screenshot(dir+"/extended-routing-controls.png");
+if(qaFrame==12){check(!qaFailed,"EXTENDED ROUTING UI QA COMPLETE");APP->window->close();}
