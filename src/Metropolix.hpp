@@ -24,6 +24,16 @@ struct ModVoltageQuantity : ParamQuantity {
         return metro::clamp(ParamQuantity::getValue(), getMinValue(), 5.f);
     }
 };
+struct TrackCvQuantity : ParamQuantity {
+    int typeParam=-1;
+    metro::TrackCvType type() const {return module && typeParam>=0?static_cast<metro::TrackCvType>(int(module->params[typeParam].getValue())):metro::BipolarCv;}
+    float getMinValue() override {return type()==metro::BipolarCv?-5.f:0.f;}
+    float getValue() override {return metro::trackCvVoltage(ParamQuantity::getValue(),type());}
+    void setValue(float v) override {ParamQuantity::setValue(type()==metro::GateCv?metro::trackCvVoltage(v,type()):v);}
+    std::string getDisplayValueString() override {return type()==metro::GateCv?(getValue()>=1.5f?"On":"Off"):ParamQuantity::getDisplayValueString();}
+    std::string getUnit() override {return type()==metro::GateCv?"":unit;}
+    void setDisplayValueString(std::string s) override {if(s=="On" || s=="on")setValue(5);else if(s=="Off" || s=="off")setValue(0);else ParamQuantity::setDisplayValueString(s);}
+};
 
 struct LoopyPulseQuantity : ParamQuantity {
     std::string getDisplayValueString() override {return getValue()<.5f?"Auto":ParamQuantity::getDisplayValueString();}
@@ -109,7 +119,8 @@ struct Metropolix : Module {
         STAGE_OVERRIDES,
         LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET,
         SCALE_LOCK, USER_SCALES, SCALE_NOTE = USER_SCALES + metro::UserScaleCount*2,
-        SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2, NUM_PARAMS
+        SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2,
+        CV_TYPE_1, CV_TYPE_2, CV_RAMPS, NUM_PARAMS = CV_RAMPS + 16
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -135,6 +146,8 @@ struct Metropolix : Module {
     static int ctrlParam(int knob, int p) { return CTRL_PARAMS + knob * CTRL_STRIDE + p; }
     static int swingParam(int track) { return SWING_1 + track; }
     static int slideTypeParam(int track) {return SLIDE_TYPE_1+track;}
+    static int cvTypeParam(int track) {return CV_TYPE_1+track;}
+    static int cvRampParam(int track,int stage) {return CV_RAMPS+track*8+stage;}
     static int userScaleParam(int slot,bool root=false) {return USER_SCALES+metro::clamp(slot,0,99)*2+int(root);}
     static int scaleShortcutParam(int slot,bool root=false) {return SCALE_SHORTCUTS+metro::clamp(slot,0,7)*2+int(root);}
     static std::vector<std::string> ctrlDestinations() {
@@ -201,7 +214,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -299,6 +312,7 @@ struct Metropolix : Module {
             configParam(gateScaleParam(t),0,100,100,name+"gate scale","%")->snapEnabled=true;
             auto* slide=configParam<SlideAmountQuantity>(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide amount", "%");slide->typeParam=slideTypeParam(t);
             configSwitch(slideTypeParam(t),0,2,0,name+"slide type",{"Tempo","Analog","Acid"});
+            configSwitch(cvTypeParam(t),0,2,0,name+"CV type",{"Bipolar ±","Unipolar +","Gate Toggle"});
             configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(trackParam(t, MUTE), 0, 1, 0, name + "mute", {"Off", "On"})->randomizeEnabled = false;
@@ -309,7 +323,8 @@ struct Metropolix : Module {
                 configParam(stageParam(t, s, ACCUMULATION), -28, 28, 0, prefix + "accumulation", " scale degrees")->snapEnabled = true;
                 configSwitch(stageParam(t, s, SLIDE), 0, 1, 0, prefix + "slide", {"Off", "On"});
                 configSwitch(stageParam(t, s, SKIP), 0, 1, 0, prefix + "skip", {"Off", "On"});
-                configParam(stageParam(t, s, CV), -5, 5, 0, prefix + "CV", " V");
+                auto* cv=configParam<TrackCvQuantity>(stageParam(t,s,CV),-5,5,0,prefix+"CV"," V");cv->typeParam=cvTypeParam(t);
+                configSwitch(cvRampParam(t,s),0,2,0,prefix+"CV transition",{"Step","sRamp (stage)","pRamp (pulse)"});
                 auto* pitch=configParam<PitchOverrideQuantity>(stageParam(t,s,PITCH_OVERRIDE),-1,60,-1,prefix+"pitch override");
                 pitch->scaleParam=SCALE; pitch->track=t; pitch->snapEnabled=true;
                 configParam<GateOverrideQuantity>(stageParam(t,s,GATE_OVERRIDE),-1,100,-1,prefix+"gate override")->snapEnabled=true;
@@ -455,6 +470,7 @@ struct Metropolix : Module {
             track.gateScale=params[gateScaleParam(t)].getValue()*.01f;
             track.slideTime = params[trackParam(t, SLIDE_TIME)].getValue() * 0.01f;
             track.slideType=static_cast<metro::SlideType>(metro::clamp(integer(slideTypeParam(t)),0,2));
+            track.cvType=static_cast<metro::TrackCvType>(metro::clamp(integer(cvTypeParam(t)),0,2));
             track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
@@ -472,6 +488,7 @@ struct Metropolix : Module {
                 edit.slide = integer(stageParam(t, s, SLIDE)) != 0;
                 edit.skip = integer(stageParam(t, s, SKIP)) != 0;
                 edit.cv = params[stageParam(t, s, CV)].getValue();
+                edit.cvRamp=static_cast<metro::StageCvRamp>(metro::clamp(integer(cvRampParam(t,s)),0,2));
                 edit.pitchOverride=integer(stageParam(t,s,PITCH_OVERRIDE));
                 edit.gateOverride=integer(stageParam(t,s,GATE_OVERRIDE));
             }
@@ -551,10 +568,10 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(16));
+        json_object_set_new(root, "schemaVersion", json_integer(17));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(4));
+        json_object_set_new(root, "presetFormat", json_integer(5));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
@@ -577,6 +594,8 @@ struct Metropolix : Module {
     void dataFromJson(json_t* root) override {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<17)
+            for(int id=CV_TYPE_1;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<16)
             for(int t=0;t<2;++t)params[slideTypeParam(t)].setValue(metro::TempoSlide);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<15)
@@ -622,7 +641,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(LOOPY_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CV_TYPE_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));

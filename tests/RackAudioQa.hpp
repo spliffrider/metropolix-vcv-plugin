@@ -102,11 +102,12 @@ struct RackAudioQaWidget : ModuleWidget {
             trace.close();
             good &= !trace.fail();
         }
-        if (std::getenv("METROPOLIX_MOD_QA")) {
+        if (std::getenv("METROPOLIX_MOD_QA") || std::getenv("METROPOLIX_STAGE_CV_AUDIO_QA")) {
             double minimum[2] = {100,100}, maximum[2] = {-100,-100};
             int changes[2] = {};
             bool cvFinite = true;
-            std::ofstream csv(std::string(directory) + "/mod-cv.csv");
+            bool stageCv=std::getenv("METROPOLIX_STAGE_CV_AUDIO_QA")!=nullptr;
+            std::ofstream csv(std::string(directory) + (stageCv?"/stage-cv.csv":"/mod-cv.csv"));
             csv << "seconds,out_a_volts,out_b_volts\n";
             for (int frame = 0; frame < m->frames; ++frame) {
                 for (int ch = 0; ch < 2; ++ch) {
@@ -121,6 +122,7 @@ struct RackAudioQaWidget : ModuleWidget {
             bool cvGood = m->cvConnected && cvFinite && minimum[0] == -2 && maximum[0] == 2
                 && minimum[1] >= 0 && maximum[1] > 4.99 && maximum[1] <= 5
                 && changes[0] > 15 && changes[1] > 100000;
+            if(stageCv)cvGood=m->cvConnected && cvFinite && minimum[0]>=-5 && minimum[1]>=-5 && maximum[0]<=5 && maximum[1]<=5 && minimum[0]<-.1 && minimum[1]<-.1 && maximum[0]>4.99 && maximum[1]>4.99 && changes[0]>1000 && changes[1]>1000;
             csv.close();
             cvGood &= !csv.fail();
             good &= cvGood;

@@ -17,10 +17,11 @@ void require(bool value, const char* message) {
 #include "LoopyRackTests.hpp"
 #include "ScaleRackTests.hpp"
 #include "SlideRackTests.hpp"
+#include "StageCvRackTests.hpp"
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
-    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::RUN_MODE==428 && Metropolix::SWING_1==429 && Metropolix::GATE_SCALE_1==431 && Metropolix::STAGE_OVERRIDES==433 && Metropolix::LOOPY_PULSES==465 && Metropolix::SCALE_LOCK==467 && Metropolix::SLIDE_TYPE_1==685 && Metropolix::NUM_PARAMS==687,"Slide parameters append without changing existing IDs");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::RUN_MODE==428 && Metropolix::SWING_1==429 && Metropolix::GATE_SCALE_1==431 && Metropolix::STAGE_OVERRIDES==433 && Metropolix::LOOPY_PULSES==465 && Metropolix::SCALE_LOCK==467 && Metropolix::SLIDE_TYPE_1==685 && Metropolix::CV_TYPE_1==687 && Metropolix::NUM_PARAMS==705,"CV parameters append without changing existing IDs");
     static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
@@ -283,6 +284,7 @@ int main() {
     loopyRackTests();
     scaleRackTests();
     slideRackTests();
+    stageCvRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

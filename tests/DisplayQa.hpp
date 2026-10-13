@@ -98,6 +98,14 @@ const DisplayCase cases[]={
     {"swing-max",Metropolix::SWING_PAGE,0,0,Metropolix::SLIDE,false},
     {"swing-mod",Metropolix::SWING_PAGE,0,0,0,true},
     {"slide-time",Metropolix::SLIDE_PAGE,0,0,0,false},
+    {"cv-type-bipolar",Metropolix::CV_TYPE_PAGE,0,0,Metropolix::CV,false},
+    {"cv-type-unipolar",Metropolix::CV_TYPE_PAGE,0,0,Metropolix::CV,false},
+    {"cv-type-gates",Metropolix::CV_TYPE_PAGE,0,0,Metropolix::CV,false},
+    {"stage-cv-sramp",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+    {"stage-cv-pramp",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+    {"stage-cv-unipolar",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+    {"stage-cv-gates",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+    {"stage-cv-all",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
     {"slide-analog",Metropolix::SLIDE_PAGE,0,0,0,false},
     {"slide-acid",Metropolix::SLIDE_PAGE,0,0,0,false},
     {"slide-mod",Metropolix::SLIDE_PAGE,0,0,0,true},
@@ -140,6 +148,16 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+        m->uiAlt.store(false);
+        if(!test.mod && (test.row==Metropolix::CV || test.page==Metropolix::CV_TYPE_PAGE)) {
+            std::string name=test.name;int t=m->selectedTrack.load();
+            int type=name.find("unipolar")!=std::string::npos?1:name.find("gates")!=std::string::npos?2:0;
+            m->params[Metropolix::cvTypeParam(t)].setValue(type);
+            const float values[]={0,1.5f,4,-2,-2,0,3,1};
+            for(int s=0;s<8;++s){m->params[Metropolix::stageParam(t,s,Metropolix::CV)].setValue(type==2?(s==2 || s==5?5:0):values[s]);m->params[Metropolix::PULSES+s].setValue(4);m->params[Metropolix::cvRampParam(t,s)].setValue(name=="stage-cv"?0:s%3);}
+            m->params[Metropolix::cvRampParam(t,2)].setValue(name=="stage-cv-sramp"?1:name=="stage-cv"?0:2);
+            m->uiAlt.store(name=="stage-cv-all");
+        }
         if(test.row>=Metropolix::PITCH_OVERRIDE && !test.mod) {
             const int pitches[]={-1,12,28,60,7,-1,40,55},gates[]={-1,0,82,100,13,-1,88,1};
             for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);

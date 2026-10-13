@@ -47,14 +47,15 @@ void line(NVGcontext* vg, float x1, float y1, float x2, float y2, NVGcolor color
 void setWithHistory(ParamQuantity* q, float value) {
     if (!q || !q->module) return;
     if(auto* m=dynamic_cast<Metropolix*>(q->module))if(m->ctrlOwner(q->paramId)>=0)return;
-    float before = q->getValue();
+    float before = q->ParamQuantity::getValue();
     q->setValue(value);
-    if (q->getValue() == before) return;
+    float after=q->ParamQuantity::getValue();
+    if (after == before) return;
     auto* change = new history::ParamChange;
     change->moduleId = q->module->id;
     change->paramId = q->paramId;
     change->oldValue = before;
-    change->newValue = q->getValue();
+    change->newValue = after;
     APP->history->push(change);
 }
 
@@ -116,6 +117,7 @@ void trackSettingsMenu(Metropolix* m) {
     std::vector<std::string> swingValues;
     for(int n=50;n<=78;++n)swingValues.push_back(std::to_string(n)+"%");
     choice("Swing", Metropolix::swingParam(t), swingValues, 50);
+    choice("CV type",Metropolix::cvTypeParam(t),{"Bipolar ±","Unipolar +","Gate Toggle"});
     std::vector<std::string> divisions;
     for (int i = 1; i <= 8; ++i) divisions.push_back("/ " + std::to_string(i));
     choice("Pulse-count division", Metropolix::extraParam(t, Metropolix::PULSE_DIV), divisions, 1);
@@ -240,6 +242,8 @@ struct ValueCell : ValueKnob {
     std::vector<std::string> shortChoices;
     float dragDistance = 0.f;
     bool dragStarted = false;
+    bool cvDrag=false;
+    float cvBefore=0;
     bool locked() const { return metroModule && metroModule->ctrlOwner(paramId)>=0; }
 
     ValueCell() {
@@ -286,19 +290,30 @@ struct ValueCell : ValueKnob {
         return row == Metropolix::SLIDE || row == Metropolix::SKIP || modProperty >= Metropolix::MOD_RAMP || modGateCell();
     }
     bool modGateCell() const {
+        int row=compact && metroModule?metroModule->selectedRow.load():stageRow;
+        if(metroModule && row==Metropolix::CV && modProperty<0)return metroModule->integer(Metropolix::cvTypeParam(metroModule->selectedTrack.load()))==metro::GateCv;
         if (!metroModule || modProperty < Metropolix::MOD_VALUE || modProperty >= Metropolix::MOD_RAMP) return false;
         int lane = metroModule->selectedLane.load();
         return metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE)) == metro::ModGate
             || metro::modGateDestination(static_cast<metro::ModDestination>(metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
     }
-    void onDragStart(const event::DragStart& e) override { if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return; dragDistance = 0.f; dragStarted=!locked(); if(dragStarted)ValueKnob::onDragStart(e); }
+    void onDragStart(const event::DragStart& e) override {
+        if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        dragDistance=0;dragStarted=!locked();cvDrag=dragStarted && dynamic_cast<TrackCvQuantity*>(getParamQuantity());
+        if(cvDrag)cvBefore=metroModule->params[paramId].getValue();
+        if(dragStarted)ValueKnob::onDragStart(e);
+    }
     void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(dragStarted && !locked())ValueKnob::onDragMove(e); }
     void onDragEnd(const event::DragEnd& e) override {
         // Automation may assign a CTRL while this drag is active. Always finish
         // a started Rack gesture so cursor capture and history are released.
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        bool cvBatch=cvDrag && dragDistance>=3;
+        float after=cvBatch?metroModule->params[paramId].getValue():0;
+        if(cvBatch)metroModule->params[paramId].setValue(cvBefore);
         if(dragStarted)ValueKnob::onDragEnd(e);
-        dragStarted=false;
+        if(cvBatch){metroModule->params[paramId].setValue(after);parameterHistory(metroModule,{paramId},{cvBefore},"edit stage CV");}
+        dragStarted=false;cvDrag=false;
     }
     void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
@@ -412,6 +427,7 @@ struct MainDisplay : widget::Widget {
 
 #include "ScaleUI.hpp"
 #include "SlideUI.hpp"
+#include "StageCvUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

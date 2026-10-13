@@ -6,6 +6,11 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_STAGE_CV_AUDIO_QA")) {
+            static unsigned visited[2]={},ramps[2]={};
+            for(int t=0;t<2;++t){int type=m->integer(Metropolix::cvTypeParam(t));if(type>=0 && type<=2)visited[t]|=1u<<type;for(int s=0;s<8;++s){int r=m->integer(Metropolix::cvRampParam(t,s));if(r>=0 && r<=2)ramps[t]|=1u<<r;}}
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((visited[0]==7 && visited[1]==7 && ramps[0]==7 && ramps[1]==7)?"PASS ":"FAIL ")<<"STAGE CV PERFORMANCE COMPLETE: three CV types/transitions observed on both tracks during real stereo playback\n";}
+        }
         if(std::getenv("METROPOLIX_SLIDE_AUDIO_QA")) {
             static unsigned visited[2]={};
             for(int t=0;t<2;++t){int type=m->integer(Metropolix::slideTypeParam(t));if(type>=0 && type<=2)visited[t]|=1u<<type;}
@@ -31,7 +36,7 @@ void MetropolixWidget::qaStep() {
         if(std::getenv("METROPOLIX_CHAIN_AUDIO_QA")) {
             if(qaFrame==2) {
                 json_t* json=APP->engine->moduleToJson(m),*data=json_object_get(json,"data");
-                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer((std::getenv("METROPOLIX_SWING_AUDIO_QA") || std::getenv("METROPOLIX_OVERRIDE_AUDIO_QA"))?8:4));
+                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer((std::getenv("METROPOLIX_SWING_AUDIO_QA") || std::getenv("METROPOLIX_OVERRIDE_AUDIO_QA") || std::getenv("METROPOLIX_STAGE_CV_AUDIO_QA"))?8:4));
                 json_t* links=json_object_get(json_object_get(data,"chains"),"working");
                 for(size_t i=0;i<json_array_size(links);++i)json_object_set_new(json_array_get(links,i),"repeats",json_integer(1));
                 APP->engine->moduleFromJson(m,json);json_decref(json);
@@ -151,6 +156,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_SCALE_UI_QA")) {
         #include "ScaleWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_STAGE_CV_UI_QA")) {
+        #include "StageCvWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_SLIDE_UI_QA")) {

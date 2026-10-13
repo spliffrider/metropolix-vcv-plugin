@@ -14,6 +14,7 @@
 #include "SwingTiming.hpp"
 #include "Scales.hpp"
 #include "SlideTiming.hpp"
+#include "StageCv.hpp"
 
 namespace metro {
 
@@ -34,6 +35,7 @@ struct StageEdit {
     bool slide = false;
     bool skip = false;
     float cv = 0.f;
+    StageCvRamp cvRamp = CvStep;
     int pitchOverride = -1; // Chromatic anchor, C0..C5; -1 follows the slider.
     int gateOverride = -1; // -1 follows track, 0 Rest, 1..99%, 100 Hold.
 };
@@ -53,6 +55,7 @@ struct Track {
     float gateScale = 1.f;
     float slideTime = 0.25f;
     SlideType slideType = TempoSlide;
+    TrackCvType cvType = BipolarCv;
     float swing = 50.f;
     int accumLimit = 9;
     int accumNegativeLimit = 9;
@@ -107,6 +110,7 @@ struct TrackState {
     bool slideActive = false, slideFromPrevious = false;
     float gate = 0.f;
     float cv = 0.f;
+    float cvValue = 0.f, cvFrom = 0.f;
 };
 
 struct LoopyRequest {
@@ -331,7 +335,7 @@ private:
                 const auto& config=settings.tracks[t];
                 state.slideDuration=config.slideType==AnalogSlide && config.stages[state.stage].slide && have?analogSlideTime(config.slideTime):0;
                 state.pitch=state.slideDuration>0?from:state.targetPitch;state.hasPitch=true;
-                state.cv=playerCv[t]=clamp(settings.tracks[t].stages[state.stage].cv,-5.f,5.f);
+                state.cv=playerCv[t]=trackCvVoltage(settings.tracks[t].stages[state.stage].cv,config.cvType);
                 playerMasks[t]=loopy.stages&255u;playerPlaying[t]=true;
             }
             // Freeze the note/CV until a fresh stage press; Gate Type is ignored.
@@ -455,12 +459,14 @@ private:
             int trackAccumulation = state.trackAccumulation;
             int trackAccumDirection = state.trackAccumDirection;
             float pitch = state.pitch;
+            float cvValue=state.cvValue;
             bool hasPitch = state.hasPitch;
             int divider = state.divider;
             bool skipInverted=state.skipInverted;
             state = TrackState();
             state.pitch = state.targetPitch = state.startPitch = pitch;
             state.hasPitch = hasPitch;
+            state.cvValue=cvValue;
             state.divider = divider;
             state.skipInverted=skipInverted;
             if (!config.autoAccumReset) {
@@ -502,6 +508,7 @@ private:
             state.activeAccumulation = state.accumMode == TrackAccumulation
                 ? state.trackAccumulation : state.accumulator[state.stage];
             beginSlide(t);
+            state.cvFrom=state.cvValue;
         }
         const auto& edit = config.stages[state.stage];
         if (newStage || edit.probabilityPerPulse) {
@@ -554,7 +561,9 @@ private:
         if(state.slideType!=TempoSlide && state.slideActive)state.pitch=slewPitch(state.pitch,state.targetPitch,dt,analogSlideTime(config.slideTime));
         else state.pitch = static_cast<float>(state.startPitch + (state.targetPitch - state.startPitch) * mix);
         state.slideAge += dt;
-        state.cv = muted(t) ? 0.f : clamp(edit.cv, -5.f, 5.f);
+        state.cvValue=stageCvValue(state.cvFrom,edit.cv,config.cvType,edit.cvRamp,
+            state.pulse,state.age,state.duration,pulses(t,state.stage));
+        state.cv = muted(t) ? 0.f : state.cvValue;
         state.gate = gate ? 5.f : 0.f;
         state.age += dt;
     }

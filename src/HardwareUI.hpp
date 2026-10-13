@@ -62,6 +62,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::DIV_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_DIVISION) : (f?Metropolix::extraParam(t,Metropolix::PULSE_DIV):Metropolix::trackParam(t,Metropolix::DIVISION));
         case Metropolix::SWING_PAGE: return mod ? -1 : Metropolix::swingParam(t);
         case Metropolix::SLIDE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::SLIDE_TIME);
+        case Metropolix::CV_TYPE_PAGE: return mod?Metropolix::modParam(l,Metropolix::MOD_TYPE):Metropolix::cvTypeParam(t);
         case Metropolix::GATE_PAGE: return mod ? -1 : f?Metropolix::gateScaleParam(t):Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
         case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
         case Metropolix::A_PAGE: return Metropolix::OUTPUT_SOURCE_A;
@@ -117,6 +118,7 @@ void encoderPress(Metropolix* m) {
         auto* q=m->getParamQuantity(id);setWithHistory(q,1-q->getValue());return;
     }
     if(p==Metropolix::STAGE_PAGE) {
+        if(cvPage(m)){cvEncoderPress(m);return;}
         if(overridePage(m) && m->selectedRow.load()==Metropolix::PITCH_OVERRIDE){syncPitchOverrides(m);return;}
         int id=-1, count=2, t=m->selectedTrack.load(),s=m->selectedStage.load();
         if(m->uiMod.load())id=Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_RAMP+s);
@@ -269,6 +271,14 @@ struct HardwareControl : ValueKnob {
             if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
         } else {
             ValueKnob::onDragMove(e);
+            if(gestureIds.size()>1 && cvPage(metroModule) && !cvGate(metroModule)) {
+                auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
+                if(it!=gestureIds.end()) {
+                    auto type=static_cast<metro::TrackCvType>(metroModule->integer(Metropolix::cvTypeParam(metroModule->selectedTrack.load())));
+                    float delta=metroModule->params[paramId].getValue()-metro::trackCvVoltage(gestureBefore[it-gestureIds.begin()],type);
+                    for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId)metroModule->getParamQuantity(gestureIds[i])->setValue(metro::trackCvVoltage(gestureBefore[i],type)+delta);
+                }
+            }
             if(gestureIds.size()>1 && overridePage(metroModule)) {
                 auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
                 if(it!=gestureIds.end()) {
@@ -291,7 +301,7 @@ struct HardwareControl : ValueKnob {
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
-        bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity()) && (moved>=3 || longFired);
+        bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity() || cvPage(metroModule)) && (moved>=3 || longFired);
         std::vector<float> after;
         if(batch) {
             for(int id:gestureIds)after.push_back(metroModule->params[id].getValue());
@@ -301,7 +311,7 @@ struct HardwareControl : ValueKnob {
             if(it!=gestureIds.end())metroModule->params[paramId].setValue(gestureBefore[it-gestureIds.begin()]);
         }
         ValueKnob::onDragEnd(e);
-        if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit gate or stage overrides");}
+        if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit track settings");}
         gestureIds.clear();gestureBefore.clear();
         if(navigating && navigationEnd)navigationEnd();
         if(releaseAction)releaseAction();
