@@ -1,4 +1,4 @@
-# Metropolix Lab 2.14.0 — Windows alpha quick start
+# Metropolix Lab 2.15.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.14.0/MetropolixLab-2.14.0-win-x64.vcvplugin)
-- [Stage CV demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.14.0/Stage-CV-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/MetropolixLab-2.15.0-win-x64.vcvplugin)
+- [Clock output demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/Clock-output-demo.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.14.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.15.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.14.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.15.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -192,9 +192,19 @@ latching/unlatching and stopped Stage Player. Check that release restores the
 current original pattern. Try both target settings and save/reopen.
 [Operation and comparison limits](LOOPY.md); [portable demo](../examples/Loopy-performance.vcv).
 
-## Scales — new in 2.14.0
+## Scales — new in 2.12.0
 
 Try the [scale guide](SCALES.md): factory banks, custom note/root editing,
 lock/search/apply, eight held/menu shortcuts, undo and saving/reopening.
 The Scale (User) MOD/AUX/CTRL destination moves inside the locked ten-slot bank.
 Feedback on fractional-voltage boundaries from hardware owners is especially useful.
+
+## Clock output — new in 2.15.0
+
+Open the supplied clock demo, select your audio device and press RUN. The right
+voice uses CLK `/4` offset `2`; the left voice uses regular track gates.
+Press ALT → CLK, try offsets 0–3 and other divisors, and verify that both note
+tracks keep their existing timing. Encoder click selects the other field;
+vertical dragging edits; long press resets both with one undo. Save/reopen
+the patch and recall an internal preset: CLK settings should stay global.
+See [Clock output](CLOCK-OUTPUT.md) for transport and live-edit choices.
