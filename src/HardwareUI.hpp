@@ -73,7 +73,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::SETUP_PAGE: return f && m->setupCursor.load()==0?Metropolix::RANGE:-1;
         case Metropolix::GLOBAL_SETUP_PAGE:return f?globalMenuParam(m):-1;
         case Metropolix::TUNER_PAGE:return Metropolix::TUNER_OCTAVE;
-        case Metropolix::PRESET_SETUP_PAGE: return Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
+        case Metropolix::PRESET_SETUP_PAGE: return f==7?Metropolix::INIT_PRESET:Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
     }
@@ -110,7 +110,7 @@ void encoderPress(Metropolix* m) {
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
     if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
-    if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%7); return; }
+    if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }
     if(p==Metropolix::SAVE_PAGE) { m->presetSaveAction.store((m->presetSaveAction.load()+1)%3); return; }
     if(p==Metropolix::ACCUM_PAGE) { m->uiField.store((m->uiField.load()+1)%6); return; }

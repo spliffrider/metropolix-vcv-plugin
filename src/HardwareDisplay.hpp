@@ -39,6 +39,9 @@ struct HardwareDisplay : HardwareControl {
     }
     void footer(OledCanvas& c,bool detailed=false) const {
         auto* m=metroModule;
+        if(m && m->workflowUntil>system::getTime()){c.fill(0,54,128,10,0);c.text(1,56,m->workflowMessage);return;}
+        if(m && m->workflowStageHeld){c.text(1,56,string::f(m->workflowLaneCopy?"COPY LANE %d":"COPY STAGE %d",m->workflowStageSource+1));return;}
+        if(m && m->heldTrackReset.load() && !workflowTrackIds(m,m->selectedTrack.load()).empty()){c.text(1,56,string::f("COPY TRK %d",m->heldTrackReset.load()&1?1:2));return;}
         std::string left=m && m->uiMod.load()?string::f("MOD %d",m->selectedLane.load()+1):string::f("TRK %d",m?m->selectedTrack.load()+1:1);
         if(detailed && m)left+=string::f(":%d",m->selectedStage.load()+1);
         std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":
@@ -322,7 +325,10 @@ struct HardwareDisplay : HardwareControl {
                 }
                 if(item==cursor && f)c.line(68,y+14,126,y+14);
             }
-            c.text(1,57,string::f("TRK %d MENU",t+1));return c;
+            if(m && m->workflowUntil>system::getTime())c.text(1,57,m->workflowMessage);
+            else if(m && m->heldTrackReset.load())c.text(1,57,string::f("COPY TRK %d MENU",m->heldTrackReset.load()&1?1:2));
+            else c.text(1,57,string::f("TRK %d MENU",t+1));
+            return c;
         } else if(page==Metropolix::A_PAGE || page==Metropolix::B_PAGE) {
             int source=m?shownOutputSource(m):0;auto selection=metro::outputSelection(source);
             bool pending=m && m->outputDraft[outputIndex(m)].load()>=0;
@@ -395,12 +401,13 @@ struct HardwareDisplay : HardwareControl {
             } else c.text(1,57,save?"SELECT SLOT TO SAVE":"SELECT SLOT TO LOAD");
             return c;
         } else if(page==Metropolix::PRESET_SETUP_PAGE) {
-            const char* labels[]={"Total Pulses","Queue Pulses","Load Delay","Pitch Load","Switch Load","Ctrl Load","Aux Load"};
+            const char* labels[]={"Total Pulses","Queue Pulses","Load Delay","Pitch Load","Switch Load","Ctrl Load","Aux Load","Set Init Preset"};
             int first=f/3*3;
-            for(int i=first;i<std::min(first+3,7);++i) {
-                int n=integer(Metropolix::TOTAL_PULSES+i);
+            for(int i=first;i<std::min(first+3,8);++i) {
+                int n=integer(i==7?Metropolix::INIT_PRESET:Metropolix::TOTAL_PULSES+i);
                 std::string v;
-                if(i<2)v=n?std::to_string(n):"-";
+                if(i==7)v=m?m->getParamQuantity(Metropolix::INIT_PRESET)->getDisplayValueString():"Off";
+                else if(i<2)v=n?std::to_string(n):"-";
                 else if(i==2){const char* names[]={"Instant","Queue","Total"};v=names[n];}
                 else if(i==5){const char* names[]={"Off","Assigns","Jump"};v=names[n];}
                 else v=n?(i==6?"Assigns":"Jump"):"Off";

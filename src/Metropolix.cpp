@@ -100,6 +100,8 @@ void overrideMenu(ui::Menu* menu,Metropolix* m) {
 const char* notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
 void resetTrackMenu(Metropolix* m,bool all,bool record);
+void appendWorkflowMenu(ui::Menu* menu,Metropolix* m,int forcedKind=0,int forcedTarget=-1);
+void clearWorkflowAux(Metropolix* m,bool record);
 void trackSettingsMenu(Metropolix* m) {
     if (!m) return;
     int t = m->selectedTrack.load();
@@ -121,6 +123,7 @@ void trackSettingsMenu(Metropolix* m) {
     choice("Slider direction",Metropolix::outputTrackParam(t,Metropolix::SLIDER_DIRECTION),{"Normal","Inverted"});
     choice("Pulse-count source",Metropolix::trackBehaviorParam(t,Metropolix::PULSE_SOURCE),{"Switch","1","2","3","4","5","6","7","8"});
     choice("Gate-type source",Metropolix::trackBehaviorParam(t,Metropolix::GATE_SOURCE),Metropolix::gateSourceLabels());
+    appendWorkflowMenu(menu,m,3,t);
     choice("Rest pitch",Metropolix::trackBehaviorParam(t,Metropolix::REST_PITCH),{"Hold","Update"});
     choice("Global reset",Metropolix::TRACK_GLOBAL_RESET_1+t,{"Off","On"});
     std::vector<std::string> divisions;
@@ -166,6 +169,7 @@ void modSettingsMenu(Metropolix* m, int lane) {
     if (!m) return;
     auto* menu = createMenu();
     menu->addChild(createMenuLabel(string::f("MOD lane %d", lane + 1)));
+    appendWorkflowMenu(menu,m,4,lane);
     auto choice=[menu,m,lane](const std::string& label,int property,std::vector<std::string> values,bool disabled=false) {
         auto* q=m->getParamQuantity(Metropolix::modParam(lane,property));
         menu->addChild(createIndexSubmenuItem(label,values,
@@ -203,7 +207,7 @@ void appendAuxMenu(ui::Menu* menu, Metropolix* m, int input) {
     choice("Destination",Metropolix::AUX_DESTINATION,Metropolix::modDestinations());
     choice("Target tracks",Metropolix::AUX_ASSIGNMENT,{"Track 1","Track 2","Both tracks"},metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION)))));
     menu->addChild(createMenuItem("Clear assignment","",[m,input] {
-        setWithHistory(m->getParamQuantity(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION)),0.f);
+        int previous=m->selectedAux.load();m->selectedAux.store(input);clearWorkflowAux(m,true);m->selectedAux.store(previous);
     }));
 }
 
@@ -435,6 +439,7 @@ struct MainDisplay : widget::Widget {
 #include "ClockUI.hpp"
 #include "OutputUI.hpp"
 #include "TrackMenuUI.hpp"
+#include "WorkflowUI.hpp"
 void openChainPage(Metropolix* m);
 #include "SetupUI.hpp"
 #include "HardwareUI.hpp"

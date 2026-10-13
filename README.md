@@ -4,9 +4,11 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.20.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.21.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.20.0/MetropolixLab-2.20.0-win-x64.vcvplugin)** · **[Clock/reset performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.20.0/Clock-reset-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.20.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.21.0/MetropolixLab-2.21.0-win-x64.vcvplugin)** · **[Editing workflows demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.21.0/Editing-workflows-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.21.0)**
+
+2.21.0 adds [editing workflows](docs/EDITING-WORKFLOWS.md): ALT+AUX randomize/morph/restore, held and menu copy/paste, custom Init presets and AUX long clear, with native undo.
 
 2.20.0 adds [clock/reset configuration and tuning](docs/CLOCK-RESET.md): explicit clock sources, stopped clock output, Reset/Run/Run-C inputs, per-track Global Reset, Bottom Pitch and tuner.
 
@@ -170,7 +172,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.20.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.21.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -242,7 +244,7 @@ The original twelve internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy AUX/MOD routing, AUX/MOD-only accumulator reset, hardware bank interchange, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include MIDI, MX expansion or hardware SysEx interchange. Remaining setup preferences, encoder confirmation and hardware pickup behavior are still being developed.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, Analog/Acid rate calibration, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
@@ -266,6 +268,8 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-ui.ps1 -SlideAudio
 .\scripts\test-ui.ps1 -Display
 .\scripts\test-ui.ps1 -Controls
+.\scripts\test-ui.ps1 -Workflows
+.\scripts\test-ui.ps1 -WorkflowsAudio
 .\scripts\test-ui.ps1 -Audio
 .\scripts\test-ui.ps1 -Modulation
 .\scripts\test-ui.ps1 -Hardware

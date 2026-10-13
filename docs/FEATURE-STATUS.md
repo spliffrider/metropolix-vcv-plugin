@@ -1,9 +1,10 @@
-# Feature status — 2.20.0 public alpha
+# Feature status — 2.21.0 public alpha
 
 Assessment date: 2026-10-13. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.21.0 adds [editing workflows, custom Init and copy/paste](EDITING-WORKFLOWS.md).
 2.20.0 adds [clock/reset configuration, protected tracks, Bottom Pitch and tuner](CLOCK-RESET.md).
 2.19.0 completed all 38 AUX/MOD destinations, including Loopy and targeted reset; see [Complete routing](COMPLETE-ROUTING.md).
 2.18.0 added all 29 CTRL destinations and six accumulator AUX/MOD routes; see [Accumulator routing](ACCUMULATOR-ROUTING.md).
@@ -20,16 +21,10 @@ This implementation has not been compared with a physical module.
 2.7.0 added 64 internal presets, selective recall, queued loading and Total Pulses.
 2.6.0 added both CTRL performance knobs with 23 supported destinations.
 2.5.0 added Stage/Track accumulator mode and a LIM options display.
-The broad completeness estimates below remain unchanged; they are not a
-hardware-fidelity score. See the [chain guide](PRESET-CHAINS.md).
-
-Our engineering estimate is **75–85% of the core sequencing functions** and
-**45–55% of the full hardware feature set**. These are broad judgment ranges,
-not a measured count or a prediction of remaining development time. We weight
-functional areas by their musical scope; individual scales, menu entries, and
-repeated parameter instances are not counted as equally sized features.
-Physical installation, calibration, and firmware-update procedures are outside
-this software comparison. Visual resemblance does not establish behavior.
+The feature table below is the current assessment. Earlier percentage estimates
+predate several major features and should not be used to judge this build.
+Physical installation, calibration and firmware-update procedures are outside
+the software comparison. Visual resemblance does not establish behavior.
 
 By core sequencing we mean creating two note sequences from the eight shared
 stages, controlling traversal/timing, and applying gate/stage variations. The
@@ -44,12 +39,12 @@ configuration, preset workflows, and external interfaces.
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
 | Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; legacy preset selector/global difference |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute; all 38 hardware destinations; gate On/Off readouts and global scope | Continuous destination-specific display units and hardware comparisons |
-| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | ALT+AUX selective randomization and hardware comparisons |
-| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching and Loopy AUX/MOD routing | Hardware copy/paste and selective randomization workflows |
+| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons and remaining setup preferences |
+| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover help, context menus, vertical dragging, numeric entry, undo, optional grids | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
-| Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains and Quick Chain | Custom Init, pickup, MIDI, MX expansion and SysEx interchange |
+| Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains Quick Chain and custom Init | Pickup, MIDI, MX expansion and SysEx interchange |
 
-The current 727 parameters include repeated stage/lane controls; that number is
+The current 728 parameters include repeated stage/lane controls; that number is
 not a count of distinct hardware features. Implemented behavior can still
 differ in edge cases or where the manual leaves details unspecified. See
 [validation and known interpretations](VALIDATION.md).
@@ -57,7 +52,7 @@ differ in edge cases or where the manual leaves details unspecified. See
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows testers**. The engine suites, Rack
-host/persistence checks, widget callback tests, 108 display states, and recorded
+host/persistence checks, widget callback tests, 113 display states, and recorded
 stereo/CV paths pass on the documented setup. The musical baseline also received
 an initial user playtest. Broad testing on other computers, long sessions,
 different zoom/DPI settings, and interactions with other plugins is still needed.

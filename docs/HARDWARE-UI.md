@@ -77,7 +77,7 @@ knob. Older patches and presets clear CTRL assignments, preserving their
 existing panel values; previous AUX/mode migrations are unchanged. Temporary
 ALT state clears on load.
 
-AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). MX and ALT+AUX selective randomization remain unimplemented, with explanatory help.
+AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). ALT+AUX now randomizes, morphs and restores the current screen; see [Editing workflows](EDITING-WORKFLOWS.md). MX remains unimplemented.
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 

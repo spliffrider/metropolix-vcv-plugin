@@ -13,6 +13,7 @@ DISTRIBUTABLES += docs/OUTPUT-ROUTING.md docs/TRACK-OPTIONS.md
 DISTRIBUTABLES += docs/ACCUMULATOR-ROUTING.md
 DISTRIBUTABLES += docs/COMPLETE-ROUTING.md
 DISTRIBUTABLES += docs/CLOCK-RESET.md
+DISTRIBUTABLES += docs/EDITING-WORKFLOWS.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -61,6 +62,8 @@ test:
 	./build/tests/extended-routing-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/ClockConfigTests.cpp -o build/tests/clock-config-tests.exe
 	./build/tests/clock-config-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/WorkflowTests.cpp -o build/tests/workflow-tests.exe
+	./build/tests/workflow-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:
