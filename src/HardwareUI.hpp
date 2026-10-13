@@ -52,6 +52,7 @@ int screenParam(Metropolix* m) {
     bool mod=m->uiMod.load();
     if(m->uiChooseFunction.load())return -1;
     switch(m->uiPage.load()) {
+        case Metropolix::TRACK_MENU_PAGE: return f?trackMenuParam(m):-1;
         case Metropolix::LOOPY_PAGE: return Metropolix::LOOPY_PULSES;
         case Metropolix::BPM_PAGE: return m->externalClock.load()?-1:Metropolix::TEMPO;
         case Metropolix::CLOCK_OUT_PAGE: return f?(m->integer(Metropolix::CLOCK_OUT_DIV)>1?Metropolix::CLOCK_OUT_OFFSET:-1):Metropolix::CLOCK_OUT_DIV;
@@ -86,6 +87,7 @@ void screenPage(Metropolix* m, int page) {
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
+    if(trackMenuPage(m)){trackMenuEncoderPress(m);return;}
     if(outputPage(m)){outputEncoderPress(m);return;}
     if(p==Metropolix::SLIDE_PAGE && !m->uiMod.load()) {
         int id=Metropolix::slideTypeParam(m->selectedTrack.load());

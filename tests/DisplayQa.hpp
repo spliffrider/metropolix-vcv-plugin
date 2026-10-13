@@ -123,6 +123,16 @@ const DisplayCase cases[]={
     {"clock-default",Metropolix::CLOCK_OUT_PAGE,0,0,0,false},
     {"clock-offset",Metropolix::CLOCK_OUT_PAGE,1,0,0,false},
     {"clock-max",Metropolix::CLOCK_OUT_PAGE,1,0,0,false},
+    {"track-menu-0",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-1",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
+    {"track-menu-2",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-3",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
+    {"track-menu-4",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-5",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
+    {"track-menu-6",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-7",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
+    {"track-menu-8",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-9",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
     {"output-kind-0",Metropolix::A_PAGE,0,0,0,false},
     {"output-kind-1",Metropolix::A_PAGE,1,0,0,false},
     {"output-kind-2",Metropolix::A_PAGE,0,0,0,false},
@@ -185,6 +195,11 @@ if(qaFrame>=20 && index<count) {
             int source=0;std::string name=test.name;
             if(name.find("output-kind-")==0){int kind=std::stoi(name.substr(12));source=metro::outputSource(kind,metro::outputIsMod(kind)?7:1);}
             m->params[Metropolix::OUTPUT_SOURCE_A+(test.page==Metropolix::B_PAGE)].setValue(source);m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
+        }
+        if(test.page==Metropolix::TRACK_MENU_PAGE){
+            m->trackMenuCursor.store(std::stoi(std::string(test.name).substr(11)));
+            m->params[Metropolix::trackBehaviorParam(m->selectedTrack.load(),Metropolix::GATE_SOURCE)].setValue(6);
+            m->params[Metropolix::trackBehaviorParam(m->selectedTrack.load(),Metropolix::REST_PITCH)].setValue(1);
         }
         m->clearLoopy();
         if(test.page==Metropolix::CLOCK_OUT_PAGE){std::string name=test.name;m->params[Metropolix::CLOCK_OUT_DIV].setValue(name=="clock-default"?1:name=="clock-max"?256:4);m->params[Metropolix::CLOCK_OUT_OFFSET].setValue(name=="clock-max"?255:name=="clock-default"?0:2);}

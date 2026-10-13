@@ -9,7 +9,7 @@ DISTRIBUTABLES += docs/PRESET-CHAINS.md
 DISTRIBUTABLES += docs/SWING.md
 DISTRIBUTABLES += docs/STAGE-OVERRIDES.md docs/LOOPY.md
 DISTRIBUTABLES += docs/SCALES.md docs/SLIDES.md docs/STAGE-CV.md docs/CLOCK-OUTPUT.md
-DISTRIBUTABLES += docs/OUTPUT-ROUTING.md
+DISTRIBUTABLES += docs/OUTPUT-ROUTING.md docs/TRACK-OPTIONS.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -50,6 +50,8 @@ test:
 	./build/tests/clock-output-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/OutputRoutingTests.cpp -o build/tests/output-routing-tests.exe
 	./build/tests/output-routing-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/TrackOptionsTests.cpp -o build/tests/track-options-tests.exe
+	./build/tests/track-options-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:

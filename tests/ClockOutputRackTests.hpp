@@ -1,6 +1,6 @@
 void clockOutputRackTests(){
     using M=Metropolix;auto m=std::unique_ptr<M>(new M),other=std::unique_ptr<M>(new M);
-    static_assert(M::CLOCK_OUT_DIV==705 && M::CLOCK_OUT_OFFSET==706 && M::OUTPUT_TRACK_OPTIONS==707 && M::NUM_PARAMS==713,"clock settings append without moving old IDs");
+    static_assert(M::CLOCK_OUT_DIV==705 && M::CLOCK_OUT_OFFSET==706 && M::OUTPUT_TRACK_OPTIONS==707 && M::NUM_PARAMS==719,"clock settings append without moving old IDs");
     static_assert(M::FORMAT5_PARAMS==478,"global clock parameters never change preset format5");
     require(M::presetIndex(M::CLOCK_OUT_DIV)==-1 && M::presetIndex(M::CLOCK_OUT_OFFSET)==-1,"clock settings excluded from internal presets");
     auto* div=m->getParamQuantity(M::CLOCK_OUT_DIV);auto* offset=m->getParamQuantity(M::CLOCK_OUT_OFFSET);

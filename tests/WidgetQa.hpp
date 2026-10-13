@@ -6,6 +6,11 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_TRACK_AUDIO_QA")) {
+            static unsigned pulses[2]={},gates[2]={},rests[2]={};
+            for(int t=0;t<2;++t){pulses[t]|=1u<<m->integer(Metropolix::trackBehaviorParam(t,Metropolix::PULSE_SOURCE));gates[t]|=1u<<m->integer(Metropolix::trackBehaviorParam(t,Metropolix::GATE_SOURCE));rests[t]|=1u<<m->integer(Metropolix::trackBehaviorParam(t,Metropolix::REST_PITCH));}
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((pulses[0]==15 && pulses[1]==15 && gates[0]==71 && gates[1]==21 && rests[0]==3 && rests[1]==3)?"PASS ":"FAIL ")<<"TRACK PERFORMANCE COMPLETE: independent pulse/gate sources and both Rest Pitch modes observed in real stereo arrangement\n";}
+        }
         if(std::getenv("METROPOLIX_OUTPUT_ARRANGEMENT_QA")) {
             static unsigned divisions=0;static bool good=true;
             int division=m->integer(Metropolix::modParam(7,Metropolix::MOD_DIVISION));if(division>=2 && division<=4)divisions|=1u<<division;
@@ -162,6 +167,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_SCALE_UI_QA")) {
         #include "ScaleWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_TRACK_UI_QA")) {
+        #include "TrackOptionsWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_OUTPUT_UI_QA")) {

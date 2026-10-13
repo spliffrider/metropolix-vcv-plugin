@@ -130,7 +130,8 @@ struct Metropolix : Module {
         SCALE_LOCK, USER_SCALES, SCALE_NOTE = USER_SCALES + metro::UserScaleCount*2,
         SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2,
         CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET,
-        OUTPUT_TRACK_OPTIONS, OUTPUT_TRACK_STRIDE=3, NUM_PARAMS=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE
+        OUTPUT_TRACK_OPTIONS, OUTPUT_TRACK_STRIDE=3,
+        TRACK_BEHAVIOR=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE, TRACK_BEHAVIOR_STRIDE=3, NUM_PARAMS=TRACK_BEHAVIOR+2*TRACK_BEHAVIOR_STRIDE
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -142,6 +143,7 @@ struct Metropolix : Module {
     enum AuxParams { AUX_AMOUNT, AUX_DESTINATION, AUX_ASSIGNMENT };
     enum CtrlParams { CTRL_VALUE, CTRL_DESTINATION, CTRL_ASSIGNMENT };
     enum OutputTrackOptions {VELOCITY_SOURCE, SLIDER_OCTAVES, SLIDER_DIRECTION};
+    enum TrackBehavior {PULSE_SOURCE, GATE_SOURCE, REST_PITCH};
     enum InputIds { CLOCK_IN, RESET_IN, AUX_X_IN, AUX_Y_IN, AUX_Z_IN, NUM_INPUTS };
     enum OutputIds { PITCH_1, GATE_1, PITCH_2, GATE_2, CLOCK_OUT, A_OUT, B_OUT, NUM_OUTPUTS };
     enum LightIds { POSITION_1, POSITION_2 = POSITION_1 + 8, NUM_LIGHTS = POSITION_2 + 8 };
@@ -160,6 +162,8 @@ struct Metropolix : Module {
     static int cvTypeParam(int track) {return CV_TYPE_1+track;}
     static int cvRampParam(int track,int stage) {return CV_RAMPS+track*8+stage;}
     static int outputTrackParam(int track,int field) {return OUTPUT_TRACK_OPTIONS+track*OUTPUT_TRACK_STRIDE+field;}
+    static int trackBehaviorParam(int track,int field) {return TRACK_BEHAVIOR+track*TRACK_BEHAVIOR_STRIDE+field;}
+    static std::vector<std::string> gateSourceLabels(){return {"Switch","Single","Single + Rest","Multi","Multi + Rest","Hold","Hold + Rest"};}
     static int userScaleParam(int slot,bool root=false) {return USER_SCALES+metro::clamp(slot,0,99)*2+int(root);}
     static int scaleShortcutParam(int slot,bool root=false) {return SCALE_SHORTCUTS+metro::clamp(slot,0,7)*2+int(root);}
     static std::vector<std::string> ctrlDestinations() {
@@ -241,9 +245,10 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
+    std::atomic<int> trackMenuCursor{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
@@ -337,7 +342,7 @@ struct Metropolix : Module {
             configSwitch(accumParam(t, BIPOLAR), 0, 1, 0, name + "accumulator polarity", {"Unipolar", "Bipolar"});
             configSwitch(accumParam(t, ACCUM_ORDER), 0, 3, 0, name + "accumulator order", {"Wrap", "Pendulum", "Random", "Hold"});
             configSwitch(accumModeParam(t), 0, 1, 0, name + "accumulator mode", {"Stage", "Track"});
-            configParam(trackParam(t, TRANSPOSE), -24, 24, 0, name + "transpose", " semitones")->snapEnabled = true;
+            configParam(trackParam(t, TRANSPOSE), -60, 60, 0, name + "transpose", " semitones")->snapEnabled = true;
             configParam<GateLengthQuantity>(trackParam(t, GATE_LENGTH), 1, 100, 50, name + "gate length", "%");
             configParam(gateScaleParam(t),0,100,100,name+"gate scale","%")->snapEnabled=true;
             auto* slide=configParam<SlideAmountQuantity>(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide amount", "%");slide->typeParam=slideTypeParam(t);
@@ -346,6 +351,9 @@ struct Metropolix : Module {
             configSwitch(outputTrackParam(t,VELOCITY_SOURCE),0,3,2,name+"velocity source",{"50%","75%","100%","Track CV"});
             configSwitch(outputTrackParam(t,SLIDER_OCTAVES),0,4,0,name+"slider octaves",{"Follow shared range","1 octave","2 octaves","3 octaves","4 octaves"});
             configSwitch(outputTrackParam(t,SLIDER_DIRECTION),0,1,0,name+"slider direction",{"Normal","Inverted"});
+            configSwitch(trackBehaviorParam(t,PULSE_SOURCE),0,8,0,name+"pulse-count source",{"Switch","1","2","3","4","5","6","7","8"});
+            configSwitch(trackBehaviorParam(t,GATE_SOURCE),0,6,0,name+"gate-type source",gateSourceLabels());
+            configSwitch(trackBehaviorParam(t,REST_PITCH),0,1,0,name+"rest pitch",{"Hold","Update"});
             configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(trackParam(t, MUTE), 0, 1, 0, name + "mute", {"Off", "On"})->randomizeEnabled = false;
@@ -511,6 +519,9 @@ struct Metropolix : Module {
             track.velocitySource=integer(outputTrackParam(t,VELOCITY_SOURCE));
             track.sliderOctaves=integer(outputTrackParam(t,SLIDER_OCTAVES));
             track.sliderInverted=integer(outputTrackParam(t,SLIDER_DIRECTION))!=0;
+            track.pulseSource=integer(trackBehaviorParam(t,PULSE_SOURCE));
+            track.gateSource=integer(trackBehaviorParam(t,GATE_SOURCE));
+            track.restPitchUpdate=integer(trackBehaviorParam(t,REST_PITCH))!=0;
             track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
@@ -608,13 +619,14 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(19));
+        json_object_set_new(root, "schemaVersion", json_integer(20));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(6));
+        json_object_set_new(root, "presetFormat", json_integer(7));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
+        json_object_set_new(root,"trackMenuCursor",json_integer(trackMenuCursor.load()));
         json_object_set_new(root, "selectedAux", json_integer(selectedAux.load()));
         json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
         json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
@@ -635,6 +647,9 @@ struct Metropolix : Module {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
+        trackMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"trackMenuCursor"))),0,9));
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<20)
+            for(int id=TRACK_BEHAVIOR;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<19){
             for(int id=OUTPUT_TRACK_OPTIONS;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
             // Missing pre-routing source parameters used legacy CV defaults.
@@ -690,7 +705,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CLOCK_OUT_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(TRACK_MENU_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));

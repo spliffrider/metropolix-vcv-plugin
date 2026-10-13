@@ -55,6 +55,9 @@ struct Track {
     int sliderOctaves = 0; // 0 follows the shared legacy range.
     bool sliderInverted = false;
     int velocitySource = 2; // 50%, 75%, 100%, or Track CV.
+    int pulseSource = 0; // 0 shared switches, otherwise a uniform 1..8.
+    int gateSource = 0; // Switch, Single, Single+Rest, Multi, Multi+Rest, Hold, Hold+Rest.
+    bool restPitchUpdate = false;
     float gateLength = 0.5f;
     float gateScale = 1.f;
     float slideTime = 0.25f;
@@ -424,10 +427,14 @@ private:
         return settings.tracks[t].stages[stage].skip != voice(t).skipInverted;
     }
     int pulses(int t,int stage) const {
-        return clamp(settings.stages[stage].pulses+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7)),1,8);
+        int source=settings.tracks[t].pulseSource;
+        return clamp((source?clamp(source,1,8):settings.stages[stage].pulses)+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7)),1,8);
     }
     Gate panelGate(int t,int stage) const {
-        return settings.tracks[t].slideType==AcidSlide && settings.tracks[t].stages[stage].slide?Hold:settings.stages[stage].gate;
+        Gate gate=settings.stages[stage].gate;
+        int source=clamp(settings.tracks[t].gateSource,0,6);
+        if(source && !(source%2==0 && gate==Rest))gate=source<=2?Single:source<=4?Multi:Hold;
+        return settings.tracks[t].slideType==AcidSlide && settings.tracks[t].stages[stage].slide?Hold:gate;
     }
     void beginSlide(int t) {
         auto& state=voice(t);const auto& config=settings.tracks[t];
@@ -582,7 +589,7 @@ private:
             if ((edit.accumTrigger == AccumStage && newStage)
                 || (edit.accumTrigger == AccumPulse && (newStage || gate == Multi))) accumulate(t);
         }
-        if (state.allowed && gate != Rest && !muted(t)) {
+        if (state.allowed && (gate != Rest || config.restPitchUpdate) && !muted(t)) {
             state.targetPitch = stagePitch(t);
             state.hasPitch = true;
         }
@@ -617,7 +624,7 @@ private:
             accumulate(t);
             state.lastRatchetEvent = eventId;
         }
-        if (state.allowed && physical != Rest && !muted(t))
+        if (state.allowed && (physical != Rest || config.restPitchUpdate) && !muted(t))
             state.targetPitch = stagePitch(t);
         double mix = state.slideDuration > 0.0 ? std::min(1.0, state.slideAge / state.slideDuration) : 1.0;
         if(state.slideType!=TempoSlide && state.slideActive)state.pitch=slewPitch(state.pitch,state.targetPitch,dt,analogSlideTime(config.slideTime));

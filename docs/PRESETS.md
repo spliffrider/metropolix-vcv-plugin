@@ -124,3 +124,6 @@ legacy range. Global cable functions remain unchanged by recall.
 Since 2.16.0, velocity and per-track slider octave/direction settings are
 stored in format6 presets. Formats1–5 migrate to 100% velocity and the shared
 legacy range. Global cable functions remain unchanged by recall.
+
+Since 2.17.0, format7 appends pulse/gate sources and Rest Pitch. Formats1–6
+retain Switch sources and Hold. See [Track options](TRACK-OPTIONS.md).
