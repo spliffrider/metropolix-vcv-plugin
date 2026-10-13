@@ -29,6 +29,16 @@ struct LoopyPulseQuantity : ParamQuantity {
     std::string getDisplayValueString() override {return getValue()<.5f?"Auto":ParamQuantity::getDisplayValueString();}
     void setDisplayValueString(std::string s) override {if(s=="Auto" || s=="auto")setValue(0);else ParamQuantity::setDisplayValueString(s);}
 };
+struct SlideAmountQuantity : ParamQuantity {
+    int typeParam=-1;
+    std::string getUnit() override {return module && typeParam>=0 && module->params[typeParam].getValue()==metro::TempoSlide?"% of a pulse":"%";}
+    std::string getDescription() override {
+        int type=module && typeParam>=0?int(module->params[typeParam].getValue()):0;
+        if(type==metro::TempoSlide)return "Glide into marked stages over this fraction of a track pulse.";
+        return std::string(type==metro::AcidSlide?"Hold marked stages and glide into the following stage. ":"Glide into marked stages. ")+
+            string::f("Slew time: %.2f ms per octave, independent of tempo.",metro::analogSlideTime(getValue()*.01f)*1000);
+    }
+};
 struct GateLengthQuantity : ParamQuantity {
     std::string getDisplayValueString() override { return getValue()>=100?"Hold":ParamQuantity::getDisplayValueString(); }
     std::string getUnit() override { return getValue()>=100?"":unit; }
@@ -99,7 +109,7 @@ struct Metropolix : Module {
         STAGE_OVERRIDES,
         LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET,
         SCALE_LOCK, USER_SCALES, SCALE_NOTE = USER_SCALES + metro::UserScaleCount*2,
-        SCALE_SHORTCUTS, NUM_PARAMS = SCALE_SHORTCUTS + 16
+        SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -124,6 +134,7 @@ struct Metropolix : Module {
     static int accumModeParam(int t) { return ACCUM_MODE + t; }
     static int ctrlParam(int knob, int p) { return CTRL_PARAMS + knob * CTRL_STRIDE + p; }
     static int swingParam(int track) { return SWING_1 + track; }
+    static int slideTypeParam(int track) {return SLIDE_TYPE_1+track;}
     static int userScaleParam(int slot,bool root=false) {return USER_SCALES+metro::clamp(slot,0,99)*2+int(root);}
     static int scaleShortcutParam(int slot,bool root=false) {return SCALE_SHORTCUTS+metro::clamp(slot,0,7)*2+int(root);}
     static std::vector<std::string> ctrlDestinations() {
@@ -286,7 +297,8 @@ struct Metropolix : Module {
             configParam(trackParam(t, TRANSPOSE), -24, 24, 0, name + "transpose", " semitones")->snapEnabled = true;
             configParam<GateLengthQuantity>(trackParam(t, GATE_LENGTH), 1, 100, 50, name + "gate length", "%");
             configParam(gateScaleParam(t),0,100,100,name+"gate scale","%")->snapEnabled=true;
-            configParam(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide time", "% of a pulse");
+            auto* slide=configParam<SlideAmountQuantity>(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide amount", "%");slide->typeParam=slideTypeParam(t);
+            configSwitch(slideTypeParam(t),0,2,0,name+"slide type",{"Tempo","Analog","Acid"});
             configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(trackParam(t, MUTE), 0, 1, 0, name + "mute", {"Off", "On"})->randomizeEnabled = false;
@@ -442,6 +454,7 @@ struct Metropolix : Module {
             track.gateLength = params[trackParam(t, GATE_LENGTH)].getValue() * 0.01f;
             track.gateScale=params[gateScaleParam(t)].getValue()*.01f;
             track.slideTime = params[trackParam(t, SLIDE_TIME)].getValue() * 0.01f;
+            track.slideType=static_cast<metro::SlideType>(metro::clamp(integer(slideTypeParam(t)),0,2));
             track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
@@ -538,10 +551,10 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(15));
+        json_object_set_new(root, "schemaVersion", json_integer(16));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(3));
+        json_object_set_new(root, "presetFormat", json_integer(4));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
@@ -564,6 +577,8 @@ struct Metropolix : Module {
     void dataFromJson(json_t* root) override {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<16)
+            for(int t=0;t<2;++t)params[slideTypeParam(t)].setValue(metro::TempoSlide);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<15)
             for(int id=SCALE_LOCK;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<14)

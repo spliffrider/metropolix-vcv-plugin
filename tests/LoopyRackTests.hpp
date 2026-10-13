@@ -3,7 +3,7 @@ void loopyRackTests(){
     Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;
     for(int k=0;k<2;++k)m.params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);
     m.params[M::LOOPY_PULSES].setValue(5);m.params[M::LOOPY_TARGET].setValue(1);
-    require(M::SNAPSHOT_PARAMS==458 && M::presetIndex(M::LOOPY_PULSES)<0 && M::presetIndex(M::LOOPY_TARGET)<0,"Loopy global preferences leave preset formats compatible");
+    require(M::FORMAT3_PARAMS==458 && M::presetIndex(M::LOOPY_PULSES)<0 && M::presetIndex(M::LOOPY_TARGET)<0,"Loopy global preferences leave preset formats compatible");
     auto snapshot=m.capturePreset();m.params[M::LOOPY_PULSES].setValue(7);m.putPreset(0,snapshot);m.requestPreset(0);m.sendPresetCommand();m.process(args);
     require(m.integer(M::LOOPY_PULSES)==7 && m.integer(M::LOOPY_TARGET)==1,"preset recall preserves global Loopy settings");
     m.params[M::stageParam(0,4,M::PITCH_OVERRIDE)].setValue(24);m.params[M::stageParam(0,4,M::CV)].setValue(2);

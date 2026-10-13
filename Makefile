@@ -8,7 +8,7 @@ DISTRIBUTABLES += docs/AUX-INPUTS.md docs/CTRL-KNOBS.md docs/PRESETS.md
 DISTRIBUTABLES += docs/PRESET-CHAINS.md
 DISTRIBUTABLES += docs/SWING.md
 DISTRIBUTABLES += docs/STAGE-OVERRIDES.md docs/LOOPY.md
-DISTRIBUTABLES += docs/SCALES.md
+DISTRIBUTABLES += docs/SCALES.md docs/SLIDES.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -41,6 +41,8 @@ test:
 	./build/tests/loopy-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/ScaleTests.cpp -o build/tests/scale-tests.exe
 	./build/tests/scale-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/SlideTests.cpp -o build/tests/slide-tests.exe
+	./build/tests/slide-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:

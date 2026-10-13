@@ -263,14 +263,14 @@ IDs, ports, settings schema, and example patches are unchanged from 2.4.0.
 ## Interpretations and limits
 
 - **No hardware comparison.** Passing a manual example establishes agreement with that example, not firmware equivalence.
-- **Quantization and slide.** Pitch sliders choose the nearest enabled scale degree. Ties choose the lower degree. Slide is linear over a fraction of a track pulse. Hardware calibration and Acid/Analog curves have not been reproduced.
+- **Quantization and slide.** Pitch sliders choose the nearest enabled scale degree. Ties choose the lower degree. Tempo slide is linear over a fraction of a track pulse. Version 2.13.0 adds Analog/Acid constant-rate linear slew; their rate calibration is chosen locally, not measured from hardware.
 - **Order names.** The Arp variants follow the printed sequences on p.72. Those sequences take precedence over a mathematical interpretation of their Shift labels. Odd-length variants generalize the patterns; not every length has a printed oracle.
 - **Generative orders.** Random source and seeds are local implementation choices. Brownian has bounded retries when stages are skipped so it cannot stall the audio thread; behavior in heavily skipped patterns is not specified precisely by the manual.
 - **Bipolar wrap.** On p.129, the body text says Unipolar below the BIPOLAR WRAP heading. This implementation follows the heading and plotted bipolar sequence.
 - **Pulse probability with long gates.** Each physical track pulse makes a new decision in Pulse mode. That decision gates the current pulse, including a stretched gate. The manual explains probability targets but does not fully specify every long-gate interaction.
 - **Accumulator combinations.** The p.102 trigger matrix is matched with ordinary gates and ratchets. Pulse accumulation uses each eligible track-clock pulse for MULTI; Ratchet accumulation follows emitted ratchet events. Interactions with pulse-count division, probability, stretch, or live setting changes need more reference evidence before claiming exact firmware behavior.
 - **Gate duration.** Gate tests reproduce the printed 50% ratchet examples and 75% stretch examples. Gated-ratchet behavior at other gate lengths is inferred. The nominal minimum high duration is 333 microseconds, capped below the ratchet interval to preserve edges at unusually fast external clocks.
-- **Clock input.** One edge is a sixteenth note. Hardware input-mode/PPQN options and swing are absent. The first external period is estimated from internal tempo until two edges arrive.
+- **Clock input.** One edge is a sixteenth note. Hardware input-mode/PPQN options are absent; per-track Swing is available. The first external period is estimated from internal tempo until two edges arrive.
 - **Pitch on rests.** Rest/rejected stages hold pitch. CV lanes still follow the selected stage unless muted/stopped. Hardware configuration alternatives are not implemented.
 - **MOD timing.** Each lane advances one stage per divided base-clock pulse, independently of note-stage pulse counts. Ramps interpolate from the previous voltage to the new stage's target over that whole stage; the initial voltage after reset is zero. A ramp uses the most recently estimated clock period and holds its target if the clock stalls. Exact first-ramp and abrupt external-tempo-change behavior has not been compared with hardware.
 - **MOD pitch scaling.** Octave uses whole-volt thresholds at 1 V/oct, truncating toward zero. Pitch Pre adds 1 V/oct before scale quantization; Pitch Post rounds to chromatic semitones at 1 V/oct; Pitch Offset adds continuous voltage after quantization. Mute toggles the programmed mute while its route is at least 1.5 V. Gate-type lanes use 0/5 V and ignore ramps.
@@ -312,7 +312,7 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy routing/Queue options; full scale selection; and additional slide models are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy routing/Queue options; and full stage-CV types are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 
@@ -354,3 +354,33 @@ Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
 Internal presets retain the earlier plugin selector/root recall behavior, unlike
 the hardware global classification; custom definitions and locks stay global.
+
+## Slide models — 2.13.0
+
+The manual pp.80–81/86 and Stage Player p.44 define the distinctions.
+Tempo interpolates into the marked stage over a fraction of a track pulse.
+Analog has a fixed voltage slew rate; Acid uses that rate into the next actually
+played stage and replaces the marked stage's physical switch with Hold.
+Explicit Rest overrides, zero Gate Scale, probability and mute still suppress
+gates. Analog is the only model applied during stopped Stage Player.
+
+The dedicated suite passes 2,160,397 checks, including interval and tempo
+comparisons at 44.1/48/96 kHz, ascending/descending bounded slew, skipped
+Acid sources, every physical gate type, multi-pulse Hold and frozen audition.
+Rack tests cover actual pitch/gate jacks, model descriptions, parameter IDs,
+format-4 snapshots and neutral Tempo migration from formats 1–3. Widget tests
+cover cycling, upward dragging, grouped reset/undo, CTRL ownership, shortcuts,
+independent tracks, MOD guards and native save/reopen. All 52 OLED states pass.
+
+Real twelve-second stereo playback observes all three models on both tracks
+and the full seven-link chain loop. RMS .382/.373 V, peaks 1.663/1.642 V,
+DC approximately -.00081 V. Existing preset/chain/swing/override/Loopy/scale
+checks and the slider/readout/Bloom zoom checks pass. These recordings establish
+a finite signal path, not a hardware or musical quality comparison.
+
+The manual gives no numeric rate calibration and contains conflicting Analog
+time wording. We follow its close-versus-distant-note example using constant
+voltage slew, with an exponential amount mapping from 1 ms to 1 second per
+octave and instantaneous zero. Defaults and shortcuts remain explicit choices.
+Owner feedback is needed for the curves and Acid's Hold/accumulator interactions;
+see [Slide models](SLIDES.md).

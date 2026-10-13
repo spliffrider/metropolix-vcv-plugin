@@ -13,6 +13,7 @@
 #include "Controls.hpp"
 #include "SwingTiming.hpp"
 #include "Scales.hpp"
+#include "SlideTiming.hpp"
 
 namespace metro {
 
@@ -51,6 +52,7 @@ struct Track {
     float gateLength = 0.5f;
     float gateScale = 1.f;
     float slideTime = 0.25f;
+    SlideType slideType = TempoSlide;
     float swing = 50.f;
     int accumLimit = 9;
     int accumNegativeLimit = 9;
@@ -101,6 +103,8 @@ struct TrackState {
     float startPitch = 0.f;
     double slideAge = 0.0;
     double slideDuration = 0.0;
+    SlideType slideType = TempoSlide;
+    bool slideActive = false, slideFromPrevious = false;
     float gate = 0.f;
     float cv = 0.f;
 };
@@ -277,7 +281,7 @@ public:
             // External pitch routing is available to stopped Stage Player notes.
             if(loopy.stages & 255u)modulation.render(settings.modLanes, 0.0, settings.auxInputs);
             modulation.outputs.fill(0.f);
-            stagePlayer();
+            stagePlayer(dt);
             clockRemaining = 0.0;
         }
         clock = running && clockRemaining > 0.0 ? 5.f : 0.f;
@@ -314,18 +318,24 @@ private:
         float direction=controls.values[t][CtrlDirection];
         return direction==0?settings.tracks[t].reversed:direction<0;
     }
-    void stagePlayer() {
+    void stagePlayer(double dt) {
         for(int t=0;t<2;++t) {
             loopPlaying[t]=false; loopMasks[t]=0;
             if(!requested(t)) {playerPlaying[t]=false;playerMasks[t]=0;continue;}
             if(!playerPlaying[t] || playerMasks[t]!=(loopy.stages&255u)) {
-                auto& state=playerTracks[t];state=tracks[t];state.stage=lower();
+                auto& state=playerTracks[t];bool have=state.hasPitch || tracks[t].hasPitch;
+                float from=playerPlaying[t]?state.pitch:tracks[t].pitch;
+                state=tracks[t];state.stage=lower();
                 state.activeAccumulation=state.accumMode==TrackAccumulation?state.trackAccumulation:state.accumulator[state.stage];
-                voiceMode=2;state.pitch=state.targetPitch=stagePitch(t);voiceMode=0;
+                voiceMode=2;state.targetPitch=stagePitch(t);voiceMode=0;
+                const auto& config=settings.tracks[t];
+                state.slideDuration=config.slideType==AnalogSlide && config.stages[state.stage].slide && have?analogSlideTime(config.slideTime):0;
+                state.pitch=state.slideDuration>0?from:state.targetPitch;state.hasPitch=true;
                 state.cv=playerCv[t]=clamp(settings.tracks[t].stages[state.stage].cv,-5.f,5.f);
                 playerMasks[t]=loopy.stages&255u;playerPlaying[t]=true;
             }
             // Freeze the note/CV until a fresh stage press; Gate Type is ignored.
+            playerTracks[t].pitch=slewPitch(playerTracks[t].pitch,playerTracks[t].targetPitch,dt,playerTracks[t].slideDuration);
             playerTracks[t].gate=muted(t)?0.f:5.f;
             playerTracks[t].cv=muted(t)?0.f:playerCv[t];
         }
@@ -353,6 +363,16 @@ private:
     }
     int pulses(int t,int stage) const {
         return clamp(settings.stages[stage].pulses+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7)),1,8);
+    }
+    Gate panelGate(int t,int stage) const {
+        return settings.tracks[t].slideType==AcidSlide && settings.tracks[t].stages[stage].slide?Hold:settings.stages[stage].gate;
+    }
+    void beginSlide(int t) {
+        auto& state=voice(t);const auto& config=settings.tracks[t];
+        state.startPitch=state.pitch;state.slideAge=0;
+        state.slideType=config.slideType;
+        state.slideActive=state.hasPitch && (config.slideType==AcidSlide?state.slideFromPrevious:config.stages[state.stage].slide);
+        state.slideDuration=state.slideActive && config.slideType==TempoSlide?slideAmount(config.slideTime)*state.duration:0;
     }
 
     bool nextStage(int t) {
@@ -418,15 +438,13 @@ private:
                 amount, config.accumLimit, config.accumNegativeLimit,
                 config.accumBipolar, config.accumOrder, state.accumDirection[state.stage], dice(t));
         }
-        state.startPitch = state.pitch;
-        state.slideAge = 0.0;
-        state.slideDuration = edit.slide && state.hasPitch
-            ? clamp(config.slideTime, 0.f, 1.f) * state.duration : 0.0;
+        beginSlide(t);
     }
 
     void trackTick(int t, double duration) {
         auto& state = voice(t);
         const auto& config = settings.tracks[t];
+        int precedingStage=state.stage;
         if(voiceMode==1 && loopLimits[t]>0 && loopCounts[t]>=loopLimits[t]) {
             state.stage=state.position=-1;state.pulse=0;loopCounts[t]=0;
         }
@@ -478,27 +496,24 @@ private:
             if (voiceMode==0 && state.stage >= 0 && state.stage != modulo(state.position + config.offset, 8))
                 state.position = -1;
             if (!nextStage(t)) { state.gate = 0.f; state.cv = 0.f; return; }
+            state.slideFromPrevious=precedingStage>=0 && config.stages[precedingStage].slide;
             state.pulse = 0;
             state.lastRatchetEvent = -1;
-            const auto& edit = config.stages[state.stage];
             state.activeAccumulation = state.accumMode == TrackAccumulation
                 ? state.trackAccumulation : state.accumulator[state.stage];
-            state.startPitch = state.pitch;
-            state.slideAge = 0.0;
-            state.slideDuration = edit.slide && state.hasPitch
-                ? clamp(config.slideTime, 0.f, 1.f) * duration : 0.0;
+            beginSlide(t);
         }
         const auto& edit = config.stages[state.stage];
         if (newStage || edit.probabilityPerPulse) {
             float probability = clamp(edit.probability + modulation.routes[t][ModProbability] * 20.f + controls.values[t][CtrlProbability]*100.f, 0.f, 100.f);
             state.allowed = probability >= 100.f || (probability > 0.f && dice(t).percent() < probability);
         }
-        const Gate gate = settings.stages[state.stage].gate;
+        const Gate gate = panelGate(t,state.stage);
         if (state.allowed && gate != Rest && !muted(t)) {
             if ((edit.accumTrigger == AccumStage && newStage)
                 || (edit.accumTrigger == AccumPulse && (newStage || gate == Multi))) accumulate(t);
         }
-        if (state.allowed && settings.stages[state.stage].gate != Rest && !muted(t)) {
+        if (state.allowed && gate != Rest && !muted(t)) {
             state.targetPitch = stagePitch(t);
             state.hasPitch = true;
         }
@@ -508,8 +523,8 @@ private:
         auto& state = voice(t);
         const auto& config = settings.tracks[t];
         if (state.stage < 0) { state.gate = 0.f; state.cv = 0.f; return; }
-        const auto& panel = settings.stages[state.stage];
         const auto& edit = config.stages[state.stage];
+        Gate physical=panelGate(t,state.stage);
         int eventId = -1;
         // Stage Rest affects only the output, never the accumulator clock.
         // Preserve the unoverridden ratchet events for its accumulation.
@@ -521,22 +536,23 @@ private:
         float accumLength=inherited*clamp(config.gateScale,0.f,1.f);
         int ratchets = clamp(edit.ratchets + static_cast<int>(std::round(modulation.routes[t][ModRatchet] * 1.4f + controls.values[t][CtrlRatchet]*7.f)), 1, 8);
         bool accumulationGate = !muted(t) && accumLength > 0.f && state.allowed && gateHigh(
-            panel.gate==Rest?Rest:accumLength>=1.f?Hold:panel.gate, state.pulse,
+            physical==Rest?Rest:accumLength>=1.f?Hold:physical, state.pulse,
             state.age / state.duration, pulses(t,state.stage), clamp(config.pulseDivision, 1, 8),
             config.gateStretch, config.ratchetMode, ratchets,
             accumLength, state.duration, &eventId);
         bool gate = edit.gateOverride==0?false:
-            !muted(t) && gateLength>0.f && state.allowed && gateHigh(panel.gate==Rest?Rest:gateLength>=1.f?Hold:panel.gate,
+            !muted(t) && gateLength>0.f && state.allowed && gateHigh(physical==Rest?Rest:gateLength>=1.f?Hold:physical,
                 state.pulse,state.age/state.duration,pulses(t,state.stage),clamp(config.pulseDivision,1,8),
                 config.gateStretch,config.ratchetMode,ratchets,gateLength,state.duration);
         if (accumulationGate && edit.accumTrigger == AccumRatchet && eventId != state.lastRatchetEvent) {
             accumulate(t);
             state.lastRatchetEvent = eventId;
         }
-        if (state.allowed && panel.gate != Rest && !muted(t))
+        if (state.allowed && physical != Rest && !muted(t))
             state.targetPitch = stagePitch(t);
         double mix = state.slideDuration > 0.0 ? std::min(1.0, state.slideAge / state.slideDuration) : 1.0;
-        state.pitch = static_cast<float>(state.startPitch + (state.targetPitch - state.startPitch) * mix);
+        if(state.slideType!=TempoSlide && state.slideActive)state.pitch=slewPitch(state.pitch,state.targetPitch,dt,analogSlideTime(config.slideTime));
+        else state.pitch = static_cast<float>(state.startPitch + (state.targetPitch - state.startPitch) * mix);
         state.slideAge += dt;
         state.cv = muted(t) ? 0.f : clamp(edit.cv, -5.f, 5.f);
         state.gate = gate ? 5.f : 0.f;

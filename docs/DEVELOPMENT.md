@@ -8,12 +8,12 @@ Commit source, artwork, tests, documentation, and reusable demo patches together
 
 ```powershell
 git status
-git switch -c ui/next-refinement
+git switch -c codex/next-refinement
 # Make changes and run the relevant checks from README.
 git add src tests docs
 git diff --cached
 git commit -m "Describe the finished change"
-git push -u origin ui/next-refinement
+git push -u origin codex/next-refinement
 ```
 
 Use a pull request to review the diff before merging into `main`. A branch is
@@ -54,7 +54,7 @@ The repository retains the panel reference image, UI assets, source attribution,
 demo patches, and generated example audio. GitHub stores the source history;
 keep local backups of personal patches separately.
 
-GitHub Actions runs the eleven portable C++ engine suites on pushes and pull
+GitHub Actions runs the thirteen portable C++ engine suites on pushes and pull
 requests. It does not run Rack, validate the Windows DLL, or exercise the UI.
 Run the Windows build, Rack integration, and applicable UI/audio checks from
 README for changes to plugin behavior or rendering. Test DLLs must never be
