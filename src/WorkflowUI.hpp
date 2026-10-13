@@ -54,7 +54,7 @@ std::vector<int> workflowCopyIds(Metropolix* m,int kind,int target){
     using M=Metropolix;if(kind==1)return workflowStageIds(m,target);
     if(kind==2)return workflowTrackIds(m,target);
     if(kind==3){int prior=m->selectedTrack.load();m->selectedTrack.store(target);std::vector<int> ids;for(int item=0;item<TrackMenuCount;++item){int id=trackMenuParam(m,item);if(id>=0)ids.push_back(id);}m->selectedTrack.store(prior);return ids;}
-    std::vector<int> ids;if(kind==4)for(int p=0;p<M::MOD_STRIDE;++p)ids.push_back(M::modParam(target,p));return ids;
+    std::vector<int> ids;if(kind==4){for(int p=0;p<M::MOD_STRIDE;++p)ids.push_back(M::modParam(target,p));for(int p=0;p<M::MIDI_MOD_STRIDE;++p)ids.push_back(M::midiModParam(target,p));}return ids;
 }
 int workflowTag(Metropolix* m,int kind){return kind==1?(m->uiMod.load()?8:m->selectedRow.load()):kind==2?m->uiPage.load():0;}
 void copyWorkflow(Metropolix* m,int kind,int source){

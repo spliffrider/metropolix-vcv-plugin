@@ -35,6 +35,7 @@ void pumpPresetUi(Metropolix* m) {
     }
     m->sendPresetCommand();
     m->sendChainCommand();
+    m->sendMidiBank();
 }
 bool presetPage(Metropolix* m) {
     return m && (m->uiPage.load() == Metropolix::LOAD_PAGE || m->uiPage.load() == Metropolix::SAVE_PAGE);

@@ -33,7 +33,7 @@ void appendCvMenu(ui::Menu* menu,Metropolix* m) {
     int t=m->selectedTrack.load(),s=m->selectedStage.load();
     menu->addChild(new ui::MenuSeparator);menu->addChild(createMenuLabel("Track CV"));
     const char* types[]={"Bipolar ±","Unipolar +","Gate Toggle"};
-    for(int type=0;type<3;++type)menu->addChild(createCheckMenuItem(types[type],"",[m,t,type]{return m->integer(Metropolix::cvTypeParam(t))==type;},[m,t,type]{setWithHistory(m->getParamQuantity(Metropolix::cvTypeParam(t)),type);}));
+    for(int type=0;type<3;++type)menu->addChild(createCheckMenuItem(types[type],"",[m,t,type]{return int(m->effectiveCvType(t))==type;},[m,t,type]{setWithHistory(m->getParamQuantity(Metropolix::cvTypeParam(t)),type);},type==0 && m->integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3));
     if(!cvPage(m))return;
     if(cvGate(m)) {
         menu->addChild(createMenuItem("Invert gate pattern","",[m]{invertCv(m);}));
