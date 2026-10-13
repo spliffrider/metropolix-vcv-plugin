@@ -9,7 +9,7 @@ void MetropolixWidget::qaStep() {
         if(std::getenv("METROPOLIX_CHAIN_AUDIO_QA")) {
             if(qaFrame==2) {
                 json_t* json=APP->engine->moduleToJson(m),*data=json_object_get(json,"data");
-                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer(std::getenv("METROPOLIX_SWING_AUDIO_QA")?8:4));
+                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer((std::getenv("METROPOLIX_SWING_AUDIO_QA") || std::getenv("METROPOLIX_OVERRIDE_AUDIO_QA"))?8:4));
                 json_t* links=json_object_get(json_object_get(data,"chains"),"working");
                 for(size_t i=0;i<json_array_size(links);++i)json_object_set_new(json_array_get(links,i),"repeats",json_integer(1));
                 APP->engine->moduleFromJson(m,json);json_decref(json);
@@ -23,8 +23,15 @@ void MetropolixWidget::qaStep() {
                     const int slots[]={0,1,0,2,3,1,3};const int amounts[]={50,62,66,75};
                     good &= m->integer(Metropolix::swingParam(1))==amounts[slots[link]];
                 }
+                if(std::getenv("METROPOLIX_OVERRIDE_AUDIO_QA")) {
+                    const int slots[]={0,1,0,2,3,1,3},pitches[]={-1,15,22,12},gates[]={-1,88,0,50},scales[]={100,70,50,100};int slot=slots[link];
+                    good &= m->integer(Metropolix::stageParam(1,2,Metropolix::PITCH_OVERRIDE))==pitches[slot] &&
+                        m->integer(Metropolix::stageParam(1,2,Metropolix::GATE_OVERRIDE))==gates[slot] &&
+                        m->integer(Metropolix::gateScaleParam(1))==scales[slot];
+                }
                 if(transitions==7) {std::ofstream report(dir+"/report.txt",std::ios::app);report<<(good?"PASS ":"FAIL ")<<"CHAIN PERFORMANCE COMPLETE: all seven links and loop observed during real audio playback\n";}
                 if(transitions==7 && std::getenv("METROPOLIX_SWING_AUDIO_QA")){std::ofstream report(dir+"/report.txt",std::ios::app);report<<(good?"PASS ":"FAIL ")<<"SWING PERFORMANCE COMPLETE: straight and swung presets observed during real stereo playback\n";}
+                if(transitions==7 && std::getenv("METROPOLIX_OVERRIDE_AUDIO_QA")){std::ofstream report(dir+"/report.txt",std::ios::app);report<<(good?"PASS ":"FAIL ")<<"OVERRIDE PERFORMANCE COMPLETE: pitch/gate overrides and Gate Scale observed on all seven links and loop\n";}
             }
         }
         if(std::getenv("METROPOLIX_PRESET_AUDIO_QA")) {
@@ -114,6 +121,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_SWING_UI_QA")) {
         #include "SwingWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_OVERRIDE_UI_QA")) {
+        #include "OverrideWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_DISPLAY_QA")) {

@@ -4,11 +4,17 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.9.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.10.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/MetropolixLab-2.9.0-win-x64.vcvplugin)** · **[Swing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/Swing-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.9.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/MetropolixLab-2.10.0-win-x64.vcvplugin)** · **[Stage override performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/Stage-overrides-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.10.0)**
 
-2.9.0 adds **Swing** independently for both note tracks, from 50–78%, with a
+2.10.0 adds **per-stage pitch and gate-length overrides** for both tracks,
+including slider Sync, ALT edits/clears, manual-style OLEDs, and one-step undo.
+The track GATE page now edits **Gate Scale** and includes a **Hold** endpoint.
+Overrides are stored in presets and chains; older patches keep their sound.
+See the [stage override guide](docs/STAGE-OVERRIDES.md).
+
+2.9.0 added **Swing** independently for both note tracks, from 50–78%, with a
 manual-style OLED, stage shortcuts, long-press reset, desktop editing and undo.
 Swing is also available as a direct CTRL destination and an AUX/MOD offset.
 Old patches and preset banks keep straight timing. The new demo alternates

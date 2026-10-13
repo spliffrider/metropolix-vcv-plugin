@@ -58,7 +58,47 @@ void setWithHistory(ParamQuantity* q, float value) {
     APP->history->push(change);
 }
 
-const char* rowNames[] = {"RATCHETS", "PROBABILITY", "ACCUM", "SLIDE", "SKIP", "CV"};
+const char* rowNames[] = {"RATCHETS", "PROBABILITY", "ACCUM", "SLIDE", "SKIP", "CV", "PITCH", "GATE"};
+
+void parameterHistory(Metropolix* m,const std::vector<int>& ids,const std::vector<float>& before,const std::string& name) {
+    auto* batch=new history::ComplexAction;batch->name=name;
+    for(size_t i=0;i<ids.size();++i) {
+        float after=m->params[ids[i]].getValue();if(after==before[i])continue;
+        auto* change=new history::ParamChange;change->moduleId=m->id;change->paramId=ids[i];change->oldValue=before[i];change->newValue=after;batch->push(change);
+    }
+    if(batch->isEmpty())delete batch;else APP->history->push(batch);
+}
+bool overridePage(Metropolix* m) { return m && !m->uiMod.load() && m->uiPage.load()==Metropolix::STAGE_PAGE && m->selectedRow.load()>=Metropolix::PITCH_OVERRIDE; }
+std::vector<int> overrideParams(Metropolix* m) {
+    std::vector<int> ids;if(!overridePage(m))return ids;
+    for(int s=0;s<8;++s)if(m->uiAlt.load() || s==m->selectedStage.load())ids.push_back(Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load()));
+    return ids;
+}
+void syncPitchOverrides(Metropolix* m) {
+    auto ids=overrideParams(m);std::vector<float> before;
+    for(int id:ids) {
+        before.push_back(m->params[id].getValue());int s=(id-Metropolix::STAGE_OVERRIDES)%16;
+        float slider=m->params[Metropolix::PITCH+s].getValue();
+        for(int k=0;k<2;++k)if(m->integer(Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION))==metro::CtrlSliderInvert &&
+            (m->integer(Metropolix::ctrlParam(k,Metropolix::CTRL_ASSIGNMENT))==2 || m->integer(Metropolix::ctrlParam(k,Metropolix::CTRL_ASSIGNMENT))==m->selectedTrack.load()))
+            slider=m->params[Metropolix::ctrlParam(k,Metropolix::CTRL_VALUE)].getValue()>0?1.f-m->params[Metropolix::PITCH+s].getValue():m->params[Metropolix::PITCH+s].getValue();
+        m->getParamQuantity(id)->setValue(slider*12*m->integer(Metropolix::RANGE));
+    }
+    parameterHistory(m,ids,before,"sync pitch overrides");
+}
+void overrideMenu(ui::Menu* menu,Metropolix* m) {
+    if(!overridePage(m))return;
+    menu->addChild(new ui::MenuSeparator);
+    for(bool all:{false,true}) {
+        if(m->selectedRow.load()==Metropolix::PITCH_OVERRIDE)
+            menu->addChild(createMenuItem(all?"Sync all pitch overrides to sliders":"Sync pitch override to slider","",[m,all]{bool alt=m->uiAlt.load();m->uiAlt.store(all);syncPitchOverrides(m);m->uiAlt.store(alt);}));
+        menu->addChild(createMenuItem(all?"Remove all overrides on this track":"Remove this stage override","",[m,all]{
+            bool alt=m->uiAlt.load();m->uiAlt.store(all);auto ids=overrideParams(m);m->uiAlt.store(alt);std::vector<float> before;
+            for(int id:ids){before.push_back(m->params[id].getValue());m->params[id].setValue(-1);}
+            parameterHistory(m,ids,before,"remove stage overrides");
+        }));
+    }
+}
 const char* notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
 void trackSettingsMenu(Metropolix* m) {
@@ -228,6 +268,7 @@ struct ValueCell : ValueKnob {
         if (modGateCell()) return q->getValue() >= 1.5f ? "ON" : "OFF";
         int row = compact && metroModule ? metroModule->selectedRow.load() : stageRow;
         if (row == Metropolix::SLIDE || row == Metropolix::SKIP) return q->getValue() > 0.5f ? "ON" : "OFF";
+        if(row>=Metropolix::PITCH_OVERRIDE || trackProperty==Metropolix::GATE_LENGTH)return q->getDisplayValueString();
         const auto& labels = shortChoices.empty() ? choices : shortChoices;
         if (!labels.empty()) return labels[metro::clamp(static_cast<int>(std::round(q->getValue())), 0, static_cast<int>(labels.size()) - 1)];
         int precision = row == Metropolix::CV ? 2 : decimals;

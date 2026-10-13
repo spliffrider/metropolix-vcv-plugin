@@ -114,6 +114,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->help="HOME: drag or click to browse four overviews. Editing: drag the active value; click performs the encoder action. Right-click for direct access.";
     display->action=[m] { encoderPress(m); };
     display->extraMenu=[m](ui::Menu* menu) {
+        overrideMenu(menu,m);
         if(m && m->uiPage.load()==Metropolix::AUX_PAGE)appendAuxMenu(menu,m,m->selectedAux.load());
         if(m && m->uiPage.load()==Metropolix::CTRL_PAGE)appendCtrlMenu(menu,m,m->selectedCtrl.load());
         if(m && (presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::PRESET_SETUP_PAGE))appendPresetMenu(menu,m);
@@ -144,6 +145,13 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     };
     encoder->navigationMode=display->navigationMode;encoder->navigationTurn=display->navigationTurn;
     for(auto* c:{static_cast<HardwareControl*>(display),encoder}) {
+        c->groupedParams=[m] {
+            if(overridePage(m))return overrideParams(m);
+            std::vector<int> ids;
+            if(m && !m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE)
+                for(int id:{Metropolix::trackParam(m->selectedTrack.load(),Metropolix::GATE_LENGTH),Metropolix::gateScaleParam(m->selectedTrack.load())})if(m->ctrlOwner(id)<0)ids.push_back(id);
+            return ids;
+        };
         auto before=std::make_shared<Metropolix::ChainState>();
         c->navigationStart=[m,before]{if(chainPage(m))*before=m->getChainState();};
         c->navigationEnd=[m,before]{if(chainPage(m) && !(before->working==m->getChainState().working))chainHistory(m,*before,"edit chain link");};
@@ -157,8 +165,16 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             return string::f("Home overview %d / 4",m?m->uiHome.load()+1:1);
         };
     }
-    encoder->longAction=[m]{if(chainPage(m))chainDelete(m);else if(m && m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load())m->getParamQuantity(Metropolix::swingParam(m->selectedTrack.load()))->setValue(50.f);};
-    encoder->longEnabled=[m]{return m && ((m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
+    encoder->longAction=[m]{
+        if(chainPage(m))chainDelete(m);
+        else if(overridePage(m))for(int id:overrideParams(m))m->getParamQuantity(id)->setValue(-1);
+        else if(m && !m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) {
+            for(int id:{Metropolix::trackParam(m->selectedTrack.load(),Metropolix::GATE_LENGTH),Metropolix::gateScaleParam(m->selectedTrack.load())})
+                if(m->ctrlOwner(id)<0)m->getParamQuantity(id)->setValue(m->getParamQuantity(id)->defaultValue);
+        }
+        else if(m && m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load())m->getParamQuantity(Metropolix::swingParam(m->selectedTrack.load()))->setValue(50.f);
+    };
+    encoder->longEnabled=[m]{return m && (overridePage(m) || (!m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) || (m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
     auto* exit=control("EXIT",214,229,15,HardwareControl::DARK_BUTTON);
     exit->help="Return to the home overview. Right-click for optional editors.";
     exit->action=[m] { if(m) { if(m->chainQuick){m->chainQuickCancel=true;return;}if(chainPage(m) && m->chainEdit.load()){m->chainEdit.store(0);m->chainCreating=false;return;} screenPage(m,Metropolix::HOME); m->uiEdit.store(false); m->uiAlt.store(false); m->uiChooseFunction.store(false); } };
@@ -255,20 +271,36 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->extraMenu=[m,extraDisplay,swingMenu](ui::Menu* menu){extraDisplay(menu);if(m && m->uiPage.load()==Metropolix::SWING_PAGE)swingMenu(menu);};
     encoder->extraMenu=display->extraMenu;
     valueButton("SLIDE",145.8f,340,Metropolix::SLIDE_PAGE,[m] { return m && !m->uiMod.load()?Metropolix::trackParam(m->selectedTrack.load(),Metropolix::SLIDE_TIME):-1; });
-    valueButton("GATE",177,340,Metropolix::GATE_PAGE,[m] { return m && !m->uiMod.load()?Metropolix::trackParam(m->selectedTrack.load(),Metropolix::GATE_LENGTH):-1; });
+    auto* trackGate=valueButton("GATE",177,340,Metropolix::GATE_PAGE,[m] {
+        if(!m || m->uiMod.load())return -1;
+        return m->uiPage.load()==Metropolix::GATE_PAGE && m->uiField.load()?Metropolix::gateScaleParam(m->selectedTrack.load()):Metropolix::trackParam(m->selectedTrack.load(),Metropolix::GATE_LENGTH);
+    });
+    trackGate->action=[m]{if(m && m->uiPage.load()!=Metropolix::GATE_PAGE)screenPage(m,Metropolix::GATE_PAGE);};trackGate->dragAction=trackGate->action;
+    trackGate->help="Gate Length / Gate Scale. Click encoder to switch. Hold this button and press stage 1-8 for shortcuts. Long encoder press resets both fields.";
+    auto gateMenu=[m](ui::Menu* menu) {
+        if(!m || m->uiMod.load())return;
+        int field=m->uiPage.load()==Metropolix::GATE_PAGE?m->uiField.load():0;
+        int id=field?Metropolix::gateScaleParam(m->selectedTrack.load()):Metropolix::trackParam(m->selectedTrack.load(),Metropolix::GATE_LENGTH);
+        const int shortcuts[]={1,15,30,45,60,75,90,100};menu->addChild(new ui::MenuSeparator);
+        for(int v:shortcuts)menu->addChild(createMenuItem(v==100 && !field?"Hold":std::to_string(v)+"%","",[m,id,v]{setWithHistory(m->getParamQuantity(id),float(v));},m->ctrlOwner(id)>=0));
+    };
+    trackGate->extraMenu=gateMenu;
+    auto displayMenu=display->extraMenu;display->extraMenu=[m,displayMenu,gateMenu](ui::Menu* menu){displayMenu(menu);if(m && m->uiPage.load()==Metropolix::GATE_PAGE)gateMenu(menu);};encoder->extraMenu=display->extraMenu;
     auto* edit=control("EDIT",208.2f,340,16,HardwareControl::DARK_BUTTON);
     edit->help="Choose a stage function: press EDIT, then its printed stage button, then a stage. Right-click opens the grid.";
     edit->action=[m] { if(m)m->uiChooseFunction.store(!m->uiChooseFunction.load()); };
     edit->active=[m] { return m && m->uiChooseFunction.load(); }; edit->rightAction=stageEditor;
     const char* names[]={"SLIDE","SKIP","PITCH","GATE","RATCH","PROB","ACCUM","CV"};
-    const int rows[]={Metropolix::SLIDE,Metropolix::SKIP,-1,-1,Metropolix::RATCHETS,Metropolix::PROBABILITY,Metropolix::ACCUMULATION,Metropolix::CV};
+    const int rows[]={Metropolix::SLIDE,Metropolix::SKIP,Metropolix::PITCH_OVERRIDE,Metropolix::GATE_OVERRIDE,Metropolix::RATCHETS,Metropolix::PROBABILITY,Metropolix::ACCUMULATION,Metropolix::CV};
     for(int s=0;s<8;++s) {
         auto* c=control(std::string("Stage ")+std::to_string(s+1)+" / "+names[s],244+s*35.7f,340,16,HardwareControl::BLUE_BUTTON);
-        c->binding=[m,s] {
-            if(!m || m->uiAlt.load() || m->uiChooseFunction.load() || presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::SWING_PAGE) return -1;
+        c->binding=[m,s,trackGate] {
+            if(trackGate->dragging && m && m->uiPage.load()==Metropolix::GATE_PAGE)return -1;
+            if(!m || (m->uiAlt.load() && !overridePage(m)) || m->uiChooseFunction.load() || presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::SWING_PAGE) return -1;
             return m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s):Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load());
         };
         c->help="EDIT then a function, then select a stage. Hold + drag edits this stage. Slide/Skip clicks toggle. Right-click for values.";
+        c->groupedParams=[m]{return overrideParams(m);};
         c->detailHelp=[m,s] {
             if(m && m->uiPage.load()==Metropolix::SWING_PAGE)return std::string("Swing shortcut: ")+std::to_string(metro::swingShortcut(s))+"%. Click to apply to the selected note track.";
             if(!presetPage(m))return std::string();
@@ -276,14 +308,20 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             return string::f("Preset %d-%d: %s. Click to load/save; right-click for slot actions. Turn encoder to change bank.",slot/8+1,slot%8+1,m->getPreset(slot).occupied?"saved":"empty");
         };
         if(s==6)c->help+=" ALT + this button opens LIM: click the encoder to select Mode, then drag to choose Stage or Track.";
-        c->dragAction=[m,s] { if(m && !m->uiAlt.load() && !m->uiChooseFunction.load() && !presetPage(m) && !chainPage(m) && m->uiPage.load()!=Metropolix::SWING_PAGE) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
+        c->dragAction=[m,s,trackGate] { if(m && !m->uiAlt.load() && !m->uiChooseFunction.load() && !presetPage(m) && !chainPage(m) && m->uiPage.load()!=Metropolix::SWING_PAGE && !(trackGate->dragging && m->uiPage.load()==Metropolix::GATE_PAGE)) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
         c->longSeconds=2;c->longAction=[m,s]{if(chainPage(m) && !m->chainEdit.load() && !m->chainQuick)chainSave(m,s);};
         c->longEnabled=[m]{return chainPage(m) && !m->chainEnabled.load() && !m->chainEdit.load() && !m->chainQuick;};
         int row=rows[s];
-        c->action=[this,m,s,row,unavailable] {
+        c->action=[this,m,s,row,unavailable,trackGate] {
             if(!m)return;
             if(chainPage(m)){chainStage(m,s);return;}
-            if(m->uiAlt.load()) {
+            if(trackGate->dragging && m->uiPage.load()==Metropolix::GATE_PAGE) {
+                const int shortcuts[]={1,15,30,45,60,75,90,100};int id=screenParam(m);
+                // The held GATE gesture records its own single native undo.
+                if(id>=0 && m->ctrlOwner(id)<0)m->getParamQuantity(id)->setValue(float(shortcuts[s]));
+                return;
+            }
+            if(m->uiAlt.load() && !overridePage(m)) {
                 m->uiAlt.store(false);
                 if(s==0) openPresetPage(m,false);
                 else if(s==1) openPresetPage(m,true);
@@ -299,7 +337,6 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 m->uiChooseFunction.store(false);
                 if(m->uiMod.load()){m->selectedLane.store(s);m->uiStageDetail.store(false);screenPage(m,Metropolix::STAGE_PAGE);}
                 else if(row>=0) { m->selectedRow.store(row); m->uiEdit.store(true); m->uiStageDetail.store(false); screenPage(m,Metropolix::STAGE_PAGE); }
-                else unavailable(s==2?"Per-stage pitch override":"Per-stage gate-length override");
                 return;
             }
             if(m->uiPage.load()==Metropolix::SWING_PAGE) {
@@ -340,7 +377,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 if(m->uiStageDetail.load() && m->selectedStage.load()==s && (m->uiMod.load() || (row!=Metropolix::SLIDE && row!=Metropolix::SKIP)))return std::fmod(system::getTime(),.65)<.4;
                 if(m->uiMod.load())return std::abs(m->params[Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s)].getValue())>.001f;
                 int v=m->integer(Metropolix::stageParam(m->selectedTrack.load(),s,row));
-                return row==Metropolix::RATCHETS?v>1:row==Metropolix::PROBABILITY?v<100:v!=0;
+                return row>=Metropolix::PITCH_OVERRIDE?v>=0:row==Metropolix::RATCHETS?v>1:row==Metropolix::PROBABILITY?v<100:v!=0;
             }
             return m->playStage[m->selectedTrack.load()].load()==s;
         };
@@ -352,7 +389,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             if(m->uiChooseFunction.load())return colors[s];
             if(presetPage(m))return m->presetBankIndex.load()==7?nvgRGB(249,135,186):colors[m->presetBankIndex.load()];
             if(m->uiMod.load())return colors[7];
-            const int map[]={4,5,6,0,1,7};return colors[map[m->selectedRow.load()]];
+            const int map[]={4,5,6,0,1,7,2,3};return colors[map[m->selectedRow.load()]];
         };
         c->dimActive=[m] { return (presetPage(m) || chainPage(m)) && !m->uiChooseFunction.load(); };
         c->rightAction=[c,m,s] {
@@ -365,11 +402,12 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         };
         c->extraMenu=[m,s,choice](ui::Menu* menu) {
             if(!m)return;
+            overrideMenu(menu,m);
             menu->addChild(new ui::MenuSeparator);
             if(m->uiMod.load()) {
                 choice(menu,m,"Transition",Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_RAMP+s),{"Step","Ramp"});
             } else {
-                for(int r=0;r<6;++r) menu->addChild(createCheckMenuItem(rowNames[r],"",[m,r] { return m->selectedRow.load()==r; },[m,r] { m->selectedRow.store(r); }));
+                for(int r=0;r<8;++r) menu->addChild(createCheckMenuItem(rowNames[r],"",[m,r] { return m->selectedRow.load()==r; },[m,r] { m->selectedRow.store(r); }));
                 menu->addChild(createMenuItem("Probability / accumulator triggers","",[m,s] { stageSettingsMenu(m,s); }));
             }
         };

@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.8.0
+# Hardware panel and desktop interaction — 2.10.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -24,6 +24,12 @@ and author metadata also identify sensiburner. This is an independent homage.
 - **Stage editing:** press EDIT, choose the printed function with a stage button, then select a stage. Drag the encoder or hold and drag a stage button to edit its value. Slide/Skip stage clicks toggle that stage. Right-click a stage button for direct editing and related choices.
 - **ALT** enables the secondary stage-button actions. LOAD/SAVE open the internal 8 × 8 preset banks ([guide](PRESETS.md)); A/B select output assignment on the display. EXIT returns to the overview.
 - **Optional grids** remain available through menus. They share parameters with the panel and preserve undo/redo. The hardware panel is 34 HP; opening a grid expands the module to 66 HP. Rack moves it to available space if needed.
+
+## Stage overrides and Gate Scale
+
+2.10.0 activates EDIT → PITCH/GATE for each track, with Sync, ALT editing,
+long-press clear, colored stage lights, menus and one-step undo. Track GATE
+now has Length/Scale fields and Hold. See the [override guide](STAGE-OVERRIDES.md).
 
 ## Swing
 
@@ -71,7 +77,7 @@ knob. Older patches and presets clear CTRL assignments, preserving their
 existing panel values; previous AUX/mode migrations are unchanged. Temporary
 ALT state clears on load.
 
-AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). Loopy, stage pitch/gate overrides, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
+AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). Loopy, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 

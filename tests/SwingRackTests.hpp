@@ -13,7 +13,7 @@ void swingRackTests() {
     require(other->integer(M::swingParam(0))==66 && other->integer(M::swingParam(1))==75 && other->getPreset(0).values==saved.values,"swing patch and banks persist");
     json_object_set_new(data,"schemaVersion",json_integer(11));json_object_set_new(data,"presetFormat",json_integer(1));
     auto* slot=json_array_get(json_object_get(data,"presets"),0);
-    json_array_remove(slot,M::TOTAL_PULSES+2);json_array_remove(slot,M::TOTAL_PULSES+1);
+    while(json_array_size(slot)>size_t(M::TOTAL_PULSES+1))json_array_remove(slot,json_array_size(slot)-1);
     other->dataFromJson(data);json_decref(data);
     require(other->integer(M::swingParam(0))==50 && other->integer(M::swingParam(1))==50,"2.8 patch migration restores straight timing over existing module");
     require(other->getPreset(0).occupied && other->getPreset(0).values[M::presetIndex(M::swingParam(0))]==50,"old internal banks migrate with straight swing");

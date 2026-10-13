@@ -1,4 +1,36 @@
-# Validation and fidelity status — 2.9.0
+# Validation and fidelity status — 2.10.0
+
+## Stage overrides — 2.10.0
+
+Pitch and gate overrides follow manual pp.89–92; track Gate Scale and Hold
+follow pp.82–84. Ten portable suites include the four p83 waveform rows,
+independent track notes, scale changes, root/transposition, pre/post modulation,
+slider restoration, stage Hold, scaled Hold, mute, skip and reset. Rest/Hold
+overrides are compared with an identical underlying pattern for all three
+accumulator triggers; override articulation cannot change accumulator events.
+
+Rack integration covers all 32 override parameters and both Gate Scale values,
+format 1/2 bank migration, schema 12 patch migration, selective recall, undo
+receipts, native note/special-state entry, and same-edge chain recall outputs.
+Existing parameter IDs, port IDs and snapshot preference exclusions remain
+unchanged. The appended parameters are 431–464; schema 13 / preset format 3.
+
+`scripts/test-ui.ps1 -Overrides` runs production widget callbacks in an isolated
+Rack profile: single/all-stage Sync, held encoder/OLED edits, all-stage undo
+and redo, long clear/reset, gate field switching, held gate shortcuts,
+CTRL ownership, stage colors, numeric readouts and context removal. It saves
+a native Rack file and launches Rack again to verify patch/preset persistence.
+`-Display` renders 41 OLED cases, including both override pages and Gate Scale.
+`-Polish` retains drag popup, Bloom, glyph descender and texture lifecycle checks.
+`-OverrideAudio` loads the public demonstration, compresses its chain to eight
+base pulses per link, checks all seven links/loop and records the stereo output.
+
+These checks establish our implementation's documented behavior and regressions.
+They do not establish exact firmware matching or native OS mouse/focus behavior.
+Chromatic-anchor storage across scale changes, Hold combined with Gate Scale,
+physical Hold/Rest switch precedence, and silent Rest ratchet accumulation
+especially benefit from a hardware owner's comparison. See the
+[operation and demo guide](STAGE-OVERRIDES.md).
 
 ## Swing — 2.9.0
 
@@ -280,7 +312,7 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; stage pitch and gate-length overrides; Loopy; swing; full scale selection; and additional slide models are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy; full scale selection; and additional slide models are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 
