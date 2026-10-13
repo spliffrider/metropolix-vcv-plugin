@@ -164,8 +164,21 @@ public:
         aux.fill(0.f);
     }
 
+    // Restart all musical state on a clock that has already been detected.
+    // Keep fractional phase and measured external tempo; the current edge
+    // plays the new first note, without adding or discarding a clock pulse.
+    void restartAtClock() {
+        double savedPhase = phase;
+        reset();
+        phase = savedPhase;
+    }
+
     // One external edge is one sixteenth-note pulse in this first version.
     void process(double dt, bool run, bool external, bool edge, bool resetEdge) {
+        process(dt, run, external, edge, resetEdge, [] {});
+    }
+    template <typename BeforeClock>
+    void process(double dt, bool run, bool external, bool edge, bool resetEdge, BeforeClock beforeClock) {
         dt = clamp(dt, 1e-7, 0.1);
         controls.read(settings.controls);
         const double internalPeriod = 15.0 / clamp(settings.bpm, 0.1f, 400.f);
@@ -192,7 +205,7 @@ public:
             resetIgnore = 0.001;
         }
 
-        const double period = external ? externalPeriod : internalPeriod;
+        double period = external ? externalPeriod : internalPeriod;
         bool tick = false;
         if (running) {
             if (external) {
@@ -201,7 +214,14 @@ public:
                 tick = true;
                 phase = firstTick ? 0.0 : std::fmod(phase, period);
             }
-            if (tick) modulation.tick(settings.modLanes, period);
+            if (tick) {
+                beforeClock();
+                controls.read(settings.controls);
+                // A recalled direct CTRL assignment can change internal tempo.
+                // The first note's gate/slide timing uses that new tempo too.
+                if (!external) period = 15.0 / clamp(settings.bpm, 0.1f, 400.f);
+                modulation.tick(settings.modLanes, period);
+            }
             modulation.render(settings.modLanes, dt, settings.auxInputs);
             if (tick) {
                 firstTick = false;

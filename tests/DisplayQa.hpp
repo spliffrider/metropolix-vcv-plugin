@@ -108,6 +108,10 @@ const DisplayCase cases[]={
     {"ctrl-gate",Metropolix::CTRL_PAGE,0,0,Metropolix::SLIDE,false},
     {"ctrl-pulse-count",Metropolix::CTRL_PAGE,1,0,Metropolix::SLIDE,false},
     {"ctrl-owned-accum",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
+    {"preset-load",Metropolix::LOAD_PAGE,0,0,0,false},
+    {"preset-save",Metropolix::SAVE_PAGE,0,0,0,false},
+    {"preset-timing",Metropolix::PRESET_SETUP_PAGE,1,0,0,false},
+    {"preset-policies",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;

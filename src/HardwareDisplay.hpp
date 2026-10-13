@@ -282,7 +282,40 @@ struct HardwareDisplay : HardwareControl {
                 if(owner>=0){c.circle(6,y+8,6);c.text(4,y+6,std::to_string(owner+1));}
                 if(i==f){c.corners(0,y,128,16);if(owner<0)c.turn(1,y+5);}
             }
-        } else if(page==Metropolix::SETUP_PAGE)field(c,0,"SLIDER OCTAVES",std::to_string(integer(Metropolix::RANGE,3)),true);
+        } else if(page==Metropolix::LOAD_PAGE || page==Metropolix::SAVE_PAGE) {
+            int bank=m?m->presetBankIndex.load():0;
+            const char* colors[]={"Red","Orange","Yellow","Green","Cyan","Blue","Magenta","Pink"};
+            field(c,0,"PRESET BANK",string::f("%d ",bank+1)+colors[bank],true,128,1);
+            bool save=page==Metropolix::SAVE_PAGE;
+            const char* delays[]={"Instant","Queue Pulses","Total Pulses"};
+            const char* actions[]={"Save + Exit","Save","Clear"};
+            field(c,28,save?"ACTION":"LOAD DELAY",save?actions[m?m->presetSaveAction.load():0]:delays[integer(Metropolix::LOAD_DELAY)],false,128,1);
+            int pending=m?m->pendingSlot.load():-1,notice=m?m->presetNotice.load():0;
+            if(pending>=0)c.text(1,57,string::f("QUEUED %d-%d",pending/8+1,pending%8+1));
+            else if(notice) {
+                const char* messages[]={"","SAVED","CLEARED","EMPTY SLOT","QUEUE CANCELLED","CANCEL QUEUE FIRST"};
+                c.text(1,57,messages[metro::clamp(notice,0,5)]);
+            } else c.text(1,57,save?"SELECT SLOT TO SAVE":"SELECT SLOT TO LOAD");
+            return c;
+        } else if(page==Metropolix::PRESET_SETUP_PAGE) {
+            const char* labels[]={"Total Pulses","Queue Pulses","Load Delay","Pitch Load","Switch Load","Ctrl Load","Aux Load"};
+            int first=f/3*3;
+            for(int i=first;i<std::min(first+3,7);++i) {
+                int n=integer(Metropolix::TOTAL_PULSES+i);
+                std::string v;
+                if(i<2)v=n?std::to_string(n):"-";
+                else if(i==2){const char* names[]={"Instant","Queue","Total"};v=names[n];}
+                else if(i==5){const char* names[]={"Off","Assigns","Jump"};v=names[n];}
+                else v=n?(i==6?"Assigns":"Jump"):"Off";
+                int y=(i-first)*17;
+                c.text(13,y+5,labels[i]);c.right(126,y+5,v);
+                if(i==f){c.corners(0,y,128,16);c.turn(1,y+5);}
+            }
+            c.text(1,56,"PRESET SETTINGS");return c;
+        } else if(page==Metropolix::SETUP_PAGE) {
+            field(c,0,"SLIDER OCTAVES",std::to_string(integer(Metropolix::RANGE,3)),true);
+            c.text(2,33,"RIGHT-CLICK SETUP");c.text(2,44,"FOR PRESET SETTINGS");
+        }
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
         footer(c);return c;
     }

@@ -4,9 +4,15 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.6.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.7.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.6.0/MetropolixLab-2.6.0-win-x64.vcvplugin)** · **[Stage/Track comparison patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.5.0/Accumulator-modes.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.6.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.0/MetropolixLab-2.7.0-win-x64.vcvplugin)** · **[Four-pattern preset demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.0/Preset-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.7.0)**
+
+2.7.0 adds **64 internal presets**, hardware-style **ALT → LOAD / SAVE** pages,
+selective recall, Queue/Total pulse boundaries, and Rack undo. Banks persist
+inside each saved Rack patch. Choose **Recall complete pattern** in the preset
+menu to include slider/switch positions. See the [preset guide](docs/PRESETS.md).
+Preset chaining remains future work.
 
 2.6.0 activates **CTRL 1 and CTRL 2** with 23 destinations, independent track
 assignments, direct panel control and bipolar offsets, an OLED assignment page,
@@ -105,7 +111,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.6.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.7.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -176,7 +182,7 @@ The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware preset banks/chains, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, preset chains or hardware bank interchange, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 

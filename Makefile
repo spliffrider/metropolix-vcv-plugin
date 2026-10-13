@@ -4,7 +4,7 @@ DISTRIBUTABLES += README.md examples res
 # Explicit public documentation list: local continuation notes stay local.
 DISTRIBUTABLES += docs/HARDWARE-UI.md docs/MOD-TEST.md docs/UI-TARGET.md
 DISTRIBUTABLES += docs/VALIDATION.md docs/DEVELOPMENT.md docs/TESTING.md docs/FEATURE-STATUS.md
-DISTRIBUTABLES += docs/AUX-INPUTS.md docs/CTRL-KNOBS.md
+DISTRIBUTABLES += docs/AUX-INPUTS.md docs/CTRL-KNOBS.md docs/PRESETS.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -24,6 +24,8 @@ test:
 	./build/tests/aux-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/ControlTests.cpp -o build/tests/control-tests.exe
 	./build/tests/control-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic -pthread tests/PresetTests.cpp -o build/tests/preset-tests.exe
+	./build/tests/preset-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:
