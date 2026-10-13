@@ -6,6 +6,11 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_SCALE_AUDIO_QA")) {
+            static unsigned visited[2]={};
+            for(int t=0;t<2;++t){int scale=m->soundingScale[t].load()-49;if(scale>=0 && scale<4)visited[t]|=1u<<scale;}
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((visited[0]==15 && visited[1]==15)?"PASS ":"FAIL ")<<"SCALE PERFORMANCE COMPLETE: C / Am / F / G custom scales and roots observed on both tracks during actual stereo playback\n";}
+        }
         if(std::getenv("METROPOLIX_LOOPY_AUDIO_QA")) {
             static bool momentary=false,returned=false;static unsigned range=0;
             if(qaFrame>40 && qaFrame<110)momentary |= m->playStage[1].load()==2;
@@ -137,6 +142,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_LOOPY_UI_QA")) {
         #include "LoopyWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_SCALE_UI_QA")) {
+        #include "ScaleWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_OVERRIDE_UI_QA")) {

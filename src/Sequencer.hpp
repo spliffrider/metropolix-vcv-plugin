@@ -12,6 +12,7 @@
 #include "Modulation.hpp"
 #include "Controls.hpp"
 #include "SwingTiming.hpp"
+#include "Scales.hpp"
 
 namespace metro {
 
@@ -63,6 +64,8 @@ struct Settings {
     float bpm = 120.f;
     int root = 0;
     int scale = 1;
+    int lockedScale = -1;
+    std::array<UserScale,UserScaleCount> userScales;
     int octaves = 3;
     std::array<Stage, 8> stages;
     std::array<Track, 2> tracks;
@@ -71,40 +74,6 @@ struct Settings {
     std::array<Control,2> controls;
     std::array<int, 2> outputSources{{0,1}}; // 0/1 = track CV, 2..9 = MOD 1..8
 };
-
-struct Scale {
-    int count;
-    int notes[12];
-};
-inline const Scale& scaleAt(int index) {
-    static const Scale scales[] = {
-        {12, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}},
-        {7, {0, 2, 4, 5, 7, 9, 11}},
-        {7, {0, 2, 3, 5, 7, 8, 10}},
-        {7, {0, 2, 3, 5, 7, 9, 10}},
-        {7, {0, 2, 4, 5, 7, 9, 10}},
-        {5, {0, 2, 4, 7, 9}},
-        {5, {0, 3, 5, 7, 10}}
-    };
-    return scales[clamp(index, 0, 6)];
-}
-inline int degreeToSemitone(int degree, int scale) {
-    const Scale& s = scaleAt(scale);
-    int note = modulo(degree, s.count);
-    int octave = (degree - note) / s.count;
-    return 12 * octave + s.notes[note];
-}
-inline int nearestDegree(float semitone, int scale) {
-    const Scale& s = scaleAt(scale);
-    int octave = static_cast<int>(std::floor(semitone / 12.f));
-    int best = octave * s.count;
-    float distance = 100.f;
-    for (int d = (octave - 1) * s.count; d <= (octave + 2) * s.count; ++d) {
-        float candidate = std::abs(semitone - degreeToSemitone(d, scale));
-        if (candidate < distance) { distance = candidate; best = d; }
-    }
-    return best;
-}
 
 struct TrackState {
     int stage = -1;
@@ -164,6 +133,17 @@ public:
     bool resumeOnRun = false;
     unsigned chainMutes = 0;
     float clock = 0.f;
+    int scaleIndex(int t) const {
+        int index=clamp(settings.lockedScale>=0?settings.lockedScale:settings.scale,0,ScaleCount-1);
+        return settings.lockedScale>=0?modulatedUserScale(index,
+            modulation.routes[t][ModUserScale]+controls.values[t][CtrlUserScale]*5.f):index;
+    }
+    Scale currentScale(int t) const {
+        int index=scaleIndex(t);return userScale(index)?scaleFromMask(settings.userScales[index-FactoryScaleCount].mask):scaleAt(index);
+    }
+    int scaleRoot(int t) const {
+        int index=scaleIndex(t);return userScale(index)?clamp(settings.userScales[index-FactoryScaleCount].root,0,11):settings.root;
+    }
 
     void seed(uint32_t value) {
         random[0].state = value ? value : 1;
@@ -407,11 +387,12 @@ private:
         if(ctrl[CtrlSliderInvert]>0)slider=1-slider;
         const int overrideNote=settings.tracks[t].stages[state.stage].pitchOverride;
         float source=overrideNote<0?slider*12.f*clamp(settings.octaves,1,4):float(clamp(overrideNote,0,60));
+        Scale scale=currentScale(t);
         int base = nearestDegree(source
-            + (modulation.routes[t][ModPitchPre]+ctrl[CtrlPitchPre])*12.f, settings.scale);
-        int note = degreeToSemitone(base + state.activeAccumulation, settings.scale);
+            + (modulation.routes[t][ModPitchPre]+ctrl[CtrlPitchPre])*12.f, scale);
+        int note = degreeToSemitone(base + state.activeAccumulation, scale);
         const auto& route = modulation.routes[t];
-        return (note + settings.root + settings.tracks[t].transpose + std::round(ctrl[CtrlRoot]*12.f)
+        return (note + scaleRoot(t) + settings.tracks[t].transpose + std::round(ctrl[CtrlRoot]*12.f)
             + std::round((route[ModPitchPost]+ctrl[CtrlPitchPost])*12.f)) / 12.f
             + std::trunc(route[ModOctave]) + std::round(ctrl[CtrlOctave]*2.f) + route[ModPitchOffset]+ctrl[CtrlPitchOffset];
     }

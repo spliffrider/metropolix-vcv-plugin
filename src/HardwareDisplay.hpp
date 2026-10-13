@@ -95,11 +95,13 @@ struct HardwareDisplay : HardwareControl {
                 }
             }
         } else if(h==1) {
-            int scale=integer(Metropolix::SCALE,1),root=integer(Metropolix::ROOT);
-            const char* scaleNames[]={"CHROMATIC","MAJOR","MINOR","DORIAN","MIXOLYD","MAJ PENT","MIN PENT"};
             for(int t=0;t<2;++t) {
+                int locked=integer(Metropolix::SCALE_LOCK,-1),index=locked<0?integer(Metropolix::SCALE,1):locked;
+                if(m && metro::userScale(locked)){int playing=m->soundingScale[t].load();if(metro::userScale(playing) && (playing-49)/10==(locked-49)/10)index=playing;}
+                int root=integer(m?m->scaleRootParam(index):Metropolix::ROOT);
+                auto scale=m?m->uiScale(index):metro::scaleAt(index);
                 int y=5+t*25;
-                c.text(0,y,std::string(notes[root])+" "+scaleNames[scale]);
+                c.fit(0,y,80,std::string(notes[root])+" "+metro::scaleName(index),1);
                 int pre=m?metro::nearestDegree(m->pitchPre[t].load()*12.f,scale):0;
                 int post=m?static_cast<int>(std::round(m->pitchPost[t].load()*12.f)):0;
                 c.right(102,y,string::f("%+d",pre));c.right(127,y,string::f("%+d",post));
@@ -149,13 +151,19 @@ struct HardwareDisplay : HardwareControl {
         footer(c);
     }
     void keyboard(OledCanvas& c,int x,int y,int w) const {
-        int root=integer(Metropolix::ROOT),scale=integer(Metropolix::SCALE,1);
-        const auto& sc=metro::scaleAt(scale);const int white[]={0,2,4,5,7,9,11};
+        int scale=integer(Metropolix::SCALE,1),root=integer(metroModule?metroModule->scaleRootParam(scale):Metropolix::ROOT);
+        auto sc=metroModule?metroModule->uiScale(scale):metro::scaleAt(scale);const int white[]={0,2,4,5,7,9,11};
         auto enabled=[&](int note){for(int i=0;i<sc.count;++i)if(metro::modulo(note-root,12)==sc.notes[i])return true;return false;};
         int kw=w/7;
         for(int k=0;k<7;++k){c.fill(x+k*kw,y,kw-1,23);if(!enabled(white[k]))c.hatch(x+k*kw,y,kw-1,23);if(white[k]==root)c.fill(x+k*kw+kw/2-1,y+19,2,2,0);}
         const int after[]={0,1,3,4,5},black[]={1,3,6,8,10};
         for(int k=0;k<5;++k){int bx=x+(after[k]+1)*kw-2;c.fill(bx,y,4,14,0);if(!enabled(black[k])){c.fill(bx,y,4,14);c.hatch(bx,y,4,14);}if(black[k]==root)c.dot(bx+1,y+11);}
+        if(metroModule && metroModule->scaleEditing.load()) {
+            int note=metro::modulo(integer(Metropolix::SCALE_NOTE)+root,12),px=x;
+            for(int k=0;k<7;++k)if(white[k]==note)px=x+k*kw+kw/2;
+            for(int k=0;k<5;++k)if(black[k]==note)px=x+(after[k]+1)*kw;
+            c.arrow(px,y-5);
+        }
     }
     void stage(OledCanvas& c) const {
         auto* m=metroModule;if(!m)return;
@@ -241,9 +249,14 @@ struct HardwareDisplay : HardwareControl {
             field(c,0,ext?"EXTERNAL":"INTERNAL",string::f("%.1f",ext?m->displayBpm.load():value(Metropolix::TEMPO,120)),!ext);
             field(c,29,ext?"EXT CLOCK DIV":"TAP TEMPO",ext?"/1":"Tap BPM",false,128,1);
         } else if(page==Metropolix::SCALE_PAGE) {
-            const char* names[]={"Chromatic","Major","Minor","Dorian","Mixolydian","Major pent.","Minor pent."};
-            field(c,0,"SCALE",names[integer(Metropolix::SCALE,1)],f==1,128,1);
-            c.text(2,32,"ROOT");c.text(37,45,notes[integer(Metropolix::ROOT)],false);
+            int shown=integer(Metropolix::SCALE,1),locked=integer(Metropolix::SCALE_LOCK,-1);
+            bool edit=m && m->scaleEditing.load();
+            field(c,0,edit?"EDIT USER SCALE":"SCALE",metro::scaleName(shown),f==1,128,1);
+            if(locked>=0) {
+                if(locked==shown){c.box(115,3,7,6);c.box(117,1,3,3);if(metro::userScale(locked))c.text(100,3,"M");}
+                else {c.circle(117,4,3);c.line(119,6,124,11);}
+            }
+            c.text(2,32,"ROOT");c.text(37,45,notes[integer(m?m->scaleRootParam():Metropolix::ROOT)],false);
             if(f==0)c.corners(0,29,51,26);
             c.box(2,45,17,7);c.text(4,46,"ALT");keyboard(c,58,29,70);
         } else if(page==Metropolix::ORDER_PAGE) {

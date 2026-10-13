@@ -57,7 +57,8 @@ alongside CTRL. The HOME panel view now shows the actual knob positions.
 | Slider Invert | Right reverses pitch-slider interpretation; left/noon normal |
 | Track Out Swap | Right swaps physical Pitch/Gate 1 and 2 plus track-CV assignments at A/B; left/noon normal. MOD sources at A/B remain unchanged. Global. |
 
-There are 24 destinations plus None as of 2.9.0. **Accum Dir, Gate Scale, Scale (User),
+There are 25 destinations plus None as of 2.12.0. Scale (User) moves within the
+locked user bank; see [Scales](SCALES.md). **Accum Dir, Gate Scale,
 Slider Range, and Velocity** are listed as not implemented in the menu.
 In particular, reversing an accumulated sequence requires more than changing
 the sign of its increments, so Accum Dir is not presented as available.
@@ -87,5 +88,5 @@ skip inversion resets the sequence but does not fully define that reset scope.
 An order whose visited stages are all skipped produces silence. HOME reflects
 the effective skip mask; the SKIP editor retains the programmed mask.
 
-Gate Length retains the engine's existing 1–99% range; the hardware's wider
-endpoint behavior is unfinished. No physical module comparison has been made.
+Direct CTRL Gate Length retains 1–99%; the track page also offers Hold since
+2.10.0. No physical module comparison has been made.

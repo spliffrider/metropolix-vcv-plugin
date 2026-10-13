@@ -11,7 +11,7 @@ enum CtrlDestination { CtrlNone, CtrlAccumMode, CtrlAccumPolar, CtrlTempo,
     CtrlPitchPost, CtrlPitchPre, CtrlOrder, CtrlProbability, CtrlPulseCount,
     CtrlPulseDiv, CtrlPulsesLength, CtrlRatchet, CtrlRoot, CtrlSkipInvert,
     CtrlSlideAmount, CtrlSliderInvert, CtrlStagesLength, CtrlStagesOffset,
-    CtrlOutputSwap, CtrlSwing, CtrlDestinationCount };
+    CtrlOutputSwap, CtrlSwing, CtrlUserScale, CtrlDestinationCount };
 
 inline float ctrlClamp(float v) { return std::isfinite(v)?std::max(-1.f,std::min(1.f,v)):0.f; }
 struct Control {

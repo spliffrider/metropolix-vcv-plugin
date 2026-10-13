@@ -47,15 +47,19 @@ struct GateOverrideQuantity : ParamQuantity {
 };
 struct PitchOverrideQuantity : ParamQuantity {
     int scaleParam=-1;
-    int scale() const { return module && scaleParam>=0?int(std::round(module->params[scaleParam].getValue())):0; }
+    int track=0;
+    metro::Scale scale() const;
     void setValue(float v) override {
-        ParamQuantity::setValue(v<-.5f?-1.f:float(metro::degreeToSemitone(metro::nearestDegree(metro::clamp(v,0.f,60.f),scale()),scale())));
+        const auto notes=scale();
+        ParamQuantity::setValue(v<-.5f?-1.f:float(metro::clamp(metro::degreeToSemitone(metro::nearestDegree(metro::clamp(v,0.f,60.f),notes),notes),0,60)));
     }
     std::string getDisplayValueString() override {
         if(getValue()<0)return "-- (slider)";
         static const char* names[]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
-        int note=metro::degreeToSemitone(metro::nearestDegree(getValue(),scale()),scale());
-        return std::string(names[note%12])+std::to_string(note/12);
+        const auto scaleNotes=scale();
+        int note=metro::degreeToSemitone(metro::nearestDegree(getValue(),scaleNotes),scaleNotes);
+        int pitchClass=metro::modulo(note,12);
+        return std::string(names[pitchClass])+std::to_string((note-pitchClass)/12);
     }
     void setDisplayValueString(std::string s) override {
         if(s=="--" || s=="slider"){setValue(-1);return;}
@@ -93,7 +97,9 @@ struct Metropolix : Module {
         SWING_1, SWING_2,
         GATE_SCALE_1, GATE_SCALE_2,
         STAGE_OVERRIDES,
-        LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET, NUM_PARAMS
+        LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET,
+        SCALE_LOCK, USER_SCALES, SCALE_NOTE = USER_SCALES + metro::UserScaleCount*2,
+        SCALE_SHORTCUTS, NUM_PARAMS = SCALE_SHORTCUTS + 16
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -118,11 +124,13 @@ struct Metropolix : Module {
     static int accumModeParam(int t) { return ACCUM_MODE + t; }
     static int ctrlParam(int knob, int p) { return CTRL_PARAMS + knob * CTRL_STRIDE + p; }
     static int swingParam(int track) { return SWING_1 + track; }
+    static int userScaleParam(int slot,bool root=false) {return USER_SCALES+metro::clamp(slot,0,99)*2+int(root);}
+    static int scaleShortcutParam(int slot,bool root=false) {return SCALE_SHORTCUTS+metro::clamp(slot,0,7)*2+int(root);}
     static std::vector<std::string> ctrlDestinations() {
         return {"None", "Accum Mode", "Accum Polar", "Tempo", "Clock Div", "Direction",
             "Gate Length", "Octave", "Pitch Offset", "Pitch Post", "Pitch Pre", "Play Order",
             "Probability", "Pulse Count", "Pulse Div", "Pulses Len", "Ratchet", "Root",
-            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing"};
+            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing", "Scale (User)"};
     }
     static int ctrlBaseParam(metro::CtrlDestination d, int t) {
         switch(d) {
@@ -157,7 +165,7 @@ struct Metropolix : Module {
         return ids[metro::clamp(field, 0, 5)];
     }
     static std::vector<std::string> modDestinations() {
-        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing"};
+        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)"};
     }
     static std::vector<std::string> outputSources() {
         return {"Track 1 CV", "Track 2 CV", "MOD 1", "MOD 2", "MOD 3", "MOD 4", "MOD 5", "MOD 6", "MOD 7", "MOD 8"};
@@ -188,6 +196,8 @@ struct Metropolix : Module {
     std::atomic<bool> uiStageDetail{false};
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
     std::atomic<bool> uiChooseFunction{false};
+    std::atomic<bool> scaleEditing{false},scaleShortcutHeld{false},scaleShortcutUsed{false};
+    std::atomic<int> soundingScale[2];
     std::atomic<int> modStage[8];
     std::atomic<float> modVoltage[8];
     std::atomic<int> playStage[2];
@@ -231,7 +241,19 @@ struct Metropolix : Module {
         configSwitch(RUN, 0, 1, 0, "Transport", {"Stopped", "Running"})->randomizeEnabled = false;
         configButton(RESET, "Reset position and accumulators");
         configSwitch(ROOT, 0, 11, 0, "Root", {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"});
-        configSwitch(SCALE, 0, 6, 1, "Scale", {"Chromatic", "Major", "Minor", "Dorian", "Mixolydian", "Major pent.", "Minor pent."});
+        configSwitch(SCALE, 0, metro::ScaleCount-1, 1, "Scale", metro::scaleNames());
+        configParam(SCALE_LOCK,-1,metro::ScaleCount-1,-1,"Locked scale (-1 = unlocked)")->snapEnabled=true;
+        paramQuantities[SCALE_LOCK]->randomizeEnabled=false;
+        for(int i=0;i<metro::UserScaleCount;++i) {
+            auto* q=configParam(userScaleParam(i),1,4095,0xAB5,metro::scaleName(49+i)+" note mask");q->snapEnabled=true;q->randomizeEnabled=false;
+            configSwitch(userScaleParam(i,true),0,11,0,metro::scaleName(49+i)+" root",{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"})->randomizeEnabled=false;
+        }
+        configParam(SCALE_NOTE,0,11,0,"User scale note cursor")->snapEnabled=true;paramQuantities[SCALE_NOTE]->randomizeEnabled=false;
+        const int shortcuts[]={1,2,3,4,5,6,0,17};
+        for(int i=0;i<8;++i) {
+            configSwitch(scaleShortcutParam(i),0,148,shortcuts[i],"Scale shortcut "+std::to_string(i+1),metro::scaleNames())->randomizeEnabled=false;
+            configSwitch(scaleShortcutParam(i,true),0,11,0,"Scale shortcut root "+std::to_string(i+1),{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"})->randomizeEnabled=false;
+        }
         configParam(RANGE, 1, 4, 3, "Slider range", " octaves")->snapEnabled = true;
         const float notes[8] = {0, 4, 7, 12, 16, 19, 14, 7};
         for (int s = 0; s < 8; ++s) {
@@ -245,6 +267,7 @@ struct Metropolix : Module {
             playPulse[t].store(0);
             playPitch[t].store(0.f);
             playCv[t].store(0.f); pitchPre[t].store(0.f); pitchPost[t].store(0.f);
+            soundingScale[t].store(1);
             std::string name = "Track " + std::to_string(t + 1) + " ";
             configParam(trackParam(t, LENGTH), 1, 8, 8, name + "length", " stages")->snapEnabled = true;
             configParam(trackParam(t, OFFSET), 0, 7, 0, name + "offset", " stages")->snapEnabled = true;
@@ -276,7 +299,7 @@ struct Metropolix : Module {
                 configSwitch(stageParam(t, s, SKIP), 0, 1, 0, prefix + "skip", {"Off", "On"});
                 configParam(stageParam(t, s, CV), -5, 5, 0, prefix + "CV", " V");
                 auto* pitch=configParam<PitchOverrideQuantity>(stageParam(t,s,PITCH_OVERRIDE),-1,60,-1,prefix+"pitch override");
-                pitch->scaleParam=SCALE; pitch->snapEnabled=true;
+                pitch->scaleParam=SCALE; pitch->track=t; pitch->snapEnabled=true;
                 configParam<GateOverrideQuantity>(stageParam(t,s,GATE_OVERRIDE),-1,100,-1,prefix+"gate override")->snapEnabled=true;
                 configSwitch(stageOption(t, s, PROB_TARGET), 0, 1, 0, prefix + "probability target", {"Stage", "Pulse"});
                 configSwitch(stageOption(t, s, ACCUM_TRIGGER), 0, 2, 0, prefix + "accumulator trigger", {"Stage", "Pulse", "Ratchet"});
@@ -343,6 +366,13 @@ struct Metropolix : Module {
     }
 
     int integer(int id) { return static_cast<int>(std::round(params[id].getValue())); }
+    int scaleRootParam(int scale=-1) {
+        if(scale<0)scale=integer(SCALE);
+        return metro::userScale(scale)?userScaleParam(scale-metro::FactoryScaleCount,true):ROOT;
+    }
+    metro::Scale uiScale(int index) {
+        return metro::userScale(index)?metro::scaleFromMask(unsigned(integer(userScaleParam(index-49)))):metro::scaleAt(index);
+    }
 #include "PresetAdapter.hpp"
 #include "ChainAdapter.hpp"
     void readSettings() {
@@ -388,6 +418,8 @@ struct Metropolix : Module {
         c.bpm = params[TEMPO].getValue();
         c.root = integer(ROOT);
         c.scale = integer(SCALE);
+        c.lockedScale = integer(SCALE_LOCK);
+        for(int i=0;i<metro::UserScaleCount;++i){c.userScales[i].mask=unsigned(integer(userScaleParam(i)));c.userScales[i].root=integer(userScaleParam(i,true));}
         c.octaves = integer(RANGE);
         for (int s = 0; s < 8; ++s) {
             c.stages[s].pitch = params[PITCH + s].getValue();
@@ -474,6 +506,7 @@ struct Metropolix : Module {
                 playPulse[t].store(state.pulse, std::memory_order_relaxed);
                 playPitch[t].store(state.pitch, std::memory_order_relaxed);
                 playCv[t].store(state.cv, std::memory_order_relaxed);
+                soundingScale[t].store(sequencer.scaleIndex(t),std::memory_order_relaxed);
                 pitchPre[t].store(sequencer.modulation.routes[t][metro::ModPitchPre]+sequencer.controls.values[t][metro::CtrlPitchPre], std::memory_order_relaxed);
                 pitchPost[t].store(sequencer.modulation.routes[t][metro::ModPitchPost]+sequencer.controls.values[t][metro::CtrlPitchPost], std::memory_order_relaxed);
                 for (int s = 0; s < 8; ++s)
@@ -496,6 +529,7 @@ struct Metropolix : Module {
     void onReset(const ResetEvent& e) override {
         Module::onReset(e);
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
+        scaleEditing.store(false);scaleShortcutHeld.store(false);
         resetPresetRuntime();
         resetChainRuntime();
         { std::lock_guard<std::mutex> lock(presetMutex);chainState.enabled=false;chainEnabled.store(false); }
@@ -504,7 +538,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(14));
+        json_object_set_new(root, "schemaVersion", json_integer(15));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(3));
@@ -529,6 +563,9 @@ struct Metropolix : Module {
     }
     void dataFromJson(json_t* root) override {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
+        scaleEditing.store(false);scaleShortcutHeld.store(false);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<15)
+            for(int id=SCALE_LOCK;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<14)
             for(int id=LOOPY_PULSES;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<13)
@@ -583,3 +620,15 @@ struct Metropolix : Module {
         readSettings();
     }
 };
+
+inline metro::Scale PitchOverrideQuantity::scale() const {
+    auto* m=dynamic_cast<Metropolix*>(module);
+    if(!m)return metro::scaleAt(0);
+    int id=m->integer(Metropolix::SCALE_LOCK);
+    if(id<0)id=m->integer(Metropolix::SCALE);
+    else if(metro::userScale(id)) {
+        int sounding=m->soundingScale[track].load();
+        if(metro::userScale(sounding) && (sounding-49)/10==(id-49)/10)id=sounding;
+    }
+    return metro::userScale(id)?metro::scaleFromMask(unsigned(m->integer(Metropolix::userScaleParam(id-49)))):metro::scaleAt(id);
+}

@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.11.0
+# Validation and fidelity status — 2.12.0
 
 ## Stage overrides — 2.10.0
 
@@ -163,7 +163,7 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
 | MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
 | MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
-| Rack host | All 467 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode/Swing migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
+| Rack host | All 685 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode/Swing migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
 | Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
 | MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
@@ -337,3 +337,20 @@ parameter undo, mutes and a native Rack file save/reopen. The display suite rend
 momentary/range/release transitions with a 12-second output recording. Native OS
 input, hardware accumulator behavior and Loopy AUX/MOD routing remain unverified
 or unavailable; see [the operation guide](LOOPY.md).
+
+## Scales — 2.12.0
+
+All 49 factory scales/chords and 100 custom definitions are available from SCALE.
+Encoder browsing uses the hardware bank order while legacy numerical IDs stay fixed.
+Long encoder presses enter/exit note editing, ALT selects Root, clicks lock/apply
+or toggle notes. Hold SCALE + stage to recall a shortcut; long stage press saves.
+Right-click menus provide the same operations. See [Scales](SCALES.md).
+
+Portable validation adds 1,609,670 checks. Rack host, custom editing, lock/search,
+held shortcuts, grouped undo, native saving/reopening, 49 display states and
+actual stereo chord playback pass. Audio measured RMS .360/.363 V, peaks
+1.730/1.733 V, DC approximately .00084 V at 48 kHz over twelve seconds.
+Fractional-voltage truncation, default C-major custom slots and root-only empty
+mask fallback are implementation choices; hardware comparison remains necessary.
+Internal presets retain the earlier plugin selector/root recall behavior, unlike
+the hardware global classification; custom definitions and locks stay global.

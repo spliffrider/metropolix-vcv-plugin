@@ -1,0 +1,100 @@
+# Scales and chord changes — 2.12.0 alpha
+
+The SCALE screen offers all **49 factory scales/chord shapes** shown in the
+[firmware 1.6 manual, pp.62–68](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf),
+plus **100 editable user scales**, in ten banks of ten slots. Factory note sets
+were transcribed from the keyboard diagrams on pp.63–64.
+
+## Choose a scale
+
+Click SCALE, then drag the encoder or display up/down to browse in the manual's
+bank order. ALT switches between Scale and Root. Right-click SCALE, the encoder,
+or the display for factory-bank menus, all ten user banks and direct Root choices.
+The keyboard shows enabled notes, disabled hashed keys and the root marker.
+
+The original seven numerical scale IDs stay unchanged for existing patches and
+internal presets. Encoder browsing and the bank menus use the hardware order;
+Rack's numerical automation IDs retain their historical order.
+
+## Lock and browse
+
+With Scale selected, click the encoder to lock the displayed scale. Browsing now
+changes the screen without changing the audible scale. The lock becomes a search
+icon when viewing another scale. Click to apply and lock that new scale; click
+again to unlock. A user-scale lock also establishes its modulation bank and 0V
+starting slot. Locks survive saving and reopening a Rack patch.
+
+## Edit a user scale
+
+1. Choose a user slot, such as Scale 1-1.
+2. Hold the encoder for more than one second to enter note editing.
+3. Drag to move the keyboard arrow; click the encoder to toggle that note.
+4. ALT selects the user's Root field. Changing Root transposes the note pattern.
+5. Hold the encoder again to exit. The definition is saved with the Rack patch.
+
+Menus provide the same note toggles, and can copy a factory note pattern into the
+current user slot. Each definition contains twelve note-enable bits, relative to
+its own root. User slots recall their root along with their notes; factory scales
+use the shared factory Root setting. New user slots start as C major.
+
+At least one note must remain enabled. The editor ignores attempts to remove the
+last note. A malformed empty definition falls back to the root note in the engine.
+Note toggles, root drags and factory-pattern copies support Rack undo/redo.
+
+## Sequence chord changes
+
+Lock a user scale and assign **Scale (User)** to a MOD lane, AUX input or CTRL knob.
+Assignments can affect TRK 1, TRK 2 or both. Each +1V advances one user slot; each
+-1V moves back one slot. Selection wraps inside the locked ten-slot bank. The
+chosen slot supplies both its notes and root. Browsing another bank does not move
+the locked starting point. Factory locks and unlocked user scales ignore this route.
+
+CTRL uses a -5V to +5V equivalent around noon. MOD/AUX voltages and the CTRL offset
+combine before choosing the slot. In this implementation, fractional voltages
+truncate toward zero: +0.99V/-0.99V remain at the starting slot, +1V/-1V change it.
+The manual specifies whole-volt changes but does not define intermediate boundaries;
+this threshold choice still needs comparison with hardware.
+
+Open [Scale-progression.vcv](../examples/Scale-progression.vcv), select an AUDIO
+device and press RUN. MOD 1 selects C major, A minor, F major and G major triads on
+both voices. CTRL 1 adds a live scale offset. Other user slots in that bank remain
+editable, so a large CTRL offset can intentionally select a different chord.
+Switch HOME to its note overview to see each track's current scale and pitches.
+
+## Eight shortcuts
+
+Hold SCALE and click a stage button to recall its saved Scale/Root combination.
+Hold the stage for more than one second while holding SCALE to store the current
+combination. For a mouse, right-click SCALE for the shortcut menu, or right-click
+a stage on the SCALE screen for its individual Save/Recall commands.
+
+Recalling a shortcut applies the new scale even if another scale was locked.
+Shortcut gestures and menu actions group their parameter changes into one undo.
+The eight shortcuts and all user definitions belong to the Rack module instance
+and survive patch saving. They are not stored inside the 64 internal sequence presets.
+
+## Compatibility and validation
+
+Old patch scale IDs, routing destination IDs, ports and preset format 3 remain
+compatible. New scale parameters append after the 467 existing parameters.
+The expanded module has 685 parameters; repeated user masks, roots and shortcuts
+account for most of the increase. Loading an older patch resets the new definitions,
+shortcuts and lock to their defaults.
+
+For compatibility with earlier plugin releases, internal presets still recall
+the original Scale and factory Root selector parameters. The hardware manual
+lists these as globals. Custom definitions, custom roots, shortcuts and the lock
+remain global to the module and are preserved by internal preset recall.
+
+Scale changes requantize slider pitches and chromatic override anchors.
+Accumulation continues in the selected scale's degrees, preserving its stored
+degree offsets. Loopy and stopped audition use the same quantizer.
+
+Validation covers every nonempty twelve-note set, nearest-note ties and negative
+octaves, factory mode relationships, manual World/chord diagrams, all user-bank
+wraps, per-track AUX/MOD/CTRL routing, accumulation and overrides. Rack host tests
+cover old patch migration, all 100 definitions, global preset boundaries and real
+pitch outputs. Widget tests exercise editing, locks, held shortcuts, undo/redo and
+native save/reopen. The supplied two-voice patch also verifies all four chord
+changes during recorded Rack playback. Native OS mouse behavior and physical
+hardware fidelity remain user-test items.

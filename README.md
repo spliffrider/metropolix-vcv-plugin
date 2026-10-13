@@ -4,11 +4,16 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.11.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.12.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/MetropolixLab-2.11.0-win-x64.vcvplugin)** · **[Loopy performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/Loopy-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.11.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/MetropolixLab-2.12.0-win-x64.vcvplugin)** · **[Custom chord progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/Scale-progression.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.12.0)**
 
-2.11.0 adds **Loopy live loops, stopped Stage Player, latching and performance
+2.12.0 adds **all 49 factory scales/chords, 100 user scales, scale locks, eight
+shortcuts and Scale (User) routing** through MOD, AUX and CTRL. The chord demo
+uses stored notes and roots to move through C / Am / F / G. See the
+[scale guide](docs/SCALES.md).
+
+2.11.0 added **Loopy live loops, stopped Stage Player, latching and performance
 mutes**, with a manual-style display and mouse range menus. The original sequence
 keeps advancing underneath temporary loops. Global settings persist; held gestures
 clear on reopen. See the [Loopy guide](docs/LOOPY.md).
@@ -176,7 +181,7 @@ Rack must be closed first because its Windows version allows one running instanc
 
 9. Right-click an **AUX X/Y/Z assignment button** below its knob to choose a destination and target tracks. Drag the knob up/down to attenuvert. Click the button for the AUX display; encoder clicks switch destination/track fields. See the [AUX guide](docs/AUX-INPUTS.md), especially the gate-inversion behavior of Mute.
 
-Opening an optional grid changes the width from 34 HP to 66 HP. Rack finds an available position if that would overlap a neighbor. Closing returns it to 34 HP. View state and musical parameters are saved with the Rack patch. The previous 404 parameter IDs and nine existing patchable ports are preserved; AUX appends nine parameters and three inputs. Earlier development patches migrate their reverse-order setting and shared accumulation limit and start with AUX unassigned.
+Opening an optional grid changes the width from 34 HP to 66 HP. Rack finds an available position if that would overlap a neighbor. Closing returns it to 34 HP. View state and musical parameters are saved with the Rack patch. Existing parameter and port IDs are preserved as features append new controls. Earlier development patches migrate their reverse-order setting and shared accumulation limit and start with AUX unassigned.
 
 ## Connections
 
@@ -194,7 +199,7 @@ With CLOCK IN connected, RUN arms playback and the next eligible clock edge begi
 
 MOD lanes advance one stage per divided base-clock pulse, independently of the note tracks' pulse counts. Bipolar lanes span -5 to +5 V, unipolar lanes span 0 to +5 V, and gate lanes output 0 or +5 V. A ramp travels from the previous voltage to the current stage's target across the whole stage. Muted lanes keep advancing but contribute no voltage or internal modulation. Stop silences all MOD outputs; reset restarts their traversal.
 
-The nine available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, and Swing. Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
+The ten available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, Swing, and Scale (User). Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
 
 ## Implemented
 
@@ -202,15 +207,15 @@ The nine available internal destinations are Octave, Pitch Pre, Pitch Post, Pitc
 - Pulse-count division 1–8; gate stretching; Multiply, Pulse, and Gated ratchet modes; ratchet counts 1–8.
 - Per-stage probability with Stage/Pulse targeting; skip; a linear, tempo-relative slide; bipolar CV.
 - Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
-- Seven scales: chromatic, major, minor, Dorian, Mixolydian, major and minor pentatonic; chromatic root; slider range 1–4 octaves.
-- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, nine internal destinations, track assignment, and assignable A/B outputs.
-- Three AUX CV/gate inputs, attenuverters, the same nine destinations, per-input track assignments, live meters, and logical gate inversion.
+- All 49 factory scales/chords, 100 custom scales with stored roots, locking, eight Scale/Root shortcuts, and Scale (User) modulation; slider range 1–4 octaves.
+- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, ten internal destinations, track assignment, and assignable A/B outputs.
+- Three AUX CV/gate inputs, attenuverters, the same ten destinations, per-input track assignments, live meters, and logical gate inversion.
 - Independent 50–78% Swing per note track, with CTRL control and AUX/MOD offsets, shortcuts, reset, and desktop editing.
 - Rack parameter automation, numeric entry, undo/redo, and patch/preset serialization.
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy AUX/MOD routing, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware bank interchange, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy AUX/MOD routing, AUX/MOD-only accumulator reset, acid/analog slide models, hardware bank interchange, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
