@@ -142,7 +142,8 @@ struct Metropolix : Module {
         SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2,
         CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET,
         OUTPUT_TRACK_OPTIONS, OUTPUT_TRACK_STRIDE=3,
-        TRACK_BEHAVIOR=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE, TRACK_BEHAVIOR_STRIDE=3, NUM_PARAMS=TRACK_BEHAVIOR+2*TRACK_BEHAVIOR_STRIDE
+        TRACK_BEHAVIOR=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE, TRACK_BEHAVIOR_STRIDE=3, FORMAT19_NUM_PARAMS=TRACK_BEHAVIOR+2*TRACK_BEHAVIOR_STRIDE,
+        CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -257,10 +258,12 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
-    std::atomic<int> trackMenuCursor{0};
+    std::atomic<int> trackMenuCursor{0}, setupCursor{0}, globalCursor{0};
+    std::atomic<bool> tunerActive{false}, transportRunning{false};
+    std::atomic<unsigned> heldTrackReset{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
@@ -366,6 +369,7 @@ struct Metropolix : Module {
             configSwitch(trackBehaviorParam(t,PULSE_SOURCE),0,8,0,name+"pulse-count source",{"Switch","1","2","3","4","5","6","7","8"});
             configSwitch(trackBehaviorParam(t,GATE_SOURCE),0,6,0,name+"gate-type source",gateSourceLabels());
             configSwitch(trackBehaviorParam(t,REST_PITCH),0,1,0,name+"rest pitch",{"Hold","Update"});
+            configSwitch(TRACK_GLOBAL_RESET_1+t,0,1,1,name+"global reset",{"Off","On"})->randomizeEnabled=false;
             configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(trackParam(t, MUTE), 0, 1, 0, name + "mute", {"Off", "On"})->randomizeEnabled = false;
@@ -443,6 +447,15 @@ struct Metropolix : Module {
         paramQuantities[CLOCK_OUT_OFFSET]->description = "Shift divided CLK triggers later by 0 to division minus one master pulses. Long encoder press resets both CLK fields.";
         for (int t=0; t<2; ++t)
             paramQuantities[accumModeParam(t)]->description = "Stage changes each stage independently. Track carries accumulation across the whole phrase. Takes effect on the next track clock pulse.";
+        configSwitch(CLOCK_SOURCE,0,2,0,"Clock source",{"Auto (VCV cable)","Internal","External"});
+        configSwitch(CLOCK_RUNNING_ONLY,0,2,2,"Clock / reset output",{"Always","Running","VCV legacy (clock Running, reset Always)"});
+        configSwitch(RESET_INPUT_MODE,0,2,0,"Reset input",{"Reset","Run (restart)","Run-C (continue)"});
+        configSwitch(BOTTOM_PITCH,0,12,12,"Bottom pitch",{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B","Root"});
+        configParam(TUNER_OCTAVE,-5,5,0,"Tuner pitch"," octaves (C0 = 0 V)")->snapEnabled=true;
+        configSwitch(TUNER_GATE,0,1,0,"Tuner gates",{"High","Clock"});
+        paramQuantities[RUN]->description="Run button transport. A connected Reset jack in Run/Run-C mode overrides this saved choice; the light follows actual playback.";
+        paramQuantities[RESET]->description="Reset tracks with Global Reset On. Hold a TRK button to force that track's reset even with Global Reset Off.";
+        for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id){paramQuantities[id]->randomizeEnabled=false;paramQuantities[id]->snapEnabled=true;}
         sequencer.seed(random::u32());
         readSettings();
     }
@@ -498,6 +511,7 @@ struct Metropolix : Module {
             }
         }
         c.bpm = params[TEMPO].getValue();
+        c.clockRunningOnly=integer(CLOCK_RUNNING_ONLY)!=0;c.resetRunningOnly=integer(CLOCK_RUNNING_ONLY)==1;c.bottomPitch=integer(BOTTOM_PITCH);
         c.clockOutDivision=metro::ClockOutput::division(integer(CLOCK_OUT_DIV));
         c.clockOutOffset=metro::ClockOutput::offset(integer(CLOCK_OUT_OFFSET),c.clockOutDivision);
         c.root = integer(ROOT);
@@ -534,6 +548,7 @@ struct Metropolix : Module {
             track.pulseSource=integer(trackBehaviorParam(t,PULSE_SOURCE));
             track.gateSource=integer(trackBehaviorParam(t,GATE_SOURCE));
             track.restPitchUpdate=integer(trackBehaviorParam(t,REST_PITCH))!=0;
+            track.globalReset=integer(TRACK_GLOBAL_RESET_1+t)!=0;
             track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
@@ -570,7 +585,8 @@ struct Metropolix : Module {
         bool clockEdge = clockTrigger.process(inputs[CLOCK_IN].getVoltage(), 0.1f, 1.5f);
         bool resetEdge = resetTrigger.process(inputs[RESET_IN].getVoltage(), 0.1f, 1.5f);
         bool button = resetButton.process(params[RESET].getValue());
-        bool external = inputs[CLOCK_IN].isConnected();
+        int source=integer(CLOCK_SOURCE);
+        bool external = source==2 || (source==0 && inputs[CLOCK_IN].isConnected());
         if(!external || !meterWasExternal){meterClockSeen=false;meterClockElapsed=0.0;}
         if(external) {
             meterClockElapsed+=args.sampleTime;
@@ -580,13 +596,21 @@ struct Metropolix : Module {
             }
         }
         meterWasExternal=external;
-        bool run = params[RUN].getValue() > 0.5f;
+        int resetMode=integer(RESET_INPUT_MODE);
+        bool gatedRun=resetMode && inputs[RESET_IN].isConnected();
+        bool run = gatedRun?resetTrigger.isHigh():params[RUN].getValue() > 0.5f;
+        resetEdge=resetEdge && resetMode!=2;
+        if(gatedRun)sequencer.resumeOnRun=true;
+        else sequencer.resumeOnRun=integer(RUN_MODE)!=0;
+        sequencer.manualResetForce=button?heldTrackReset.load():0;
+        transportRunning.store(run,std::memory_order_relaxed);
         processChainCommands(run, external, resetEdge || button);
         processPresetCommands(run, external, resetEdge || button);
         unsigned gesture=loopyCommand.load();
         sequencer.loopy.stages=gesture&255u;sequencer.loopy.targets=integer(LOOPY_TARGET)?3u:1u<<selectedTrack.load();
         sequencer.loopy.pulses=integer(LOOPY_PULSES);
         if(!run)applyLoopyMutes();
+        sequencer.resumeOnRun=gatedRun || integer(RUN_MODE)!=0;
         sequencer.process(args.sampleTime, run, external, clockEdge, resetEdge || button, [this] { presetClock(); applyLoopyMutes(); });
         for (int t = 0; t < 2; ++t) {
             const auto& state = sequencer.sounding(t);
@@ -607,6 +631,7 @@ struct Metropolix : Module {
             }
         }
         outputs[CLOCK_OUT].setVoltage(sequencer.clock);
+        if(tunerActive.load()){for(int t=0;t<2;++t){outputs[PITCH_1+t*2].setVoltage(float(integer(TUNER_OCTAVE)));outputs[GATE_1+t*2].setVoltage(integer(TUNER_GATE)?(run?sequencer.masterClock:0.f):5.f);}}
         if (update) for (int lane = 0; lane < 8; ++lane) {
             modStage[lane].store(sequencer.running ? sequencer.modulation.lanes[lane].stage : -1, std::memory_order_relaxed);
             modVoltage[lane].store(sequencer.modulation.outputs[lane], std::memory_order_relaxed);
@@ -621,7 +646,7 @@ struct Metropolix : Module {
     }
 
     void onReset(const ResetEvent& e) override {
-        Module::onReset(e);
+        Module::onReset(e);tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         resetPresetRuntime();
@@ -632,14 +657,15 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(22));
+        json_object_set_new(root, "schemaVersion", json_integer(23));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(7));
+        json_object_set_new(root, "presetFormat", json_integer(8));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
         json_object_set_new(root,"trackMenuCursor",json_integer(trackMenuCursor.load()));
+        json_object_set_new(root,"setupCursor",json_integer(setupCursor.load()));json_object_set_new(root,"globalCursor",json_integer(globalCursor.load()));
         json_object_set_new(root, "selectedAux", json_integer(selectedAux.load()));
         json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
         json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
@@ -660,7 +686,11 @@ struct Metropolix : Module {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
-        trackMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"trackMenuCursor"))),0,9));
+        tunerActive.store(false);heldTrackReset.store(0);
+        int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
+        int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
+        trackMenuCursor.store(metro::clamp(cursor,0,10));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,3));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
+        if(schema<23)for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<20)
             for(int id=TRACK_BEHAVIOR;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<19){
@@ -718,8 +748,9 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(TRACK_MENU_PAGE)));
-        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(TUNER_PAGE)));
+        if(uiPage.load()==TUNER_PAGE){uiPage.store(GLOBAL_SETUP_PAGE);globalCursor.store(5);}
+        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));
         if(json_integer_value(json_object_get(root,"schemaVersion"))<6 && uiPage.load()==LENGTH_PAGE)uiField.store(0);

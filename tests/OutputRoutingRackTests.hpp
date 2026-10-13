@@ -1,6 +1,6 @@
 void outputRoutingRackTests(){
     using M=Metropolix;auto m=std::unique_ptr<M>(new M),other=std::unique_ptr<M>(new M);
-    static_assert(M::OUTPUT_TRACK_OPTIONS==707 && M::NUM_PARAMS==719 && M::FORMAT5_PARAMS==478 && M::FORMAT6_PARAMS==484,"routing appends track settings without moving legacy fields");
+    static_assert(M::OUTPUT_TRACK_OPTIONS==707 && M::FORMAT19_NUM_PARAMS==719 && M::FORMAT5_PARAMS==478 && M::FORMAT6_PARAMS==484,"routing appends track settings without moving legacy fields");
     require(m->integer(M::OUTPUT_SOURCE_A)==0 && m->integer(M::OUTPUT_SOURCE_B)==14,"new modules use manual CV/First Pulse defaults");
     for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(0);
     m->params[M::ctrlParam(0,M::CTRL_VALUE)].setValue(.4f);m->params[M::ctrlParam(1,M::CTRL_VALUE)].setValue(-.6f);

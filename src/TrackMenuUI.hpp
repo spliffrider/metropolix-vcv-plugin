@@ -1,10 +1,10 @@
 bool trackMenuPage(Metropolix* m){return m && m->uiPage.load()==Metropolix::TRACK_MENU_PAGE;}
-constexpr int TrackMenuCount=10;
-const char* trackMenuName(int item){const char* names[]={"Transpose","Slider Octaves","Slider Dir","Pulse Count","Gate Type","Gate Stretching","Ratchets","Rest Pitch","Velocity","Init Trk Defaults"};return names[metro::clamp(item,0,TrackMenuCount-1)];}
+constexpr int TrackMenuCount=11;
+const char* trackMenuName(int item){const char* names[]={"Transpose","Slider Octaves","Slider Dir","Pulse Count","Gate Type","Gate Stretching","Ratchets","Rest Pitch","Global Reset","Velocity","Init Trk Defaults"};return names[metro::clamp(item,0,TrackMenuCount-1)];}
 int trackMenuParam(Metropolix* m,int item=-1){
     if(!m)return -1;
     int t=m->selectedTrack.load();
-    const int ids[]={Metropolix::trackParam(t,Metropolix::TRANSPOSE),Metropolix::outputTrackParam(t,Metropolix::SLIDER_OCTAVES),Metropolix::outputTrackParam(t,Metropolix::SLIDER_DIRECTION),Metropolix::trackBehaviorParam(t,Metropolix::PULSE_SOURCE),Metropolix::trackBehaviorParam(t,Metropolix::GATE_SOURCE),Metropolix::extraParam(t,Metropolix::GATE_STRETCH),Metropolix::extraParam(t,Metropolix::RATCHET_MODE),Metropolix::trackBehaviorParam(t,Metropolix::REST_PITCH),Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE),-1};
+    const int ids[]={Metropolix::trackParam(t,Metropolix::TRANSPOSE),Metropolix::outputTrackParam(t,Metropolix::SLIDER_OCTAVES),Metropolix::outputTrackParam(t,Metropolix::SLIDER_DIRECTION),Metropolix::trackBehaviorParam(t,Metropolix::PULSE_SOURCE),Metropolix::trackBehaviorParam(t,Metropolix::GATE_SOURCE),Metropolix::extraParam(t,Metropolix::GATE_STRETCH),Metropolix::extraParam(t,Metropolix::RATCHET_MODE),Metropolix::trackBehaviorParam(t,Metropolix::REST_PITCH),Metropolix::TRACK_GLOBAL_RESET_1+t,Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE),-1};
     return ids[metro::clamp(item<0?m->trackMenuCursor.load():item,0,TrackMenuCount-1)];
 }
 std::vector<int> trackResetParams(Metropolix* m){
@@ -12,7 +12,7 @@ std::vector<int> trackResetParams(Metropolix* m){
     for(int k=0;k<Metropolix::TRACK_STRIDE;++k)ids.push_back(Metropolix::trackParam(t,k));
     for(int k=0;k<Metropolix::EXTRA_STRIDE;++k)ids.push_back(Metropolix::extraParam(t,k));
     for(int k=0;k<3;++k){ids.push_back(Metropolix::accumParam(t,k));ids.push_back(Metropolix::outputTrackParam(t,k));ids.push_back(Metropolix::trackBehaviorParam(t,k));}
-    ids.push_back(Metropolix::accumModeParam(t));ids.push_back(Metropolix::slideTypeParam(t));ids.push_back(Metropolix::cvTypeParam(t));ids.push_back(Metropolix::swingParam(t));ids.push_back(Metropolix::gateScaleParam(t));
+    ids.push_back(Metropolix::TRACK_GLOBAL_RESET_1+t);ids.push_back(Metropolix::accumModeParam(t));ids.push_back(Metropolix::slideTypeParam(t));ids.push_back(Metropolix::cvTypeParam(t));ids.push_back(Metropolix::swingParam(t));ids.push_back(Metropolix::gateScaleParam(t));
     for(int s=0;s<8;++s){for(int k=0;k<2;++k){ids.push_back(Metropolix::stageOption(t,s,k));ids.push_back(Metropolix::stageParam(t,s,Metropolix::PITCH_OVERRIDE+k));}ids.push_back(Metropolix::cvRampParam(t,s));}
     return ids;
 }

@@ -188,6 +188,10 @@ void MetropolixWidget::qaStep() {
         #include "AccumulatorRoutingWidgetQa.hpp"
         return;
     }
+    if(std::getenv("METROPOLIX_CONFIG_UI_QA")){
+#include "ClockConfigWidgetQa.hpp"
+        return;
+    }
     if(std::getenv("METROPOLIX_EXTENDED_ROUTING_UI_QA")) {
         #include "ExtendedRoutingWidgetQa.hpp"
         return;

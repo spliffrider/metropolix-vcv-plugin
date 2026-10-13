@@ -122,6 +122,7 @@ void trackSettingsMenu(Metropolix* m) {
     choice("Pulse-count source",Metropolix::trackBehaviorParam(t,Metropolix::PULSE_SOURCE),{"Switch","1","2","3","4","5","6","7","8"});
     choice("Gate-type source",Metropolix::trackBehaviorParam(t,Metropolix::GATE_SOURCE),Metropolix::gateSourceLabels());
     choice("Rest pitch",Metropolix::trackBehaviorParam(t,Metropolix::REST_PITCH),{"Hold","Update"});
+    choice("Global reset",Metropolix::TRACK_GLOBAL_RESET_1+t,{"Off","On"});
     std::vector<std::string> divisions;
     for (int i = 1; i <= 8; ++i) divisions.push_back("/ " + std::to_string(i));
     choice("Pulse-count division", Metropolix::extraParam(t, Metropolix::PULSE_DIV), divisions, 1);
@@ -395,6 +396,7 @@ struct TransportButton : app::Switch {
     TransportButton() { box.size = Vec(16, 16); }
     void draw(const DrawArgs& args) override {
         bool on = getParamQuantity() && getParamQuantity()->getValue() > 0.5f;
+        if(!reset && module)on=static_cast<Metropolix*>(module)->transportRunning.load();
         nvgBeginPath(args.vg); nvgCircle(args.vg,8,8,7.7f);
         nvgFillColor(args.vg,nvgRGB(96,98,99)); nvgFill(args.vg);
         nvgBeginPath(args.vg); nvgCircle(args.vg,8,8,6.8f);
@@ -433,6 +435,8 @@ struct MainDisplay : widget::Widget {
 #include "ClockUI.hpp"
 #include "OutputUI.hpp"
 #include "TrackMenuUI.hpp"
+void openChainPage(Metropolix* m);
+#include "SetupUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

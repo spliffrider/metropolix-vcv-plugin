@@ -1,6 +1,6 @@
 void trackOptionsRackTests(){
     using M=Metropolix;auto m=std::unique_ptr<M>(new M),other=std::unique_ptr<M>(new M);
-    static_assert(M::TRACK_BEHAVIOR==713 && M::NUM_PARAMS==719 && M::FORMAT6_PARAMS==484 && M::SNAPSHOT_PARAMS==490,"new options append after frozen routing snapshot");
+    static_assert(M::TRACK_BEHAVIOR==713 && M::FORMAT19_NUM_PARAMS==719 && M::FORMAT6_PARAMS==484 && M::FORMAT7_PARAMS==490,"new options append after frozen routing snapshot");
     require(m->getParamQuantity(M::trackParam(0,M::TRANSPOSE))->minValue==-60 && m->getParamQuantity(M::trackParam(0,M::TRANSPOSE))->maxValue==60,"native transpose covers hardware full range");
     m->params[M::RUN].setValue(1);for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(0);
     m->params[M::trackBehaviorParam(0,M::PULSE_SOURCE)].setValue(3);m->params[M::trackBehaviorParam(0,M::GATE_SOURCE)].setValue(1);m->params[M::GATES].setValue(0);m->params[M::PULSES].setValue(8);
