@@ -4,6 +4,7 @@
 #include "Presets.hpp"
 #include "Chains.hpp"
 #include "Workflows.hpp"
+#include "SetupTiming.hpp"
 #include <atomic>
 #include <mutex>
 #include <deque>
@@ -144,7 +145,7 @@ struct Metropolix : Module {
         CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET,
         OUTPUT_TRACK_OPTIONS, OUTPUT_TRACK_STRIDE=3,
         TRACK_BEHAVIOR=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE, TRACK_BEHAVIOR_STRIDE=3, FORMAT19_NUM_PARAMS=TRACK_BEHAVIOR+2*TRACK_BEHAVIOR_STRIDE,
-        CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, FORMAT20_NUM_PARAMS, INIT_PRESET=FORMAT20_NUM_PARAMS, NUM_PARAMS
+        CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, FORMAT20_NUM_PARAMS, INIT_PRESET=FORMAT20_NUM_PARAMS, FORMAT21_NUM_PARAMS, ENC_CONFIRM=FORMAT21_NUM_PARAMS, SHOW_POSITION, BUTTON_LEVEL, SLIDER_LEVEL, SCREEN_LEVEL, CV_OUT_DELAY, EXT_CLOCK_DIV, RUN_ON_BOOT, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -259,7 +260,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
     std::vector<float> workflowBaseline, workflowClipboard;
@@ -269,6 +270,19 @@ struct Metropolix : Module {
     std::string workflowMessage;double workflowUntil=0;
     metro::RandomSource workflowRandomSource;
     void clearWorkflows(){workflowBaseline.clear();workflowClipboard.clear();workflowClipKind=0;workflowClipTag=-1;workflowStageHeld=0;workflowCopyUsed=workflowLaneCopy=workflowEditUsed=false;workflowMessage.clear();workflowUntil=0;}
+    int uiDraftParam=-1;float uiDraftValue=0,uiDraftBase=0,uiDraftOrigin=0;
+    std::vector<int> uiDraftIds;std::vector<float> uiDraftBefore;
+    std::atomic<int> uiSetupCursor{0},modMenuCursor{0};
+    metro::ExternalDivider externalDivider;metro::OutputDelay<NUM_OUTPUTS> outputDelay;
+    void cancelDraft(){uiDraftParam=-1;uiDraftIds.clear();uiDraftBefore.clear();}
+    float uiValue(int id){
+        if(id==uiDraftParam)return uiDraftValue;
+        for(size_t i=0;i<uiDraftIds.size();++i)if(uiDraftIds[i]==id){
+            if(auto* pitch=dynamic_cast<PitchOverrideQuantity*>(getParamQuantity(uiDraftParam))){auto scale=pitch->scale();int off=metro::nearestDegree(0,scale)-1;auto degree=[&](float v){return v<0?off:metro::nearestDegree(v,scale);};int d=metro::clamp(degree(uiDraftBefore[i])+degree(uiDraftValue)-degree(uiDraftOrigin),off,metro::nearestDegree(60,scale));return d==off?-1.f:float(metro::clamp(metro::degreeToSemitone(d,scale),0,60));}
+            return metro::clamp(uiDraftBefore[i]+uiDraftValue-uiDraftOrigin,getParamQuantity(id)->getMinValue(),getParamQuantity(id)->getMaxValue());
+        }
+        return params[id].getValue();
+    }
     std::atomic<int> trackMenuCursor{0}, setupCursor{0}, globalCursor{0};
     std::atomic<bool> tunerActive{false}, transportRunning{false};
     std::atomic<unsigned> heldTrackReset{0};
@@ -465,6 +479,12 @@ struct Metropolix : Module {
         configSwitch(INIT_PRESET,0,64,0,"Init preset",initLabels);workflowRandomSource.state=random::u32();
         paramQuantities[RUN]->description="Run button transport. A connected Reset jack in Run/Run-C mode overrides this saved choice; the light follows actual playback.";
         paramQuantities[RESET]->description="Reset tracks with Global Reset On. Hold a TRK button to force that track's reset even with Global Reset Off.";
+        configSwitch(ENC_CONFIRM,0,1,0,"Encoder confirmation",{"Off","On"});
+        configSwitch(SHOW_POSITION,0,1,1,"Show stage position",{"Off","On"});
+        for(int id:{BUTTON_LEVEL,SLIDER_LEVEL,SCREEN_LEVEL})configParam(id,1,4,4,id==BUTTON_LEVEL?"Button LED level":id==SLIDER_LEVEL?"Slider LED level":"Screen level");
+        configParam(CV_OUT_DELAY,0,21,0,"CV output delay"," ms");
+        configParam(EXT_CLOCK_DIV,1,256,1,"External clock input division");
+        configSwitch(RUN_ON_BOOT,0,2,2,"Run on boot",{"Off","On","Recall Rack patch"});
         for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id){paramQuantities[id]->randomizeEnabled=false;paramQuantities[id]->snapEnabled=true;}
         sequencer.seed(random::u32());
         readSettings();
@@ -597,6 +617,8 @@ struct Metropolix : Module {
         bool button = resetButton.process(params[RESET].getValue());
         int source=integer(CLOCK_SOURCE);
         bool external = source==2 || (source==0 && inputs[CLOCK_IN].isConnected());
+        if(external!=meterWasExternal || (button && !heldTrackReset.load()) || (resetEdge && integer(RESET_INPUT_MODE)==0))externalDivider.reset();
+        clockEdge=externalDivider.process(clockEdge,integer(EXT_CLOCK_DIV));
         if(!external || !meterWasExternal){meterClockSeen=false;meterClockElapsed=0.0;}
         if(external) {
             meterClockElapsed+=args.sampleTime;
@@ -612,10 +634,11 @@ struct Metropolix : Module {
         resetEdge=resetEdge && resetMode!=2;
         if(gatedRun)sequencer.resumeOnRun=true;
         else sequencer.resumeOnRun=integer(RUN_MODE)!=0;
-        sequencer.manualResetForce=button?heldTrackReset.load():0;
+        sequencer.manualResetForce=button && !resetEdge?heldTrackReset.load():0;
         transportRunning.store(run,std::memory_order_relaxed);
-        processChainCommands(run, external, resetEdge || button);
-        processPresetCommands(run, external, resetEdge || button);
+        bool globalResetEvent=resetEdge || (button && !sequencer.manualResetForce);
+        processChainCommands(run, external, globalResetEvent);
+        processPresetCommands(run, external, globalResetEvent);
         unsigned gesture=loopyCommand.load();
         sequencer.loopy.stages=gesture&255u;sequencer.loopy.targets=integer(LOOPY_TARGET)?3u:1u<<selectedTrack.load();
         sequencer.loopy.pulses=integer(LOOPY_PULSES);
@@ -651,12 +674,15 @@ struct Metropolix : Module {
             modSkipMask.store((sequencer.modulation.routes[0][metro::ModSkipInvert]>=1.5f?1u:0u)|(sequencer.modulation.routes[1][metro::ModSkipInvert]>=1.5f?2u:0u),std::memory_order_relaxed);
             if(!external)displayBpm.store(sequencer.effectiveTempo(),std::memory_order_relaxed);
         }
+        std::array<float,NUM_OUTPUTS> signals;for(int id=0;id<NUM_OUTPUTS;++id)signals[id]=outputs[id].getVoltage();
+        signals=outputDelay.process(signals,params[CV_OUT_DELAY].getValue());for(int id=0;id<NUM_OUTPUTS;++id)outputs[id].setVoltage(signals[id]);
         // Avoid signed counter overflow in patches left running for days.
         controlCounter &= 31;
     }
 
+    void onSampleRateChange(const SampleRateChangeEvent& e) override {outputDelay.prepare(e.sampleRate);}
     void onReset(const ResetEvent& e) override {
-        Module::onReset(e);tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();
+        Module::onReset(e);tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         resetPresetRuntime();
@@ -667,7 +693,8 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(24));
+        json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
+        json_object_set_new(root, "schemaVersion", json_integer(25));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(8));
@@ -696,10 +723,14 @@ struct Metropolix : Module {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
-        tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();
+        tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
+        uiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"uiSetupCursor"))),0,7));
+        modMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"modMenuCursor"))),0,1));
         int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
         int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
-        trackMenuCursor.store(metro::clamp(cursor,0,10));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,4));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
+        trackMenuCursor.store(metro::clamp(cursor,0,10));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,5));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
+        if(schema<25)for(int id=ENC_CONFIRM;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
+        if(integer(RUN_ON_BOOT)<2)params[RUN].setValue(float(integer(RUN_ON_BOOT)));
         if(schema<24)params[INIT_PRESET].setValue(0);
         if(schema<23)for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<20)
@@ -759,7 +790,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(TUNER_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(MOD_MENU_PAGE)));
         if(uiPage.load()==TUNER_PAGE){uiPage.store(GLOBAL_SETUP_PAGE);globalCursor.store(5);}
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?7:uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));

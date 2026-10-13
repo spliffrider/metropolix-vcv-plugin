@@ -109,13 +109,13 @@ struct OledCanvas {
         else if(width(s,false,1)<=w)right(x+w,y+3,s,false,1);
         else { std::string shortText=s;while(!shortText.empty() && width(shortText)>w)shortText.pop_back();right(x+w,y+4,shortText); }
     }
-    void paint(NVGcontext* vg,int& image) const {
+    void paint(NVGcontext* vg,int& image,float brightness=1) const {
         // One filtered bitmap avoids seams between adjoining vector rectangles
         // and keeps subpixel strokes visible when Rack zooms the OLED down.
         uint8_t rgba[64][128][4];
         for(int y=0;y<64;++y)for(int x=0;x<128;++x) {
             rgba[y][x][0]=172;rgba[y][x][1]=222;rgba[y][x][2]=242;
-            rgba[y][x][3]=pixels[y][x];
+            rgba[y][x][3]=uint8_t(pixels[y][x]*brightness);
         }
         const auto* data=reinterpret_cast<const unsigned char*>(rgba);
         if(image<=0)image=nvgCreateImageRGBA(vg,128,64,0,data);

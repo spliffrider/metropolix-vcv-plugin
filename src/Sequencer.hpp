@@ -228,7 +228,14 @@ public:
         modulation.seed(value);
     }
 
+    void resetTrackOnly(int t) {
+        float pitch=tracks[t].pitch;tracks[t]=TrackState();tracks[t].pitch=tracks[t].targetPitch=pitch;
+        tracks[t].outputEvents.pulses[TrackOutputEvents::First].fire();tracks[t].outputEvents.firstDue=false;
+        loopTracks[t]=playerTracks[t]=tracks[t];loopPlaying[t]=playerPlaying[t]=false;loopMasks[t]=playerMasks[t]=0;loopCounts[t]=0;
+        swingTiming[t].reset();pendingAccumReset[t]=false;resetPulse.fire();
+    }
     void reset(bool manual=false) {
+        if(manual && manualResetForce){for(int t=0;t<2;++t)if(manualResetForce & (1u<<t))resetTrackOnly(t);if(manualResetForce & 4u)modulation.reset();resetPulse.fire();return;}
         if(!manual){pendingAccumReset.fill(false);accumResetHigh.fill(false);trackResetHigh.fill(false);}
         for (int t=0;t<2;++t) {
             if(manual && !settings.tracks[t].globalReset && !(manualResetForce & (1u<<t)))continue;
@@ -292,7 +299,7 @@ public:
         }
         if (resetEdge) {
             reset(true);
-            resetIgnore = 0.001;
+            if(!manualResetForce)resetIgnore = 0.001;
         }
 
         double period = external ? externalPeriod : internalPeriod;
@@ -434,10 +441,7 @@ private:
             if(stopped){voltage=0;for(const auto& input:settings.auxInputs)if(input.destination==ModReset && (input.assignment==2 || input.assignment==t))voltage+=input.effectiveVoltage();}
             bool high=voltage>=1.5f;
             if(high && !trackResetHigh[t]){
-                float pitch=tracks[t].pitch;tracks[t]=TrackState();tracks[t].pitch=tracks[t].targetPitch=pitch;
-                tracks[t].outputEvents.pulses[TrackOutputEvents::First].fire();tracks[t].outputEvents.firstDue=false;
-                loopTracks[t]=playerTracks[t]=tracks[t];loopPlaying[t]=playerPlaying[t]=false;loopMasks[t]=playerMasks[t]=0;loopCounts[t]=0;
-                swingTiming[t].reset();pendingAccumReset[t]=false;resetPulse.fire();
+                resetTrackOnly(t);
             }
             trackResetHigh[t]=high;
         }

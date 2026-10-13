@@ -50,6 +50,7 @@ void setWithHistory(ParamQuantity* q, float value) {
     float before = q->ParamQuantity::getValue();
     q->setValue(value);
     float after=q->ParamQuantity::getValue();
+    if(auto* m=dynamic_cast<Metropolix*>(q->module))m->cancelDraft();
     if (after == before) return;
     auto* change = new history::ParamChange;
     change->moduleId = q->module->id;
@@ -102,6 +103,7 @@ const char* notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#
 void resetTrackMenu(Metropolix* m,bool all,bool record);
 void appendWorkflowMenu(ui::Menu* menu,Metropolix* m,int forcedKind=0,int forcedTarget=-1);
 void clearWorkflowAux(Metropolix* m,bool record);
+void initModLane(Metropolix* m,bool all=false,bool record=true);
 void trackSettingsMenu(Metropolix* m) {
     if (!m) return;
     int t = m->selectedTrack.load();
@@ -170,6 +172,8 @@ void modSettingsMenu(Metropolix* m, int lane) {
     auto* menu = createMenu();
     menu->addChild(createMenuLabel(string::f("MOD lane %d", lane + 1)));
     appendWorkflowMenu(menu,m,4,lane);
+    menu->addChild(createMenuItem("Initialize this lane's stages","",[m,lane]{m->selectedLane.store(lane);initModLane(m);}));
+    menu->addChild(createMenuItem("Initialize all lane stages","",[m]{initModLane(m,true);}));
     auto choice=[menu,m,lane](const std::string& label,int property,std::vector<std::string> values,bool disabled=false) {
         auto* q=m->getParamQuantity(Metropolix::modParam(lane,property));
         menu->addChild(createIndexSubmenuItem(label,values,
@@ -401,12 +405,13 @@ struct TransportButton : app::Switch {
     void draw(const DrawArgs& args) override {
         bool on = getParamQuantity() && getParamQuantity()->getValue() > 0.5f;
         if(!reset && module)on=static_cast<Metropolix*>(module)->transportRunning.load();
+        float level=module?module->params[Metropolix::BUTTON_LEVEL].getValue()*.25f:1;
         nvgBeginPath(args.vg); nvgCircle(args.vg,8,8,7.7f);
         nvgFillColor(args.vg,nvgRGB(96,98,99)); nvgFill(args.vg);
         nvgBeginPath(args.vg); nvgCircle(args.vg,8,8,6.8f);
         nvgFillPaint(args.vg,nvgLinearGradient(args.vg,3,2,12,14,
-            on ? (reset?nvgRGB(243,103,92):nvgRGB(131,210,151)) : nvgRGB(211,217,224),
-            on ? (reset?nvgRGB(161,49,48):nvgRGB(57,139,82)) : nvgRGB(169,178,192)));
+            on ? color::mult(reset?nvgRGB(243,103,92):nvgRGB(131,210,151),level) : nvgRGB(211,217,224),
+            on ? color::mult(reset?nvgRGB(161,49,48):nvgRGB(57,139,82),level) : nvgRGB(169,178,192)));
         nvgFill(args.vg);
     }
 };
@@ -440,6 +445,8 @@ struct MainDisplay : widget::Widget {
 #include "OutputUI.hpp"
 #include "TrackMenuUI.hpp"
 #include "WorkflowUI.hpp"
+#include "ConfirmationUI.hpp"
+#include "ModWorkflowUI.hpp"
 void openChainPage(Metropolix* m);
 #include "SetupUI.hpp"
 #include "HardwareUI.hpp"
@@ -634,7 +641,7 @@ struct MetropolixWidget : ModuleWidget {
 
     void step() override {
         auto* m = getModule<Metropolix>();
-        if (m) pumpPresetUi(m);
+        if (m) {pumpPresetUi(m);if(m->uiDraftParam>=0 && (m->uiDraftParam!=screenParam(m) || m->params[m->uiDraftParam].getValue()!=m->uiDraftBase))m->cancelDraft();}
         bool expanded = m && m->expanded.load();
         if (expanded != isExpanded) {
             isExpanded = expanded;

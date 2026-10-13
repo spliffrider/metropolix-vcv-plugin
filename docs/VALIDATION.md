@@ -1,4 +1,16 @@
-# Validation and fidelity status — 2.21.0
+# Validation and fidelity status — 2.22.0
+
+## UI setup and confirmation — 2.22.0
+
+Twenty-two portable suites pass. SetupTimingTests adds 1,030,604 assertions for
+all 256 input divisions, 0–21 ms delay at four sample rates, and selected resets
+across every play order, both accumulator modes and every skip position.
+Native Rack integration checks the seven physical output ports at three rates,
+24 ppq conversion, Run on Boot and schema migration. Widget tests cover preview,
+confirmation, cancellation, grouped MOD edits, undo/redo, BPM shortcuts and actual
+save/reopen. The display suite captures 122 OLED states. Prior workflow/clock/
+track/stage callbacks and real two-voice playback are regression checks.
+See [UI setup](UI-SETUP.md) for defaults and software-specific interpretations.
 
 ## Editing workflows — 2.21.0
 
