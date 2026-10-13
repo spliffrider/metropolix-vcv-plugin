@@ -54,7 +54,7 @@ The repository retains the panel reference image, UI assets, source attribution,
 demo patches, and generated example audio. GitHub stores the source history;
 keep local backups of personal patches separately.
 
-GitHub Actions runs the fifteen portable C++ engine suites on pushes and pull
+GitHub Actions runs the sixteen portable C++ engine suites on pushes and pull
 requests. It does not run Rack, validate the Windows DLL, or exercise the UI.
 Run the Windows build, Rack integration, and applicable UI/audio checks from
 README for changes to plugin behavior or rendering. Test DLLs must never be

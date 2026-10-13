@@ -102,6 +102,22 @@ struct RackAudioQaWidget : ModuleWidget {
             good &= timing;
             report<<(timing?"PASS ":"FAIL ")<<"CLOCK AUDIO TIMING: /4 offset2 through actual cable, "<<edges.size()<<" triggers at 0.5 second intervals\n";
         }
+        if(std::getenv("METROPOLIX_OUTPUT_AUDIO_QA")) {
+            double minimum=100,maximum=-100;int changes=0,width=0,edges=0,last=-1;bool routing=m->cvConnected;
+            bool arrangement=std::getenv("METROPOLIX_OUTPUT_ARRANGEMENT_QA")!=nullptr;
+            std::ofstream csv(std::string(directory)+"/output-signals.csv");csv<<"seconds,velocity_v,mod_clock_v\n";
+            for(int frame=0;frame<m->frames;++frame){
+                float a=m->cvSamples[frame*2],b=m->cvSamples[frame*2+1];
+                routing &= std::isfinite(a) && a>=0 && a<=5 && (b==0 || b==5);
+                minimum=std::min(minimum,double(a));maximum=std::max(maximum,double(a));
+                if(frame && std::abs(a-m->cvSamples[(frame-1)*2])>.00001f)++changes;
+                if(b>0){if(!width){if(last>=0 && !arrangement)routing &= std::abs(frame-last-18000)<=1;last=frame;++edges;}++width;}
+                else if(width){routing &= width>=47 && width<=49;width=0;}
+                if(frame%480==0)csv<<frame/48000.0<<','<<a<<','<<b<<'\n';
+            }
+            routing &= minimum<=2.5 && maximum>=4.99 && changes>15 && (arrangement?edges>15:edges>=31 && edges<=33);
+            good &= routing;report<<(routing?"PASS ":"FAIL ")<<"OUTPUT AUDIO ROUTING: Velocity A=["<<minimum<<','<<maximum<<"] V, changes="<<changes<<"; MOD8 clock B "<<(arrangement?"arrangement":"/3")<<", "<<edges<<" one-millisecond triggers through actual cables\n";
+        }
         wav.close();
         good &= !wav.fail();
         if (m->performance) {

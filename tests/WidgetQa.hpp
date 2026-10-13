@@ -6,6 +6,12 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_OUTPUT_ARRANGEMENT_QA")) {
+            static unsigned divisions=0;static bool good=true;
+            int division=m->integer(Metropolix::modParam(7,Metropolix::MOD_DIVISION));if(division>=2 && division<=4)divisions|=1u<<division;
+            good &= m->integer(Metropolix::OUTPUT_SOURCE_A)==36 && m->integer(Metropolix::OUTPUT_SOURCE_B)==25 && m->integer(Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE))==3;
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((good && divisions==28)?"PASS ":"FAIL ")<<"OUTPUT ARRANGEMENT COMPLETE: velocity routing and all three percussion divisions observed during chained playback\n";}
+        }
         if(std::getenv("METROPOLIX_STAGE_CV_AUDIO_QA")) {
             static unsigned visited[2]={},ramps[2]={};
             for(int t=0;t<2;++t){int type=m->integer(Metropolix::cvTypeParam(t));if(type>=0 && type<=2)visited[t]|=1u<<type;for(int s=0;s<8;++s){int r=m->integer(Metropolix::cvRampParam(t,s));if(r>=0 && r<=2)ramps[t]|=1u<<r;}}
@@ -156,6 +162,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_SCALE_UI_QA")) {
         #include "ScaleWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_OUTPUT_UI_QA")) {
+        #include "OutputRoutingWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_CLOCK_UI_QA")) {

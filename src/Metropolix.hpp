@@ -129,7 +129,8 @@ struct Metropolix : Module {
         LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET,
         SCALE_LOCK, USER_SCALES, SCALE_NOTE = USER_SCALES + metro::UserScaleCount*2,
         SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2,
-        CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET, NUM_PARAMS
+        CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET,
+        OUTPUT_TRACK_OPTIONS, OUTPUT_TRACK_STRIDE=3, NUM_PARAMS=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -140,6 +141,7 @@ struct Metropolix : Module {
         MOD_TYPE, MOD_DESTINATION, MOD_ASSIGNMENT, MOD_MUTE, MOD_VALUE = 10, MOD_RAMP = 18 };
     enum AuxParams { AUX_AMOUNT, AUX_DESTINATION, AUX_ASSIGNMENT };
     enum CtrlParams { CTRL_VALUE, CTRL_DESTINATION, CTRL_ASSIGNMENT };
+    enum OutputTrackOptions {VELOCITY_SOURCE, SLIDER_OCTAVES, SLIDER_DIRECTION};
     enum InputIds { CLOCK_IN, RESET_IN, AUX_X_IN, AUX_Y_IN, AUX_Z_IN, NUM_INPUTS };
     enum OutputIds { PITCH_1, GATE_1, PITCH_2, GATE_2, CLOCK_OUT, A_OUT, B_OUT, NUM_OUTPUTS };
     enum LightIds { POSITION_1, POSITION_2 = POSITION_1 + 8, NUM_LIGHTS = POSITION_2 + 8 };
@@ -157,13 +159,14 @@ struct Metropolix : Module {
     static int slideTypeParam(int track) {return SLIDE_TYPE_1+track;}
     static int cvTypeParam(int track) {return CV_TYPE_1+track;}
     static int cvRampParam(int track,int stage) {return CV_RAMPS+track*8+stage;}
+    static int outputTrackParam(int track,int field) {return OUTPUT_TRACK_OPTIONS+track*OUTPUT_TRACK_STRIDE+field;}
     static int userScaleParam(int slot,bool root=false) {return USER_SCALES+metro::clamp(slot,0,99)*2+int(root);}
     static int scaleShortcutParam(int slot,bool root=false) {return SCALE_SHORTCUTS+metro::clamp(slot,0,7)*2+int(root);}
     static std::vector<std::string> ctrlDestinations() {
         return {"None", "Accum Mode", "Accum Polar", "Tempo", "Clock Div", "Direction",
             "Gate Length", "Octave", "Pitch Offset", "Pitch Post", "Pitch Pre", "Play Order",
             "Probability", "Pulse Count", "Pulse Div", "Pulses Len", "Ratchet", "Root",
-            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing", "Scale (User)"};
+            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing", "Scale (User)", "Velocity", "Slider Range", "Gate Scale"};
     }
     static int ctrlBaseParam(metro::CtrlDestination d, int t) {
         switch(d) {
@@ -179,6 +182,8 @@ struct Metropolix : Module {
             case metro::CtrlStagesLength: return trackParam(t,LENGTH);
             case metro::CtrlStagesOffset: return trackParam(t,OFFSET);
             case metro::CtrlSwing: return swingParam(t);
+            case metro::CtrlSliderRange: return outputTrackParam(t,SLIDER_OCTAVES);
+            case metro::CtrlGateScale: return gateScaleParam(t);
             default: return -1;
         }
     }
@@ -192,16 +197,29 @@ struct Metropolix : Module {
         }
         return -1;
     }
+    int uiSliderOctaves(int t) {
+        int range=integer(outputTrackParam(t,SLIDER_OCTAVES));
+        return metro::clamp(range?range:integer(RANGE),1,4);
+    }
+    float uiSliderPosition(int t,int stage) {
+        bool inverted=integer(outputTrackParam(t,SLIDER_DIRECTION));
+        float ctrl=0;
+        for(int k=0;k<2;++k)if(integer(ctrlParam(k,CTRL_DESTINATION))==metro::CtrlSliderInvert &&
+            (integer(ctrlParam(k,CTRL_ASSIGNMENT))==2 || integer(ctrlParam(k,CTRL_ASSIGNMENT))==t))
+            ctrl=params[ctrlParam(k,CTRL_VALUE)].getValue();
+        float value=params[PITCH+metro::clamp(stage,0,7)].getValue();
+        return inverted!=(ctrl>0)?1.f-value:value;
+    }
     static int accumScreenParam(int t, int field) {
         const int ids[] = {trackParam(t, ACCUM_LIMIT), accumParam(t, NEGATIVE_LIMIT),
             accumModeParam(t), accumParam(t, ACCUM_ORDER), accumParam(t, BIPOLAR), extraParam(t, ACCUM_AUTO_RESET)};
         return ids[metro::clamp(field, 0, 5)];
     }
     static std::vector<std::string> modDestinations() {
-        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)"};
+        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing", "Scale (User)", "Velocity", "Track Out Swap"};
     }
     static std::vector<std::string> outputSources() {
-        return {"Track 1 CV", "Track 2 CV", "MOD 1", "MOD 2", "MOD 3", "MOD 4", "MOD 5", "MOD 6", "MOD 7", "MOD 8"};
+        std::vector<std::string> names;for(int source=0;source<metro::OutputSourceCount;++source)names.push_back(metro::outputLabel(source));return names;
     }
     static std::vector<std::string> orderLabels() {
         return {"Linear", "Ping Pong", "Pendulum", "Odd / Even", "Jump by 2", "Jump by 3", "Jump by 4", "Jump by 5",
@@ -225,6 +243,7 @@ struct Metropolix : Module {
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
         LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
+    std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
@@ -324,6 +343,9 @@ struct Metropolix : Module {
             auto* slide=configParam<SlideAmountQuantity>(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide amount", "%");slide->typeParam=slideTypeParam(t);
             configSwitch(slideTypeParam(t),0,2,0,name+"slide type",{"Tempo","Analog","Acid"});
             configSwitch(cvTypeParam(t),0,2,0,name+"CV type",{"Bipolar ±","Unipolar +","Gate Toggle"});
+            configSwitch(outputTrackParam(t,VELOCITY_SOURCE),0,3,2,name+"velocity source",{"50%","75%","100%","Track CV"});
+            configSwitch(outputTrackParam(t,SLIDER_OCTAVES),0,4,0,name+"slider octaves",{"Follow shared range","1 octave","2 octaves","3 octaves","4 octaves"});
+            configSwitch(outputTrackParam(t,SLIDER_DIRECTION),0,1,0,name+"slider direction",{"Normal","Inverted"});
             configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(trackParam(t, MUTE), 0, 1, 0, name + "mute", {"Off", "On"})->randomizeEnabled = false;
@@ -365,8 +387,8 @@ struct Metropolix : Module {
                 configSwitch(modParam(lane, MOD_RAMP + stage), 0, 1, 0, prefix + "transition", {"Step", "Ramp"});
             }
         }
-        configSwitch(OUTPUT_SOURCE_A, 0, 9, 0, "Output A source", outputSources());
-        configSwitch(OUTPUT_SOURCE_B, 0, 9, 1, "Output B source", outputSources());
+        configSwitch(OUTPUT_SOURCE_A, 0, metro::OutputSourceCount-1, 0, "Output A source", outputSources());
+        configSwitch(OUTPUT_SOURCE_B, 0, metro::OutputSourceCount-1, metro::outputSource(metro::OutFirstPulse), "Output B source", outputSources());
         for (int input = 0; input < 3; ++input) {
             std::string name = std::string("AUX ") + char('X' + input) + " ";
             auxVoltage[input].store(0.f);
@@ -389,8 +411,8 @@ struct Metropolix : Module {
         configOutput(PITCH_2, "Track 2 pitch (1 V/oct)");
         configOutput(GATE_2, "Track 2 gate (5 V)");
         configOutput(CLOCK_OUT, "Clock (5 V, 1 ms)");
-        configOutput(A_OUT, "Assignable A: track CV or MOD lane");
-        configOutput(B_OUT, "Assignable B: track CV or MOD lane");
+        configOutput(A_OUT, "Assignable A: CV, velocity, clock, stage, transport or controller signal");
+        configOutput(B_OUT, "Assignable B: CV, velocity, clock, stage, transport or controller signal");
         for (auto* q : paramQuantities) {
             if (dynamic_cast<SwitchQuantity*>(q)) q->snapEnabled = true;
             q->description = "Hold and drag up to increase, down to decrease. Ctrl-drag for fine adjustment. Right-click for values and reset.";
@@ -486,6 +508,9 @@ struct Metropolix : Module {
             track.slideTime = params[trackParam(t, SLIDE_TIME)].getValue() * 0.01f;
             track.slideType=static_cast<metro::SlideType>(metro::clamp(integer(slideTypeParam(t)),0,2));
             track.cvType=static_cast<metro::TrackCvType>(metro::clamp(integer(cvTypeParam(t)),0,2));
+            track.velocitySource=integer(outputTrackParam(t,VELOCITY_SOURCE));
+            track.sliderOctaves=integer(outputTrackParam(t,SLIDER_OCTAVES));
+            track.sliderInverted=integer(outputTrackParam(t,SLIDER_DIRECTION))!=0;
             track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
@@ -542,7 +567,7 @@ struct Metropolix : Module {
         sequencer.process(args.sampleTime, run, external, clockEdge, resetEdge || button, [this] { presetClock(); applyLoopyMutes(); });
         for (int t = 0; t < 2; ++t) {
             const auto& state = sequencer.sounding(t);
-            int physical=sequencer.controls.swap?1-t:t;
+            int physical=sequencer.swapped()?1-t:t;
             outputs[PITCH_1 + 2 * physical].setVoltage(state.pitch);
             outputs[GATE_1 + 2 * physical].setVoltage(state.gate);
             outputs[A_OUT + t].setVoltage(sequencer.aux[t]);
@@ -583,10 +608,10 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(18));
+        json_object_set_new(root, "schemaVersion", json_integer(19));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(5));
+        json_object_set_new(root, "presetFormat", json_integer(6));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
@@ -609,6 +634,13 @@ struct Metropolix : Module {
     void dataFromJson(json_t* root) override {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
+        outputDraft[0].store(-1);outputDraft[1].store(-1);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<19){
+            for(int id=OUTPUT_TRACK_OPTIONS;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
+            // Missing pre-routing source parameters used legacy CV defaults.
+            if(integer(OUTPUT_SOURCE_A)>=10)params[OUTPUT_SOURCE_A].setValue(0);
+            if(integer(OUTPUT_SOURCE_B)>=10)params[OUTPUT_SOURCE_B].setValue(1);
+        }
         if(json_integer_value(json_object_get(root,"schemaVersion"))<18)
             for(int id=CLOCK_OUT_DIV;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<17)

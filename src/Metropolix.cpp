@@ -79,11 +79,8 @@ void syncPitchOverrides(Metropolix* m) {
     auto ids=overrideParams(m);std::vector<float> before;
     for(int id:ids) {
         before.push_back(m->params[id].getValue());int s=(id-Metropolix::STAGE_OVERRIDES)%16;
-        float slider=m->params[Metropolix::PITCH+s].getValue();
-        for(int k=0;k<2;++k)if(m->integer(Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION))==metro::CtrlSliderInvert &&
-            (m->integer(Metropolix::ctrlParam(k,Metropolix::CTRL_ASSIGNMENT))==2 || m->integer(Metropolix::ctrlParam(k,Metropolix::CTRL_ASSIGNMENT))==m->selectedTrack.load()))
-            slider=m->params[Metropolix::ctrlParam(k,Metropolix::CTRL_VALUE)].getValue()>0?1.f-m->params[Metropolix::PITCH+s].getValue():m->params[Metropolix::PITCH+s].getValue();
-        m->getParamQuantity(id)->setValue(slider*12*m->integer(Metropolix::RANGE));
+        int track=m->selectedTrack.load();
+        m->getParamQuantity(id)->setValue(m->uiSliderPosition(track,s)*12*m->uiSliderOctaves(track));
     }
     parameterHistory(m,ids,before,"sync pitch overrides");
 }
@@ -118,6 +115,9 @@ void trackSettingsMenu(Metropolix* m) {
     for(int n=50;n<=78;++n)swingValues.push_back(std::to_string(n)+"%");
     choice("Swing", Metropolix::swingParam(t), swingValues, 50);
     choice("CV type",Metropolix::cvTypeParam(t),{"Bipolar ±","Unipolar +","Gate Toggle"});
+    choice("Velocity",Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE),{"50%","75%","100%","Track CV"});
+    choice("Slider octaves",Metropolix::outputTrackParam(t,Metropolix::SLIDER_OCTAVES),{"Follow shared range","1 octave","2 octaves","3 octaves","4 octaves"});
+    choice("Slider direction",Metropolix::outputTrackParam(t,Metropolix::SLIDER_DIRECTION),{"Normal","Inverted"});
     std::vector<std::string> divisions;
     for (int i = 1; i <= 8; ++i) divisions.push_back("/ " + std::to_string(i));
     choice("Pulse-count division", Metropolix::extraParam(t, Metropolix::PULSE_DIV), divisions, 1);
@@ -220,7 +220,7 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
         setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION)),0.f);
     }));
     menu->addChild(createSubmenuItem("Not implemented yet","",[](ui::Menu* sub) {
-        for(auto name:{"Accum Dir","Gate Scale","Slider Range","Velocity"})
+        for(auto name:{"Accum Dir"})
             sub->addChild(createMenuLabel(name));
     }));
 }
@@ -429,6 +429,7 @@ struct MainDisplay : widget::Widget {
 #include "SlideUI.hpp"
 #include "StageCvUI.hpp"
 #include "ClockUI.hpp"
+#include "OutputUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

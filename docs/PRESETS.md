@@ -44,7 +44,7 @@ Choose **Recall complete pattern** in the preset menu to enable Pitch Jump,
 Switch Jump, CTRL Jump and AUX Assigns together. The demonstration patch uses
 these settings. This option has one undo step.
 
-AUX attenuverter positions, tempo, RUN state, slider range, A/B output routing,
+AUX attenuverter positions, tempo, RUN state, shared legacy slider range, A/B output routing,
 and preset loading preferences stay live. Direct CTRL ownership still applies:
 for example, recalling a CTRL assignment to Tempo lets that knob set the tempo,
 even though the BPM screen itself is not recalled. Assigns can similarly change
@@ -116,3 +116,11 @@ later firmware notes. Physical hardware comparison remains outstanding.
 Version 2.8.0 adds [preset chains and repeat counts](PRESET-CHAINS.md), using these
 banks. MIDI program changes, hardware bank interchange, custom Init presets and
 panel pickup modes remain future work.
+
+Since 2.16.0, velocity and per-track slider octave/direction settings are
+stored in format6 presets. Formats1–5 migrate to 100% velocity and the shared
+legacy range. Global cable functions remain unchanged by recall.
+
+Since 2.16.0, velocity and per-track slider octave/direction settings are
+stored in format6 presets. Formats1–5 migrate to 100% velocity and the shared
+legacy range. Global cable functions remain unchanged by recall.

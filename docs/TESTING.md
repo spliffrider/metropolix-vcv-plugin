@@ -1,4 +1,4 @@
-# Metropolix Lab 2.15.0 — Windows alpha quick start
+# Metropolix Lab 2.16.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/MetropolixLab-2.15.0-win-x64.vcvplugin)
-- [Clock output demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/Clock-output-demo.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.16.0/MetropolixLab-2.16.0-win-x64.vcvplugin)
+- [Velocity and percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.16.0/Output-routing-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.15.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.16.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.15.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.16.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -31,6 +31,12 @@ This follows the [official third-party plugin installation procedure](https://vc
 There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
+
+Open **[Output-routing-performance.vcv](../examples/Output-routing-performance.vcv)**,
+select your AUDIO device and press RUN. A drives bass velocity; B clocks a
+percussion envelope independently. Four chained scenes add variations and a
+break. Try ALT → A/B: a question mark stays pending until encoder confirmation.
+See the [output routing guide](OUTPUT-ROUTING.md).
 
 Open **[Stage-CV-performance.vcv](../examples/Stage-CV-performance.vcv)**, select
 your AUDIO device and press RUN. A/B drive the two filters through voltage
@@ -199,7 +205,7 @@ lock/search/apply, eight held/menu shortcuts, undo and saving/reopening.
 The Scale (User) MOD/AUX/CTRL destination moves inside the locked ten-slot bank.
 Feedback on fractional-voltage boundaries from hardware owners is especially useful.
 
-## Clock output — new in 2.15.0
+## Clock output — new in 2.16.0
 
 Open the supplied clock demo, select your audio device and press RUN. The right
 voice uses CLK `/4` offset `2`; the left voice uses regular track gates.

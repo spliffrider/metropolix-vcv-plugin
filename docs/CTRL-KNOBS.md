@@ -54,12 +54,13 @@ alongside CTRL. The HOME panel view now shows the actual knob positions.
 | Root | Offset: -12 to +12 semitones per track |
 | Direction | Left Reverse; noon programmed direction; right Forward |
 | Skip Invert | Right inverts all skips for the assigned tracks; left/noon normal |
-| Slider Invert | Right reverses pitch-slider interpretation; left/noon normal |
-| Track Out Swap | Right swaps physical Pitch/Gate 1 and 2 plus track-CV assignments at A/B; left/noon normal. MOD sources at A/B remain unchanged. Global. |
+| Slider Invert | Right reverses the programmed track direction; left/noon retain it |
+| Track Out Swap | Right swaps physical Pitch/Gate 1 and 2 plus every track-based assignment at A/B; left/noon normal. MOD sources at A/B remain unchanged. Global. |
 
-There are 25 destinations plus None as of 2.12.0. Scale (User) moves within the
-locked user bank; see [Scales](SCALES.md). **Accum Dir, Gate Scale,
-Slider Range, and Velocity** are listed as not implemented in the menu.
+There are 28 destinations plus None as of 2.16.0. Velocity adds −5…+5 V;
+Slider Range directly sets 1–4 octaves; Gate Scale directly sets 0–100%.
+See [Output routing](OUTPUT-ROUTING.md). Scale (User) moves within the
+locked user bank; see [Scales](SCALES.md). **Accum Dir** remains listed as not implemented in the menu.
 In particular, reversing an accumulated sequence requires more than changing
 the sign of its increments, so Accum Dir is not presented as available.
 

@@ -123,6 +123,22 @@ const DisplayCase cases[]={
     {"clock-default",Metropolix::CLOCK_OUT_PAGE,0,0,0,false},
     {"clock-offset",Metropolix::CLOCK_OUT_PAGE,1,0,0,false},
     {"clock-max",Metropolix::CLOCK_OUT_PAGE,1,0,0,false},
+    {"output-kind-0",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-1",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-2",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-3",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-4",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-5",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-6",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-7",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-8",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-9",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-10",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-11",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-12",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-13",Metropolix::A_PAGE,1,0,0,false},
+    {"output-kind-14",Metropolix::A_PAGE,0,0,0,false},
+    {"output-kind-15",Metropolix::A_PAGE,1,0,0,false},
     {"output-a",Metropolix::A_PAGE,0,0,0,false},
     {"output-b",Metropolix::B_PAGE,0,0,0,false},
     {"aux-cv",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
@@ -164,6 +180,11 @@ if(qaFrame>=20 && index<count) {
         if(test.row>=Metropolix::PITCH_OVERRIDE && !test.mod) {
             const int pitches[]={-1,12,28,60,7,-1,40,55},gates[]={-1,0,82,100,13,-1,88,1};
             for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);
+        }
+        if(test.page==Metropolix::A_PAGE || test.page==Metropolix::B_PAGE){
+            int source=0;std::string name=test.name;
+            if(name.find("output-kind-")==0){int kind=std::stoi(name.substr(12));source=metro::outputSource(kind,metro::outputIsMod(kind)?7:1);}
+            m->params[Metropolix::OUTPUT_SOURCE_A+(test.page==Metropolix::B_PAGE)].setValue(source);m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
         }
         m->clearLoopy();
         if(test.page==Metropolix::CLOCK_OUT_PAGE){std::string name=test.name;m->params[Metropolix::CLOCK_OUT_DIV].setValue(name=="clock-default"?1:name=="clock-max"?256:4);m->params[Metropolix::CLOCK_OUT_OFFSET].setValue(name=="clock-max"?255:name=="clock-default"?0:2);}
