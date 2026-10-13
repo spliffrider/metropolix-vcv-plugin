@@ -2,6 +2,9 @@
 // Coordinates follow the supplied front-on panel photograph at 34 HP / 510 px.
 constexpr float HARDWARE_WIDTH = 510.f;
 constexpr float EDITOR_WIDTH = 480.f;
+void chainEncoderPress(Metropolix* m);
+void openChainPage(Metropolix* m);
+void appendChainMenu(ui::Menu* menu,Metropolix* m);
 void stroke(NVGcontext* vg,float x,float y,float x2,float y2,NVGcolor color,float width=1.f) {
     nvgBeginPath(vg);nvgMoveTo(vg,x,y);nvgLineTo(vg,x2,y2);nvgStrokeColor(vg,color);nvgStrokeWidth(vg,width);nvgStroke(vg);
 }
@@ -63,7 +66,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
         case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
-        case Metropolix::SETUP_PAGE: return Metropolix::RANGE;
+        case Metropolix::SETUP_PAGE: return f==3?Metropolix::RANGE:-1;
         case Metropolix::PRESET_SETUP_PAGE: return Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
@@ -76,6 +79,14 @@ void screenPage(Metropolix* m, int page) {
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
+    if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
+    if(p==Metropolix::SETUP_PAGE) {
+        int f=m->uiField.load();
+        if(f==1)screenPage(m,Metropolix::PRESET_SETUP_PAGE);
+        else if(f==2)openChainPage(m);
+        else m->uiField.store(f==3?0:3);
+        return;
+    }
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%7); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }
@@ -114,6 +125,9 @@ struct HardwareControl : ValueKnob {
     std::string name, help;
     std::function<int()> binding;
     std::function<void()> action, rightAction, dragAction;
+    std::function<void()> longAction, releaseAction, navigationStart, navigationEnd;
+    std::function<bool()> longEnabled;
+    std::function<std::string()> navigationValue;
     std::function<bool()> navigationMode;
     std::function<void(int)> navigationTurn;
     std::function<void(ui::Menu*)> extraMenu;
@@ -129,6 +143,8 @@ struct HardwareControl : ValueKnob {
     float moved=0;
     float customSpeed=0;
     bool doubleClickReset=true;
+    bool longFired=false;
+    double heldSince=0, longSeconds=1;
     int controllerOwner=-1;
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
     ~HardwareControl() { clearTip(); }
@@ -164,6 +180,11 @@ struct HardwareControl : ValueKnob {
     void step() override {
         bind(); ValueKnob::step();
         if(tip) { tip->text=tooltipText(); tip->box.pos=getAbsoluteOffset(box.size); }
+        if(dragging && moved<3 && !longFired && longAction && (!longEnabled || longEnabled()) && system::getTime()-heldSince>=longSeconds) {longFired=true;longAction();}
+        if(dragging && navigating && moved>0 && navigationValue && settings::tooltips) {
+            if(!tip){auto* t=new HardwareTooltip;t->owner=this;tip=t;APP->scene->addChild(t);}
+            tip->text=navigationValue();
+        }
     }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onButton(const event::Button& e) override {
@@ -180,9 +201,10 @@ struct HardwareControl : ValueKnob {
     }
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
-        bind(); dragging=true; moved=0; clearTip();
+        bind(); dragging=true; moved=0; clearTip();heldSince=system::getTime();longFired=false;
         navigating=navigationMode && navigationMode(); navigationDelta=0;
         if(dragAction) dragAction();
+        if(navigating && navigationStart)navigationStart();
         ValueKnob::onDragStart(e);
     }
     void onDragMove(const event::DragMove& e) override {
@@ -193,8 +215,8 @@ struct HardwareControl : ValueKnob {
             if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
         } else ValueKnob::onDragMove(e);
     }
-    void onDragEnd(const event::DragEnd& e) override { if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return; ValueKnob::onDragEnd(e); dragging=false; }
-    void onAction(const event::Action&) override { if(moved<3.f && action) action(); }
+    void onDragEnd(const event::DragEnd& e) override { if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return; ValueKnob::onDragEnd(e); if(navigating && navigationEnd)navigationEnd();if(releaseAction)releaseAction();dragging=false;clearTip(); }
+    void onAction(const event::Action&) override { if(moved<3.f && !longFired && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()) app::Knob::onDoubleClick(e); }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu); }
     void draw(const DrawArgs& args) override {

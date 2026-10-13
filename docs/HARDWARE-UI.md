@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.7.1
+# Hardware panel and desktop interaction — 2.8.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -69,7 +69,7 @@ AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open de
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 
-Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. Hardware long-press shortcuts, preset chains, and the remaining secondary functions are still incomplete. Numeric editing and context menus are intentional computer conveniences.
+Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. SETUP now opens a selectable menu with Preset Settings and [Preset Chains](PRESET-CHAINS.md); holding SETUP opens chains, with encoder/stage holds for deletion/saving. Other long-press shortcuts and remaining secondary functions are incomplete. Numeric editing and context menus are intentional computer conveniences.
 
 ## Verification
 

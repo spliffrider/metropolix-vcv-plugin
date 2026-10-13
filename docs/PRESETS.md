@@ -108,5 +108,6 @@ The later changelog's explicit Load Delay rules take precedence over older
 paragraphs that still refer to Track 1 LEN/Pulses. The 4096 maximum follows the
 later firmware notes. Physical hardware comparison remains outstanding.
 
-Preset chains, repeat counts, MIDI program changes, hardware bank interchange,
-custom Init presets and panel pickup modes are separate future work.
+Version 2.8.0 adds [preset chains and repeat counts](PRESET-CHAINS.md), using these
+banks. MIDI program changes, hardware bank interchange, custom Init presets and
+panel pickup modes remain future work.

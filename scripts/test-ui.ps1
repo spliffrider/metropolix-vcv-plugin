@@ -1,4 +1,4 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish, [switch]$Chains, [switch]$ChainAudio)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
@@ -9,6 +9,7 @@ if ($Musical) { $Audio = $true }
 if ($Accumulator) { $Audio = $true }
 if ($Controls) { $Audio = $true }
 if ($PresetAudio) { $Audio = $true }
+if ($ChainAudio) { $Audio = $true }
 if (Get-Process Rack -ErrorAction SilentlyContinue) { throw 'Close Rack before the UI test.' }
 $env:CHERE_INVOKING = 'yes'
 $env:MSYSTEM = 'MINGW64'
@@ -20,6 +21,8 @@ try {
     $output = Join-Path $projectRoot $(if ($Presets) { 'tmp\preset-ui-qa' } elseif ($PresetAudio) { 'tmp\preset-audio-qa' } elseif ($Display) { 'tmp\display-qa' } elseif ($Controls) { 'tmp\ctrl-qa' } elseif ($Accumulator) { 'tmp\accumulator-qa' } elseif ($Variations) { 'tmp\variations-qa' } elseif ($Musical) { 'tmp\musical-qa' } elseif ($Aux) { 'tmp\aux-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
     $plugin = Join-Path $profile 'plugins-win-x64\MetropolixLab'
     if ($Polish) { $output = Join-Path $projectRoot 'tmp\polish-qa'; $env:METROPOLIX_POLISH_QA = '1' }
+    if ($Chains) { $output = Join-Path $projectRoot 'tmp\chain-ui-qa'; $env:METROPOLIX_CHAIN_UI_QA = '1' }
+    if ($ChainAudio) { $output = Join-Path $projectRoot 'tmp\chain-audio-qa'; $env:METROPOLIX_CHAIN_AUDIO_QA = '1' }
     New-Item -ItemType Directory -Force -Path $plugin, $output | Out-Null
     # A killed test leaves a truncated log, which Rack interprets as a crash on
     # the next launch and presents a modal before loading the explicit patch.
@@ -56,7 +59,7 @@ try {
         if ($Aux) { $env:METROPOLIX_AUX_QA = '1' }
         if ($Controls) { $env:METROPOLIX_CTRL_QA = '1' }
         if ($PresetAudio) { $env:METROPOLIX_PRESET_AUDIO_QA = '1' }
-        $audioExample = if ($PresetAudio) { 'examples\Preset-performance.vcv' } elseif ($Controls) { 'examples\CTRL-performance.vcv' } elseif ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
+        $audioExample = if ($ChainAudio) { 'examples\Chain-performance.vcv' } elseif ($PresetAudio) { 'examples\Preset-performance.vcv' } elseif ($Controls) { 'examples\CTRL-performance.vcv' } elseif ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
         $audioPatch = Get-Content -LiteralPath $audioExample -Raw | ConvertFrom-Json
         $audioPatch.modules += @{id=100; plugin='MetropolixLab'; model='AudioQA'; pos=@(100,1)}
         # Record exactly what reaches AUDIO, including the musical demo's stereo mix.
@@ -89,12 +92,13 @@ try {
     Write-Output $report
     $completion = if ($Presets) { 'PASS PRESET UI QA COMPLETE' } elseif ($Display) { 'PASS DISPLAY QA COMPLETE' } elseif ($Audio) { 'PASS AUDIO QA COMPLETE' } else { 'PASS UI QA COMPLETE' }
     if ($Polish) { $completion = 'PASS UI POLISH QA COMPLETE' }
+    if ($Chains) { $completion = 'PASS CHAIN UI QA COMPLETE' }
     if ($process.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($completion)) {
         throw 'UI test failed; inspect tmp/rack-qa/log.txt and tmp/qa/report.txt.'
     }
-    if ($Presets) {
-        $env:METROPOLIX_PRESET_REOPEN_QA = '1'
-        $arguments[-1] = '"' + (Join-Path $output 'preset-roundtrip.vcv') + '"'
+    if ($Presets -or $Chains) {
+        if ($Chains) { $env:METROPOLIX_CHAIN_REOPEN_QA = '1' } else { $env:METROPOLIX_PRESET_REOPEN_QA = '1' }
+        $arguments[-1] = '"' + (Join-Path $output $(if ($Chains) { 'chain-roundtrip.vcv' } else { 'preset-roundtrip.vcv' })) + '"'
         $reopened = Start-Process -FilePath $RackPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
         $elapsed.Restart()
         while (!$reopened.WaitForExit(1000)) {
@@ -104,13 +108,15 @@ try {
             }
         }
         $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
-        if ($reopened.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains('PASS PRESET REOPEN QA COMPLETE')) {
+        $reopenCompletion = if ($Chains) { 'PASS CHAIN REOPEN QA COMPLETE' } else { 'PASS PRESET REOPEN QA COMPLETE' }
+        if ($reopened.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($reopenCompletion)) {
             throw 'Preset banks did not survive an actual Rack file save/reopen.'
         }
-        Write-Output 'PASS PRESET REOPEN QA COMPLETE'
+        Write-Output $reopenCompletion
     }
     if ($Aux -and !$report.Contains('PASS AUX WIRING COMPLETE')) { throw 'AUX wiring verification did not finish.' }
     if ($PresetAudio -and !$report.Contains('PASS PRESET PERFORMANCE COMPLETE')) { throw 'Preset transitions did not finish.' }
+    if ($ChainAudio -and !$report.Contains('PASS CHAIN PERFORMANCE COMPLETE')) { throw 'Chain transitions did not finish.' }
     if ($Controls -and !$report.Contains('PASS CTRL PERFORMANCE COMPLETE')) { throw 'CTRL performance verification did not finish.' }
 } finally {
     Remove-Item Env:METROPOLIX_QA_DIR -ErrorAction SilentlyContinue
@@ -125,5 +131,8 @@ try {
     Remove-Item Env:METROPOLIX_PRESET_REOPEN_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_PRESET_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_POLISH_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_CHAIN_UI_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_CHAIN_REOPEN_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_CHAIN_AUDIO_QA -ErrorAction SilentlyContinue
     Pop-Location
 }

@@ -12,6 +12,7 @@ struct PresetLoadChange : history::ModuleAction {
     Metropolix::PresetRecall recall;
     void restore(bool undoing) {
         if (auto* m = dynamic_cast<Metropolix*>(APP->engine->getModule(moduleId))) {
+            if(m->chainEnabled.load()){auto state=m->getChainState();state.enabled=false;m->setChainState(state);}
             Metropolix::PresetCommand c;
             c.kind = Metropolix::PresetCommand::Restore;
             c.snapshot = undoing ? recall.before : recall.after;
@@ -31,6 +32,7 @@ void pumpPresetUi(Metropolix* m) {
         APP->history->push(h);
     }
     m->sendPresetCommand();
+    m->sendChainCommand();
 }
 bool presetPage(Metropolix* m) {
     return m && (m->uiPage.load() == Metropolix::LOAD_PAGE || m->uiPage.load() == Metropolix::SAVE_PAGE);
@@ -42,7 +44,7 @@ void openPresetPage(Metropolix* m, bool save) {
     if (save) m->presetSaveAction.store(0);
 }
 void savePresetSlot(Metropolix* m, int slot, bool clear, bool exitAfter) {
-    if (m->presetSaveBlocked()) { m->presetNotice.store(5); return; }
+    if (m->presetSaveBlocked()) { m->presetNotice.store(m->chainEnabled.load()?6:5); return; }
     pumpPresetUi(m);
     auto* h = new PresetBankChange;
     h->moduleId = m->id; h->slot = slot; h->before = m->getPreset(slot);
@@ -58,7 +60,7 @@ void savePresetSlot(Metropolix* m, int slot, bool clear, bool exitAfter) {
     if (exitAfter && !clear) screenPage(m, Metropolix::HOME);
 }
 void confirmPresetSave(Metropolix* m, int slot, bool clear, bool exitAfter) {
-    if (m->presetSaveBlocked()) { m->presetNotice.store(5); return; }
+    if (m->presetSaveBlocked()) { m->presetNotice.store(m->chainEnabled.load()?6:5); return; }
     bool occupied = m->getPreset(slot).occupied;
     if (clear && !occupied) { m->presetNotice.store(3); return; }
     if (!occupied) { savePresetSlot(m, slot, clear, exitAfter); return; }
@@ -79,6 +81,7 @@ void activatePresetSlot(Metropolix* m, int stage) {
 }
 void appendPresetMenu(ui::Menu* menu, Metropolix* m) {
     if (!m) return;
+    appendChainMenu(menu,m);
     menu->addChild(new ui::MenuSeparator);
     menu->addChild(createMenuLabel("Internal presets: 8 banks x 8 slots"));
     menu->addChild(createMenuItem("Load preset bank", "ALT + LOAD", [m] { openPresetPage(m, false); }));

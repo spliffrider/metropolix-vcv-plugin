@@ -6,6 +6,22 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_CHAIN_AUDIO_QA")) {
+            if(qaFrame==2) {
+                json_t* json=APP->engine->moduleToJson(m),*data=json_object_get(json,"data");
+                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer(4));
+                json_t* links=json_object_get(json_object_get(data,"chains"),"working");
+                for(size_t i=0;i<json_array_size(links);++i)json_object_set_new(json_array_get(links,i),"repeats",json_integer(1));
+                APP->engine->moduleFromJson(m,json);json_decref(json);
+            }
+            static int previous=-1,transitions=0;static bool good=true;
+            int link=m->chainPlayingLink.load();
+            if(link>=0 && link!=previous) {
+                if(previous>=0){good &= link==(previous+1)%7;++transitions;}
+                previous=link;
+                if(transitions==7) {std::ofstream report(dir+"/report.txt",std::ios::app);report<<(good?"PASS ":"FAIL ")<<"CHAIN PERFORMANCE COMPLETE: all seven links and loop observed during real audio playback\n";}
+            }
+        }
         if(std::getenv("METROPOLIX_PRESET_AUDIO_QA")) {
             if(qaFrame==2) {
                 // Compress the eight-bar demo to one bar for this short test.
@@ -85,6 +101,10 @@ void MetropolixWidget::qaStep() {
     };
     if(std::getenv("METROPOLIX_POLISH_QA")) {
         #include "UiPolishQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_CHAIN_UI_QA")) {
+        #include "ChainWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_DISPLAY_QA")) {

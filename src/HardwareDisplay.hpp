@@ -304,8 +304,8 @@ struct HardwareDisplay : HardwareControl {
             int pending=m?m->pendingSlot.load():-1,notice=m?m->presetNotice.load():0;
             if(pending>=0)c.text(1,57,string::f("QUEUED %d-%d",pending/8+1,pending%8+1));
             else if(notice) {
-                const char* messages[]={"","SAVED","CLEARED","EMPTY SLOT","QUEUE CANCELLED","CANCEL QUEUE FIRST"};
-                c.text(1,57,messages[metro::clamp(notice,0,5)]);
+                const char* messages[]={"","SAVED","CLEARED","EMPTY SLOT","QUEUE CANCELLED","CANCEL QUEUE FIRST","DISABLE CHAIN FIRST"};
+                c.text(1,57,messages[metro::clamp(notice,0,6)]);
             } else c.text(1,57,save?"SELECT SLOT TO SAVE":"SELECT SLOT TO LOAD");
             return c;
         } else if(page==Metropolix::PRESET_SETUP_PAGE) {
@@ -323,9 +323,46 @@ struct HardwareDisplay : HardwareControl {
                 if(i==f){c.corners(0,y,128,16);c.turn(1,y+5);}
             }
             c.text(1,56,"PRESET SETTINGS");return c;
+        } else if(page==Metropolix::CHAIN_PAGE && m) {
+            const char* colors[]={"Red","Orange","Yellow","Green","Cyan","Blue","Magenta","Pink"};
+            auto state=m->getChainState();int n=state.working.size;
+            int cursor=m->chainCursor.load(),playing=m->chainPlayingLink.load(),edit=m->chainEdit.load();
+            if(state.enabled && m->chainFollow.load() && playing>=0)cursor=2*playing+1;
+            c.text(1,1,"#");c.box(18,1,6,4);c.box(22,3,6,4);c.text(74,1,"X");c.text(103,1,"MUTE");
+            // List positions alternate links and insertion lines. Only the
+            // selected insertion line occupies a row, as on the hardware.
+            int selected=cursor/2,first=std::max(0,selected-1);
+            if(cursor>=2*n+1)first=std::max(0,n-2);
+            int y=12;
+            for(int i=first;i<=n && y<=45;++i) {
+                if(cursor==2*i && !state.enabled && !edit) {
+                    if(!n){c.text(18,y,"New Chain",false);c.box(0,y-1,128,10,155);}else {c.line(0,y+4,126,y+4);c.text(56,y,"+",true);}
+                    y+=10;
+                }
+                if(i==n)break;
+                const auto& l=state.working.links[i];
+                bool active=cursor==2*i+1;
+                if(active)c.box(edit==1?16:edit==2?73:0,y-1,edit==1?56:edit==2?27:128,10,155);
+                c.text(1,y,std::to_string(i+1),false);
+                c.text(18,y,std::string(colors[l.slot/8])+" "+std::to_string(l.slot%8+1),false);
+                c.text(75,y,"x"+std::to_string(l.repeats),false);
+                for(int t=0;t<3;++t)c.circle(108+8*t,y+4,2,!(l.mutes&(1u<<t)));
+                if(i==playing && state.enabled)c.fill(0,y+2,1,5);
+                y+=10;
+            }
+            if(y<=45) {if(cursor==2*n+1)c.box(0,y-1,128,10,155);c.text(18,y,state.enabled?"Disable Chain":"Enable Chain",false);y+=10;}
+            if(y<=45) {if(cursor==2*n+2)c.box(0,y-1,128,10,155);c.text(18,y,"Clear Chain",false);}
+            if(state.enabled) {
+                if(std::fmod(system::getTime(),.8)<.5) {c.box(1,56,7,4);c.box(5,59,7,4);}
+                c.text(15,57,playing<0?"-":string::f("%d:%d",playing+1,m->chainPlayingRepeat.load()));
+                c.text(38,57,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
+            } else c.text(1,57,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
+            return c;
         } else if(page==Metropolix::SETUP_PAGE) {
-            field(c,0,"SLIDER OCTAVES",std::to_string(integer(Metropolix::RANGE,3)),true);
-            c.text(2,33,"RIGHT-CLICK SETUP");c.text(2,44,"FOR PRESET SETTINGS");
+            c.text(13,5,"Slider Octaves");c.right(126,5,std::to_string(integer(Metropolix::RANGE,3)));
+            c.text(13,22,"Presets Setup...");c.text(13,39,"Preset Chains...");
+            c.corners(0,(f==3?0:f)*17,128,16);c.turn(1,(f==3?0:f)*17+5);
+            c.text(1,56,"SETUP MENU");return c;
         }
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
         footer(c);return c;
