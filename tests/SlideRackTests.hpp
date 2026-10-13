@@ -3,7 +3,7 @@ void slideRackTests(){
     for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);
     m->params[M::slideTypeParam(0)].setValue(metro::AnalogSlide);m->params[M::slideTypeParam(1)].setValue(metro::AcidSlide);m->readSettings();
     require(m->sequencer.settings.tracks[0].slideType==metro::AnalogSlide && m->sequencer.settings.tracks[1].slideType==metro::AcidSlide,"per-track slide types reach actual engine");
-    require(M::SNAPSHOT_PARAMS==460 && M::presetParam(458)==685 && M::presetParam(459)==686 && M::presetIndex(M::SCALE_LOCK)<0,"format 4 appends only the two slide types after the complete format 3 prefix");
+    require(M::FORMAT4_PARAMS==460 && M::presetParam(458)==685 && M::presetParam(459)==686 && M::presetIndex(M::SCALE_LOCK)<0,"format 4 appends only the two slide types after the complete format 3 prefix");
     auto preset=m->capturePreset();m->putPreset(0,preset);auto* params=m->paramsToJson();auto* data=m->dataToJson();other->paramsFromJson(params);other->dataFromJson(data);json_decref(params);
     require(other->integer(M::slideTypeParam(0))==1 && other->integer(M::slideTypeParam(1))==2 && other->getPreset(0).values==preset.values,"slide types and format 4 preset survive Rack roundtrip");
     auto* slot=json_array_get(json_object_get(data,"presets"),0);while(json_array_size(slot)>458)json_array_remove(slot,json_array_size(slot)-1);

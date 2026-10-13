@@ -1,0 +1,33 @@
+if(std::getenv("METROPOLIX_STAGE_CV_REOPEN_QA")) {
+    if(qaFrame==6){check(m->integer(Metropolix::cvTypeParam(0))==1 && m->integer(Metropolix::cvTypeParam(1))==2 && m->getPreset(0).occupied && m->getPreset(0).values[460]==1 && m->getPreset(0).values[461]==2 && m->integer(Metropolix::cvRampParam(0,0))==2,"native file and preset preserve CV types/transitions");check(true,"STAGE CV REOPEN QA COMPLETE");APP->window->close();}return;
+}
+auto hold=[&](HardwareControl* c){widget::EventContext context;event::DragStart e;e.context=&context;e.button=GLFW_MOUSE_BUTTON_LEFT;c->onDragStart(e);};
+auto release=[&](HardwareControl* c){widget::EventContext context;event::DragEnd e;e.context=&context;e.button=GLFW_MOUSE_BUTTON_LEFT;c->onDragEnd(e);};
+auto reset=[&]{auto* c=find("Encoder");hold(c);c->heldSince=system::getTime()-1.1;c->step();release(c);};
+if(qaFrame==6){
+    using M=Metropolix;for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(0);m->params[M::RUN].setValue(0);click(find("TRK 1"));click(find("ALT"));click(find("Stage 8 / CV"));
+    check(m->uiPage.load()==M::CV_TYPE_PAGE && screenParam(m)==M::cvTypeParam(0) && !m->uiAlt.load(),"ALT TYPE opens selected note track CV type");
+    drag(find("Encoder"),-45);check(m->integer(M::cvTypeParam(0))>0,"type changes by native upward drag");APP->history->undo();check(m->integer(M::cvTypeParam(0))==0,"CV type change has undo");
+    m->params[M::cvTypeParam(0)].setValue(1);reset();check(m->integer(M::cvTypeParam(0))==0,"long encoder resets type");APP->history->undo();check(m->integer(M::cvTypeParam(0))==1,"type reset undoes");m->params[M::cvTypeParam(0)].setValue(0);
+    click(find("EDIT"));click(find("Stage 8 / CV"));click(find("Stage 1 / SLIDE"));check(cvPage(m) && screenParam(m)==M::stageParam(0,0,M::CV),"EDIT CV selects a stage voltage");
+    click(find("Encoder"));check(m->integer(M::cvRampParam(0,0))==1,"encoder cycles Step to sRamp");click(find("Encoder"));check(m->integer(M::cvRampParam(0,0))==2,"encoder cycles sRamp to pRamp");APP->history->undo();check(m->integer(M::cvRampParam(0,0))==1,"CV ramp choice undoes");APP->history->redo();
+    for(int s=0;s<8;++s)m->params[M::stageParam(0,s,M::CV)].setValue(s*.25f);
+    click(find("ALT"));drag(find("Encoder"),-24);float delta=m->params[M::stageParam(0,0,M::CV)].getValue();check(delta>0,"ALT CV offset increases all values");
+    for(int s=0;s<8;++s)check(std::abs(m->params[M::stageParam(0,s,M::CV)].getValue()-(s*.25f+delta))<1e-5,"ALT CV drag preserves voltage differences");APP->history->undo();check(m->params[M::stageParam(0,7,M::CV)].getValue()==1.75f && m->params[M::stageParam(0,0,M::CV)].getValue()==0,"all CV offset undoes in one action");
+    click(find("Encoder"));for(int s=0;s<8;++s)check(m->integer(M::cvRampParam(0,s))==0,"ALT applies next selected ramp to all stages");APP->history->undo();check(m->integer(M::cvRampParam(0,0))==2 && m->integer(M::cvRampParam(0,1))==0,"all ramp changes group undo");
+    reset();for(int s=0;s<8;++s)check(m->params[M::stageParam(0,s,M::CV)].getValue()==0,"ALT long encoder resets all CV");APP->history->undo();check(m->params[M::stageParam(0,7,M::CV)].getValue()==1.75f,"bulk reset undoes");click(find("ALT"));
+    m->params[M::cvTypeParam(0)].setValue(1);m->params[M::stageParam(0,0,M::CV)].setValue(-4);reset();check(m->params[M::stageParam(0,0,M::CV)].getValue()==0,"unipolar reset clears hidden negative stored value");APP->history->undo();check(m->params[M::stageParam(0,0,M::CV)].getValue()==-4,"unipolar reset undo preserves original negative program");
+    click(find("ALT"));drag(find("Encoder"),-24);float first=m->params[M::stageParam(0,0,M::CV)].getValue();check(first>0 && std::abs(m->params[M::stageParam(0,1,M::CV)].getValue()-(.25f+first))<1e-5,"unipolar ALT offsets start from effective zero");APP->history->undo();click(find("ALT"));
+    auto* cell=new ValueCell;cell->metroModule=m;cell->module=m;cell->paramId=M::stageParam(0,0,M::CV);cell->stageRow=M::CV;cell->stageColumn=0;addChild(cell);drag(cell,-24);check(m->params[cell->paramId].getValue()>0,"optional CV cell starts a drag from effective zero");APP->history->undo();check(m->params[cell->paramId].getValue()==-4,"optional grid drag undo retains negative stored CV");removeChild(cell);delete cell;
+    m->params[M::cvTypeParam(0)].setValue(2);for(int s=0;s<8;++s)m->params[M::stageParam(0,s,M::CV)].setValue(0);
+    auto* gateCell=new ValueCell;gateCell->metroModule=m;gateCell->module=m;gateCell->paramId=M::stageParam(0,0,M::CV);gateCell->stageRow=M::CV;gateCell->stageColumn=0;addChild(gateCell);click(gateCell);check(m->params[gateCell->paramId].getValue()==5,"optional CV gate cell toggles on a short click");APP->history->undo();check(m->params[gateCell->paramId].getValue()==0,"optional gate click has one undo");removeChild(gateCell);delete gateCell;
+    m->params[M::stageParam(0,2,M::CV)].setValue(-3);click(find("Stage 3 / PITCH"));APP->history->undo();check(m->params[M::stageParam(0,2,M::CV)].getValue()==-3,"gate click undo restores original stored bipolar voltage");m->params[M::stageParam(0,2,M::CV)].setValue(0);
+    click(find("Stage 3 / PITCH"));check(m->params[M::stageParam(0,2,M::CV)].getValue()==5,"CV gate stage click toggles high");APP->history->undo();check(m->params[M::stageParam(0,2,M::CV)].getValue()==0,"gate click undoes");APP->history->redo();
+    click(find("ALT"));click(find("Encoder"));check(m->params[M::stageParam(0,2,M::CV)].getValue()==0 && m->params[M::stageParam(0,3,M::CV)].getValue()==5,"ALT encoder inverts gates");APP->history->undo();
+    drag(find("Encoder"),-22);check(m->params[M::stageParam(0,3,M::CV)].getValue()==5 && m->params[M::stageParam(0,2,M::CV)].getValue()==0,"ALT upward turn rotates gates forward");APP->history->undo();check(m->params[M::stageParam(0,2,M::CV)].getValue()==5 && m->params[M::stageParam(0,3,M::CV)].getValue()==0,"rotation has one undo");
+    reset();for(int s=0;s<8;++s)check(m->params[M::stageParam(0,s,M::CV)].getValue()==0,"ALT gate reset clears pattern");APP->history->undo();click(find("ALT"));
+    press(find("Encoder"),GLFW_MOUSE_BUTTON_RIGHT);check(seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Rotate gates backward";})!=nullptr,"CV menus provide desktop pattern operations");closeMenus();
+    m->params[M::cvTypeParam(0)].setValue(1);m->params[M::cvTypeParam(1)].setValue(2);m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/cv-roundtrip.vcv");
+}
+if(qaFrame==8)APP->window->screenshot(dir+"/cv-gate-display.png");
+if(qaFrame==12){check(!qaFailed,"STAGE CV UI QA COMPLETE");APP->window->close();}

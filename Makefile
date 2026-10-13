@@ -8,7 +8,7 @@ DISTRIBUTABLES += docs/AUX-INPUTS.md docs/CTRL-KNOBS.md docs/PRESETS.md
 DISTRIBUTABLES += docs/PRESET-CHAINS.md
 DISTRIBUTABLES += docs/SWING.md
 DISTRIBUTABLES += docs/STAGE-OVERRIDES.md docs/LOOPY.md
-DISTRIBUTABLES += docs/SCALES.md docs/SLIDES.md
+DISTRIBUTABLES += docs/SCALES.md docs/SLIDES.md docs/STAGE-CV.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -43,6 +43,8 @@ test:
 	./build/tests/scale-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/SlideTests.cpp -o build/tests/slide-tests.exe
 	./build/tests/slide-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/StageCvTests.cpp -o build/tests/stage-cv-tests.exe
+	./build/tests/stage-cv-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:
@@ -50,6 +52,8 @@ rack-test-build:
 	$(CXX) -std=c++11 -O2 -DARCH_WIN -D_USE_MATH_DEFINES -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include tests/RackIntegrationTests.cpp -L$(RACK_DIR) -lRack -static-libstdc++ -static-libgcc -o build/tests/rack-integration.exe
 
 .PHONY: ui-test-build
-ui-test-build:
+ui-test-build: build/ui-test/plugin.dll
+
+build/ui-test/plugin.dll: $(SOURCES) $(wildcard src/*.hpp tests/*.hpp) Makefile $(RACK_DIR)/include/rack.hpp
 	@mkdir -p build/ui-test
 	$(CXX) -std=c++11 -O1 -g -DMETROPOLIX_QA -DARCH_WIN -D_USE_MATH_DEFINES -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include src/plugin.cpp src/Metropolix.cpp -shared -L$(RACK_DIR) -lRack -static-libstdc++ -static-libgcc -o build/ui-test/plugin.dll

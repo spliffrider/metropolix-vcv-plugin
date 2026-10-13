@@ -312,7 +312,7 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy routing/Queue options; and full stage-CV types are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy routing/Queue options are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 
@@ -384,3 +384,28 @@ voltage slew, with an exponential amount mapping from 1 ms to 1 second per
 octave and instantaneous zero. Defaults and shortcuts remain explicit choices.
 Owner feedback is needed for the curves and Acid's Hold/accumulator interactions;
 see [Slide models](SLIDES.md).
+
+## Stage CV — 2.14.0
+
+Manual pp.103–106/136 define three types and three incoming transitions.
+The dedicated engine suite passes 2,292,494 checks: printed four-pulse timing,
+all pulse counts/types/transitions, voltage bounds, rests/probability/skips,
+all 21 orders, 44.1/48/96 kHz, Swing/division, mutes and frozen audition.
+Rack tests cover real A/B jacks, typed quantities, 478-field format-5 snapshots
+and neutral Bipolar/Step migration from earlier formats.
+
+Widget tests pass TYPE, transition cycling, ALT voltage offsets, bulk ramp
+selection/reset, gate inversion/rotation, stored negative-value undo, optional
+grid dragging and native save/reopen. All 60 OLED states pass, including each
+type and ramp plus ALT vertex markers. Existing sequencing/UI checks pass.
+The stereo demo records twelve seconds at 48 kHz: RMS .351/.344 V, peaks
+1.503/1.552 V, DC approximately .00028 V. Actual A/B cable voltages both span
+-2..+5 V, with 146,451 / 179,638 changing samples. All types and transitions
+and the seven-link loop are observed during playback.
+
+The chosen gate conversion threshold is 1.5 V; changing type preserves the
+stored numerical program. First ramps start from zero, and a stalled clock
+finishes the current pulse's progress without inventing later sRamp pulses.
+These conversion/stall/live-edit rules require hardware feedback. The manual
+conflicts on EDIT versus ALT for bulk ramp selection; this version uses ALT
+consistently with its complete CV shortcut instructions. See [Stage CV](STAGE-CV.md).
