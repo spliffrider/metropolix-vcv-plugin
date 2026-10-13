@@ -293,7 +293,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE, BACKUP_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
     std::vector<float> workflowBaseline, workflowClipboard;
@@ -306,6 +306,8 @@ struct Metropolix : Module {
     int uiDraftParam=-1;float uiDraftValue=0,uiDraftBase=0,uiDraftOrigin=0;
     std::vector<int> uiDraftIds;std::vector<float> uiDraftBefore;
     std::atomic<int> uiSetupCursor{0},modMenuCursor{0},midiSetupCursor{0};
+    std::atomic<int> backupCursor{0};
+    std::string backupNotice;double backupNoticeUntil=0; // UI thread only.
     metro::MxLogic mx;std::uint64_t mxResetSerial=0;std::atomic<bool> mxConnected{false};
     metro::ExternalDivider externalDivider;metro::OutputDelay<NUM_OUTPUTS> outputDelay;
     void cancelDraft(){uiDraftParam=-1;uiDraftIds.clear();uiDraftBefore.clear();}
@@ -319,6 +321,7 @@ struct Metropolix : Module {
     }
     std::atomic<int> trackMenuCursor{0}, setupCursor{0}, globalCursor{0};
     std::atomic<bool> tunerActive{false}, transportRunning{false};
+    bool transportRestoreHold=false; // Audio thread; restore writes under engine exclusion.
     std::atomic<unsigned> heldTrackReset{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -674,6 +677,7 @@ struct Metropolix : Module {
         int resetMode=integer(RESET_INPUT_MODE);
         bool gatedRun=resetMode && inputs[RESET_IN].isConnected();
         bool run = gatedRun?resetTrigger.isHigh():params[RUN].getValue() > 0.5f;
+        if(transportRestoreHold){if(params[RUN].getValue()>.5f || (gatedRun && !resetTrigger.isHigh()))transportRestoreHold=false;else run=false;}
         resetEdge=resetEdge && resetMode!=2;
         if(gatedRun)sequencer.resumeOnRun=true;
         else sequencer.resumeOnRun=integer(RUN_MODE)!=0;
@@ -752,11 +756,27 @@ struct Metropolix : Module {
         sequencer.reset();
         readSettings();
     }
+    json_t* paramsToJson() override {
+        // A quantity may display a constrained value (positive CV, clock offset,
+        // scale degree). Preserve its underlying setting for later mode changes.
+        auto* array=json_array();for(int id=0;id<NUM_PARAMS;++id)json_array_append_new(array,json_pack("{s:i,s:f}","id",id,"value",double(paramQuantities[id]->ParamQuantity::getValue())));return array;
+    }
+    void paramsFromJson(json_t* root) override {
+        size_t index;json_t* entry;
+        json_array_foreach(root,index,entry){auto* id=json_object_get(entry,"id");if(!id)id=json_object_get(entry,"paramId");json_int_t number=id?json_integer_value(id):json_int_t(index);auto* value=json_object_get(entry,"value");
+            if((id && !json_is_integer(id)) || number<0 || number>=NUM_PARAMS || !json_is_number(value))continue;
+            int n=int(number);
+            double v=json_number_value(value);if(!std::isfinite(v))continue;auto* q=paramQuantities[n];
+            float bounded=float(std::max(double(q->minValue),std::min(double(q->maxValue),v)));if(q->snapEnabled)bounded=std::round(bounded);
+            APP->engine->setParamValue(this,n,bounded);
+        }
+    }
     json_t* dataToJson() override {
         json_t* root = json_object();
         json_object_set_new(root,"midiInput",midiInput.toJson());json_object_set_new(root,"midiOutput",midiOutput.toJson());json_object_set_new(root,"midiSetupCursor",json_integer(midiSetupCursor.load()));
         json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
-        json_object_set_new(root, "schemaVersion", json_integer(28));
+        json_object_set_new(root, "schemaVersion", json_integer(29));
+        json_object_set_new(root,"backupCursor",json_integer(backupCursor.load()));
         json_object_set_new(root,"pickup",pickupToJson());
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
@@ -790,13 +810,15 @@ struct Metropolix : Module {
         tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
         uiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"uiSetupCursor"))),0,7));
         int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
-        midiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"midiSetupCursor"))),0,4));
+        midiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"midiSetupCursor"))),0,5));
+        backupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"backupCursor"))),0,3));
         modMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"modMenuCursor")))+(schema<27?2:0),0,3));
         int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
         if(schema<27 && cursor>=10)cursor+=5;
         trackMenuCursor.store(metro::clamp(cursor,0,15));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,6));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
         if(schema<25)for(int id=ENC_CONFIRM;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
-        if(integer(RUN_ON_BOOT)<2)params[RUN].setValue(float(integer(RUN_ON_BOOT)));
+        if(!json_is_true(json_object_get(root,"preserveTransportState")) && integer(RUN_ON_BOOT)<2)params[RUN].setValue(float(integer(RUN_ON_BOOT)));
+        transportRestoreHold=json_is_true(json_object_get(root,"preserveTransportState")) && integer(RUN)==0;
         if(schema<24)params[INIT_PRESET].setValue(0);
         if(schema<23)for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<20)
@@ -856,7 +878,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(MX_SETUP_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(BACKUP_PAGE)));
         if(uiPage.load()==TUNER_PAGE){uiPage.store(GLOBAL_SETUP_PAGE);globalCursor.store(5);}
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?7:uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));

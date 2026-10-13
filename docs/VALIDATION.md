@@ -1,4 +1,35 @@
-# Validation and fidelity status — 2.25.0
+# Validation and fidelity status — 2.26.0
+
+## Portable backups — 2.26.0
+
+All 25 portable suites pass. Native Rack engine/file tests verify three scopes,
+all 64 preset slots, saved chains, physical/sounding pickup, custom scales,
+MIDI/MX assignments, identity/geometry/device preservation and stopped restore
+with Run on Boot On. A held external Run gate cannot restart until a new gate
+cycle or explicit RUN. Old/new module receipts restore the correct RUN state.
+Signed CV and dormant clock offsets survive serialization regardless of the
+previous editing mode; malformed 64-bit parameter IDs cannot wrap to a control.
+
+Future backup/settings/preset/chain versions, missing/foreign fields, invalid
+pickup/chain slots, duplicate IDs, nonnumeric values and truncated banks reject
+before mutation. Each of the 770 parameter bounds is checked. File tests cover
+Unicode paths, float32 roundtrip, atomic overwrite, a locked destination
+preserving its original file, duplicate keys, malformed/NaN JSON and the 4 MiB
+limit. File work runs on the UI thread through Rack's locking serialization API.
+
+Actual Rack widget tests pass MIDI/backup navigation, vertical dragging, one
+import undo action, undo/redo of running state and bank, cable/device preservation,
+invalid imports without state/history changes and patch save/reopen. All 21
+prior panel modes pass. The 157 OLED cases include six new menu/status states;
+their enlarged bitmap captures were visually inspected. Native OS file chooser
+mouse/focus interaction remains a manual tester check.
+
+Actual MX bass/lead/percussion playback still observes all eight 0/5V stage
+cables, six edges each and at most one stage high. The 12-second 48 kHz recording
+has RMS .201068/.202382 V, peaks 1.32221/1.13008 V and DC .000512853/.000511606 V.
+This validates the Rack path; hardware/subjective equivalence is unverified.
+[Backups](BACKUPS.md) documents the software JSON format and scope differences.
+
 
 ## MX expander — 2.25.0
 

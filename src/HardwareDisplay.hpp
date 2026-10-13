@@ -464,6 +464,10 @@ struct HardwareDisplay : HardwareControl {
                 c.text(38,57,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
             } else c.text(1,57,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
             return c;
+        } else if(page==Metropolix::BACKUP_PAGE){
+            int cursor=m?m->backupCursor.load():0,start=std::min(std::max(cursor-1,0),1);
+            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+4,backupName(item));if(item==cursor){c.corners(0,y-1,128,16);c.arrow(3,y+5,true);}}
+            c.text(1,56,m && system::getTime()<m->backupNoticeUntil?m->backupNotice:"BACKUP FILES");return c;
         } else if(page==Metropolix::MX_SETUP_PAGE){
             c.text(1,1,"MX - EXPANDER");int mode=integer(Metropolix::MX_MODE);
             c.fit(10,12,116,m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",1);if(!f)c.turn(0,12);

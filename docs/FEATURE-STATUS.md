@@ -1,9 +1,10 @@
-# Feature status — 2.25.0 public alpha
+# Feature status — 2.26.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.26.0 adds [portable backups](BACKUPS.md), scoped restore and native undo.
 2.25.0 adds [MX gates/clocks and stage assignments](MX.md), including Loopy Stage Player, swap and mute.
 2.24.0 adds [MIDI notes/CCs, clock/transport and incoming control](MIDI.md).
 2.23.0 adds [preset pickup](PRESET-PICKUP.md), with physical/sounding state, native undo and persistence.
@@ -46,7 +47,7 @@ configuration, preset workflows, and external interfaces.
 | A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover help, context menus, vertical dragging, numeric entry, undo, optional grids | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
-| Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes | Backup/interchange |
+| Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes, scoped JSON backups | Hardware SysEx interchange |
 
 The current 770 parameters include repeated stage/lane controls; that number is
 not a count of distinct hardware features. Implemented behavior can still
@@ -56,7 +57,7 @@ differ in edge cases or where the manual leaves details unspecified. See
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows testers**. The engine suites, Rack
-host/persistence checks, widget callback tests, 151 display states, and recorded
+host/persistence checks, widget callback tests, 157 display states, and recorded
 stereo/CV paths pass on the documented setup. The musical baseline also received
 an initial user playtest. Broad testing on other computers, long sessions,
 different zoom/DPI settings, and interactions with other plugins is still needed.
