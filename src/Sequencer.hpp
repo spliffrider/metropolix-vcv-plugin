@@ -58,6 +58,7 @@ struct Track {
     int pulseSource = 0; // 0 shared switches, otherwise a uniform 1..8.
     int gateSource = 0; // Switch, Single, Single+Rest, Multi, Multi+Rest, Hold, Hold+Rest.
     bool restPitchUpdate = false;
+    bool globalReset = true;
     float gateLength = 0.5f;
     float gateScale = 1.f;
     float slideTime = 0.25f;
@@ -75,6 +76,8 @@ struct Track {
 struct Settings {
     float bpm = 120.f;
     int clockOutDivision = 1, clockOutOffset = 0;
+    bool clockRunningOnly = true, resetRunningOnly = false;
+    int bottomPitch = 12; // 12 follows Root; 0..11 select a fixed bottom note.
     int root = 0;
     int scale = 1;
     int lockedScale = -1;
@@ -154,7 +157,8 @@ public:
     bool running = false;
     bool resumeOnRun = false;
     unsigned chainMutes = 0;
-    float clock = 0.f;
+    float clock = 0.f, masterClock = 0.f;
+    unsigned manualResetForce = 0;
     bool swapped() const {
         if(controls.swap || modulation.routes[0][ModOutputSwap]>=1.5f || modulation.routes[1][ModOutputSwap]>=1.5f)return true;
         // The global external gate also works while the transport is stopped.
@@ -225,8 +229,11 @@ public:
     }
 
     void reset(bool manual=false) {
-        pendingAccumReset.fill(false);accumResetHigh.fill(false);trackResetHigh.fill(false);
-        for (auto& state : tracks) {
+        if(!manual){pendingAccumReset.fill(false);accumResetHigh.fill(false);trackResetHigh.fill(false);}
+        for (int t=0;t<2;++t) {
+            if(manual && !settings.tracks[t].globalReset && !(manualResetForce & (1u<<t)))continue;
+            pendingAccumReset[t]=false;
+            auto& state=tracks[t];
             // CV pitch holds on reset until the next played note.
             float pitch = state.pitch;
             state = TrackState();
@@ -234,16 +241,15 @@ public:
             state.targetPitch = pitch;
             if(manual){state.outputEvents.pulses[TrackOutputEvents::First].fire();state.outputEvents.firstDue=false;}
         }
-        loopTracks = tracks; playerTracks = tracks;
-        loopPlaying.fill(false); playerPlaying.fill(false);
-        loopMasks.fill(0); playerMasks.fill(0); voiceMode=0;
+        for(int t=0;t<2;++t)if(!manual || settings.tracks[t].globalReset || (manualResetForce & (1u<<t))){loopTracks[t]=playerTracks[t]=tracks[t];loopPlaying[t]=playerPlaying[t]=false;loopMasks[t]=playerMasks[t]=0;}
+        voiceMode=0;
         phase = 0.0;
         firstTick = true;
-        clockOutput.reset();
+        clockOutput.reset();masterPulse.clear();
         clock = 0.f;
         resetPulse.fire();
         modulation.reset();
-        for (auto& timing : swingTiming) timing.reset();
+        for(int t=0;t<2;++t)if(!manual || settings.tracks[t].globalReset || (manualResetForce & (1u<<t)))swingTiming[t].reset();
         aux.fill(0.f);
     }
 
@@ -291,10 +297,10 @@ public:
 
         double period = external ? externalPeriod : internalPeriod;
         bool tick = false;
-        if (running) {
+        if (running || !settings.clockRunningOnly) {
             // Read live AUX tempo before deciding whether a master pulse is due.
             // Zero dt refreshes routes without advancing ramps or pulse timers.
-            modulation.render(settings.modLanes,0.0,settings.auxInputs);
+            modulation.render(running?settings.modLanes:std::array<ModLane,8>(),0.0,settings.auxInputs);
             if(!external)period=15.0/effectiveTempo();
             if (external) {
                 tick = edge && resetIgnore <= 0.0;
@@ -302,7 +308,7 @@ public:
                 tick = true;
                 phase = firstTick ? 0.0 : std::fmod(phase, period);
             }
-            if (tick) {
+            if (tick && running) {
                 beforeClock();
                 controls.read(settings.controls);
                 // A recalled direct CTRL assignment can change internal tempo.
@@ -310,6 +316,8 @@ public:
                 if (!external) period = 15.0 / effectiveTempo();
                 modulation.tick(settings.modLanes, period);
             }
+        }
+        if(running) {
             modulation.render(settings.modLanes, dt, settings.auxInputs);
             if(!external)period=15.0/effectiveTempo();
             routeLoopy();readTrackReset();
@@ -320,7 +328,6 @@ public:
                 if (swingTiming[t].advance(dt)) performTick(t, swingTiming[t].duration);
             if (tick) {
                 firstTick = false;
-                clockOutput.tick(settings.clockOutDivision,settings.clockOutOffset);
                 for (int t = 0; t < 2; ++t) {
                     auto& state = tracks[t];
                     const auto& config = settings.tracks[t];
@@ -351,7 +358,6 @@ public:
                 if (loopPlaying[t]) { voiceMode=1; render(t,dt); voiceMode=0; }
                 playerPlaying[t]=false; playerMasks[t]=0;
             }
-            phase += dt;
         } else {
             for (auto& state : tracks) { state.gate = 0.f; state.cv = 0.f; }
             modulation.silence();
@@ -363,9 +369,13 @@ public:
             modulation.outputs.fill(0.f);
             stagePlayer(dt);
         }
-        clock = clockOutput.render(dt,running);
+        if(tick){firstTick=false;clockOutput.tick(settings.clockOutDivision,settings.clockOutOffset);masterPulse.fire();}
+        if(running || !settings.clockRunningOnly)phase+=dt;
+        clock = clockOutput.render(dt,running || !settings.clockRunningOnly);
+        masterClock=masterPulse.render(dt);
         resetIgnore = std::max(0.0, resetIgnore - dt);
         resetOutput=resetPulse.render(dt);
+        if(settings.resetRunningOnly && !running)resetOutput=0;
         for(auto& state:tracks)state.outputEvents.render(dt);
         for(auto& state:loopTracks)state.outputEvents.render(dt);
         for(auto& state:playerTracks)state.outputEvents.render(dt);
@@ -382,7 +392,7 @@ private:
     double externalElapsed = 0.0;
     double externalPeriod = 0.125;
     ClockOutput clockOutput;
-    OutputPulse resetPulse;
+    OutputPulse resetPulse, masterPulse;
     float resetOutput=0;
     double resetIgnore = 0.0;
     RandomSource random[2], loopRandom[2];
@@ -545,6 +555,14 @@ private:
         const int overrideNote=settings.tracks[t].stages[state.stage].pitchOverride;
         float source=overrideNote<0?slider*12.f*sliderOctaves(t):float(clamp(overrideNote,0,60));
         Scale scale=currentScale(t);
+        if(overrideNote<0 && settings.bottomPitch<12){
+            int scaleId=scaleIndex(t);
+            int rootBase=userScale(scaleId)?clamp(settings.userScales[scaleId-FactoryScaleCount].root,0,11):settings.root;
+            int relative=clamp(settings.bottomPitch,0,11)-rootBase;
+            int first=nearestDegree(float(relative),scale);
+            if(degreeToSemitone(first,scale)<relative)++first;
+            source+=degreeToSemitone(first,scale);
+        }
         int base = nearestDegree(source
             + (modulation.routes[t][ModPitchPre]+ctrl[CtrlPitchPre])*12.f, scale);
         int note = degreeToSemitone(base + state.activeAccumulation, scale);

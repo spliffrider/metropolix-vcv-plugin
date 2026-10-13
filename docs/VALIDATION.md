@@ -1,4 +1,15 @@
-# Validation and fidelity status — 2.19.0
+# Validation and fidelity status — 2.20.0
+
+## Clock/reset configuration — 2.20.0
+
+Twenty portable suites pass. ClockConfigTests adds 1,371,032 assertions for
+clock-only operation, three sample rates, every output division/offset endpoint,
+protected traversal across all 21 orders, forced reset, and fixed Bottom Pitch
+for all 49 factory scales, 12 roots and four octave ranges. Native Rack checks
+exercise Reset/Run/Run-C, explicit clock sources, actual tuner jacks, protected
+tracks and format 7→8 migration. Native callbacks, undo, held TRK, save/reopen
+and 108 OLED states are checked alongside the existing regression suites.
+See [Clock/reset](CLOCK-RESET.md) for defaults and hardware interpretation.
 
 ## Complete AUX/MOD routing — 2.19.0
 

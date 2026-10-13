@@ -1,4 +1,4 @@
-# Metropolix Lab 2.19.0 — Windows alpha quick start
+# Metropolix Lab 2.20.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.19.0/MetropolixLab-2.19.0-win-x64.vcvplugin)
-- [Complete-routing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.19.0/Complete-routing-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.20.0/MetropolixLab-2.20.0-win-x64.vcvplugin)
+- [Clock/reset performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.20.0/Clock-reset-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.19.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.20.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.19.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.20.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -235,3 +235,11 @@ Compare direction versus slider inversion; clock division versus pulse division;
 track Reset versus Accum Reset. Gate-driven Loopy should return to the current
 background pattern on release. Check the live BPM readout, Global assignment
 fields, On/Off gate entry, undo and save/reopen. Gate Length CV now reaches Hold.
+
+## Clock/reset and tuner — new in 2.20.0
+
+Try [Global Setup](CLOCK-RESET.md): compare Auto/Internal/External and Always/Running/Legacy.
+Check Reset versus Run versus Run-C, protected tracks and held-TRK forced reset.
+Try Bottom Pitch outside the current scale, then tune both voices with High/Clock
+gates. EXIT must restore their sequence. Save/reopen retains settings and presets
+without activating the tuner. Older format 7 presets should load with Global Reset On.

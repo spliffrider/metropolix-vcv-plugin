@@ -444,11 +444,17 @@ struct HardwareDisplay : HardwareControl {
                 c.text(38,57,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
             } else c.text(1,57,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
             return c;
-        } else if(page==Metropolix::SETUP_PAGE) {
-            c.text(13,5,"Slider Octaves");c.right(126,5,std::to_string(integer(Metropolix::RANGE,3)));
-            c.text(13,22,"Presets Setup...");c.text(13,39,"Preset Chains...");
-            c.corners(0,(f==3?0:f)*17,128,16);c.turn(1,(f==3?0:f)*17+5);
-            c.text(1,56,"SETUP MENU");return c;
+        } else if(page==Metropolix::SETUP_PAGE || page==Metropolix::GLOBAL_SETUP_PAGE) {
+            bool global=page==Metropolix::GLOBAL_SETUP_PAGE;int cursor=m?(global?m->globalCursor.load():m->setupCursor.load()):0,count=global?GlobalMenuCount:SetupMenuCount;
+            int start=std::min(std::max(cursor-1,0),count-3);
+            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+2,global?globalMenuName(item):setupMenuName(item));
+                int id=global?globalMenuParam(m,item):item==0?Metropolix::RANGE:-1;
+                if(m && id>=0){std::string value=m->getParamQuantity(id)->getDisplayValueString();if(id==Metropolix::CLOCK_SOURCE && integer(id)==0)value="Auto";if(id==Metropolix::CLOCK_RUNNING_ONLY && integer(id)==2)value="Legacy";if(id==Metropolix::RESET_INPUT_MODE){const char* names[]={"Reset","Run","Run-C"};value=names[integer(id)];}if(id==Metropolix::RUN_MODE)value=integer(id)?"Pause":"Stop";c.right(126,y+10,value);}
+                if(item==cursor){c.corners(0,y-1,128,16);if(f)c.turn(1,y+4);else c.arrow(3,y+5,true);}
+            }c.text(1,56,global?"GLOBAL SETUP":"SETUP MENU");return c;
+        } else if(page==Metropolix::TUNER_PAGE){
+            c.text(1,2,"TUNER");c.text(13,22,"Pitch");c.right(126,18,string::f("C%+d",integer(Metropolix::TUNER_OCTAVE)),2);c.turn(1,23);
+            c.text(13,44,"Gate");c.right(126,44,integer(Metropolix::TUNER_GATE)?"Clock":"High");c.text(1,56,"EXIT TO RESUME");return c;
         }
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
         if(m && m->loopyMuteHeld.load()){c.fill(0,54,128,10,0);c.text(1,56,"MUTE TRK/LANE");return c;}

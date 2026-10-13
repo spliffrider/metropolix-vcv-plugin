@@ -70,7 +70,9 @@ int screenParam(Metropolix* m) {
         case Metropolix::A_PAGE: case Metropolix::B_PAGE: return -1; // Unconfirmed choices use navigation, not the audio parameter.
         case Metropolix::AUX_PAGE: return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::auxParam(m->selectedAux.load(),Metropolix::AUX_DESTINATION))))?-1:Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
-        case Metropolix::SETUP_PAGE: return f==3?Metropolix::RANGE:-1;
+        case Metropolix::SETUP_PAGE: return f && m->setupCursor.load()==0?Metropolix::RANGE:-1;
+        case Metropolix::GLOBAL_SETUP_PAGE:return f?globalMenuParam(m):-1;
+        case Metropolix::TUNER_PAGE:return Metropolix::TUNER_OCTAVE;
         case Metropolix::PRESET_SETUP_PAGE: return Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
@@ -78,6 +80,7 @@ int screenParam(Metropolix* m) {
 }
 void screenPage(Metropolix* m, int page) {
     if(!m) return;
+    if(page!=Metropolix::TUNER_PAGE)m->tunerActive.store(false);
     if(m->uiPage.load()==Metropolix::LOOPY_PAGE && page!=Metropolix::LOOPY_PAGE && m->loopyHeld.load() && m->integer(Metropolix::RUN))m->latchLoopy();
     m->loopyMuteHeld.store(false);
     if(page!=Metropolix::SCALE_PAGE)m->scaleEditing.store(false);
@@ -105,13 +108,7 @@ void encoderPress(Metropolix* m) {
         return;
     }
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
-    if(p==Metropolix::SETUP_PAGE) {
-        int f=m->uiField.load();
-        if(f==1)screenPage(m,Metropolix::PRESET_SETUP_PAGE);
-        else if(f==2)openChainPage(m);
-        else m->uiField.store(f==3?0:3);
-        return;
-    }
+    if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%7); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }

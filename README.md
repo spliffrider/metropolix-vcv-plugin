@@ -4,11 +4,13 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.19.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.20.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.19.0/MetropolixLab-2.19.0-win-x64.vcvplugin)** · **[Complete-routing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.19.0/Complete-routing-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.19.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.20.0/MetropolixLab-2.20.0-win-x64.vcvplugin)** · **[Clock/reset performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.20.0/Clock-reset-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.20.0)**
 
-2.19.0 completes **all 38 AUX/MOD destinations**, including hands-free Loopy, track reset, clock/pulse, slider and slide routing. See [Complete routing](docs/COMPLETE-ROUTING.md).
+2.20.0 adds [clock/reset configuration and tuning](docs/CLOCK-RESET.md): explicit clock sources, stopped clock output, Reset/Run/Run-C inputs, per-track Global Reset, Bottom Pitch and tuner.
+
+2.19.0 completed **all 38 AUX/MOD destinations**, including hands-free Loopy, track reset, clock/pulse, slider and slide routing. See [Complete routing](docs/COMPLETE-ROUTING.md).
 
 2.18.0 added **CTRL Accum Dir and six AUX/MOD accumulator gates**, including pause, reverse, invert and targeted reset. See [Accumulator routing](docs/ACCUMULATOR-ROUTING.md).
 
@@ -168,7 +170,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.19.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.20.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1

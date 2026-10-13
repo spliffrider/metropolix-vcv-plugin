@@ -133,6 +133,7 @@ const DisplayCase cases[]={
     {"track-menu-7",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
     {"track-menu-8",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
     {"track-menu-9",Metropolix::TRACK_MENU_PAGE,1,0,0,false},
+    {"track-menu-10",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
     {"output-kind-0",Metropolix::A_PAGE,0,0,0,false},
     {"output-kind-1",Metropolix::A_PAGE,1,0,0,false},
     {"output-kind-2",Metropolix::A_PAGE,0,0,0,false},
@@ -157,6 +158,14 @@ const DisplayCase cases[]={
     {"aux-track-reset",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
     {"mod-extended-gate",Metropolix::STAGE_PAGE,0,0,Metropolix::SLIDE,true},
     {"mod-global-home",Metropolix::HOME,0,3,Metropolix::SLIDE,true},
+    {"setup-global",Metropolix::SETUP_PAGE,0,0,Metropolix::SLIDE,false},
+    {"global-clock-src",Metropolix::GLOBAL_SETUP_PAGE,0,0,Metropolix::SLIDE,false},
+    {"global-reset-run",Metropolix::GLOBAL_SETUP_PAGE,1,0,Metropolix::SLIDE,false},
+    {"global-bottom-pitch",Metropolix::GLOBAL_SETUP_PAGE,1,0,Metropolix::SLIDE,false},
+    {"global-tuner-item",Metropolix::GLOBAL_SETUP_PAGE,0,0,Metropolix::SLIDE,false},
+    {"tuner-low",Metropolix::TUNER_PAGE,0,0,Metropolix::SLIDE,false},
+    {"tuner-clock",Metropolix::TUNER_PAGE,0,0,Metropolix::SLIDE,false},
+    {"track-global-reset",Metropolix::TRACK_MENU_PAGE,0,0,Metropolix::SLIDE,false},
     {"bpm-modulated",Metropolix::BPM_PAGE,0,0,Metropolix::SLIDE,false},
     {"aux-gate",Metropolix::AUX_PAGE,1,0,Metropolix::SLIDE,false},
     {"accum-stage",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
@@ -207,7 +216,7 @@ if(qaFrame>=20 && index<count) {
             m->params[Metropolix::OUTPUT_SOURCE_A+(test.page==Metropolix::B_PAGE)].setValue(source);m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
         }
         if(test.page==Metropolix::TRACK_MENU_PAGE){
-            m->trackMenuCursor.store(std::stoi(std::string(test.name).substr(11)));
+            m->trackMenuCursor.store(std::string(test.name)=="track-global-reset"?8:std::stoi(std::string(test.name).substr(11)));
             m->params[Metropolix::trackBehaviorParam(m->selectedTrack.load(),Metropolix::GATE_SOURCE)].setValue(6);
             m->params[Metropolix::trackBehaviorParam(m->selectedTrack.load(),Metropolix::REST_PITCH)].setValue(1);
         }
@@ -249,6 +258,13 @@ if(qaFrame>=20 && index<count) {
         if(std::string(test.name)=="mod-accum-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModAccumReset);
         if(std::string(test.name)=="mod-extended-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModSlide);
         if(std::string(test.name)=="mod-global-home")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModLoopy);
+        if(std::string(test.name)=="setup-global")m->setupCursor.store(3);
+        if(std::string(test.name)=="global-clock-src"){m->globalCursor.store(0);m->params[Metropolix::CLOCK_SOURCE].setValue(1);}
+        if(std::string(test.name)=="global-reset-run"){m->globalCursor.store(2);m->params[Metropolix::RESET_INPUT_MODE].setValue(2);}
+        if(std::string(test.name)=="global-bottom-pitch"){m->globalCursor.store(3);m->params[Metropolix::BOTTOM_PITCH].setValue(7);}
+        if(std::string(test.name)=="global-tuner-item")m->globalCursor.store(5);
+        if(test.page==Metropolix::TUNER_PAGE){m->params[Metropolix::TUNER_OCTAVE].setValue(std::string(test.name)=="tuner-low"?-5:5);m->params[Metropolix::TUNER_GATE].setValue(std::string(test.name)=="tuner-clock");}
+        if(std::string(test.name)=="track-global-reset")m->params[Metropolix::TRACK_GLOBAL_RESET_1].setValue(0);
         if(std::string(test.name)=="aux-global-tempo")m->params[Metropolix::auxParam(0,Metropolix::AUX_DESTINATION)].setValue(metro::ModTempo);
         if(std::string(test.name)=="aux-loopy-offset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModLoopyOffset);
         if(std::string(test.name)=="aux-track-reset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModReset);
