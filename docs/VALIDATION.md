@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.10.0
+# Validation and fidelity status — 2.11.0
 
 ## Stage overrides — 2.10.0
 
@@ -163,12 +163,12 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
 | MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
 | MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
-| Rack host | All 431 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode/Swing migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
+| Rack host | All 467 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode/Swing migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
 | Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
 | MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
 
-The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 395,400 accumulator/probability assertions, 119 MOD assertions, 60,635 AUX assertions, 129,097 CTRL assertions, 5,601,646 preset assertions, 9,713,498 chain assertions, and 49,506 Swing assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
+The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 395,400 accumulator/probability assertions, 119 MOD assertions, 60,635 AUX assertions, 129,097 CTRL assertions, 5,601,646 preset assertions, 9,713,498 chain assertions, 49,506 Swing assertions, 629,735 override assertions, and 5,040,487 Loopy/Stage Player assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
 
 Actual Rack renderer images of both views were inspected. Windows Computer Use capture repeatedly failed with `window capture timed out: timed out waiting on channel`; native capture attempts were stopped. Editor tests dispatch Rack widget events from a dedicated test build, and image capture uses Rack's own renderer. Physical mouse/drag behavior and operating-system focus handling remain unverified in that session.
 
@@ -312,8 +312,28 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy; full scale selection; and additional slide models are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy routing/Queue options; full scale selection; and additional slide models are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 
 Run the commands in README. Test reports and renderer images are written to `tmp/qa`; the earlier audio report and recording go to `tmp/audio-qa`. MOD evidence goes to `tmp/mod-qa`; the new hardware demo's audio report, recording, 100 Hz CV trace (`mod-cv.csv`), and rendered patch image go to `tmp/hardware-qa`. Rack logs are in `tmp/rack-qa/log.txt`. The release package contains no QA module, environment-variable test entry point, or test recorder.
+
+## Loopy — 2.11.0
+
+Manual pp.39–46/169 drive the implementation. The dedicated engine suite matches
+the one/two-boundary examples and verifies unchanged background traversal, RNG,
+probability and accumulation across all 21 orders with straight/swung/divided
+clocks. Stopped audition freezes pitch/CV, ignores Gate Type and reaches A/B
+track-CV output. Foreground accumulation runs independently and is discarded on
+release; multi-stage stopped audition chooses the lowest held stage. These are
+explicit interpretations pending hardware feedback. Performance mute gestures
+apply on base-clock boundaries and do not create undo entries.
+
+Rack host tests cover actual cables, global settings outside format-3 snapshots,
+legacy patches, mute timing and transient gesture cleanup. Widget tests exercise
+momentary press/release, range menus, navigation latching, encoder unlatching,
+parameter undo, mutes and a native Rack file save/reopen. The display suite renders
+44 states, including Auto, both tracks and latch. Real stereo playback tests observe
+momentary/range/release transitions with a 12-second output recording. Native OS
+input, hardware accumulator behavior and Loopy AUX/MOD routing remain unverified
+or unavailable; see [the operation guide](LOOPY.md).

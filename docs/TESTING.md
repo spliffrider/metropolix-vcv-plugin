@@ -1,4 +1,4 @@
-# Metropolix Lab 2.10.0 — Windows alpha quick start
+# Metropolix Lab 2.11.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/MetropolixLab-2.10.0-win-x64.vcvplugin)
-- [Stage override performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/Stage-overrides-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/MetropolixLab-2.11.0-win-x64.vcvplugin)
+- [Loopy performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/Loopy-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.10.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.11.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.10.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.11.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -31,6 +31,10 @@ This follows the [official third-party plugin installation procedure](https://vc
 There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
+
+Open **[Loopy-performance.vcv](../examples/Loopy-performance.vcv)**, select your
+AUDIO device and press RUN. Hold a stage on the Loopy page to hear a temporary
+loop; right-click a stage to latch a range. See the [Loopy guide](LOOPY.md).
 
 For stage overrides, open **[Stage-overrides-performance.vcv](../examples/Stage-overrides-performance.vcv)**,
 choose your AUDIO device and level, then press RUN. Select a track and click
@@ -127,7 +131,7 @@ Accumulator mode, or use ALT → LIM. See the
 
 [Full controls guide](https://github.com/spliffrider/metropolix-vcv-plugin/blob/main/docs/HARDWARE-UI.md)
 
-## Stage overrides — new in 2.10.0
+## Stage overrides — introduced in 2.10.0
 
 Try EDIT → PITCH/GATE, Sync, ALT all-stage edits and clears, Rest with ACCUM,
 track Gate Scale, and undo/redo. Save/reopen your patch. The downloadable
@@ -136,7 +140,7 @@ See the [controls guide](STAGE-OVERRIDES.md); hardware comparisons are welcome.
 
 ## Known limitations
 
-**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy, most remaining MOD
+**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy AUX/MOD routing, most remaining MOD
 destinations, the full scale library/user scales and hardware bank interchange,
 remaining accumulator reset/routing options, MIDI, MX, and SysEx.
 
@@ -167,3 +171,10 @@ or send the same information to the person who shared this build:
 Confusing interactions and missing explanations are useful feedback even if
 nothing crashes. Known unimplemented functions are already tracked in the
 feature assessment.
+
+## Loopy — new in 2.11.0
+
+Try momentary loops, mouse-selected ranges, Auto versus fixed counts, reverse,
+latching/unlatching and stopped Stage Player. Check that release restores the
+current original pattern. Try both target settings and save/reopen.
+[Operation and comparison limits](LOOPY.md); [portable demo](../examples/Loopy-performance.vcv).

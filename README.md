@@ -4,9 +4,14 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.10.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.11.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/MetropolixLab-2.10.0-win-x64.vcvplugin)** · **[Stage override performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/Stage-overrides-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.10.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/MetropolixLab-2.11.0-win-x64.vcvplugin)** · **[Loopy performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/Loopy-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.11.0)**
+
+2.11.0 adds **Loopy live loops, stopped Stage Player, latching and performance
+mutes**, with a manual-style display and mouse range menus. The original sequence
+keeps advancing underneath temporary loops. Global settings persist; held gestures
+clear on reopen. See the [Loopy guide](docs/LOOPY.md).
 
 2.10.0 adds **per-stage pitch and gate-length overrides** for both tracks,
 including slider Sync, ALT edits/clears, manual-style OLEDs, and one-step undo.
@@ -205,7 +210,7 @@ The nine available internal destinations are Octave, Pitch Pre, Pitch Post, Pitc
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware bank interchange, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy AUX/MOD routing, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware bank interchange, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
@@ -249,3 +254,7 @@ The engine uses fixed-size state and performs no allocation, file I/O, or UI wor
 - `tests/`: musical, manual-example, host integration, editor, and audio checks.
 - [VCV Rack manual](https://vcvrack.com/manual/), read excluding Licensing as requested.
 - [Metropolix manual 1.6, 2025-09-24](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf), cached locally in `reference/`.
+
+For Loopy changes, run `scripts/test-ui.ps1 -Loopy` and
+`scripts/test-ui.ps1 -LoopyAudio` with Rack closed. Reports and captures go to
+`tmp/loopy-ui-qa` and `tmp/loopy-audio-qa`.

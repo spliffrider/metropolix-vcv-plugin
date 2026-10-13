@@ -52,6 +52,7 @@ int screenParam(Metropolix* m) {
     bool mod=m->uiMod.load();
     if(m->uiChooseFunction.load())return -1;
     switch(m->uiPage.load()) {
+        case Metropolix::LOOPY_PAGE: return Metropolix::LOOPY_PULSES;
         case Metropolix::BPM_PAGE: return m->externalClock.load()?-1:Metropolix::TEMPO;
         case Metropolix::SCALE_PAGE: return f ? Metropolix::SCALE : Metropolix::ROOT;
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
@@ -75,11 +76,18 @@ int screenParam(Metropolix* m) {
 }
 void screenPage(Metropolix* m, int page) {
     if(!m) return;
+    if(m->uiPage.load()==Metropolix::LOOPY_PAGE && page!=Metropolix::LOOPY_PAGE && m->loopyHeld.load() && m->integer(Metropolix::RUN))m->latchLoopy();
+    m->loopyMuteHeld.store(false);
     m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
 }
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
+    if(p==Metropolix::LOOPY_PAGE) {
+        if(m->loopyLatched.load())m->clearLoopy();
+        else setWithHistory(m->getParamQuantity(Metropolix::LOOPY_TARGET),1-m->integer(Metropolix::LOOPY_TARGET));
+        return;
+    }
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
     if(p==Metropolix::SETUP_PAGE) {
         int f=m->uiField.load();
@@ -108,6 +116,33 @@ void encoderPress(Metropolix* m) {
     if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE || (p==Metropolix::GATE_PAGE && !m->uiMod.load()) ||
        (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
+}
+
+
+void openLoopy(Metropolix* m) {
+    if(!m)return;
+    if(m->uiMod.load()){m->selectedTrack.store(0);m->uiMod.store(false);}
+    screenPage(m,Metropolix::LOOPY_PAGE);m->uiAlt.store(false);m->uiEdit.store(false);
+}
+void loopRange(Metropolix* m,int first,int last) {
+    if(!m)return;
+    if(!m->integer(Metropolix::RUN))return;
+    openLoopy(m);m->loopyHeld.store(0);m->requestLoopy((1u<<first)|(1u<<last));m->latchLoopy();
+}
+void appendLoopyMenu(ui::Menu* menu,Metropolix* m,int start=-1) {
+    if(!m)return;
+    menu->addChild(createMenuLabel("Loopy performance"));
+    menu->addChild(createMenuItem("Open Loopy","",[m]{openLoopy(m);}));
+    menu->addChild(createSubmenuItem("Loop pulses","",[m](ui::Menu* child){
+        for(int n=0;n<=64;++n)child->addChild(createCheckMenuItem(n?std::to_string(n):"Auto","",[m,n]{return m->integer(Metropolix::LOOPY_PULSES)==n;},[m,n]{setWithHistory(m->getParamQuantity(Metropolix::LOOPY_PULSES),n);}));
+    }));
+    menu->addChild(createCheckMenuItem("Target both tracks","",[m]{return m->integer(Metropolix::LOOPY_TARGET)!=0;},[m]{setWithHistory(m->getParamQuantity(Metropolix::LOOPY_TARGET),1-m->integer(Metropolix::LOOPY_TARGET));}));
+    if(start>=0 && m->integer(Metropolix::RUN))menu->addChild(createSubmenuItem("Latch range from stage "+std::to_string(start+1),"",[m,start](ui::Menu* child){
+        for(int end=0;end<8;++end)child->addChild(createMenuItem("Through stage "+std::to_string(end+1),"",[m,start,end]{loopRange(m,start,end);}));
+    }));
+    menu->addChild(createMenuItem("Latch current loop","",[m]{if(m->integer(Metropolix::RUN))m->latchLoopy();}));
+    menu->addChild(createMenuItem("Release loop / audition","",[m]{m->clearLoopy();}));
+    menu->addChild(createCheckMenuItem("Mute tracks / MOD lanes","",[m]{return m->loopyMuteHeld.load();},[m]{m->loopyMuteHeld.store(!m->loopyMuteHeld.load());m->loopyMuteUsed.store(true);}));
 }
 
 // An actual Rack Knob under every continuous/discrete value control. This

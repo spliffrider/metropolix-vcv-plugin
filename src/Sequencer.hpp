@@ -136,10 +136,27 @@ struct TrackState {
     float cv = 0.f;
 };
 
+struct LoopyRequest {
+    unsigned stages = 0; // Held boundaries; zero releases the performance overlay.
+    unsigned targets = 1;
+    int pulses = 0; // Auto, or 1..64 foreground track pulses.
+};
+
 class Sequencer {
 public:
     Settings settings;
     std::array<TrackState, 2> tracks;
+    LoopyRequest loopy;
+    std::array<TrackState, 2> loopTracks, playerTracks;
+    std::array<bool, 2> loopPlaying{{false,false}}, playerPlaying{{false,false}};
+    // The normal track remains the transport/chain clock and advances underneath.
+    const TrackState& sounding(int t) const {
+        if (loopy.stages && (loopy.targets & (1u<<t))) {
+            if (running && loopPlaying[t]) return loopTracks[t];
+            if (!running && playerPlaying[t]) return playerTracks[t];
+        }
+        return tracks[t];
+    }
     Modulation modulation;
     ControlRoutes controls;
     std::array<float, 2> aux{};
@@ -152,6 +169,9 @@ public:
         random[0].state = value ? value : 1;
         random[1].state = value ^ 0x9e3779b9u;
         if (!random[1].state) random[1].state = 1;
+        loopRandom[0].state=value^0xa511e9b3u;
+        loopRandom[1].state=value^0x63d83595u;
+        for(auto& source:loopRandom)if(!source.state)source.state=1;
         modulation.seed(value);
     }
 
@@ -163,6 +183,9 @@ public:
             state.pitch = pitch;
             state.targetPitch = pitch;
         }
+        loopTracks = tracks; playerTracks = tracks;
+        loopPlaying.fill(false); playerPlaying.fill(false);
+        loopMasks.fill(0); playerMasks.fill(0); voiceMode=0;
         phase = 0.0;
         firstTick = true;
         clockRemaining = 0.0;
@@ -234,7 +257,7 @@ public:
             // Pending track pulses use the same sample clock as gates/slides.
             // Reset/recall above cancels them before any new pattern is played.
             for (int t = 0; t < 2; ++t)
-                if (swingTiming[t].advance(dt)) trackTick(t, swingTiming[t].duration);
+                if (swingTiming[t].advance(dt)) performTick(t, swingTiming[t].duration);
             if (tick) {
                 firstTick = false;
                 clockRemaining = 0.001;
@@ -253,19 +276,28 @@ public:
                         auto& timing = swingTiming[t];
                         if (timing.pending) {
                             timing.pending = false;
-                            trackTick(t, timing.duration);
+                            performTick(t, timing.duration);
                         }
                         float amount = swingPercent(config.swing + modulation.routes[t][ModSwing] * 5.6f);
-                        if (timing.clock(period * division, amount)) trackTick(t, timing.duration);
+                        if (timing.clock(period * division, amount)) performTick(t, timing.duration);
                     }
                     state.divider = (state.divider + 1) % division;
                 }
             }
-            for (int t = 0; t < 2; ++t) render(t, dt);
+            for (int t = 0; t < 2; ++t) {
+                render(t, dt);
+                if (!requested(t)) loopPlaying[t]=false;
+                if (loopPlaying[t]) { voiceMode=1; render(t,dt); voiceMode=0; }
+                playerPlaying[t]=false; playerMasks[t]=0;
+            }
             phase += dt;
         } else {
             for (auto& state : tracks) { state.gate = 0.f; state.cv = 0.f; }
             modulation.silence();
+            // External pitch routing is available to stopped Stage Player notes.
+            if(loopy.stages & 255u)modulation.render(settings.modLanes, 0.0, settings.auxInputs);
+            modulation.outputs.fill(0.f);
+            stagePlayer();
             clockRemaining = 0.0;
         }
         clock = running && clockRemaining > 0.0 ? 5.f : 0.f;
@@ -274,7 +306,7 @@ public:
         for (int output = 0; output < 2; ++output) {
             int source = clamp(settings.outputSources[output], 0, 9);
             if(controls.swap && source<2)source=1-source;
-            aux[output] = !running ? 0.f : source < 2 ? tracks[source].cv : modulation.outputs[source - 2];
+            aux[output] = source < 2 ? sounding(source).cv : running ? modulation.outputs[source - 2] : 0.f;
         }
     }
 
@@ -287,21 +319,72 @@ private:
     double externalPeriod = 0.125;
     double clockRemaining = 0.0;
     double resetIgnore = 0.0;
-    RandomSource random[2];
+    RandomSource random[2], loopRandom[2];
+    std::array<float,2> playerCv{};
+    int voiceMode=0;
+    std::array<unsigned,2> loopMasks{}, playerMasks{};
+    std::array<int,2> loopCounts{}, loopLimits{};
+    TrackState& voice(int t) { return voiceMode==1?loopTracks[t]:voiceMode==2?playerTracks[t]:tracks[t]; }
+    const TrackState& voice(int t) const { return voiceMode==1?loopTracks[t]:voiceMode==2?playerTracks[t]:tracks[t]; }
+    RandomSource& dice(int t) { return voiceMode?loopRandom[t]:random[t]; }
+    bool requested(int t) const {return (loopy.stages & 255u) && (loopy.targets & (1u<<t));}
+    int lower() const {for(int s=0;s<8;++s)if(loopy.stages&(1u<<s))return s;return 0;}
+    int upper() const {for(int s=7;s>=0;--s)if(loopy.stages&(1u<<s))return s;return 0;}
+    bool reverse(int t) const {
+        float direction=controls.values[t][CtrlDirection];
+        return direction==0?settings.tracks[t].reversed:direction<0;
+    }
+    void stagePlayer() {
+        for(int t=0;t<2;++t) {
+            loopPlaying[t]=false; loopMasks[t]=0;
+            if(!requested(t)) {playerPlaying[t]=false;playerMasks[t]=0;continue;}
+            if(!playerPlaying[t] || playerMasks[t]!=(loopy.stages&255u)) {
+                auto& state=playerTracks[t];state=tracks[t];state.stage=lower();
+                state.activeAccumulation=state.accumMode==TrackAccumulation?state.trackAccumulation:state.accumulator[state.stage];
+                voiceMode=2;state.pitch=state.targetPitch=stagePitch(t);voiceMode=0;
+                state.cv=playerCv[t]=clamp(settings.tracks[t].stages[state.stage].cv,-5.f,5.f);
+                playerMasks[t]=loopy.stages&255u;playerPlaying[t]=true;
+            }
+            // Freeze the note/CV until a fresh stage press; Gate Type is ignored.
+            playerTracks[t].gate=muted(t)?0.f:5.f;
+            playerTracks[t].cv=muted(t)?0.f:playerCv[t];
+        }
+    }
+    void performTick(int t,double duration) {
+        trackTick(t,duration);
+        if(!requested(t)){loopPlaying[t]=false;loopMasks[t]=0;return;}
+        voiceMode=1;
+        if(!loopPlaying[t] || loopMasks[t]!=(loopy.stages&255u)) {
+            loopTracks[t]=tracks[t];loopTracks[t].stage=loopTracks[t].position=-1;
+            loopTracks[t].pulse=0;loopTracks[t].lastRatchetEvent=-1;
+            loopCounts[t]=0;loopMasks[t]=loopy.stages&255u;
+        }
+        loopPlaying[t]=true;
+        loopLimits[t]=clamp(loopy.pulses,0,64);
+        trackTick(t,duration);voiceMode=0;
+    }
     std::array<SwingTiming, 2> swingTiming;
 
     bool muted(int t) const {
         return (chainMutes & (1u<<t)) || (settings.tracks[t].mute != (modulation.routes[t][ModMute] >= 1.5f));
     }
     bool skipped(int t,int stage) const {
-        return settings.tracks[t].stages[stage].skip != tracks[t].skipInverted;
+        return settings.tracks[t].stages[stage].skip != voice(t).skipInverted;
     }
     int pulses(int t,int stage) const {
         return clamp(settings.stages[stage].pulses+static_cast<int>(std::round(controls.values[t][CtrlPulseCount]*7)),1,8);
     }
 
     bool nextStage(int t) {
-        auto& state = tracks[t];
+        auto& state = voice(t);
+        if(voiceMode==1) {
+            int lo=lower(),hi=upper();bool bounded=lo!=hi || loopy.pulses==0;
+            if(state.stage<0)state.stage=reverse(t)?hi:lo;
+            else if(bounded)state.stage=reverse(t)?(state.stage<=lo?hi:state.stage-1):(state.stage>=hi?lo:state.stage+1);
+            else state.stage=modulo(state.stage+(reverse(t)?-1:1),8);
+            state.position=state.stage;
+            return true; // Loopy ignores Skip, Length, Offset and play order.
+        }
         const auto& config = settings.tracks[t];
         int length = clamp(config.length, 1, 8);
         if (state.windowOffset != config.offset) {
@@ -312,13 +395,13 @@ private:
         for (int i = 0; i < length; ++i) enabled[i] = !skipped(t,modulo(i + config.offset, 8));
         float direction=controls.values[t][CtrlDirection];
         bool reversed=direction==0?config.reversed:direction<0;
-        state.position = state.playOrder.next(length, config.order, reversed, enabled, random[t]);
+        state.position = state.playOrder.next(length, config.order, reversed, enabled, dice(t));
         state.stage = state.position < 0 ? -1 : modulo(state.position + config.offset, 8);
         return state.stage >= 0;
     }
 
     float stagePitch(int t) const {
-        const auto& state = tracks[t];
+        const auto& state = voice(t);
         const auto& ctrl=controls.values[t];
         float slider=clamp(settings.stages[state.stage].pitch,0.f,1.f);
         if(ctrl[CtrlSliderInvert]>0)slider=1-slider;
@@ -334,7 +417,7 @@ private:
     }
 
     void accumulate(int t) {
-        auto& state = tracks[t];
+        auto& state = voice(t);
         const auto& config = settings.tracks[t];
         const auto& edit = config.stages[state.stage];
         const int amount = clamp(edit.accumulation, -28, 28)*(controls.values[t][CtrlAccumPolar]<0?-1:1);
@@ -345,14 +428,14 @@ private:
                 state.trackAccumulation = state.trackAccumulator;
                 state.trackAccumulator = advanceAccumulator(state.trackAccumulation,
                     amount, config.accumLimit, config.accumNegativeLimit,
-                    config.accumBipolar, config.accumOrder, state.trackAccumDirection, random[t]);
+                    config.accumBipolar, config.accumOrder, state.trackAccumDirection, dice(t));
             }
             state.activeAccumulation = state.trackAccumulation;
         } else {
             state.activeAccumulation = state.accumulator[state.stage];
             state.accumulator[state.stage] = advanceAccumulator(state.activeAccumulation,
                 amount, config.accumLimit, config.accumNegativeLimit,
-                config.accumBipolar, config.accumOrder, state.accumDirection[state.stage], random[t]);
+                config.accumBipolar, config.accumOrder, state.accumDirection[state.stage], dice(t));
         }
         state.startPitch = state.pitch;
         state.slideAge = 0.0;
@@ -361,9 +444,12 @@ private:
     }
 
     void trackTick(int t, double duration) {
-        auto& state = tracks[t];
+        auto& state = voice(t);
         const auto& config = settings.tracks[t];
-        if (config.pulseLimit > 0 && state.totalPulses >= clamp(config.pulseLimit, 1, 64)) {
+        if(voiceMode==1 && loopLimits[t]>0 && loopCounts[t]>=loopLimits[t]) {
+            state.stage=state.position=-1;state.pulse=0;loopCounts[t]=0;
+        }
+        if (voiceMode==0 && config.pulseLimit > 0 && state.totalPulses >= clamp(config.pulseLimit, 1, 64)) {
             auto accumulator = state.accumulator;
             auto accumDirection = state.accumDirection;
             int trackAccumulator = state.trackAccumulator;
@@ -393,13 +479,14 @@ private:
                 ? state.trackAccumulation : (state.stage >= 0 ? state.accumulator[state.stage] : 0);
         }
         ++state.totalPulses;
+        if(voiceMode==1)loopCounts[t]=loopLimits[t]>0?loopCounts[t]+1:0;
         // Auto sequences can run indefinitely without overflowing a counter.
-        if (config.pulseLimit <= 0) state.totalPulses = 0;
+        if (config.pulseLimit <= 0 || voiceMode==1) state.totalPulses = 0;
         state.duration = duration;
         state.age = 0.0;
-        bool newStage = state.stage < 0 || state.position >= clamp(config.length, 1, 8)
+        bool newStage = state.stage < 0 || (voiceMode==0 && (state.position >= clamp(config.length, 1, 8)
             || (state.stage >= 0 && (skipped(t,state.stage)
-                || state.stage != modulo(state.position + config.offset, 8)));
+                || state.stage != modulo(state.position + config.offset, 8)))));
         if (!newStage) {
             ++state.pulse;
             newStage = state.pulse >= pulses(t,state.stage);
@@ -407,7 +494,7 @@ private:
         if (newStage) {
             // A length/offset edit starts a new traversal if the old position
             // is no longer part of the selected stage window.
-            if (state.stage >= 0 && state.stage != modulo(state.position + config.offset, 8))
+            if (voiceMode==0 && state.stage >= 0 && state.stage != modulo(state.position + config.offset, 8))
                 state.position = -1;
             if (!nextStage(t)) { state.gate = 0.f; state.cv = 0.f; return; }
             state.pulse = 0;
@@ -423,7 +510,7 @@ private:
         const auto& edit = config.stages[state.stage];
         if (newStage || edit.probabilityPerPulse) {
             float probability = clamp(edit.probability + modulation.routes[t][ModProbability] * 20.f + controls.values[t][CtrlProbability]*100.f, 0.f, 100.f);
-            state.allowed = probability >= 100.f || (probability > 0.f && random[t].percent() < probability);
+            state.allowed = probability >= 100.f || (probability > 0.f && dice(t).percent() < probability);
         }
         const Gate gate = settings.stages[state.stage].gate;
         if (state.allowed && gate != Rest && !muted(t)) {
@@ -437,7 +524,7 @@ private:
     }
 
     void render(int t, double dt) {
-        auto& state = tracks[t];
+        auto& state = voice(t);
         const auto& config = settings.tracks[t];
         if (state.stage < 0) { state.gate = 0.f; state.cv = 0.f; return; }
         const auto& panel = settings.stages[state.stage];

@@ -118,6 +118,9 @@ const DisplayCase cases[]={
     {"preset-save",Metropolix::SAVE_PAGE,0,0,0,false},
     {"preset-timing",Metropolix::PRESET_SETUP_PAGE,1,0,0,false},
     {"preset-policies",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
+    {"loopy-auto",Metropolix::LOOPY_PAGE,0,0,0,false},
+    {"loopy-both",Metropolix::LOOPY_PAGE,1,0,0,false},
+    {"loopy-latched",Metropolix::LOOPY_PAGE,0,0,0,false},
     {"chain-empty",Metropolix::CHAIN_PAGE,0,0,0,false},
     {"chain-edit",Metropolix::CHAIN_PAGE,0,0,0,false},
     {"chain-end",Metropolix::CHAIN_PAGE,0,0,0,false},
@@ -133,6 +136,8 @@ if(qaFrame>=20 && index<count) {
             const int pitches[]={-1,12,28,60,7,-1,40,55},gates[]={-1,0,82,100,13,-1,88,1};
             for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);
         }
+        m->clearLoopy();
+        if(test.page==Metropolix::LOOPY_PAGE){m->params[Metropolix::LOOPY_PULSES].setValue(test.field?64:0);m->params[Metropolix::LOOPY_TARGET].setValue(test.field);if(std::string(test.name)=="loopy-latched"){m->requestLoopy(18);m->latchLoopy();}}
         if(test.page==Metropolix::SWING_PAGE)m->params[Metropolix::swingParam(m->selectedTrack.load())].setValue(std::string(test.name)=="swing-max"?78:50);
         if(test.page==Metropolix::CHAIN_PAGE) {
             Metropolix::ChainState state;
