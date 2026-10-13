@@ -53,7 +53,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         auto* knob=control(name+" attenuverter",24+i*37,159,20,HardwareControl::BLACK_KNOB);
         knob->binding=[i] { return Metropolix::auxParam(i,Metropolix::AUX_AMOUNT); };
         knob->action=open;knob->dragAction=open;knob->extraMenu=menu;knob->detailHelp=detail;
-        knob->help="CV: noon = zero; clockwise adds, counterclockwise inverts. Mute: clockwise follows gates (>=1.5 V), counterclockwise inverts gate logic. Unpatched Mute: clockwise = on, counterclockwise = off.";
+        knob->help="CV: noon = zero; clockwise adds, counterclockwise inverts. Gates/triggers: clockwise follows >=1.5 V, counterclockwise inverts logic. Unpatched: clockwise = high, counterclockwise = low. Assigned Accumulate at noon pauses pitch accumulation.";
         auto* button=control(name+" assignment",24+i*37,193,15,HardwareControl::DARK_BUTTON);
         button->binding=[m,i] { return m && !m->uiAlt.load()?Metropolix::auxParam(i,Metropolix::AUX_DESTINATION):-1; };
         button->action=[m,open,unavailable] { if(m && m->uiAlt.load())unavailable("AUX selective randomization");else open(); };
@@ -72,7 +72,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             int target=m->integer(Metropolix::ctrlParam(i,Metropolix::CTRL_ASSIGNMENT));
             return Metropolix::ctrlDestinations()[d]+" / "+((d==metro::CtrlTempo || d==metro::CtrlOutputSwap)?std::string("Global"):
                 target==2?std::string("Both tracks"):string::f("Track %d",target+1))+
-                (metro::ctrlDirect(d)?"\nDirect control: changes the panel setting.":"\nNoon = programmed value. Turn left/right for variation.");
+                (d==metro::CtrlAccumDir?"\nClockwise = forward; exact noon = freeze the last accumulated pitch; counterclockwise = reverse.":metro::ctrlDirect(d)?"\nDirect control: changes the panel setting.":"\nNoon = programmed value. Turn left/right for variation.");
         };
         auto* knob=control(string::f("CTRL %d",i+1),31+i*72,252,41,HardwareControl::WHITE_KNOB);
         knob->binding=[i]{return Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE);};

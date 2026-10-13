@@ -84,3 +84,7 @@ scale bank and can target either or both tracks. See [Scales](SCALES.md).
 Since 2.16.0, Velocity adds −5…+5 V and Track Out Swap is a global gate
 destination with the same gate inversion/threshold handling as Mute. See
 [Output routing](OUTPUT-ROUTING.md) for all track-based A/B signals.
+
+Version 2.18.0 adds six [accumulator routes](ACCUMULATOR-ROUTING.md), bringing the
+shared AUX/MOD count to 18. All six use gate logic; Accum Reset uses its rising
+edge. An assigned low Accumulate gate pauses rather than removing the route.

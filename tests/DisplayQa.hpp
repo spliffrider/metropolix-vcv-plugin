@@ -157,6 +157,10 @@ const DisplayCase cases[]={
     {"accum-track",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
     {"accum-options",Metropolix::ACCUM_PAGE,4,0,Metropolix::ACCUMULATION,false},
     {"ctrl-gate",Metropolix::CTRL_PAGE,0,0,Metropolix::SLIDE,false},
+    {"ctrl-accum-dir",Metropolix::CTRL_PAGE,0,0,Metropolix::SLIDE,false},
+    {"aux-accum-reset",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
+    {"aux-accumulate",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
+    {"mod-accum-gate",Metropolix::STAGE_PAGE,0,0,Metropolix::SLIDE,true},
     {"ctrl-pulse-count",Metropolix::CTRL_PAGE,1,0,Metropolix::SLIDE,false},
     {"ctrl-owned-accum",Metropolix::ACCUM_PAGE,2,0,Metropolix::ACCUMULATION,false},
     {"preset-load",Metropolix::LOAD_PAGE,0,0,0,false},
@@ -226,6 +230,7 @@ if(qaFrame>=20 && index<count) {
             m->params[Metropolix::ctrlParam(test.field,Metropolix::CTRL_DESTINATION)].setValue(test.field?metro::CtrlPulseCount:metro::CtrlGateLength);
             m->params[Metropolix::ctrlParam(test.field,Metropolix::CTRL_VALUE)].setValue(test.field?.5f:.2f);
             m->params[Metropolix::ctrlParam(test.field,Metropolix::CTRL_ASSIGNMENT)].setValue(test.field?1:2);
+            if(std::string(test.name)=="ctrl-accum-dir")m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION)].setValue(metro::CtrlAccumDir);
         }
         if(std::string(test.name)=="ctrl-owned-accum")m->params[Metropolix::ctrlParam(0,Metropolix::CTRL_DESTINATION)].setValue(metro::CtrlAccumMode);
         if(test.page==Metropolix::AUX_PAGE) {
@@ -233,7 +238,9 @@ if(qaFrame>=20 && index<count) {
             m->params[Metropolix::auxParam(test.field,Metropolix::AUX_AMOUNT)].setValue(1);
             m->params[Metropolix::auxParam(test.field,Metropolix::AUX_DESTINATION)].setValue(test.field?metro::ModMute:metro::ModPitchPre);
             m->params[Metropolix::auxParam(test.field,Metropolix::AUX_ASSIGNMENT)].setValue(test.field?2:0);
+            if(std::string(test.name)=="aux-accum-reset" || std::string(test.name)=="aux-accumulate")m->params[Metropolix::auxParam(0,Metropolix::AUX_DESTINATION)].setValue(std::string(test.name)=="aux-accum-reset"?metro::ModAccumReset:metro::ModAccumulate);
         }
+        if(std::string(test.name)=="mod-accum-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModAccumReset);
     }
     if((qaFrame-20)%6==3) {
         APP->window->screenshot(dir+"/"+test.name+".png");

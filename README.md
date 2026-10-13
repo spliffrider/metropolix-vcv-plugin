@@ -4,11 +4,13 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.17.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.18.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.17.0/MetropolixLab-2.17.0-win-x64.vcvplugin)** · **[Track-options performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.17.0/Track-options-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.17.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.18.0/MetropolixLab-2.18.0-win-x64.vcvplugin)** · **[Accumulator-routing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.18.0/Accumulator-routing-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.18.0)**
 
-2.17.0 adds **the ALT → TRK menu**, independent uniform pulse/gate sources,
+2.18.0 adds **CTRL Accum Dir and six AUX/MOD accumulator gates**, including pause, reverse, invert and targeted reset. See [Accumulator routing](docs/ACCUMULATOR-ROUTING.md).
+
+2.17.0 added **the ALT → TRK menu**, independent uniform pulse/gate sources,
 Rest Pitch Hold/Update, transpose −60…+60 and track initialization with undo.
 See [Track options](docs/TRACK-OPTIONS.md) and its changing performance demo.
 
@@ -164,7 +166,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.17.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.18.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -220,7 +222,7 @@ With CLOCK IN connected, RUN arms playback and the next eligible clock edge begi
 
 MOD lanes advance one stage per divided base-clock pulse, independently of the note tracks' pulse counts. Bipolar lanes span -5 to +5 V, unipolar lanes span 0 to +5 V, and gate lanes output 0 or +5 V. A ramp travels from the previous voltage to the current stage's target across the whole stage. Muted lanes keep advancing but contribute no voltage or internal modulation. Stop silences all MOD outputs; reset restarts their traversal.
 
-The twelve available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, Swing, Scale (User), Velocity and Track Out Swap. Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
+The original twelve internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, Swing, Scale (User), Velocity and Track Out Swap. Version 2.18.0 also adds Accumulate, Accum Rev, Accum Invert, Accum Mode, Accum Polar and Accum Reset; see [the accumulator routing guide](docs/ACCUMULATOR-ROUTING.md). Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
 
 ## Implemented
 
@@ -229,8 +231,8 @@ The twelve available internal destinations are Octave, Pitch Pre, Pitch Post, Pi
 - Per-stage probability with Stage/Pulse targeting; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate stage CV with Step/sRamp/pRamp transitions.
 - Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
 - All 49 factory scales/chords, 100 custom scales with stored roots, locking, eight Scale/Root shortcuts, and Scale (User) modulation; slider range 1–4 octaves.
-- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, twelve internal destinations, track assignment, and assignable A/B outputs.
-- Three AUX CV/gate inputs, attenuverters, the same twelve destinations, per-input track assignments, live meters, and logical gate inversion.
+- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, 18 internal destinations, track assignment, and assignable A/B outputs.
+- Three AUX CV/gate inputs, attenuverters, the same 18 destinations, per-input track assignments, live meters, and logical gate inversion.
 - Independent 50–78% Swing per note track, with CTRL control and AUX/MOD offsets, shortcuts, reset, and desktop editing.
 - Rack parameter automation, numeric entry, undo/redo, and patch/preset serialization.
 

@@ -1,4 +1,20 @@
-# Validation and fidelity status — 2.17.0
+# Validation and fidelity status — 2.18.0
+
+## Accumulator routing — 2.18.0
+
+The new portable suite passes 2,230,784 checks: exhaustive Wrap reversal, literal
+manual live Invert, Pendulum boundary reversal, gate thresholds/inversion,
+Stage/Pulse/Ratchet pauses across all orders with skips, and brief targeted
+resets through divided clocks at 44.1/48/96 kHz. Native Rack tests check actual
+V/oct and gate ports, independent CTRL freezing, held-trigger suppression,
+parameter metadata, patch persistence and internal preset banks.
+Native widget/save-reopen checks, 93 OLED states and Bloom/zoom inspection pass.
+The four-scene/seven-link demo exercises all six gates, both CTRL assignments,
+velocity bass and independent percussion through real cables. Its 12-second
+48 kHz stereo recording has RMS .223333/.262357 V, peaks 1.04887/1.14602 V and
+DC .000288/.000291 V. This verifies signals and transitions, not a listening
+judgment or physical-module fidelity.
+The comparison interpretations are in [Accumulator routing](ACCUMULATOR-ROUTING.md).
 
 ## Track options — 2.17.0
 
@@ -254,8 +270,8 @@ listening judgment.
 
 See [CTRL ranges and interpretations](CTRL-KNOBS.md). Knob gains not specified
 by the manual, collision precedence, and Skip Invert reset scope remain
-documented implementation choices. Accum Dir is deferred rather than equated
-with signed increment inversion. Six hardware destinations remain unavailable.
+documented implementation choices. Version 2.18.0 implements Accum Dir separately
+from signed increment inversion and completes the hardware's CTRL destination list.
 No hardware comparison has been performed.
 
 ## Hardware UI pass — 2.2.0

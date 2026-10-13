@@ -21,6 +21,7 @@ void require(bool value, const char* message) {
 #include "ClockOutputRackTests.hpp"
 #include "OutputRoutingRackTests.hpp"
 #include "TrackOptionsRackTests.hpp"
+#include "AccumulatorRoutingRackTests.hpp"
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
@@ -291,6 +292,7 @@ int main() {
     clockOutputRackTests();
     outputRoutingRackTests();
     trackOptionsRackTests();
+    accumulatorRoutingRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

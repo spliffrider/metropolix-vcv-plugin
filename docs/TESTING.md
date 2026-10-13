@@ -1,4 +1,4 @@
-# Metropolix Lab 2.17.0 — Windows alpha quick start
+# Metropolix Lab 2.18.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.17.0/MetropolixLab-2.17.0-win-x64.vcvplugin)
-- [Track-options performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.17.0/Track-options-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.18.0/MetropolixLab-2.18.0-win-x64.vcvplugin)
+- [Accumulator-routing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.18.0/Accumulator-routing-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.17.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.18.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.17.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.18.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -210,7 +210,7 @@ lock/search/apply, eight held/menu shortcuts, undo and saving/reopening.
 The Scale (User) MOD/AUX/CTRL destination moves inside the locked ten-slot bank.
 Feedback on fractional-voltage boundaries from hardware owners is especially useful.
 
-## Clock output — new in 2.17.0
+## Clock output — new in 2.15.0
 
 Open the supplied clock demo, select your audio device and press RUN. The right
 voice uses CLK `/4` offset `2`; the left voice uses regular track gates.
@@ -219,3 +219,11 @@ tracks keep their existing timing. Encoder click selects the other field;
 vertical dragging edits; long press resets both with one undo. Save/reopen
 the patch and recall an internal preset: CLK settings should stay global.
 See [Clock output](CLOCK-OUTPUT.md) for transport and live-edit choices.
+
+## Accumulator gates — new in 2.18.0
+
+Try CTRL Accum Dir at forward/noon/reverse positions and AUX/MOD Accumulate,
+Rev, Invert, Mode, Polar and Reset. Check that pauses keep the gate rhythm and
+that a brief reset waits for the next track pulse without restarting the pattern.
+Use [the guide](ACCUMULATOR-ROUTING.md) and the new percussion arrangement.
+Compare Rev versus Invert in unipolar mode, save/reopen and test undo.
