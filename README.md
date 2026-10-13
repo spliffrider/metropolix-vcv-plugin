@@ -4,11 +4,15 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.12.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.13.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/MetropolixLab-2.12.0-win-x64.vcvplugin)** · **[Custom chord progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/Scale-progression.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.12.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.13.0/MetropolixLab-2.13.0-win-x64.vcvplugin)** · **[Slide models demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.13.0/Slide-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.13.0)**
 
-2.12.0 adds **all 49 factory scales/chords, 100 user scales, scale locks, eight
+2.13.0 adds **Tempo, Analog and Acid slides**, independent track models,
+shortcuts, grouped reset and Analog stopped Stage Player. The new chained demo
+compares the three models across two voices. See the [slide guide](docs/SLIDES.md).
+
+2.12.0 added **all 49 factory scales/chords, 100 user scales, scale locks, eight
 shortcuts and Scale (User) routing** through MOD, AUX and CTRL. The chord demo
 uses stored notes and roots to move through C / Am / F / G. See the
 [scale guide](docs/SCALES.md).
@@ -143,7 +147,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.9.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.13.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -173,7 +177,7 @@ Rack must be closed first because its Windows version allows one running instanc
 1. **RUN** starts or stops playback. **RESET** returns to the starting position and clears accumulated transpositions.
 2. Drag the pitch faders, **PULSE COUNT** switches (1–8), and **GATE TYPE** switches (Rest, Single, Multiple, Hold) vertically. Right-click for direct entry or named choices.
 3. Select **TRK 1** or **TRK 2**. Pitches, pulse counts, and gate types are shared; track settings and stage edits are independent. Right-click a track button for timing, ratchet, and accumulator settings.
-4. Click **EDIT**, choose the printed function on a stage button, then choose a stage. Drag the encoder, screen value, or held stage button to edit it. Slide/Skip stage clicks toggle the chosen stage. Stage pitch/gate-length overrides are still unimplemented.
+4. Click **EDIT**, choose the printed function on a stage button, then choose a stage. Drag the encoder, screen value, or held stage button to edit it. Slide/Skip stage clicks toggle the chosen stage. PITCH/GATE edit the independent overrides for that track.
 5. Right-click **EDIT** to open the stage grid. Numeric and toggle cells accept vertical dragging; a short click toggles ON/OFF. Right-click a stage button for its current value, function selection, and probability/accumulator trigger settings.
 6. Click **BPM**, **SCALE**, **ORDER**, **LEN**, **DIV**, **SLIDE**, or **GATE** for its display page. These value buttons also accept a held vertical drag. The encoder/display click switches fields where applicable. **EXIT** returns home.
 7. Click **MOD** for modulation. Right-click it to choose MOD 1–8, change lane settings/routing, or open the MOD grid. Each lane retains independent values, transitions, timing, destination, and mute.
@@ -205,7 +209,7 @@ The ten available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch
 
 - Two independent tracks, with length, offset, all 21 play orders and reverse direction, division 1–64, fixed pulse length 1–64 or Auto, transpose, gate length, and mute.
 - Pulse-count division 1–8; gate stretching; Multiply, Pulse, and Gated ratchet modes; ratchet counts 1–8.
-- Per-stage probability with Stage/Pulse targeting; skip; a linear, tempo-relative slide; bipolar CV.
+- Per-stage probability with Stage/Pulse targeting; skip; Tempo/Analog/Acid slides; bipolar CV.
 - Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
 - All 49 factory scales/chords, 100 custom scales with stored roots, locking, eight Scale/Root shortcuts, and Scale (User) modulation; slider range 1–4 octaves.
 - Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, ten internal destinations, track assignment, and assignable A/B outputs.
@@ -215,9 +219,9 @@ The ten available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy AUX/MOD routing, AUX/MOD-only accumulator reset, acid/analog slide models, hardware bank interchange, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy AUX/MOD routing, AUX/MOD-only accumulator reset, full stage-CV types, hardware bank interchange, MIDI, MX, or SysEx compatibility.
 
-The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
+The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, Analog/Acid rate calibration, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
 ## Build and test
 
@@ -227,6 +231,8 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-rack.ps1
 .\scripts\test-ui.ps1
 .\scripts\test-ui.ps1 -Aux
+.\scripts\test-ui.ps1 -Slides
+.\scripts\test-ui.ps1 -SlideAudio
 .\scripts\test-ui.ps1 -Display
 .\scripts\test-ui.ps1 -Controls
 .\scripts\test-ui.ps1 -Audio

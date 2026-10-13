@@ -98,6 +98,9 @@ const DisplayCase cases[]={
     {"swing-max",Metropolix::SWING_PAGE,0,0,Metropolix::SLIDE,false},
     {"swing-mod",Metropolix::SWING_PAGE,0,0,0,true},
     {"slide-time",Metropolix::SLIDE_PAGE,0,0,0,false},
+    {"slide-analog",Metropolix::SLIDE_PAGE,0,0,0,false},
+    {"slide-acid",Metropolix::SLIDE_PAGE,0,0,0,false},
+    {"slide-mod",Metropolix::SLIDE_PAGE,0,0,0,true},
     {"gate-length",Metropolix::GATE_PAGE,0,0,0,false},
     {"gate-scale",Metropolix::GATE_PAGE,1,0,0,false},
     {"stage-pitch-override",Metropolix::STAGE_PAGE,0,0,Metropolix::PITCH_OVERRIDE,false},
@@ -142,6 +145,7 @@ if(qaFrame>=20 && index<count) {
             for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);
         }
         m->clearLoopy();
+        if(test.page==Metropolix::SLIDE_PAGE)m->params[Metropolix::slideTypeParam(m->selectedTrack.load())].setValue(std::string(test.name)=="slide-analog"?1:std::string(test.name)=="slide-acid"?2:0);
         m->scaleEditing.store(false);m->params[Metropolix::SCALE_LOCK].setValue(-1);m->params[Metropolix::SCALE].setValue(1);
         if(test.page==Metropolix::SCALE_PAGE) {
             std::string name=test.name;

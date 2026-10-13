@@ -84,6 +84,10 @@ void screenPage(Metropolix* m, int page) {
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
+    if(p==Metropolix::SLIDE_PAGE && !m->uiMod.load()) {
+        int id=Metropolix::slideTypeParam(m->selectedTrack.load());
+        setWithHistory(m->getParamQuantity(id),metro::nextSlideType(m->integer(id)));return;
+    }
     if(p==Metropolix::SCALE_PAGE) {
         if(m->scaleEditing.load() && m->uiField.load())scaleToggleNote(m);
         else if(m->uiField.load())scaleLockPress(m);

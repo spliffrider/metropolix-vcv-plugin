@@ -49,8 +49,9 @@ and stage CV through the existing A/B track-CV routing. It ignores physical
 Gate Type, gate-length override, Skip and probability. Pitch overrides and the
 existing pitch routing apply. The pitch/CV are sampled on press and frozen until
 a fresh press. Releasing drops the gate/CV. The original playback position stays
-unchanged; Resume run mode can continue it. Tempo slide is inactive here, matching
-the manual; Analog slide is not implemented yet. When several stages are held
+unchanged; Resume run mode can continue it. Analog slide applies to marked stages
+as of 2.13.0; its rate and target freeze on press. Tempo and Acid audition
+immediately. See the [slide guide](SLIDES.md). When several stages are held
 while stopped, this version auditions the lowest numbered stage.
 
 ## Mutes

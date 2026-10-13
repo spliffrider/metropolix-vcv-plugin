@@ -274,8 +274,12 @@ struct HardwareDisplay : HardwareControl {
             field(c,0,"CLOCK DIV","/"+std::to_string(integer(tm(Metropolix::DIVISION,Metropolix::MOD_DIVISION),1)),f==0);
             if(!mod)field(c,29,"PULSE COUNT DIV","/"+std::to_string(integer(Metropolix::extraParam(t,Metropolix::PULSE_DIV),1)),f==1);
         } else if(page==Metropolix::SLIDE_PAGE) {
+            if(mod){c.text(2,3,"SLIDE");c.text(2,23,"NOTE TRACKS ONLY");}
+            else {
             field(c,0,"SLIDE AMOUNT",string::f("%.0f%%",value(Metropolix::trackParam(t,Metropolix::SLIDE_TIME),25)),true);
-            c.text(2,31,"SLIDE TYPE");c.fit(20,41,105,"Tempo",1);
+            const char* types[]={"Tempo","Analog","Acid"};
+            c.text(2,31,"SLIDE TYPE");c.fit(20,41,105,types[metro::clamp(integer(Metropolix::slideTypeParam(t)),0,2)],1);
+            }
         } else if(page==Metropolix::SWING_PAGE) {
             if(mod){c.text(2,3,"SWING");c.text(2,23,"NOTE TRACKS ONLY");}
             else {

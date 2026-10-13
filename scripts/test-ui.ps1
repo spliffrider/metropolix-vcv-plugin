@@ -1,4 +1,4 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish, [switch]$Chains, [switch]$ChainAudio, [switch]$Swing, [switch]$SwingAudio, [switch]$Overrides, [switch]$OverrideAudio, [switch]$Loopy, [switch]$LoopyAudio, [switch]$Scales, [switch]$ScaleAudio)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish, [switch]$Chains, [switch]$ChainAudio, [switch]$Swing, [switch]$SwingAudio, [switch]$Overrides, [switch]$OverrideAudio, [switch]$Loopy, [switch]$LoopyAudio, [switch]$Scales, [switch]$ScaleAudio, [switch]$Slides, [switch]$SlideAudio)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
@@ -12,6 +12,7 @@ if ($PresetAudio) { $Audio = $true }
 if ($ChainAudio) { $Audio = $true }
 if ($LoopyAudio) { $Audio = $true }
 if ($ScaleAudio) { $Audio = $true }
+if ($SlideAudio) { $Audio = $true; $ChainAudio = $true }
 if ($OverrideAudio) { $Audio = $true; $ChainAudio = $true }
 if ($SwingAudio) { $Audio = $true; $ChainAudio = $true }
 if (Get-Process Rack -ErrorAction SilentlyContinue) { throw 'Close Rack before the UI test.' }
@@ -27,6 +28,8 @@ try {
     if ($Polish) { $output = Join-Path $projectRoot 'tmp\polish-qa'; $env:METROPOLIX_POLISH_QA = '1' }
     if ($Chains) { $output = Join-Path $projectRoot 'tmp\chain-ui-qa'; $env:METROPOLIX_CHAIN_UI_QA = '1' }
     if ($ChainAudio) { $output = Join-Path $projectRoot 'tmp\chain-audio-qa'; $env:METROPOLIX_CHAIN_AUDIO_QA = '1' }
+    if ($SlideAudio) { $output = Join-Path $projectRoot 'tmp/slide-audio-qa'; $env:METROPOLIX_SLIDE_AUDIO_QA = '1' }
+    if ($Slides) { $output = Join-Path $projectRoot 'tmp/slide-ui-qa'; $env:METROPOLIX_SLIDE_UI_QA = '1' }
     if ($ScaleAudio) { $output = Join-Path $projectRoot 'tmp/scale-audio-qa'; $env:METROPOLIX_SCALE_AUDIO_QA = '1' }
     if ($Scales) { $output = Join-Path $projectRoot 'tmp/scale-ui-qa'; $env:METROPOLIX_SCALE_UI_QA = '1' }
     if ($Loopy) { $output = Join-Path $projectRoot 'tmp/loopy-ui-qa'; $env:METROPOLIX_LOOPY_UI_QA = '1' }
@@ -71,9 +74,9 @@ try {
         if ($Aux) { $env:METROPOLIX_AUX_QA = '1' }
         if ($Controls) { $env:METROPOLIX_CTRL_QA = '1' }
         if ($PresetAudio) { $env:METROPOLIX_PRESET_AUDIO_QA = '1' }
-        $audioExample = if ($ScaleAudio) { 'examples/Scale-progression.vcv' } elseif ($LoopyAudio) { 'examples/Loopy-performance.vcv' } elseif ($OverrideAudio) { 'examples/Stage-overrides-performance.vcv' } elseif ($SwingAudio) { 'examples\Swing-performance.vcv' } elseif ($ChainAudio) { 'examples\Chain-performance.vcv' } elseif ($PresetAudio) { 'examples\Preset-performance.vcv' } elseif ($Controls) { 'examples\CTRL-performance.vcv' } elseif ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
+        $audioExample = if ($SlideAudio) { 'examples/Slide-performance.vcv' } elseif ($ScaleAudio) { 'examples/Scale-progression.vcv' } elseif ($LoopyAudio) { 'examples/Loopy-performance.vcv' } elseif ($OverrideAudio) { 'examples/Stage-overrides-performance.vcv' } elseif ($SwingAudio) { 'examples\Swing-performance.vcv' } elseif ($ChainAudio) { 'examples\Chain-performance.vcv' } elseif ($PresetAudio) { 'examples\Preset-performance.vcv' } elseif ($Controls) { 'examples\CTRL-performance.vcv' } elseif ($Accumulator) { 'examples\Accumulator-modes.vcv' } elseif ($Variations) { 'examples\Musical-variations.vcv' } elseif ($Musical) { 'examples\Musical-demo.vcv' } elseif ($Aux) { 'examples\Aux-inputs-demo.vcv' } elseif ($Hardware) { 'examples\Hardware-panel-demo.vcv' } elseif ($Modulation) { 'examples\Modulation-demo.vcv' } else { 'examples\Two-voice-demo.vcv' }
         $audioPatch = Get-Content -LiteralPath $audioExample -Raw | ConvertFrom-Json
-        if ($SwingAudio -or $OverrideAudio -or $LoopyAudio -or $ScaleAudio) { ($audioPatch.modules | Where-Object plugin -eq 'MetropolixLab').params | Where-Object id -eq 1 | ForEach-Object { $_.value = 1 } }
+        if ($SwingAudio -or $OverrideAudio -or $LoopyAudio -or $ScaleAudio -or $SlideAudio) { ($audioPatch.modules | Where-Object plugin -eq 'MetropolixLab').params | Where-Object id -eq 1 | ForEach-Object { $_.value = 1 } }
         $audioPatch.modules += @{id=100; plugin='MetropolixLab'; model='AudioQA'; pos=@(100,1)}
         # Record exactly what reaches AUDIO, including the musical demo's stereo mix.
         for ($channel = 0; $channel -lt 2; $channel++) {
@@ -106,6 +109,7 @@ try {
     $completion = if ($Presets) { 'PASS PRESET UI QA COMPLETE' } elseif ($Display) { 'PASS DISPLAY QA COMPLETE' } elseif ($Audio) { 'PASS AUDIO QA COMPLETE' } else { 'PASS UI QA COMPLETE' }
     if ($Polish) { $completion = 'PASS UI POLISH QA COMPLETE' }
     if ($Chains) { $completion = 'PASS CHAIN UI QA COMPLETE' }
+    if ($Slides) { $completion = 'PASS SLIDE UI QA COMPLETE' }
     if ($Scales) { $completion = 'PASS SCALE UI QA COMPLETE' }
     if ($Loopy) { $completion = 'PASS LOOPY UI QA COMPLETE' }
     if ($Overrides) { $completion = 'PASS OVERRIDE UI QA COMPLETE' }
@@ -113,9 +117,9 @@ try {
     if ($process.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($completion)) {
         throw 'UI test failed; inspect tmp/rack-qa/log.txt and tmp/qa/report.txt.'
     }
-    if ($Presets -or $Chains -or $Swing -or $Overrides -or $Loopy -or $Scales) {
-        if ($Scales) { $env:METROPOLIX_SCALE_REOPEN_QA = '1' } elseif ($Loopy) { $env:METROPOLIX_LOOPY_REOPEN_QA = '1' } elseif ($Overrides) { $env:METROPOLIX_OVERRIDE_REOPEN_QA = '1' } elseif ($Swing) { $env:METROPOLIX_SWING_REOPEN_QA = '1' } elseif ($Chains) { $env:METROPOLIX_CHAIN_REOPEN_QA = '1' } else { $env:METROPOLIX_PRESET_REOPEN_QA = '1' }
-        $arguments[-1] = '"' + (Join-Path $output $(if ($Scales) { 'scale-roundtrip.vcv' } elseif ($Loopy) { 'loopy-roundtrip.vcv' } elseif ($Overrides) { 'override-roundtrip.vcv' } elseif ($Swing) { 'swing-roundtrip.vcv' } elseif ($Chains) { 'chain-roundtrip.vcv' } else { 'preset-roundtrip.vcv' })) + '"'
+    if ($Presets -or $Chains -or $Swing -or $Overrides -or $Loopy -or $Scales -or $Slides) {
+        if ($Slides) { $env:METROPOLIX_SLIDE_REOPEN_QA = '1' } elseif ($Scales) { $env:METROPOLIX_SCALE_REOPEN_QA = '1' } elseif ($Loopy) { $env:METROPOLIX_LOOPY_REOPEN_QA = '1' } elseif ($Overrides) { $env:METROPOLIX_OVERRIDE_REOPEN_QA = '1' } elseif ($Swing) { $env:METROPOLIX_SWING_REOPEN_QA = '1' } elseif ($Chains) { $env:METROPOLIX_CHAIN_REOPEN_QA = '1' } else { $env:METROPOLIX_PRESET_REOPEN_QA = '1' }
+        $arguments[-1] = '"' + (Join-Path $output $(if ($Slides) { 'slide-roundtrip.vcv' } elseif ($Scales) { 'scale-roundtrip.vcv' } elseif ($Loopy) { 'loopy-roundtrip.vcv' } elseif ($Overrides) { 'override-roundtrip.vcv' } elseif ($Swing) { 'swing-roundtrip.vcv' } elseif ($Chains) { 'chain-roundtrip.vcv' } else { 'preset-roundtrip.vcv' })) + '"'
         $reopened = Start-Process -FilePath $RackPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
         $elapsed.Restart()
         while (!$reopened.WaitForExit(1000)) {
@@ -125,7 +129,7 @@ try {
             }
         }
         $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
-        $reopenCompletion = if ($Scales) { 'PASS SCALE REOPEN QA COMPLETE' } elseif ($Loopy) { 'PASS LOOPY REOPEN QA COMPLETE' } elseif ($Overrides) { 'PASS OVERRIDE REOPEN QA COMPLETE' } elseif ($Swing) { 'PASS SWING REOPEN QA COMPLETE' } elseif ($Chains) { 'PASS CHAIN REOPEN QA COMPLETE' } else { 'PASS PRESET REOPEN QA COMPLETE' }
+        $reopenCompletion = if ($Slides) { 'PASS SLIDE REOPEN QA COMPLETE' } elseif ($Scales) { 'PASS SCALE REOPEN QA COMPLETE' } elseif ($Loopy) { 'PASS LOOPY REOPEN QA COMPLETE' } elseif ($Overrides) { 'PASS OVERRIDE REOPEN QA COMPLETE' } elseif ($Swing) { 'PASS SWING REOPEN QA COMPLETE' } elseif ($Chains) { 'PASS CHAIN REOPEN QA COMPLETE' } else { 'PASS PRESET REOPEN QA COMPLETE' }
         if ($reopened.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($reopenCompletion)) {
             throw 'Preset banks did not survive an actual Rack file save/reopen.'
         }
@@ -134,12 +138,15 @@ try {
     if ($LoopyAudio -and !$report.Contains('PASS LOOPY PERFORMANCE COMPLETE')) { throw 'Loopy audio demonstration did not complete.' }
     if ($Aux -and !$report.Contains('PASS AUX WIRING COMPLETE')) { throw 'AUX wiring verification did not finish.' }
     if ($PresetAudio -and !$report.Contains('PASS PRESET PERFORMANCE COMPLETE')) { throw 'Preset transitions did not finish.' }
+    if ($SlideAudio -and !$report.Contains('PASS SLIDE PERFORMANCE COMPLETE')) { throw 'Slide types were not observed during actual audio playback.' }
     if ($ScaleAudio -and !$report.Contains('PASS SCALE PERFORMANCE COMPLETE')) { throw 'Scale progression was not observed in actual playback.' }
     if ($ChainAudio -and !$report.Contains('PASS CHAIN PERFORMANCE COMPLETE')) { throw 'Chain transitions did not finish.' }
     if ($OverrideAudio -and !$report.Contains('PASS OVERRIDE PERFORMANCE COMPLETE')) { throw 'Override demo transitions did not finish.' }
     if ($SwingAudio -and !$report.Contains('PASS SWING PERFORMANCE COMPLETE')) { throw 'Swing values were not observed in real playback.' }
     if ($Controls -and !$report.Contains('PASS CTRL PERFORMANCE COMPLETE')) { throw 'CTRL performance verification did not finish.' }
 } finally {
+    Remove-Item Env:METROPOLIX_SLIDE_AUDIO_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_SLIDE_UI_QA, Env:METROPOLIX_SLIDE_REOPEN_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_SCALE_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_SCALE_UI_QA, Env:METROPOLIX_SCALE_REOPEN_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_LOOPY_UI_QA, Env:METROPOLIX_LOOPY_REOPEN_QA, Env:METROPOLIX_LOOPY_AUDIO_QA -ErrorAction SilentlyContinue

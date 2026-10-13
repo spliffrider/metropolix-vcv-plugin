@@ -8,7 +8,7 @@ void scaleRackTests(){
     require(other->integer(M::SCALE)==148 && other->integer(M::SCALE_LOCK)==67 && !other->scaleEditing.load() && !other->scaleShortcutHeld.load(),"scale selection/lock persist while edit/held gestures clear");
     for(int i=0;i<100;++i)require(other->integer(M::userScaleParam(i))==i+1 && other->integer(M::userScaleParam(i,true))==i%12,"all one hundred custom masks/roots survive Rack roundtrip");
     require(other->integer(M::scaleShortcutParam(7))==148 && other->integer(M::scaleShortcutParam(7,true))==9,"scale/root shortcuts roundtrip");
-    require(M::SNAPSHOT_PARAMS==458 && M::presetIndex(M::SCALE_LOCK)<0 && M::presetIndex(M::userScaleParam(99,true))<0,"global definitions do not enlarge or overwrite internal preset snapshots");
+    require(M::FORMAT3_PARAMS==458 && M::presetIndex(M::SCALE_LOCK)<0 && M::presetIndex(M::userScaleParam(99,true))<0,"global scale definitions do not overwrite internal preset snapshots");
     auto preset=m->capturePreset();m->params[M::userScaleParam(0)].setValue(1);m->params[M::SCALE_LOCK].setValue(-1);m->putPreset(0,preset);m->requestPreset(0);m->sendPresetCommand();
     Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;m->process(args);
     require(m->integer(M::SCALE)==148 && m->integer(M::userScaleParam(0))==1 && m->integer(M::SCALE_LOCK)==-1,"presets keep scale selector compatibility and global definitions/lock");

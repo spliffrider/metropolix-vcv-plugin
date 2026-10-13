@@ -6,6 +6,11 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_SLIDE_AUDIO_QA")) {
+            static unsigned visited[2]={};
+            for(int t=0;t<2;++t){int type=m->integer(Metropolix::slideTypeParam(t));if(type>=0 && type<=2)visited[t]|=1u<<type;}
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((visited[0]==7 && visited[1]==7)?"PASS ":"FAIL ")<<"SLIDE PERFORMANCE COMPLETE: Tempo / Analog / Acid presets observed on both tracks during real stereo playback\n";}
+        }
         if(std::getenv("METROPOLIX_SCALE_AUDIO_QA")) {
             static unsigned visited[2]={};
             for(int t=0;t<2;++t){int scale=m->soundingScale[t].load()-49;if(scale>=0 && scale<4)visited[t]|=1u<<scale;}
@@ -146,6 +151,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_SCALE_UI_QA")) {
         #include "ScaleWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_SLIDE_UI_QA")) {
+        #include "SlideWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_OVERRIDE_UI_QA")) {

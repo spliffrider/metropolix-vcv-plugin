@@ -1,4 +1,4 @@
-# Metropolix Lab 2.12.0 — Windows alpha quick start
+# Metropolix Lab 2.13.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/MetropolixLab-2.12.0-win-x64.vcvplugin)
-- [Custom chord progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/Scale-progression.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.13.0/MetropolixLab-2.13.0-win-x64.vcvplugin)
+- [Slide models demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.13.0/Slide-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.12.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.13.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.12.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.13.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -32,7 +32,12 @@ There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
 
-Open **[Scale-progression.vcv](../examples/Scale-progression.vcv)**, select your
+Open **[Slide-performance.vcv](../examples/Slide-performance.vcv)**, select your
+AUDIO device and press RUN. Four chained patterns compare Tempo, Analog and Acid
+on two voices. Try the [slide guide](SLIDES.md) for amount/type controls,
+shortcuts, resets and stopped Analog audition.
+
+For custom chords, open **[Scale-progression.vcv](../examples/Scale-progression.vcv)**, select your
 AUDIO device and press RUN. MOD 1 moves both voices through C / Am / F / G
 custom triads. CTRL 1 adds a live scale offset. See the [scale guide](SCALES.md).
 
@@ -144,10 +149,10 @@ See the [controls guide](STAGE-OVERRIDES.md); hardware comparisons are welcome.
 ## Known limitations
 
 **Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy AUX/MOD routing, most remaining MOD
-destinations, the full scale library/user scales and hardware bank interchange,
+destinations, full stage-CV type behavior and hardware bank interchange,
 remaining accumulator reset/routing options, MIDI, MX, and SysEx.
 
-**Fixed options:** Tempo slide and /1 external input clock
+**Fixed options:** /1 external input clock
 division. Each incoming clock edge is one sixteenth note. Some internal MOD
 gains are implementation choices pending hardware comparison. The front panel
 is not a promise that every printed function is implemented.
@@ -182,7 +187,7 @@ latching/unlatching and stopped Stage Player. Check that release restores the
 current original pattern. Try both target settings and save/reopen.
 [Operation and comparison limits](LOOPY.md); [portable demo](../examples/Loopy-performance.vcv).
 
-## Scales — new in 2.12.0
+## Scales — new in 2.13.0
 
 Try the [scale guide](SCALES.md): factory banks, custom note/root editing,
 lock/search/apply, eight held/menu shortcuts, undo and saving/reopening.
