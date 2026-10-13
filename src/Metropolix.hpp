@@ -2,6 +2,7 @@
 #include "plugin.hpp"
 #include "Sequencer.hpp"
 #include "Presets.hpp"
+#include "Chains.hpp"
 #include <atomic>
 #include <mutex>
 #include <deque>
@@ -47,6 +48,7 @@ struct Metropolix : Module {
         CTRL_STRIDE = 3,
         TOTAL_PULSES = CTRL_PARAMS + 2 * CTRL_STRIDE,
         QUEUE_PULSES, LOAD_DELAY, LOAD_PITCH, LOAD_SWITCHES, LOAD_CTRL, LOAD_AUX,
+        RUN_MODE,
         NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
@@ -133,7 +135,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -263,6 +265,7 @@ struct Metropolix : Module {
 
     int integer(int id) { return static_cast<int>(std::round(params[id].getValue())); }
 #include "PresetAdapter.hpp"
+#include "ChainAdapter.hpp"
     void readSettings() {
         auto& c = sequencer.settings;
         // Direct CTRL destinations own the panel parameter itself. Offsets are
@@ -297,7 +300,7 @@ struct Metropolix : Module {
             mod.type = static_cast<metro::ModType>(integer(modParam(lane, MOD_TYPE)));
             mod.destination = static_cast<metro::ModDestination>(integer(modParam(lane, MOD_DESTINATION)));
             mod.assignment = integer(modParam(lane, MOD_ASSIGNMENT));
-            mod.mute = integer(modParam(lane, MOD_MUTE)) != 0;
+            mod.mute = integer(modParam(lane, MOD_MUTE)) != 0 || (sequencer.chainMutes & 4);
             for (int stage = 0; stage < 8; ++stage) {
                 mod.values[stage] = params[modParam(lane, MOD_VALUE + stage)].getValue();
                 mod.ramps[stage] = integer(modParam(lane, MOD_RAMP + stage)) != 0;
@@ -370,6 +373,7 @@ struct Metropolix : Module {
         }
         meterWasExternal=external;
         bool run = params[RUN].getValue() > 0.5f;
+        processChainCommands(run, external, resetEdge || button);
         processPresetCommands(run, external, resetEdge || button);
         sequencer.process(args.sampleTime, run, external, clockEdge, resetEdge || button, [this] { presetClock(); });
         for (int t = 0; t < 2; ++t) {
@@ -405,12 +409,16 @@ struct Metropolix : Module {
     void onReset(const ResetEvent& e) override {
         Module::onReset(e);
         resetPresetRuntime();
+        resetChainRuntime();
+        { std::lock_guard<std::mutex> lock(presetMutex);chainState.enabled=false;chainEnabled.store(false); }
         sequencer.reset();
         readSettings();
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(10));
+        json_object_set_new(root, "schemaVersion", json_integer(11));
+        json_object_set_new(root, "chainFormat", json_integer(1));
+        json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(1));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
@@ -437,6 +445,8 @@ struct Metropolix : Module {
         if(json_integer_value(json_object_get(root,"schemaVersion"))<10)
             for(int id=TOTAL_PULSES;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         presetsFromJson(root);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<11)params[RUN_MODE].setValue(0);
+        chainsFromJson(root);
         // Old module presets may be loaded over an already configured module.
         // Missing AUX parameters must restore the original, unassigned sound.
         if(json_integer_value(json_object_get(root,"schemaVersion"))<7)
@@ -465,8 +475,8 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(PRESET_SETUP_PAGE)));
-        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:1));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CHAIN_PAGE)));
+        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));
         if(json_integer_value(json_object_get(root,"schemaVersion"))<6 && uiPage.load()==LENGTH_PAGE)uiField.store(0);

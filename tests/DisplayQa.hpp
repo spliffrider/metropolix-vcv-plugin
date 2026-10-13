@@ -112,6 +112,9 @@ const DisplayCase cases[]={
     {"preset-save",Metropolix::SAVE_PAGE,0,0,0,false},
     {"preset-timing",Metropolix::PRESET_SETUP_PAGE,1,0,0,false},
     {"preset-policies",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
+    {"chain-empty",Metropolix::CHAIN_PAGE,0,0,0,false},
+    {"chain-edit",Metropolix::CHAIN_PAGE,0,0,0,false},
+    {"chain-end",Metropolix::CHAIN_PAGE,0,0,0,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -120,6 +123,12 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+        if(test.page==Metropolix::CHAIN_PAGE) {
+            Metropolix::ChainState state;
+            if(std::string(test.name)!="chain-empty")for(int i=0;i<32;++i) {metro::ChainLink l;l.slot=i==31?55:i;l.repeats=i==31?64:i+1;l.mutes=i%8;state.working.insert(i,l);}
+            m->setChainState(state);m->chainCursor.store(std::string(test.name)=="chain-end"?66:63);m->chainEdit.store(std::string(test.name)=="chain-edit"?2:0);
+            if(!state.working.size)m->chainCursor.store(0);
+        }
         if(test.page==Metropolix::ACCUM_PAGE)m->params[Metropolix::accumModeParam(0)].setValue(std::string(test.name)=="accum-stage"?0:1);
         if(test.page==Metropolix::CTRL_PAGE) {
             m->selectedCtrl.store(test.field);

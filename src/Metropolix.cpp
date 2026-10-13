@@ -366,6 +366,7 @@ struct MainDisplay : widget::Widget {
 
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
+#include "ChainUI.hpp"
 
 struct Panel : widget::Widget {
     Metropolix* module = nullptr;

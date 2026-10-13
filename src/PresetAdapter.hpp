@@ -33,6 +33,7 @@ void configurePresets() {
     configSwitch(LOAD_SWITCHES, 0, 1, 0, "Preset switch load", {"Off (keep switches)", "Jump (recall switches)"});
     configSwitch(LOAD_CTRL, 0, 2, 1, "Preset CTRL load", {"Off", "Assigns", "Jump (assignments and positions)"});
     configSwitch(LOAD_AUX, 0, 1, 1, "Preset AUX load", {"Off", "Assigns"});
+    configSwitch(RUN_MODE, 0, 1, 0, "Chain Run button", {"Run/Stop (restart)", "Run/Pause (resume)"});
     for (int id = TOTAL_PULSES; id < NUM_PARAMS; ++id) paramQuantities[id]->randomizeEnabled = false;
 }
 
@@ -67,6 +68,7 @@ Snapshot getPreset(int slot) {
 }
 void putPreset(int slot, const Snapshot& s) {
     if (slot < 0 || slot >= 64) return;
+    if(chainEnabled.load()) {auto state=getChainState();state.enabled=false;setChainState(state);}
     std::lock_guard<std::mutex> lock(presetMutex);
     presetBank[slot] = s;
 }
@@ -74,6 +76,7 @@ void putPreset(int slot, const Snapshot& s) {
 // recall receipts. Thus at most two new receipts can arrive before the next
 // frame (one existing queued load and one new command); eight cells suffice.
 void requestPreset(int slot) {
+    if(chainEnabled.load()) { presetNotice.store(6);return; }
     PresetCommand c;
     c.slot = slot;
     c.snapshot = getPreset(slot);
@@ -86,7 +89,7 @@ void cancelPreset() {
     presetUiCommands.push_back(PresetCommand{});
     presetNotice.store(4);
 }
-bool presetSaveBlocked() const { return pendingSlot.load() >= 0 || presetCommandInFlight.load() || !presetUiCommands.empty(); }
+bool presetSaveBlocked() const { return chainEnabled.load() || pendingSlot.load() >= 0 || presetCommandInFlight.load() || !presetUiCommands.empty(); }
 void sendPresetCommand() {
     if (!presetUiCommands.empty() && !presetCommandInFlight.load()) {
         presetCommandInFlight.store(true);
@@ -122,7 +125,7 @@ void applyPendingPreset(bool atClock) {
     if (atClock) sequencer.restartAtClock(); else sequencer.reset();
 }
 void processPresetCommands(bool run, bool external, bool reset) {
-    if (reset || run != presetWasRunning || external != presetWasExternal) presetTiming.reset();
+    if (reset || (!audioChain.enabled && run != presetWasRunning) || external != presetWasExternal) presetTiming.reset();
     presetWasRunning = run;
     presetWasExternal = external;
     auto& c = audioPresetCommand;
@@ -141,7 +144,7 @@ void processPresetCommands(bool run, bool external, bool reset) {
             audioPendingSlot = -1;
             pendingSlot.store(-1);
             presetNotice.store(c.kind == PresetCommand::Cancel ? presetNotice.load() : 4);
-        } else {
+        } else if(!audioChain.enabled) {
             pendingPreset = c.snapshot;
             audioPendingSlot = c.slot;
             pendingSlot.store(c.slot);
@@ -151,6 +154,7 @@ void processPresetCommands(bool run, bool external, bool reset) {
     if (consumed) presetCommandInFlight.store(false);
 }
 void presetClock() {
+    if(chainClock())return;
     int total = integer(TOTAL_PULSES);
     if (audioPendingSlot >= 0 && presetTiming.loadDue(integer(LOAD_DELAY), integer(QUEUE_PULSES), total))
         applyPendingPreset(true);

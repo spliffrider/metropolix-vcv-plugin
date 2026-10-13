@@ -1,4 +1,30 @@
-# Validation and fidelity status — 2.7.1
+# Validation and fidelity status — 2.8.0
+
+## Preset chains — 2.8.0
+
+The eighth portable suite covers 32-link storage limits, insertion/deletion,
+1–64 repeats, Total/Queue/Off timing, looping, reset, mute isolation and
+phase preservation at 44.1/48/96 kHz with divided/skipped tracks. Rack-library
+tests cover actual note/gate/MOD output on transition edges, accumulator resets,
+empty preset retention, transport/pause, selective recall, schema migration,
+malformed 64-bit JSON fields and patch-local chain/preset storage.
+
+`scripts/test-ui.ps1 -Chains` exercises the actual Setup/encoder/stage callbacks,
+held repeat drag with one undo, link mutes, long-save, clearing/recalling,
+Quick Chain (including Red 1 and repeated presses), read-only playback and
+Chain Follow. It saves a `.vcv` file and launches Rack again to verify the
+working chain, saved chains, repeats, mutes and enabled state. OLED captures
+cover the empty, editing and following views. `-ChainAudio` compresses the demo
+to four pulses per link, observes all seven links and the loop, and records
+12 seconds of the real stereo mix. This checks finite signal and healthy level,
+not subjective musical quality. Existing UI/preset/polish/display regressions
+remain part of the Windows validation.
+
+Chains follow manual pp.171–178 and the later changelog fixes. Storage is local
+to the Rack patch, and reopening starts at Link 1. Additional link mute flags
+combine with stored mute settings; Queue fallback does not reset natural track
+cycles between repeats; clock-source changes restart at Link 1. These combined
+behaviors are documented interpretations requiring hardware-owner comparison.
 
 ## UI polish — 2.7.1
 
@@ -74,7 +100,7 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
 | MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
 | MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
-| Rack host | All 428 parameters and 64 preset slots round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
+| Rack host | All 429 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
 | Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
 | MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
@@ -215,7 +241,7 @@ Skip does not retroactively remove an already accumulated track offset.
 
 The comparison patch is a functional demonstration, not a new composed song.
 That accumulator release did not add preset banks/chaining or accumulator MOD
-destinations. Version 2.7.0 adds banks and queued loading; chains remain open.
+destinations. Version 2.7.0 adds banks and queued loading; 2.8.0 adds chains.
 Its 12-second, 48 kHz Rack recording passes both stereo signal checks: RMS
 0.261/0.435 V, peaks 1.579/1.600 V, DC below 0.0005 V. These measurements
 confirm the patched signal path; they do not rate the musical result.
@@ -223,7 +249,7 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; stage pitch and gate-length overrides; Loopy; swing; full scale selection; additional slide models; and preset chaining are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; stage pitch and gate-length overrides; Loopy; swing; full scale selection; and additional slide models are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
 
 ## Reproduce
 

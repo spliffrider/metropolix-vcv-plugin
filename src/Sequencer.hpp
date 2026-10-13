@@ -139,6 +139,8 @@ public:
     ControlRoutes controls;
     std::array<float, 2> aux{};
     bool running = false;
+    bool resumeOnRun = false;
+    unsigned chainMutes = 0;
     float clock = 0.f;
 
     void seed(uint32_t value) {
@@ -198,7 +200,7 @@ public:
         }
         if (run != running) {
             running = run;
-            if (running) reset();
+            if (running && !resumeOnRun) reset();
         }
         if (resetEdge) {
             reset();
@@ -271,7 +273,7 @@ private:
     RandomSource random[2];
 
     bool muted(int t) const {
-        return settings.tracks[t].mute != (modulation.routes[t][ModMute] >= 1.5f);
+        return (chainMutes & (1u<<t)) || (settings.tracks[t].mute != (modulation.routes[t][ModMute] >= 1.5f));
     }
     bool skipped(int t,int stage) const {
         return settings.tracks[t].stages[stage].skip != tracks[t].skipInverted;

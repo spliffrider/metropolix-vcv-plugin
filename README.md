@@ -4,9 +4,14 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.7.1 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.8.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.1/MetropolixLab-2.7.1-win-x64.vcvplugin)** · **[Four-pattern preset demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.1/Preset-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.7.1)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.8.0/MetropolixLab-2.8.0-win-x64.vcvplugin)** · **[Evolving chain demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.8.0/Chain-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.8.0)**
+
+2.8.0 adds **preset chaining**: 32 links, 1–64 repeats, per-link track/MOD
+mutes, eight saved chains, Quick Chain, an OLED list/follow view, desktop menus
+and undo. Hold SETUP to open it. The new 32-bar demo changes patterns and mute
+states automatically. See the [chain guide](docs/PRESET-CHAINS.md).
 
 2.7.1 refines the desktop controls following tester feedback: gentler sliders,
 live parameter readouts during drags, complete OLED descenders, and pitch-slider
@@ -17,7 +22,7 @@ unchanged. See [UI validation](docs/VALIDATION.md#ui-polish--271).
 selective recall, Queue/Total pulse boundaries, and Rack undo. Banks persist
 inside each saved Rack patch. Choose **Recall complete pattern** in the preset
 menu to include slider/switch positions. See the [preset guide](docs/PRESETS.md).
-Preset chaining remains future work.
+The 2.8.0 chain workflow builds on these banks.
 
 2.6.0 activates **CTRL 1 and CTRL 2** with 23 destinations, independent track
 assignments, direct panel control and bipolar offsets, an OLED assignment page,
@@ -28,8 +33,8 @@ See the [CTRL guide](docs/CTRL-KNOBS.md) and try the
 2.5.0 added **Track accumulation** alongside the original Stage mode. Select a
 track, then **ALT → LIM → Mode**, or right-click **TRK 1/2 → Accumulator mode**.
 The LIM display also exposes limits, order, polarity, and reset. Old patches
-retain Stage mode and their existing parameter/cable IDs. Preset chaining is
-still unimplemented; this release focuses on accumulation and skip interactions.
+retain Stage mode and their existing parameter/cable IDs. This earlier release
+focuses on accumulation and skip interactions.
 See [accumulator operation and comparison](docs/HARDWARE-UI.md#accumulator-modes).
 
 2.4.0 made X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). macOS/Linux plugin downloads are not available yet. The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
@@ -116,7 +121,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.7.1-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.8.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -187,7 +192,7 @@ The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, preset chains or hardware bank interchange, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware bank interchange, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
