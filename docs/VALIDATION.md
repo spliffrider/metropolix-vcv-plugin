@@ -1,4 +1,16 @@
-# Validation and fidelity status — 2.22.0
+# Validation and fidelity status — 2.23.0
+
+## Preset pickup — 2.23.0
+
+Twenty-three portable suites pass. PickupTests adds 599,116 assertions across
+target/physical positions, both directions, exact/overshoot takeover, subsequent
+recall and Off/Jump transitions. Native Rack tests exercise physical/effective
+pitch and CTRL values, effective bank saving, exact recall undo state, chains,
+schema migration and patch persistence. Actual widget callbacks cover partial
+drag, pickup, undo/redo, explicit takeover, effective save and native reopen.
+The display suite captures 126 states, including pickup dots and expanded
+recall lists. A real two-voice patch also exercises persisted pickup targets.
+See [Preset pickup](PRESET-PICKUP.md) for desktop behavior and interpretation.
 
 ## UI setup and confirmation — 2.22.0
 

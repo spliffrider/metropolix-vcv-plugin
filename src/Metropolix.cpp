@@ -449,6 +449,7 @@ struct MainDisplay : widget::Widget {
 #include "ModWorkflowUI.hpp"
 void openChainPage(Metropolix* m);
 #include "SetupUI.hpp"
+#include "PickupUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

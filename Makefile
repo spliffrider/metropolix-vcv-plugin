@@ -15,6 +15,7 @@ DISTRIBUTABLES += docs/COMPLETE-ROUTING.md
 DISTRIBUTABLES += docs/CLOCK-RESET.md
 DISTRIBUTABLES += docs/EDITING-WORKFLOWS.md
 DISTRIBUTABLES += docs/UI-SETUP.md
+DISTRIBUTABLES += docs/PRESET-PICKUP.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -67,6 +68,8 @@ test:
 	./build/tests/workflow-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/SetupTimingTests.cpp -o build/tests/setup-timing-tests.exe
 	./build/tests/setup-timing-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/PickupTests.cpp -o build/tests/pickup-tests.exe
+	./build/tests/pickup-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:

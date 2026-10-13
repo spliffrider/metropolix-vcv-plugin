@@ -1,9 +1,10 @@
-# Feature status — 2.22.0 public alpha
+# Feature status — 2.23.0 public alpha
 
-Assessment date: 2026-10-13. The reference is the
+Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.23.0 adds [preset pickup](PRESET-PICKUP.md), with physical/sounding state, native undo and persistence.
 2.22.0 adds [UI setup, pending confirmation, input clock division and output delay](UI-SETUP.md).
 2.21.0 adds [editing workflows, custom Init and copy/paste](EDITING-WORKFLOWS.md).
 2.20.0 adds [clock/reset configuration, protected tracks, Bottom Pitch and tuner](CLOCK-RESET.md).
@@ -40,10 +41,10 @@ configuration, preset workflows, and external interfaces.
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
 | Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; legacy preset selector/global difference |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute; all 38 hardware destinations; gate On/Off readouts and global scope | MIDI options, continuous destination-specific display units and hardware comparisons |
-| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons and remaining setup preferences |
+| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover help, context menus, vertical dragging, numeric entry, undo, optional grids | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
-| Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains Quick Chain and custom Init | Pickup, MIDI, MX expansion and SysEx interchange |
+| Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init and pitch/CTRL Thru pickup | MIDI, MX expansion and SysEx interchange |
 
 The current 736 parameters include repeated stage/lane controls; that number is
 not a count of distinct hardware features. Implemented behavior can still
@@ -53,13 +54,7 @@ differ in edge cases or where the manual leaves details unspecified. See
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows testers**. The engine suites, Rack
-host/persistence checks, widget callback tests, 122 display states, and recorded
+host/persistence checks, widget callback tests, 126 display states, and recorded
 stereo/CV paths pass on the documented setup. The musical baseline also received
 an initial user playtest. Broad testing on other computers, long sessions,
 different zoom/DPI settings, and interactions with other plugins is still needed.
-
-2.4.0 adds AUX inputs and their hardware-positioned controls/display. The broad
-completion estimates above remain unchanged; this is one routing feature area.
-It is suitable for experimental patches and
-feedback, with saved copies of important work. It is not a complete or
-hardware-verified Metropolix replacement.

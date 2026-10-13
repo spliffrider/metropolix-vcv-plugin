@@ -6,7 +6,7 @@ void chainRackTests() {
     auto pulse=[&]{m.inputs[M::CLOCK_IN].setVoltage(0);process(100);m.inputs[M::CLOCK_IN].setVoltage(5);process();};
     auto upload=[&](const M::ChainState& s){m.setChainState(s);m.sendChainCommand();process();};
     for(int k=0;k<2;++k)m.params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);
-    m.params[M::LOAD_PITCH].setValue(1);m.params[M::LOAD_SWITCHES].setValue(1);
+    m.params[M::LOAD_PITCH].setValue(M::PitchJump);m.params[M::LOAD_SWITCHES].setValue(1);
     m.params[M::SCALE].setValue(0);m.params[M::RANGE].setValue(1);
     auto a=m.capturePreset();a.values[M::TOTAL_PULSES]=3;a.values[M::PITCH]=0;
     a.values[M::modParam(0,M::MOD_VALUE)]=2;a.values[M::modParam(0,M::MOD_DESTINATION)]=metro::ModPitchPost;

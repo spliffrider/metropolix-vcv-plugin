@@ -11,13 +11,16 @@ static constexpr int SNAPSHOT_PARAMS = FORMAT7_PARAMS + 2;
 static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index<FORMAT3_PARAMS?SWING_1 + index - TOTAL_PULSES - 1:index<FORMAT5_PARAMS?SLIDE_TYPE_1+index-FORMAT3_PARAMS:index<FORMAT6_PARAMS?OUTPUT_TRACK_OPTIONS+index-FORMAT5_PARAMS:index<FORMAT7_PARAMS?TRACK_BEHAVIOR+index-FORMAT6_PARAMS:TRACK_GLOBAL_RESET_1+index-FORMAT7_PARAMS; }
 static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : id>=SLIDE_TYPE_1 && id<CV_RAMPS+16?FORMAT3_PARAMS+id-SLIDE_TYPE_1:id>=OUTPUT_TRACK_OPTIONS && id<OUTPUT_TRACK_OPTIONS+6?FORMAT5_PARAMS+id-OUTPUT_TRACK_OPTIONS:id>=TRACK_BEHAVIOR && id<TRACK_BEHAVIOR+6?FORMAT6_PARAMS+id-TRACK_BEHAVIOR:id>=TRACK_GLOBAL_RESET_1 && id<=TRACK_GLOBAL_RESET_2?FORMAT7_PARAMS+id-TRACK_GLOBAL_RESET_1:-1; }
 using Snapshot = metro::PresetSnapshot<SNAPSHOT_PARAMS>;
+#include "PickupAdapter.hpp"
 struct PresetCommand {
-    enum Kind { Load, Cancel, Restore, Initialize } kind = Cancel;
+    enum Kind { Load, Cancel, Restore, Initialize, PanelEdit } kind = Cancel;
     Snapshot snapshot, other;
+    metro::PanelPickup pickup;std::array<float,10> physical{};unsigned pickupMask=0;
     int slot = -1;
 };
 struct PresetRecall {
     Snapshot before, after;
+    metro::PanelPickup pickupBefore,pickupAfter;std::array<float,10> physicalBefore{},physicalAfter{};unsigned pickupMask=0;
     int slot = -1;
 };
 std::array<Snapshot, 64> presetBank{};
@@ -39,9 +42,9 @@ void configurePresets() {
     configParam(TOTAL_PULSES, 0, 4096, 0, "Preset total pulses (0 = Off)")->snapEnabled = true;
     configParam(QUEUE_PULSES, 0, 4096, 32, "Preset queue pulses (0 = manual reset)")->snapEnabled = true;
     configSwitch(LOAD_DELAY, 0, 2, 0, "Preset load delay", {"Instant", "Queue Pulses", "Total Pulses"});
-    configSwitch(LOAD_PITCH, 0, 1, 0, "Preset pitch load", {"Off (keep sliders)", "Jump (recall sliders)"});
+    configSwitch(LOAD_PITCH, 0, 2, 0, "Preset pitch load", {"Off (keep sliders)", "Thru (pickup saved pitches)", "Jump (recall sliders)"});
     configSwitch(LOAD_SWITCHES, 0, 1, 0, "Preset switch load", {"Off (keep switches)", "Jump (recall switches)"});
-    configSwitch(LOAD_CTRL, 0, 2, 1, "Preset CTRL load", {"Off", "Assigns", "Jump (assignments and positions)"});
+    configSwitch(LOAD_CTRL, 0, 3, 1, "Preset CTRL load", {"Off", "Assigns", "Thru (pickup saved positions)", "Jump (assignments and positions)"});
     configSwitch(LOAD_AUX, 0, 1, 1, "Preset AUX load", {"Off", "Assigns"});
     configSwitch(RUN_MODE, 0, 1, 0, "Chain Run button", {"Run/Stop (restart)", "Run/Pause (resume)"});
     for (int id = TOTAL_PULSES; id <= RUN_MODE; ++id) paramQuantities[id]->randomizeEnabled = false;
@@ -50,11 +53,11 @@ void configurePresets() {
 Snapshot capturePreset() {
     Snapshot s;
     s.occupied = true;
-    for (int i = 0; i < SNAPSHOT_PARAMS; ++i) s.values[i] = params[presetParam(i)].getValue();
+    for (int i = 0; i < SNAPSHOT_PARAMS; ++i){int id=presetParam(i),panel=panelIndex(id);s.values[i]=panel>=0 && panelPickup[panel].active?panelPickup[panel].target:params[id].getValue();}
     return s;
 }
 // Used on the UI thread with Engine::moduleToJson(), which excludes process().
-Snapshot presetFromParamsJson(json_t* array) {
+Snapshot presetFromParamsJson(json_t* array,json_t* data=nullptr) {
     Snapshot s;
     s.occupied = true;
     for (int i = 0; i < SNAPSHOT_PARAMS; ++i) s.values[i] = paramQuantities[presetParam(i)]->defaultValue;
@@ -65,6 +68,7 @@ Snapshot presetFromParamsJson(json_t* array) {
         int index = presetIndex(id);
         if (id >= 0 && index >= 0 && json_is_number(value)) s.values[index] = sanitizePresetValue(id, json_number_value(value));
     }
+    if(data)snapshotPickupJson(s,data);
     return s;
 }
 float sanitizePresetValue(int id, double v) const {
@@ -129,10 +133,11 @@ void applyPendingPreset(bool atClock) {
     PresetRecall event;
     event.slot = audioPendingSlot;
     event.before = capturePreset();
-    for (int i = ROOT; i < SNAPSHOT_PARAMS; ++i)
-        if (recallParam(presetParam(i))) params[presetParam(i)].setValue(pendingPreset.values[i]);
+    event.pickupBefore=panelPickup;event.physicalBefore=physicalControls();
+    recallMusical(pendingPreset);
     readSettings();
-    event.after = capturePreset();
+    event.after = capturePreset();event.pickupAfter=panelPickup;event.physicalAfter=physicalControls();
+    for(int i=0;i<10;++i)if(event.pickupBefore[i]!=event.pickupAfter[i] || event.physicalBefore[i]!=event.physicalAfter[i])event.pickupMask|=1u<<i;
     // This push cannot overflow: the UI drains receipts before sending a
     // command, and without another command only one pending load can finish.
     presetRecalls.push(event);
@@ -149,12 +154,14 @@ void processPresetCommands(bool run, bool external, bool reset) {
     auto& c = audioPresetCommand;
     bool consumed = presetCommands.pop(c);
     if (consumed) {
-        if(c.kind==PresetCommand::Initialize){pendingPreset=c.snapshot;audioPendingSlot=-2;applyPendingPreset(false);}
+        if(c.kind==PresetCommand::PanelEdit){for(int i=0;i<10;++i)if(c.pickupMask & (1u<<i)){params[panelParam(i)].setValue(c.physical[i]);panelPickup[i]=c.pickup[i];}readSettings();}
+        else if(c.kind==PresetCommand::Initialize){pendingPreset=c.snapshot;audioPendingSlot=-2;applyPendingPreset(false);}
         else if (c.kind == PresetCommand::Restore) {
             audioPendingSlot = -1;
             pendingSlot.store(-1);
             for (int i = 0; i < SNAPSHOT_PARAMS; ++i)
-                if (c.snapshot.values[i] != c.other.values[i]) params[presetParam(i)].setValue(c.snapshot.values[i]);
+                if (c.snapshot.values[i] != c.other.values[i] && panelIndex(presetParam(i))<0) params[presetParam(i)].setValue(c.snapshot.values[i]);
+            for(int i=0;i<10;++i)if(c.pickupMask & (1u<<i)){params[panelParam(i)].setValue(c.physical[i]);panelPickup[i]=c.pickup[i];}
             readSettings();
             sequencer.reset();
             presetTiming.reset();

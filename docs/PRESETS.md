@@ -35,9 +35,9 @@ load. The following choices are global to this module instance:
 
 | Setting | Default | Choices |
 | --- | --- | --- |
-| Pitch Load | Off | Keep live pitch sliders, or Jump to saved positions |
+| Pitch Load | Off | Keep live sliders, Thru pickup, or Jump to saved positions |
 | Switch Load | Off | Keep pulse/gate switches, or Jump to saved positions |
-| Ctrl Load | Assigns | Off; saved destinations/track assignments with current knob positions; or Jump including saved positions |
+| Ctrl Load | Assigns | Off; saved destinations/track assignments with current knob positions; Thru pickup of saved positions; or Jump including saved positions |
 | Aux Load | Assigns | Keep current routes, or recall destinations/track assignments |
 
 Choose **Recall complete pattern** in the preset menu to enable Pitch Jump,
@@ -50,9 +50,13 @@ for example, recalling a CTRL assignment to Tempo lets that knob set the tempo,
 even though the BPM screen itself is not recalled. Assigns can similarly change
 a direct track setting according to the current knob position.
 
-Hardware **Thru** pickup is not offered here: recalled virtual knobs/sliders
-move to their saved positions, and mouse drags continue from those positions.
-External MIDI-controller pickup is not implemented.
+As of 2.23.0, **Thru** recalls sounding values while leaving the virtual physical
+controls in place. Each control takes over when it reaches/crosses its saved
+position. Hover and HOME override dots show waiting controls; a slider marker
+shows the pickup target. Right-click provides explicit takeover. Gesture undo
+restores both physical position and waiting state. Saving a pattern stores the
+sounding values, and saving a Rack patch retains the two states. See
+[Preset pickup](PRESET-PICKUP.md). External MIDI-controller pickup is separate.
 
 As of 2.9.0, both track Swing values are stored and recalled with each pattern.
 Format-1 banks from earlier releases migrate with 50% Swing, preserving their

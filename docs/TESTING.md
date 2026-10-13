@@ -1,17 +1,19 @@
-# Metropolix Lab 2.22.0 — Windows alpha quick start
+# Metropolix Lab 2.23.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. Some hardware controls are still placeholders; see Known limitations.
 
+2.23.0 adds [preset pickup](PRESET-PICKUP.md), keeping physical controls in place until they reach their recalled sounding values.
+
 2.22.0 adds [UI setup and confirmation](UI-SETUP.md), input clock division and common CV/gate output delay.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.22.0/MetropolixLab-2.22.0-win-x64.vcvplugin)
-- [UI setup demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.22.0/Setup-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.23.0/MetropolixLab-2.23.0-win-x64.vcvplugin)
+- [Preset pickup demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.23.0/Pickup-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.22.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.23.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -25,7 +27,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.22.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.23.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -246,7 +248,7 @@ Try Bottom Pitch outside the current scale, then tune both voices with High/Cloc
 gates. EXIT must restore their sequence. Save/reopen retains settings and presets
 without activating the tuner. Older format 7 presets should load with Global Reset On.
 
-## Editing workflows — new in 2.22.0
+## Editing workflows — new in 2.23.0
 
 Try [ALT randomize/morph/restore and copy/paste](EDITING-WORKFLOWS.md). Compare
 AUX Y variations with AUX Z, confirm LEN Pulses stays unchanged when randomizing,

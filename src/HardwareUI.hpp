@@ -206,6 +206,7 @@ struct HardwareControl : ValueKnob {
     std::function<std::vector<int>()> groupedParams;
     std::vector<int> gestureIds;
     std::vector<float> gestureBefore;
+    int pickupGestureParam=-1;float pickupPhysicalBefore=0;metro::Pickup pickupBefore,pickupAfter;
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
     ~HardwareControl() { clearTip(); }
     void bind() {
@@ -224,6 +225,7 @@ struct HardwareControl : ValueKnob {
         if(!help.empty()) s += "\n"+help;
         if(metroModule && paramId==metroModule->uiDraftParam)s+="\nPending: "+previewDisplayString(metroModule,paramId)+". Press encoder to apply.";
         if(detailHelp) s += "\n"+detailHelp();
+        if(metroModule && metroModule->waitingPickup(paramId)){float physical=metroModule->params[paramId].getValue(),saved=metroModule->panelValue(paramId);s+=string::f("\nWaiting for pickup: saved %+.3f, physical %+.3f. Move %s to reach saved position, or right-click to take over.",saved,physical,saved>physical?"up / clockwise":"down / counterclockwise");}
         if(q) s += "\nHold + drag up/down to increase/decrease. Ctrl = fine. Right-click = values/reset.";
         return s;
     }
@@ -271,6 +273,8 @@ struct HardwareControl : ValueKnob {
         ValueKnob::onDragStart(e);
         gestureIds=groupedParams?groupedParams():std::vector<int>{};gestureBefore.clear();
         for(int id:gestureIds)gestureBefore.push_back(metroModule->params[id].getValue());
+        pickupGestureParam=metroModule && metroModule->waitingPickup(paramId)?paramId:-1;
+        if(pickupGestureParam>=0){pickupPhysicalBefore=metroModule->params[paramId].getValue();pickupBefore=pickupAfter=uiPickup(metroModule,paramId);}
     }
     void onDragMove(const event::DragMove& e) override {
         moved+=e.mouseDelta.norm();
@@ -309,10 +313,13 @@ struct HardwareControl : ValueKnob {
                 }
             }
         }
+        if(pickupGestureParam>=0){bool pitch=Metropolix::panelIndex(pickupGestureParam)<8;int mode=metroModule->integer(pitch?Metropolix::LOAD_PITCH:Metropolix::LOAD_CTRL);pickupAfter.process(metroModule->params[pickupGestureParam].getValue(),mode==(pitch?Metropolix::PitchThru:Metropolix::CtrlThru),mode>=(pitch?Metropolix::PitchThru:Metropolix::CtrlThru));}
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
         bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity() || cvPage(metroModule)) && (moved>=3 || longFired);
+        float pickupPhysicalAfter=pickupGestureParam>=0?metroModule->params[pickupGestureParam].getValue():0;
+        if(pickupGestureParam>=0)metroModule->params[pickupGestureParam].setValue(pickupPhysicalBefore);
         std::vector<float> after;
         if(batch) {
             for(int id:gestureIds)after.push_back(metroModule->params[id].getValue());
@@ -323,6 +330,7 @@ struct HardwareControl : ValueKnob {
             for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(gestureBefore[i]);
         }
         ValueKnob::onDragEnd(e);
+        if(pickupGestureParam>=0){metroModule->params[pickupGestureParam].setValue(pickupPhysicalAfter);panelControlHistory(metroModule,pickupGestureParam,pickupPhysicalBefore,pickupPhysicalAfter,pickupBefore,pickupAfter,"move recalled control");pickupGestureParam=-1;}
         if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit track settings");}
         gestureIds.clear();gestureBefore.clear();
         if(navigating && navigationEnd)navigationEnd();
@@ -331,7 +339,7 @@ struct HardwareControl : ValueKnob {
     }
     void onAction(const event::Action&) override { if(moved<3.f && !longFired && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();app::Knob::onDoubleClick(e);} }
-    void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu); }
+    void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu);auto* m=metroModule;int id=paramId;if(m && m->waitingPickup(id))menu->addChild(createMenuItem("Take over at current physical position","",[m,id]{takeOverPanel(m,id);})); }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg; float x=box.size.x/2, y=box.size.y/2, r=std::min(x,y)-.7f;
         if(look==INVISIBLE) return;
@@ -414,6 +422,7 @@ struct HardwareSlider : HardwareControl {
             rect(vg,x-half+1,3,half*2-2,2,nvgRGB(56,92,70),0);
             rect(vg,x-half+1,h-5,half*2-2,2,nvgRGB(56,92,70),0);
             for(float y:{h*.27f,h*.65f})stroke(vg,x-half+1,y,x+half-1,y,nvgRGB(56,48,31),.5f);
+            if(metroModule && metroModule->waitingPickup(Metropolix::PITCH+stage)){float target=metroModule->panelValue(Metropolix::PITCH+stage),y=handle/2+2+(1-target)*(h-handle-4);stroke(vg,x-half+1,y,x+half-1,y,nvgRGB(147,226,255),1);}
         }
         rect(vg,x-half+.1f,cy-handle/2,half*2-.2f,handle,nvgRGB(13,16,17),.6f);
         if(kind==PITCH_SLIDER) {
