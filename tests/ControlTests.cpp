@@ -18,7 +18,7 @@ int main() {
     struct Range { CtrlDestination dest; float low,high; };
     const Range ranges[]={{CtrlTempo,.1f,400},{CtrlClockDiv,1,64},{CtrlGateLength,1,99},
         {CtrlOrder,0,20},{CtrlPulseDiv,1,8},{CtrlPulsesLength,0,64},{CtrlSlideAmount,0,100},
-        {CtrlStagesLength,1,8},{CtrlStagesOffset,0,7},{CtrlAccumMode,0,1}};
+        {CtrlStagesLength,1,8},{CtrlStagesOffset,0,7},{CtrlAccumMode,0,1},{CtrlSwing,50,78}};
     for(auto r:ranges){near(ctrlDirectValue(r.dest,-1),r.low,"direct minimum");near(ctrlDirectValue(r.dest,1),r.high,"direct maximum");}
     near(ctrlDirectValue(CtrlAccumPolar,0),1,"noon selects bipolar");
     near(ctrlDirectValue(CtrlAccumPolar,-1),0,"negative polarity selects unipolar");

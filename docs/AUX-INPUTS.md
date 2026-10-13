@@ -25,6 +25,11 @@ takes effect at its next decision; rest/rejected stages retain pitch as before).
 
 ## CV and gate behavior
 
+As of 2.9.0, **Swing** is a ninth destination: ±5 V adds/subtracts up to
+28 percentage points from the programmed amount, limited to 50–78%.
+The AUX/MOD sum is sampled at the beginning of each track's pulse pair.
+See the [Swing guide](SWING.md) for timing and CTRL interaction.
+
 Continuous CV is multiplied by the knob's -100% to +100% amount, then limited
 to -5..+5 V. For example, +10 V at +25% produces +2.5 V; at -25%, -2.5 V.
 Unpatched continuous inputs contribute zero.

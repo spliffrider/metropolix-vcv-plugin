@@ -73,6 +73,9 @@ void trackSettingsMenu(Metropolix* m) {
             [q, offset](size_t index) { setWithHistory(q, static_cast<float>(index + offset)); }, m->ctrlOwner(id)>=0));
     };
     choice("Direction", Metropolix::extraParam(t, Metropolix::REVERSED), {"Forward", "Reverse"});
+    std::vector<std::string> swingValues;
+    for(int n=50;n<=78;++n)swingValues.push_back(std::to_string(n)+"%");
+    choice("Swing", Metropolix::swingParam(t), swingValues, 50);
     std::vector<std::string> divisions;
     for (int i = 1; i <= 8; ++i) divisions.push_back("/ " + std::to_string(i));
     choice("Pulse-count division", Metropolix::extraParam(t, Metropolix::PULSE_DIV), divisions, 1);
@@ -175,7 +178,7 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
         setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION)),0.f);
     }));
     menu->addChild(createSubmenuItem("Not implemented yet","",[](ui::Menu* sub) {
-        for(auto name:{"Accum Dir","Gate Scale","Scale (User)","Slider Range","Swing","Velocity"})
+        for(auto name:{"Accum Dir","Gate Scale","Scale (User)","Slider Range","Velocity"})
             sub->addChild(createMenuLabel(name));
     }));
 }
@@ -186,6 +189,7 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
 struct ValueCell : ValueKnob {
     Metropolix* metroModule = nullptr;
     int trackProperty = -1;
+    bool swingProperty = false;
     int stageColumn = -1;
     int stageRow = -1;
     int modProperty = -1;
@@ -208,6 +212,7 @@ struct ValueCell : ValueKnob {
         if (metroModule && !dragStarted) {
             int t = metroModule->selectedTrack.load();
             if (trackProperty >= 0) paramId = Metropolix::trackParam(t, trackProperty);
+            if (swingProperty) paramId = Metropolix::swingParam(t);
             if (stageRow >= 0) paramId = Metropolix::stageParam(t, stageColumn, stageRow);
             if (compact) paramId = Metropolix::stageParam(t,
                 metroModule->selectedStage.load(), metroModule->selectedRow.load());
@@ -414,8 +419,8 @@ struct Panel : widget::Widget {
             const float positions[] = {620, 680, 740, 800, 934};
             const char* labels2[] = {"LENGTH", "OFFSET", "DIVIDE", "PLAY ORDER", "MUTE"};
             for (int i = 0; i < 5; ++i) text(args.vg, positions[i], 48, labels2[i], 8, muted());
-            const char* labels3[] = {"TRANSPOSE", "GATE %", "SLIDE %", "ACC LIMIT +"};
-            for (int i = 0; i < 4; ++i) text(args.vg, 620 + i * 85, 95, labels3[i], 8, muted());
+            const char* labels3[] = {"TRANSPOSE", "GATE %", "SLIDE %", "ACC LIMIT +", "SWING %"};
+            for (int i = 0; i < 5; ++i) text(args.vg, 620 + i * 85, 95, labels3[i], 8, muted());
             line(args.vg, 620, 132, 1060, 132, nvgRGB(170, 178, 169));
             for (int s = 0; s < 8; ++s) text(args.vg, 713 + s * 44, 146, std::to_string(s + 1), 9, muted(), NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             for (int row = 0; row < 6; ++row)
@@ -510,6 +515,7 @@ struct MetropolixWidget : ModuleWidget {
             auto* c = cell(editor, module, Metropolix::trackParam(0, props2[i]), 20 + i * 85, 103, 72);
             c->trackProperty = props2[i];
         }
+        cell(editor,module,Metropolix::swingParam(0),360,103,72)->swingProperty=true;
         for (int row = 0; row < 6; ++row) {
             for (int s = 0; s < 8; ++s) {
                 auto* c = cell(editor, module, Metropolix::stageParam(0, s, row), 94 + s * 44, 157 + row * 30, 38);

@@ -9,7 +9,7 @@ void MetropolixWidget::qaStep() {
         if(std::getenv("METROPOLIX_CHAIN_AUDIO_QA")) {
             if(qaFrame==2) {
                 json_t* json=APP->engine->moduleToJson(m),*data=json_object_get(json,"data");
-                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer(4));
+                for(int s=0;s<4;++s)json_array_set_new(json_array_get(json_object_get(data,"presets"),s),Metropolix::TOTAL_PULSES,json_integer(std::getenv("METROPOLIX_SWING_AUDIO_QA")?8:4));
                 json_t* links=json_object_get(json_object_get(data,"chains"),"working");
                 for(size_t i=0;i<json_array_size(links);++i)json_object_set_new(json_array_get(links,i),"repeats",json_integer(1));
                 APP->engine->moduleFromJson(m,json);json_decref(json);
@@ -19,7 +19,12 @@ void MetropolixWidget::qaStep() {
             if(link>=0 && link!=previous) {
                 if(previous>=0){good &= link==(previous+1)%7;++transitions;}
                 previous=link;
+                if(std::getenv("METROPOLIX_SWING_AUDIO_QA")) {
+                    const int slots[]={0,1,0,2,3,1,3};const int amounts[]={50,62,66,75};
+                    good &= m->integer(Metropolix::swingParam(1))==amounts[slots[link]];
+                }
                 if(transitions==7) {std::ofstream report(dir+"/report.txt",std::ios::app);report<<(good?"PASS ":"FAIL ")<<"CHAIN PERFORMANCE COMPLETE: all seven links and loop observed during real audio playback\n";}
+                if(transitions==7 && std::getenv("METROPOLIX_SWING_AUDIO_QA")){std::ofstream report(dir+"/report.txt",std::ios::app);report<<(good?"PASS ":"FAIL ")<<"SWING PERFORMANCE COMPLETE: straight and swung presets observed during real stereo playback\n";}
             }
         }
         if(std::getenv("METROPOLIX_PRESET_AUDIO_QA")) {
@@ -105,6 +110,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_CHAIN_UI_QA")) {
         #include "ChainWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_SWING_UI_QA")) {
+        #include "SwingWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_DISPLAY_QA")) {
@@ -249,7 +258,7 @@ void MetropolixWidget::qaStep() {
     if(qaFrame==70) {
         check(box.size.x==510 && !editor->visible && !modPanel->visible,"optional editors close to hardware width");
         check(m->uiPage.load()==Metropolix::HOME && !m->uiAlt.load(),"EXIT returns to home");
-        auto* stub=find("SWING"); check(stub && stub->tooltipText().find("not implemented")!=std::string::npos,"unfinished hardware control explains its status");
+        auto* stub=find("Loopy"); check(stub && stub->tooltipText().find("not implemented")!=std::string::npos,"unfinished hardware control explains its status");
         auto* knob=find("AUX X attenuverter");auto* q=m->getParamQuantity(Metropolix::auxParam(0,Metropolix::AUX_AMOUNT));
         drag(knob,-100);check(q->getValue()>0,"AUX knob upward drag increases amount");
         APP->history->undo();check(q->getValue()==0,"AUX knob drag is one undo");

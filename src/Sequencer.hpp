@@ -11,6 +11,7 @@
 #include "Accumulator.hpp"
 #include "Modulation.hpp"
 #include "Controls.hpp"
+#include "SwingTiming.hpp"
 
 namespace metro {
 
@@ -46,6 +47,7 @@ struct Track {
     int transpose = 0;
     float gateLength = 0.5f;
     float slideTime = 0.25f;
+    float swing = 50.f;
     int accumLimit = 9;
     int accumNegativeLimit = 9;
     bool accumBipolar = false;
@@ -163,6 +165,7 @@ public:
         clockRemaining = 0.0;
         clock = 0.f;
         modulation.reset();
+        for (auto& timing : swingTiming) timing.reset();
         aux.fill(0.f);
     }
 
@@ -225,6 +228,10 @@ public:
                 modulation.tick(settings.modLanes, period);
             }
             modulation.render(settings.modLanes, dt, settings.auxInputs);
+            // Pending track pulses use the same sample clock as gates/slides.
+            // Reset/recall above cancels them before any new pattern is played.
+            for (int t = 0; t < 2; ++t)
+                if (swingTiming[t].advance(dt)) trackTick(t, swingTiming[t].duration);
             if (tick) {
                 firstTick = false;
                 clockRemaining = 0.001;
@@ -239,8 +246,15 @@ public:
                         state.pulse=state.divider=state.totalPulses=0;state.playOrder.reset();
                     }
                     int division = clamp(config.division, 1, 64);
-                    if (state.divider == 0 || state.divider >= division)
-                        trackTick(t, period * division);
+                    if (state.divider == 0 || state.divider >= division) {
+                        auto& timing = swingTiming[t];
+                        if (timing.pending) {
+                            timing.pending = false;
+                            trackTick(t, timing.duration);
+                        }
+                        float amount = swingPercent(config.swing + modulation.routes[t][ModSwing] * 5.6f);
+                        if (timing.clock(period * division, amount)) trackTick(t, timing.duration);
+                    }
                     state.divider = (state.divider + 1) % division;
                 }
             }
@@ -271,6 +285,7 @@ private:
     double clockRemaining = 0.0;
     double resetIgnore = 0.0;
     RandomSource random[2];
+    std::array<SwingTiming, 2> swingTiming;
 
     bool muted(int t) const {
         return (chainMutes & (1u<<t)) || (settings.tracks[t].mute != (modulation.routes[t][ModMute] >= 1.5f));

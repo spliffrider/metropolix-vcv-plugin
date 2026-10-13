@@ -7,7 +7,7 @@
 namespace metro {
 enum ModType { ModBipolar, ModUnipolar, ModGate };
 enum ModDestination { ModNone, ModOctave, ModPitchPre, ModPitchPost, ModPitchOffset,
-    ModGateLength, ModProbability, ModRatchet, ModMute, ModDestinationCount };
+    ModGateLength, ModProbability, ModRatchet, ModMute, ModSwing, ModDestinationCount };
 inline bool modGateDestination(ModDestination destination) { return destination == ModMute; }
 template <class T> T modClamp(T v, T lo, T hi) { return std::max(lo, std::min(hi, v)); }
 

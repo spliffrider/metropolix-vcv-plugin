@@ -49,6 +49,7 @@ struct Metropolix : Module {
         TOTAL_PULSES = CTRL_PARAMS + 2 * CTRL_STRIDE,
         QUEUE_PULSES, LOAD_DELAY, LOAD_PITCH, LOAD_SWITCHES, LOAD_CTRL, LOAD_AUX,
         RUN_MODE,
+        SWING_1, SWING_2,
         NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
@@ -72,11 +73,12 @@ struct Metropolix : Module {
     static int auxParam(int input, int p) { return AUX_PARAMS + input * AUX_STRIDE + p; }
     static int accumModeParam(int t) { return ACCUM_MODE + t; }
     static int ctrlParam(int knob, int p) { return CTRL_PARAMS + knob * CTRL_STRIDE + p; }
+    static int swingParam(int track) { return SWING_1 + track; }
     static std::vector<std::string> ctrlDestinations() {
         return {"None", "Accum Mode", "Accum Polar", "Tempo", "Clock Div", "Direction",
             "Gate Length", "Octave", "Pitch Offset", "Pitch Post", "Pitch Pre", "Play Order",
             "Probability", "Pulse Count", "Pulse Div", "Pulses Len", "Ratchet", "Root",
-            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap"};
+            "Skip Invert", "Slide Amount", "Slider Invert", "Stages Len", "Stages Offset", "Track Out Swap", "Swing"};
     }
     static int ctrlBaseParam(metro::CtrlDestination d, int t) {
         switch(d) {
@@ -91,6 +93,7 @@ struct Metropolix : Module {
             case metro::CtrlSlideAmount: return trackParam(t,SLIDE_TIME);
             case metro::CtrlStagesLength: return trackParam(t,LENGTH);
             case metro::CtrlStagesOffset: return trackParam(t,OFFSET);
+            case metro::CtrlSwing: return swingParam(t);
             default: return -1;
         }
     }
@@ -110,7 +113,7 @@ struct Metropolix : Module {
         return ids[metro::clamp(field, 0, 5)];
     }
     static std::vector<std::string> modDestinations() {
-        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute"};
+        return {"None", "Octave", "Pitch Pre", "Pitch Post", "Pitch Offset", "Gate Length", "Probability", "Ratchet", "Mute", "Swing"};
     }
     static std::vector<std::string> outputSources() {
         return {"Track 1 CV", "Track 2 CV", "MOD 1", "MOD 2", "MOD 3", "MOD 4", "MOD 5", "MOD 6", "MOD 7", "MOD 8"};
@@ -135,7 +138,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -189,6 +192,7 @@ struct Metropolix : Module {
             configParam(trackParam(t, TRANSPOSE), -24, 24, 0, name + "transpose", " semitones")->snapEnabled = true;
             configParam(trackParam(t, GATE_LENGTH), 1, 99, 50, name + "gate length", "%");
             configParam(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide time", "% of a pulse");
+            configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
             configSwitch(trackParam(t, MUTE), 0, 1, 0, name + "mute", {"Off", "On"})->randomizeEnabled = false;
             for (int s = 0; s < 8; ++s) {
@@ -330,6 +334,7 @@ struct Metropolix : Module {
             track.transpose = integer(trackParam(t, TRANSPOSE));
             track.gateLength = params[trackParam(t, GATE_LENGTH)].getValue() * 0.01f;
             track.slideTime = params[trackParam(t, SLIDE_TIME)].getValue() * 0.01f;
+            track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
             track.accumNegativeLimit = integer(accumParam(t, NEGATIVE_LIMIT));
             track.accumBipolar = integer(accumParam(t, BIPOLAR)) != 0;
@@ -416,10 +421,10 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(11));
+        json_object_set_new(root, "schemaVersion", json_integer(12));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(1));
+        json_object_set_new(root, "presetFormat", json_integer(2));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
@@ -440,6 +445,8 @@ struct Metropolix : Module {
         return root;
     }
     void dataFromJson(json_t* root) override {
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<12)
+            for(int t=0;t<2;++t)params[swingParam(t)].setValue(50.f);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<9)
             for(int id=CTRL_PARAMS;id<TOTAL_PULSES;++id)params[id].setValue(0.f);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<10)
@@ -475,7 +482,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CHAIN_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(SWING_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));

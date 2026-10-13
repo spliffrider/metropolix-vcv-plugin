@@ -12,10 +12,11 @@ void require(bool value, const char* message) {
 
 #include "PresetRackTests.hpp"
 #include "ChainRackTests.hpp"
+#include "SwingRackTests.hpp"
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
-    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::RUN_MODE==428 && Metropolix::NUM_PARAMS==429,"chain Run mode appends without changing existing IDs");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::RUN_MODE==428 && Metropolix::SWING_1==429 && Metropolix::NUM_PARAMS==431,"Swing appends without changing existing IDs");
     static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
@@ -273,6 +274,7 @@ int main() {
     }
     presetRackTests();
     chainRackTests();
+    swingRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

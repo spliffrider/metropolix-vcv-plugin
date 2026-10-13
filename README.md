@@ -4,9 +4,15 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.8.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.9.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.8.0/MetropolixLab-2.8.0-win-x64.vcvplugin)** · **[Evolving chain demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.8.0/Chain-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.8.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/MetropolixLab-2.9.0-win-x64.vcvplugin)** · **[Swing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/Swing-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.9.0)**
+
+2.9.0 adds **Swing** independently for both note tracks, from 50–78%, with a
+manual-style OLED, stage shortcuts, long-press reset, desktop editing and undo.
+Swing is also available as a direct CTRL destination and an AUX/MOD offset.
+Old patches and preset banks keep straight timing. The new demo alternates
+straight and swung phrases and starts stopped. See the [Swing guide](docs/SWING.md).
 
 2.8.0 adds **preset chaining**: 32 links, 1–64 repeats, per-link track/MOD
 mutes, eight saved chains, Quick Chain, an OLED list/follow view, desktop menus
@@ -121,7 +127,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.8.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.9.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -177,7 +183,7 @@ With CLOCK IN connected, RUN arms playback and the next eligible clock edge begi
 
 MOD lanes advance one stage per divided base-clock pulse, independently of the note tracks' pulse counts. Bipolar lanes span -5 to +5 V, unipolar lanes span 0 to +5 V, and gate lanes output 0 or +5 V. A ramp travels from the previous voltage to the current stage's target across the whole stage. Muted lanes keep advancing but contribute no voltage or internal modulation. Stop silences all MOD outputs; reset restarts their traversal.
 
-The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, and Mute. Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
+The nine available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, and Swing. Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
 
 ## Implemented
 
@@ -186,13 +192,14 @@ The eight available internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 - Per-stage probability with Stage/Pulse targeting; skip; a linear, tempo-relative slide; bipolar CV.
 - Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
 - Seven scales: chromatic, major, minor, Dorian, Mixolydian, major and minor pentatonic; chromatic root; slider range 1–4 octaves.
-- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, eight internal destinations, track assignment, and assignable A/B outputs.
-- Three AUX CV/gate inputs, attenuverters, the same eight destinations, per-input track assignments, live meters, and logical gate inversion.
+- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, nine internal destinations, track assignment, and assignable A/B outputs.
+- Three AUX CV/gate inputs, attenuverters, the same nine destinations, per-input track assignments, live meters, and logical gate inversion.
+- Independent 50–78% Swing per note track, with CTRL control and AUX/MOD offsets, shortcuts, reset, and desktop editing.
 - Rack parameter automation, numeric entry, undo/redo, and patch/preset serialization.
 
 ## What remains
 
-This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, swing, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware bank interchange, MIDI, MX, or SysEx compatibility.
+This build does **not** yet include the remaining hardware MOD/AUX/CTRL destinations, ALT+AUX selective randomization, Loopy, per-stage pitch/gate-length overrides, AUX/MOD-only accumulator reset, acid/analog slide models, the full scale library or user scales, hardware bank interchange, MIDI, MX, or SysEx compatibility.
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, the linear slide, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 

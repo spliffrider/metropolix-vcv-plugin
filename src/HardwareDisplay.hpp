@@ -246,6 +246,15 @@ struct HardwareDisplay : HardwareControl {
         } else if(page==Metropolix::SLIDE_PAGE) {
             field(c,0,"SLIDE AMOUNT",string::f("%.0f%%",value(Metropolix::trackParam(t,Metropolix::SLIDE_TIME),25)),true);
             c.text(2,31,"SLIDE TYPE");c.fit(20,41,105,"Tempo",1);
+        } else if(page==Metropolix::SWING_PAGE) {
+            if(mod){c.text(2,3,"SWING");c.text(2,23,"NOTE TRACKS ONLY");}
+            else {
+                int owner=m?m->ctrlOwner(Metropolix::swingParam(t)):-1;
+                c.text(2,2,"SWING",true,1,owner>=0?155:255);
+                c.right(126,10,string::f("%.0f%%",value(Metropolix::swingParam(t),50)),false,2);
+                c.corners(0,0,128,27);
+                if(owner>=0){c.circle(7,20,6);c.text(5,18,std::to_string(owner+1));}else c.turn(3,17);
+            }
         } else if(page==Metropolix::GATE_PAGE) {
             field(c,0,"GATE LENGTH",string::f("%.0f%%",value(Metropolix::trackParam(t,Metropolix::GATE_LENGTH),50)),true);
             c.text(2,31,"GATE SCALE");c.fit(20,41,105,"100%",1);

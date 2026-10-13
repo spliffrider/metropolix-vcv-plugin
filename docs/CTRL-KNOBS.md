@@ -41,6 +41,7 @@ alongside CTRL. The HOME panel view now shows the actual knob positions.
 | Play Order | Direct: the 21 supported play orders |
 | Pulse Div | Direct: /1–/8 pulse-count division |
 | Pulses Len | Direct: Auto at minimum, then 1–64 pulses |
+| Swing | Direct: 50–78%; noon = 64%. See [Swing operation](SWING.md). |
 | Slide Amount | Direct: 0–100% of one track pulse |
 | Stages Len / Stages Offset | Direct: 1–8 stages / offset 0–7 |
 | Octave | Offset: -2 to +2 octaves, whole octaves |
@@ -56,8 +57,8 @@ alongside CTRL. The HOME panel view now shows the actual knob positions.
 | Slider Invert | Right reverses pitch-slider interpretation; left/noon normal |
 | Track Out Swap | Right swaps physical Pitch/Gate 1 and 2 plus track-CV assignments at A/B; left/noon normal. MOD sources at A/B remain unchanged. Global. |
 
-There are 23 destinations plus None. **Accum Dir, Gate Scale, Scale (User),
-Slider Range, Swing, and Velocity** are listed as not implemented in the menu.
+There are 24 destinations plus None as of 2.9.0. **Accum Dir, Gate Scale, Scale (User),
+Slider Range, and Velocity** are listed as not implemented in the menu.
 In particular, reversing an accumulated sequence requires more than changing
 the sign of its increments, so Accum Dir is not presented as available.
 
