@@ -218,7 +218,7 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
         setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION)),0.f);
     }));
     menu->addChild(createSubmenuItem("Not implemented yet","",[](ui::Menu* sub) {
-        for(auto name:{"Accum Dir","Gate Scale","Scale (User)","Slider Range","Velocity"})
+        for(auto name:{"Accum Dir","Gate Scale","Slider Range","Velocity"})
             sub->addChild(createMenuLabel(name));
     }));
 }
@@ -410,6 +410,7 @@ struct MainDisplay : widget::Widget {
     }
 };
 
+#include "ScaleUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

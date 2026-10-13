@@ -54,7 +54,7 @@ int screenParam(Metropolix* m) {
     switch(m->uiPage.load()) {
         case Metropolix::LOOPY_PAGE: return Metropolix::LOOPY_PULSES;
         case Metropolix::BPM_PAGE: return m->externalClock.load()?-1:Metropolix::TEMPO;
-        case Metropolix::SCALE_PAGE: return f ? Metropolix::SCALE : Metropolix::ROOT;
+        case Metropolix::SCALE_PAGE: return f ? (m->scaleEditing.load()?Metropolix::SCALE_NOTE:Metropolix::SCALE) : m->scaleRootParam();
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
         case Metropolix::LENGTH_PAGE:
             if(m->uiAlt.load())return mod?Metropolix::modParam(l,Metropolix::MOD_OFFSET):Metropolix::trackParam(t,Metropolix::OFFSET);
@@ -78,11 +78,18 @@ void screenPage(Metropolix* m, int page) {
     if(!m) return;
     if(m->uiPage.load()==Metropolix::LOOPY_PAGE && page!=Metropolix::LOOPY_PAGE && m->loopyHeld.load() && m->integer(Metropolix::RUN))m->latchLoopy();
     m->loopyMuteHeld.store(false);
+    if(page!=Metropolix::SCALE_PAGE)m->scaleEditing.store(false);
     m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
 }
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
+    if(p==Metropolix::SCALE_PAGE) {
+        if(m->scaleEditing.load() && m->uiField.load())scaleToggleNote(m);
+        else if(m->uiField.load())scaleLockPress(m);
+        else m->uiField.store(1);
+        return;
+    }
     if(p==Metropolix::LOOPY_PAGE) {
         if(m->loopyLatched.load())m->clearLoopy();
         else setWithHistory(m->getParamQuantity(Metropolix::LOOPY_TARGET),1-m->integer(Metropolix::LOOPY_TARGET));
@@ -218,6 +225,7 @@ struct HardwareControl : ValueKnob {
     }
     void onLeave(const event::Leave& e) override { clearTip(); ValueKnob::onLeave(e); }
     void step() override {
+        if(metroModule && metroModule->scaleEditing.load() && !metro::userScale(metroModule->integer(Metropolix::SCALE)))metroModule->scaleEditing.store(false);
         bind(); ValueKnob::step();
         if(tip) { tip->text=tooltipText(); tip->box.pos=getAbsoluteOffset(box.size); }
         if(dragging && moved<3 && !longFired && longAction && (!longEnabled || longEnabled()) && system::getTime()-heldSince>=longSeconds) {longFired=true;longAction();}
@@ -260,14 +268,17 @@ struct HardwareControl : ValueKnob {
             if(gestureIds.size()>1 && overridePage(metroModule)) {
                 auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
                 if(it!=gestureIds.end()) {
-                    int index=int(it-gestureIds.begin()),scale=metroModule->integer(Metropolix::SCALE);
+                    int index=int(it-gestureIds.begin());
+                    int id=metroModule->integer(Metropolix::SCALE_LOCK);if(id<0)id=metroModule->integer(Metropolix::SCALE);
+                    auto scale=metroModule->uiScale(id);
                     bool pitch=metroModule->selectedRow.load()==Metropolix::PITCH_OVERRIDE;
-                    auto degree=[&](float v){return v<0?-1:metro::nearestDegree(v,scale);};
+                    int offDegree=metro::nearestDegree(0,scale)-1,maxDegree=metro::nearestDegree(60,scale);
+                    auto degree=[&](float v){return v<0?offDegree:metro::nearestDegree(v,scale);};
                     float current=metroModule->params[paramId].getValue();
                     float delta=pitch?float(degree(current)-degree(gestureBefore[index])):current-gestureBefore[index];
                     for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId) {
                         float v=gestureBefore[i]+delta;
-                        if(pitch){int d=metro::clamp(degree(gestureBefore[i])+int(delta),-1,metro::scaleAt(scale).count*5);v=d<0?-1.f:float(metro::degreeToSemitone(d,scale));}
+                        if(pitch){int d=metro::clamp(degree(gestureBefore[i])+int(delta),offDegree,maxDegree);v=d==offDegree?-1.f:float(metro::clamp(metro::degreeToSemitone(d,scale),0,60));}
                         metroModule->getParamQuantity(gestureIds[i])->setValue(v);
                     }
                 }

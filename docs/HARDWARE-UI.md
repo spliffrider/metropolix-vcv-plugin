@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.11.0
+# Hardware panel and desktop interaction — 2.12.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -92,3 +92,20 @@ The Rack widget test exercises held upward/downward drags, discrete values, nume
 The ∞ control now provides temporary loops, stopped audition and performance mutes.
 Mouse range menus and a latched-loop display complement the original stage buttons.
 See [Loopy operation, saving and hardware-comparison limits](LOOPY.md).
+
+## Scales — 2.12.0
+
+All 49 factory scales/chords and 100 custom definitions are available from SCALE.
+Encoder browsing uses the hardware bank order while legacy numerical IDs stay fixed.
+Long encoder presses enter/exit note editing, ALT selects Root, clicks lock/apply
+or toggle notes. Hold SCALE + stage to recall a shortcut; long stage press saves.
+Right-click menus provide the same operations. See [Scales](SCALES.md).
+
+Portable validation adds 1,609,670 checks. Rack host, custom editing, lock/search,
+held shortcuts, grouped undo, native saving/reopening, 49 display states and
+actual stereo chord playback pass. Audio measured RMS .360/.363 V, peaks
+1.730/1.733 V, DC approximately .00084 V at 48 kHz over twelve seconds.
+Fractional-voltage truncation, default C-major custom slots and root-only empty
+mask fallback are implementation choices; hardware comparison remains necessary.
+Internal presets retain the earlier plugin selector/root recall behavior, unlike
+the hardware global classification; custom definitions and locks stay global.

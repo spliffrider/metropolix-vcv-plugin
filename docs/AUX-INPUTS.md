@@ -77,3 +77,6 @@ that already had assignments. New patches should be opened with 2.4.0 or later.
 This implements the eight destinations above. Additional hardware destinations,
 ALT+AUX selective randomization, hardware long-press gestures, CTRL assignments,
 Loopy, and swing remain unfinished. There has been no physical-hardware check.
+
+Scale (User), added in 2.12.0, uses whole-volt offsets inside the locked user
+scale bank and can target either or both tracks. See [Scales](SCALES.md).

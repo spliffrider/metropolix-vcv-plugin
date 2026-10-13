@@ -86,6 +86,11 @@ const DisplayCase cases[]={
     {"home-mod",Metropolix::HOME,0,3,0,true},
     {"bpm",Metropolix::BPM_PAGE,0,0,0,false},
     {"scale",Metropolix::SCALE_PAGE,1,0,0,false},
+    {"scale-world",Metropolix::SCALE_PAGE,1,0,0,false},
+    {"scale-locked",Metropolix::SCALE_PAGE,1,0,0,false},
+    {"scale-search",Metropolix::SCALE_PAGE,1,0,0,false},
+    {"scale-user",Metropolix::SCALE_PAGE,0,0,0,false},
+    {"scale-edit",Metropolix::SCALE_PAGE,1,0,0,false},
     {"order",Metropolix::ORDER_PAGE,0,0,0,false},
     {"length",Metropolix::LENGTH_PAGE,0,0,0,false},
     {"division",Metropolix::DIV_PAGE,1,0,0,false},
@@ -137,6 +142,14 @@ if(qaFrame>=20 && index<count) {
             for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);
         }
         m->clearLoopy();
+        m->scaleEditing.store(false);m->params[Metropolix::SCALE_LOCK].setValue(-1);m->params[Metropolix::SCALE].setValue(1);
+        if(test.page==Metropolix::SCALE_PAGE) {
+            std::string name=test.name;
+            if(name=="scale-world")m->params[Metropolix::SCALE].setValue(28);
+            if(name=="scale-locked" || name=="scale-search")m->params[Metropolix::SCALE_LOCK].setValue(1);
+            if(name=="scale-search")m->params[Metropolix::SCALE].setValue(7);
+            if(name=="scale-user" || name=="scale-edit"){m->params[Metropolix::SCALE].setValue(148);m->params[Metropolix::SCALE_LOCK].setValue(148);m->params[Metropolix::userScaleParam(99)].setValue(0x91);m->params[Metropolix::userScaleParam(99,true)].setValue(9);m->params[Metropolix::SCALE_NOTE].setValue(4);m->scaleEditing.store(name=="scale-edit");}
+        }
         if(test.page==Metropolix::LOOPY_PAGE){m->params[Metropolix::LOOPY_PULSES].setValue(test.field?64:0);m->params[Metropolix::LOOPY_TARGET].setValue(test.field);if(std::string(test.name)=="loopy-latched"){m->requestLoopy(18);m->latchLoopy();}}
         if(test.page==Metropolix::SWING_PAGE)m->params[Metropolix::swingParam(m->selectedTrack.load())].setValue(std::string(test.name)=="swing-max"?78:50);
         if(test.page==Metropolix::CHAIN_PAGE) {

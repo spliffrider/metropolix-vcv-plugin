@@ -1,4 +1,4 @@
-# Metropolix Lab 2.11.0 — Windows alpha quick start
+# Metropolix Lab 2.12.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/MetropolixLab-2.11.0-win-x64.vcvplugin)
-- [Loopy performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.11.0/Loopy-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/MetropolixLab-2.12.0-win-x64.vcvplugin)
+- [Custom chord progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.12.0/Scale-progression.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.11.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.12.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.11.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.12.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -32,9 +32,12 @@ There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
 
-Open **[Loopy-performance.vcv](../examples/Loopy-performance.vcv)**, select your
-AUDIO device and press RUN. Hold a stage on the Loopy page to hear a temporary
-loop; right-click a stage to latch a range. See the [Loopy guide](LOOPY.md).
+Open **[Scale-progression.vcv](../examples/Scale-progression.vcv)**, select your
+AUDIO device and press RUN. MOD 1 moves both voices through C / Am / F / G
+custom triads. CTRL 1 adds a live scale offset. See the [scale guide](SCALES.md).
+
+For live looping, try **[Loopy-performance.vcv](../examples/Loopy-performance.vcv)**
+and the [Loopy guide](LOOPY.md).
 
 For stage overrides, open **[Stage-overrides-performance.vcv](../examples/Stage-overrides-performance.vcv)**,
 choose your AUDIO device and level, then press RUN. Select a track and click
@@ -178,3 +181,10 @@ Try momentary loops, mouse-selected ranges, Auto versus fixed counts, reverse,
 latching/unlatching and stopped Stage Player. Check that release restores the
 current original pattern. Try both target settings and save/reopen.
 [Operation and comparison limits](LOOPY.md); [portable demo](../examples/Loopy-performance.vcv).
+
+## Scales — new in 2.12.0
+
+Try the [scale guide](SCALES.md): factory banks, custom note/root editing,
+lock/search/apply, eight held/menu shortcuts, undo and saving/reopening.
+The Scale (User) MOD/AUX/CTRL destination moves inside the locked ten-slot bank.
+Feedback on fractional-voltage boundaries from hardware owners is especially useful.
