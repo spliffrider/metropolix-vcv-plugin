@@ -10,6 +10,7 @@ Plugin* pluginInstance;
 void init(Plugin* p) {
     pluginInstance = p;
     p->addModel(modelMetropolix);
+    p->addModel(modelMX);
 #ifdef METROPOLIX_QA
     p->addModel(createModel<RackAudioQa, RackAudioQaWidget>("AudioQA"));
 #endif

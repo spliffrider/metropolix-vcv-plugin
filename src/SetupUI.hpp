@@ -9,7 +9,7 @@ void openGlobalSetup(Metropolix* m){if(!m)return;m->uiPage.store(Metropolix::GLO
 void appendGlobalMenu(ui::Menu* menu,Metropolix* m){
     if(!m)return;
     menu->addChild(createMenuLabel("Global configuration"));
-    appendMidiMenu(menu,m);
+    appendMidiMenu(menu,m);appendMxMenu(menu,m);
     menu->addChild(createMenuItem("Open UI Setup","",[m]{m->cancelDraft();m->uiPage.store(Metropolix::UI_SETUP_PAGE);m->uiField.store(0);m->uiAlt.store(false);}));
     for(int n=0;n<UiSetupCount;++n){int id=uiSetupParam(m,n);auto* q=m->getParamQuantity(id);std::vector<std::string> labels;if(auto* choice=dynamic_cast<SwitchQuantity*>(q))labels=choice->labels;else for(int i=int(q->getMinValue());i<=int(q->getMaxValue());++i)labels.push_back(std::to_string(i)+(id==Metropolix::CV_OUT_DELAY?" ms":""));int offset=int(q->getMinValue());menu->addChild(createIndexSubmenuItem(uiSetupName(n),labels,[q,offset]{return size_t(q->getValue()-offset);},[q,offset](size_t value){setWithHistory(q,float(value)+offset);}));}
     menu->addChild(createMenuItem("Open Global Setup","",[m]{openGlobalSetup(m);}));

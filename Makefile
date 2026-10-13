@@ -16,7 +16,7 @@ DISTRIBUTABLES += docs/CLOCK-RESET.md
 DISTRIBUTABLES += docs/EDITING-WORKFLOWS.md
 DISTRIBUTABLES += docs/UI-SETUP.md
 DISTRIBUTABLES += docs/PRESET-PICKUP.md
-DISTRIBUTABLES += docs/MIDI.md
+DISTRIBUTABLES += docs/MIDI.md docs/MX.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -73,6 +73,9 @@ test:
 	./build/tests/pickup-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/MidiTests.cpp -o build/tests/midi-tests.exe
 	./build/tests/midi-tests.exe
+
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/MxTests.cpp -o build/tests/mx-tests.exe
+	./build/tests/mx-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:

@@ -8,7 +8,7 @@ struct MidiTestDriver : midi::Driver {
     void unsubscribeOutput(int,midi::Output* port) override {output.unsubscribe(port);}
 };
 void midiRackTests(){
-    using M=Metropolix;static_assert(M::MIDI_TRACK==736 && M::MIDI_MOD==746 && M::NUM_PARAMS==767 && M::FORMAT8_PARAMS==492 && M::SNAPSHOT_PARAMS==518,"MIDI appends without moving existing IDs or preset prefixes");
+    using M=Metropolix;static_assert(M::MIDI_TRACK==736 && M::MIDI_MOD==746 && M::FORMAT24_NUM_PARAMS==767 && M::FORMAT8_PARAMS==492 && M::SNAPSHOT_PARAMS==518,"MIDI appends without moving existing IDs or preset prefixes");
     auto* driver=new MidiTestDriver;midi::addDriver(24023,driver);auto& packets=driver->output.messages;
     Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;args.frame=0;
     auto make=[&](){auto m=std::unique_ptr<M>(new M);m->midiOutput.setDriverId(24023);m->midiOutput.setDeviceId(0);for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);m->params[M::SCALE].setValue(0);m->params[M::RANGE].setValue(1);return m;};

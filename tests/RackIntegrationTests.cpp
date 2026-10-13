@@ -28,6 +28,10 @@ void require(bool value, const char* message) {
 #include "SetupRackTests.hpp"
 #include "PickupRackTests.hpp"
 #include "MidiRackTests.hpp"
+#include "MxRackTests.hpp"
+rack::Model nativeMetroModel,nativeMxModel;
+rack::Model* modelMetropolix=&nativeMetroModel;
+rack::Model* modelMX=&nativeMxModel;
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
@@ -305,6 +309,7 @@ int main() {
     setupRackTests();
     pickupRackTests();
     midiRackTests();
+    mxRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

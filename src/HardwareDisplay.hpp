@@ -464,6 +464,12 @@ struct HardwareDisplay : HardwareControl {
                 c.text(38,57,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
             } else c.text(1,57,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
             return c;
+        } else if(page==Metropolix::MX_SETUP_PAGE){
+            c.text(1,1,"MX - EXPANDER");int mode=integer(Metropolix::MX_MODE);
+            c.fit(10,12,116,m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",1);if(!f)c.turn(0,12);
+            c.text(1,27,"MX ASSIGN");int assign=m?mxAssignment(m):-1;
+            c.fit(10,38,116,assign<0?(mode==metro::MxModClocks?"All MOD > MX":"Global/All > MX"):previewDisplayString(m,assign)+" > MX",1);if(f && assign>=0)c.turn(0,38);
+            c.text(1,56,m && m->mxConnected.load()?"MX CONNECTED":"PLACE MX AT RIGHT");return c;
         } else if(page==Metropolix::SETUP_PAGE || page==Metropolix::GLOBAL_SETUP_PAGE || page==Metropolix::UI_SETUP_PAGE || page==Metropolix::MIDI_SETUP_PAGE) {
             bool global=page==Metropolix::GLOBAL_SETUP_PAGE,ui=page==Metropolix::UI_SETUP_PAGE,midi=page==Metropolix::MIDI_SETUP_PAGE;int cursor=m?(midi?m->midiSetupCursor.load():ui?m->uiSetupCursor.load():global?m->globalCursor.load():m->setupCursor.load()):0,count=midi?MidiSetupCount:ui?UiSetupCount:global?GlobalMenuCount:SetupMenuCount;
             int start=std::min(std::max(cursor-1,0),count-3);
