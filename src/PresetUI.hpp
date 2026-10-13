@@ -17,6 +17,7 @@ struct PresetLoadChange : history::ModuleAction {
             c.kind = Metropolix::PresetCommand::Restore;
             c.snapshot = undoing ? recall.before : recall.after;
             c.other = undoing ? recall.after : recall.before;
+            c.pickup=undoing?recall.pickupBefore:recall.pickupAfter;c.physical=undoing?recall.physicalBefore:recall.physicalAfter;c.pickupMask=recall.pickupMask;
             m->presetUiCommands.push_back(c);
         }
     }
@@ -52,7 +53,7 @@ void savePresetSlot(Metropolix* m, int slot, bool clear, bool exitAfter) {
     h->name = string::f("%s Metropolix preset %d-%d", clear ? "clear" : "save", slot / 8 + 1, slot % 8 + 1);
     if (!clear) {
         json_t* json = APP->engine->moduleToJson(m);
-        h->after = m->presetFromParamsJson(json_object_get(json, "params"));
+        h->after = m->presetFromParamsJson(json_object_get(json, "params"),json_object_get(json,"data"));
         json_decref(json);
     }
     m->putPreset(slot, h->after);
@@ -97,14 +98,14 @@ void appendPresetMenu(ui::Menu* menu, Metropolix* m) {
     menu->addChild(createMenuItem("Initialize preset","",[m]{m->requestInitialize();}));
     menu->addChild(createIndexSubmenuItem("Set Init preset",dynamic_cast<SwitchQuantity*>(m->getParamQuantity(Metropolix::INIT_PRESET))->labels,[m]{return size_t(m->integer(Metropolix::INIT_PRESET));},[m](size_t slot){setWithHistory(m->getParamQuantity(Metropolix::INIT_PRESET),float(slot));}));
     choice("Load delay", Metropolix::LOAD_DELAY, {"Instant", "Queue Pulses", "Total Pulses"});
-    choice("Pitch load", Metropolix::LOAD_PITCH, {"Off: keep sliders", "Jump: recall sliders"});
+    choice("Pitch load", Metropolix::LOAD_PITCH, {"Off: keep sliders", "Thru: pickup saved pitches", "Jump: recall sliders"});
     choice("Switch load", Metropolix::LOAD_SWITCHES, {"Off: keep switches", "Jump: recall switches"});
-    choice("CTRL load", Metropolix::LOAD_CTRL, {"Off", "Assigns", "Jump: assignments and positions"});
+    choice("CTRL load", Metropolix::LOAD_CTRL, {"Off", "Assigns", "Thru: pickup saved positions", "Jump: assignments and positions"});
     choice("AUX load", Metropolix::LOAD_AUX, {"Off", "Assigns"});
     menu->addChild(createMenuItem("Recall complete pattern", "", [m] {
         auto* h = new history::ComplexAction; h->name = "set complete preset recall";
         const int ids[] = {Metropolix::LOAD_PITCH, Metropolix::LOAD_SWITCHES, Metropolix::LOAD_CTRL, Metropolix::LOAD_AUX};
-        const int values[] = {1, 1, 2, 1};
+        const int values[] = {Metropolix::PitchJump, 1, Metropolix::CtrlJump, 1};
         for (int i = 0; i < 4; ++i) {
             auto* change = new history::ParamChange;
             change->moduleId = m->id; change->paramId = ids[i];

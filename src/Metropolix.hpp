@@ -5,6 +5,7 @@
 #include "Chains.hpp"
 #include "Workflows.hpp"
 #include "SetupTiming.hpp"
+#include "Pickup.hpp"
 #include <atomic>
 #include <mutex>
 #include <deque>
@@ -224,8 +225,8 @@ struct Metropolix : Module {
         float ctrl=0;
         for(int k=0;k<2;++k)if(integer(ctrlParam(k,CTRL_DESTINATION))==metro::CtrlSliderInvert &&
             (integer(ctrlParam(k,CTRL_ASSIGNMENT))==2 || integer(ctrlParam(k,CTRL_ASSIGNMENT))==t))
-            ctrl=params[ctrlParam(k,CTRL_VALUE)].getValue();
-        float value=params[PITCH+metro::clamp(stage,0,7)].getValue();
+            ctrl=panelValue(ctrlParam(k,CTRL_VALUE));
+        float value=panelValue(PITCH+metro::clamp(stage,0,7));
         return inverted!=(ctrl>0)?1.f-value:value;
     }
     static int accumScreenParam(int t, int field) {
@@ -281,7 +282,7 @@ struct Metropolix : Module {
             if(auto* pitch=dynamic_cast<PitchOverrideQuantity*>(getParamQuantity(uiDraftParam))){auto scale=pitch->scale();int off=metro::nearestDegree(0,scale)-1;auto degree=[&](float v){return v<0?off:metro::nearestDegree(v,scale);};int d=metro::clamp(degree(uiDraftBefore[i])+degree(uiDraftValue)-degree(uiDraftOrigin),off,metro::nearestDegree(60,scale));return d==off?-1.f:float(metro::clamp(metro::degreeToSemitone(d,scale),0,60));}
             return metro::clamp(uiDraftBefore[i]+uiDraftValue-uiDraftOrigin,getParamQuantity(id)->getMinValue(),getParamQuantity(id)->getMaxValue());
         }
-        return params[id].getValue();
+        return panelValue(id);
     }
     std::atomic<int> trackMenuCursor{0}, setupCursor{0}, globalCursor{0};
     std::atomic<bool> tunerActive{false}, transportRunning{false};
@@ -506,7 +507,7 @@ struct Metropolix : Module {
         // routed separately and never accumulate into saved base values.
         for(int k=0;k<2;++k) {
             auto& ctrl=c.controls[k];
-            ctrl.value=metro::ctrlClamp(params[ctrlParam(k,CTRL_VALUE)].getValue());
+            ctrl.value=metro::ctrlClamp(readPanel(k+8));
             ctrl.destination=static_cast<metro::CtrlDestination>(metro::clamp(integer(ctrlParam(k,CTRL_DESTINATION)),0,int(metro::CtrlDestinationCount)-1));
             ctrl.assignment=metro::clamp(integer(ctrlParam(k,CTRL_ASSIGNMENT)),0,2);
             for(int t=0;t<2;++t) {
@@ -550,7 +551,7 @@ struct Metropolix : Module {
         for(int i=0;i<metro::UserScaleCount;++i){c.userScales[i].mask=unsigned(integer(userScaleParam(i)));c.userScales[i].root=integer(userScaleParam(i,true));}
         c.octaves = integer(RANGE);
         for (int s = 0; s < 8; ++s) {
-            c.stages[s].pitch = params[PITCH + s].getValue();
+            c.stages[s].pitch = readPanel(s);
             c.stages[s].pulses = integer(PULSES + s);
             c.stages[s].gate = static_cast<metro::Gate>(integer(GATES + s));
         }
@@ -601,6 +602,7 @@ struct Metropolix : Module {
                 edit.gateOverride=integer(stageParam(t,s,GATE_OVERRIDE));
             }
         }
+        publishPickup();
     }
 
     void process(const ProcessArgs& args) override {
@@ -682,7 +684,7 @@ struct Metropolix : Module {
 
     void onSampleRateChange(const SampleRateChangeEvent& e) override {outputDelay.prepare(e.sampleRate);}
     void onReset(const ResetEvent& e) override {
-        Module::onReset(e);tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
+        Module::onReset(e);clearPickup();tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         resetPresetRuntime();
@@ -694,7 +696,8 @@ struct Metropolix : Module {
     json_t* dataToJson() override {
         json_t* root = json_object();
         json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
-        json_object_set_new(root, "schemaVersion", json_integer(25));
+        json_object_set_new(root, "schemaVersion", json_integer(26));
+        json_object_set_new(root,"pickup",pickupToJson());
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(8));
@@ -800,6 +803,7 @@ struct Metropolix : Module {
         uiEdit.store(json_is_true(json_object_get(root, "uiEdit")));
         uiChooseFunction.store(json_is_true(json_object_get(root, "uiChooseFunction")));
         uiAlt.store(false);
+        if(schema<26){if(integer(LOAD_PITCH)==1)params[LOAD_PITCH].setValue(PitchJump);if(integer(LOAD_CTRL)==2)params[LOAD_CTRL].setValue(CtrlJump);clearPickup();}else pickupFromJson(root);
         sequencer.reset();
         readSettings();
     }

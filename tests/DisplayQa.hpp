@@ -202,6 +202,10 @@ const DisplayCase cases[]={
     {"mod-menu",Metropolix::MOD_MENU_PAGE,0,0,0,true},
     {"stage-position-off",Metropolix::STAGE_PAGE,0,0,Metropolix::PROBABILITY,false},
     {"bpm-divider",Metropolix::BPM_PAGE,0,0,0,false},
+    {"home-pickup",Metropolix::HOME,0,2,0,false},
+    {"preset-pitch-thru",Metropolix::PRESET_SETUP_PAGE,3,0,0,false},
+    {"preset-ctrl-thru",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
+    {"preset-ctrl-jump",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -210,7 +214,7 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
-        m->uiAlt.store(false);m->clearWorkflows();m->cancelDraft();m->params[Metropolix::SHOW_POSITION].setValue(1);m->params[Metropolix::SCREEN_LEVEL].setValue(4);
+        m->uiAlt.store(false);m->clearWorkflows();m->cancelDraft();m->params[Metropolix::SHOW_POSITION].setValue(1);m->params[Metropolix::SCREEN_LEVEL].setValue(4);m->clearPickup();
         if(std::string(test.name)=="setup-init")m->setupCursor.store(4);
         if(std::string(test.name)=="preset-init")m->params[Metropolix::INIT_PRESET].setValue(64);
         if(std::string(test.name)=="workflow-stage-copy" || std::string(test.name)=="workflow-lane-copy"){m->workflowStageHeld=1;m->workflowStageSource=0;m->workflowLaneCopy=test.mod;}
@@ -287,6 +291,10 @@ if(qaFrame>=20 && index<count) {
         if(std::string(test.name)=="aux-loopy-offset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModLoopyOffset);
         if(std::string(test.name)=="aux-track-reset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModReset);
         std::string setupName=test.name;
+        if(setupName=="home-pickup"){m->params[Metropolix::LOAD_PITCH].setValue(Metropolix::PitchThru);m->params[Metropolix::LOAD_CTRL].setValue(Metropolix::CtrlThru);for(int i=0;i<10;++i){int id=Metropolix::panelParam(i);m->panelPickup[i].recall(i<8?.1f:-.8f,i<8?(.9f-i*.08f):.5f);m->params[id].setValue(i<8?.1f:-.8f);}m->publishPickup();}
+        if(setupName=="preset-pitch-thru")m->params[Metropolix::LOAD_PITCH].setValue(Metropolix::PitchThru);
+        if(setupName=="preset-ctrl-thru" || setupName=="preset-ctrl-jump")m->params[Metropolix::LOAD_CTRL].setValue(setupName=="preset-ctrl-thru"?Metropolix::CtrlThru:Metropolix::CtrlJump);
+
         if(test.page==Metropolix::UI_SETUP_PAGE){m->uiSetupCursor.store(setupName=="ui-setup-top"?0:setupName=="ui-setup-confirm"?2:7);m->params[Metropolix::ENC_CONFIRM].setValue(1);m->params[Metropolix::CV_OUT_DELAY].setValue(21);}
         if(setupName=="aux-pending" || setupName=="mod-pending" || setupName=="length-pending"){int id=screenParam(m);m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftOrigin=m->getParamQuantity(id)->getValue();m->uiDraftValue=setupName=="length-pending"?4:metro::ModTempo;}
         if(setupName=="mod-menu")m->modMenuCursor.store(1);

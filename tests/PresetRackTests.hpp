@@ -65,7 +65,7 @@ void presetRackTests() {
     require(m.params[M::TEMPO].getValue()==120 && m.integer(M::RANGE)==3 && m.integer(M::OUTPUT_SOURCE_A)==0,"internal presets preserve tempo, slider range and global output routing");
     require(m.integer(M::auxParam(0,M::AUX_DESTINATION))==metro::ModPitchPre && m.params[M::auxParam(0,M::AUX_AMOUNT)].getValue()==0,"AUX Assigns recalls routing but keeps attenuverter");
     require(m.integer(M::ctrlParam(0,M::CTRL_DESTINATION))==metro::CtrlRatchet && m.params[M::ctrlParam(0,M::CTRL_VALUE)].getValue()==0,"CTRL Assigns recalls destination but keeps live knob");
-    m.params[M::LOAD_PITCH].setValue(1);m.params[M::LOAD_SWITCHES].setValue(1);m.params[M::LOAD_CTRL].setValue(2);
+    m.params[M::LOAD_PITCH].setValue(M::PitchJump);m.params[M::LOAD_SWITCHES].setValue(1);m.params[M::LOAD_CTRL].setValue(M::CtrlJump);
     submit(1);
     require(m.params[M::PITCH].getValue()==.5f && m.integer(M::PULSES)==6 && m.integer(M::GATES)==metro::Single,"Jump recalls all shared sliders and switches");
     require(m.params[M::ctrlParam(0,M::CTRL_VALUE)].getValue()==.75f,"CTRL Jump recalls knob position");

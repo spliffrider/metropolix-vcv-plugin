@@ -123,16 +123,17 @@ struct HardwareDisplay : HardwareControl {
                 }
             }
         } else if(h==2) {
-            // Rack presets restore the physical controls themselves. There are
-            // no separate hardware/preset values, so no override dots appear.
+            // Override dots distinguish sounding memories from physical controls.
             for(int i=0;i<2;++i){
                 float a=value(Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE))*2.61f;
                 c.circle(8,14+i*25,6);c.line(8,14+i*25,8+std::round(std::sin(a)*5),14+i*25-std::round(std::cos(a)*5));
                 c.text(7,22+i*25,std::to_string(i+1));
+                if(m && m->waitingPickup(Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE)))c.circle(18,14+i*25,1,true);
             }
             for(int s=0;s<8;++s) {
                 int x=30+s*13;c.text(x-2,4,std::to_string(s+1));
                 c.line(x,14,x,34);int y=34-static_cast<int>(value(Metropolix::PITCH+s)*20);c.line(x-3,y,x+3,y);
+                if(m && m->waitingPickup(Metropolix::PITCH+s))c.circle(x+5,y,1,true);
                 c.text(x-2,40,std::to_string(integer(Metropolix::PULSES+s,1)));
                 int gate=integer(Metropolix::GATES+s,2);
                 c.box(x-4,49,9,3);if(gate==1)c.fill(x-4,49,3,3);if(gate==2){c.fill(x-4,49,2,3);c.fill(x,49,2,3);}if(gate==3)c.fill(x-4,49,9,3);
@@ -414,7 +415,8 @@ struct HardwareDisplay : HardwareControl {
                 if(i==7)v=m?m->getParamQuantity(Metropolix::INIT_PRESET)->getDisplayValueString():"Off";
                 else if(i<2)v=n?std::to_string(n):"-";
                 else if(i==2){const char* names[]={"Instant","Queue","Total"};v=names[n];}
-                else if(i==5){const char* names[]={"Off","Assigns","Jump"};v=names[n];}
+                else if(i==5){const char* names[]={"Off","Assigns","Thru","Jump"};v=names[metro::clamp(n,0,3)];}
+                else if(i==3){const char* names[]={"Off","Thru","Jump"};v=names[metro::clamp(n,0,2)];}
                 else v=n?(i==6?"Assigns":"Jump"):"Off";
                 int y=(i-first)*17;
                 c.text(13,y+5,labels[i]);c.right(126,y+5,v);
