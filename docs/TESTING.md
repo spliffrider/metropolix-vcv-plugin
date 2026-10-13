@@ -1,8 +1,10 @@
-# Metropolix Lab 2.25.0 — Windows alpha quick start
+# Metropolix Lab 2.26.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
-welcome. Some hardware controls are still placeholders; see Known limitations.
+welcome. See Known limitations for remaining fidelity checks.
+
+2.26.0 adds [portable backups](BACKUPS.md) for settings, all 64 presets and chains, with undoable restore.
 
 2.25.0 adds [MX expansion](MX.md), including eight clock/stage outputs and seven modes.
 
@@ -12,10 +14,11 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.25.0/MetropolixLab-2.25.0-win-x64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.25.0/MX-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.26.0/MetropolixLab-2.26.0-win-x64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.26.0/MX-performance.vcv)
+- [Example backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.26.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.25.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.26.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -29,7 +32,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.25.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.26.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -170,8 +173,8 @@ See the [controls guide](STAGE-OVERRIDES.md); hardware comparisons are welcome.
 
 ## Known limitations
 
-**Currently incomplete:** software bank backup/interchange and undocumented
-hardware SysEx interchange. Setup preferences, encoder confirmation, pickup,
+**Currently incomplete:** undocumented hardware SysEx interchange. Portable JSON
+backups, setup preferences, encoder confirmation, pickup,
 MIDI, all seven MX modes, all 38 AUX/MOD and 29 CTRL destinations are implemented.
 
 External analog input division is adjustable /1–/256. MIDI clocks use 24 PPQN.
@@ -274,3 +277,11 @@ right of the sequencer and triggers kick/snare/hats from actual track stages.
 Try ALT → stage6 (MX), preview/confirm modes and track/MOD assignments, undo,
 long default reset, mute, swap, Loopy Stage Player and save/reopen. The [MX
 guide](MX.md) lists every output and the clock prediction interpretations.
+
+## Backup files — new in 2.26.0
+
+In a spare patch, export All from SETUP → MIDI → Backup files. Change the tempo
+and a preset, import your file, then try Rack Undo and Redo. Settings and the
+bank should return with RUN stopped; local MIDI devices and cables should stay
+in place. Try Settings and Presets exports separately, and cancel a chooser.
+The [backup guide](BACKUPS.md) describes scopes and the example JSON file.

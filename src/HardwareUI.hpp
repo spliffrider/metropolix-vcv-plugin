@@ -117,6 +117,7 @@ void encoderPress(Metropolix* m) {
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
     if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::UI_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
+    if(p==Metropolix::BACKUP_PAGE){backupChoose(m,m->backupCursor.load());return;}
     if(p==Metropolix::MX_SETUP_PAGE){m->uiField.store(mxAssignment(m)<0?0:1-m->uiField.load());return;}
     if(p==Metropolix::MOD_MENU_PAGE || p==Metropolix::MIDI_SETUP_PAGE){midiEncoderPress(m);return;}
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }

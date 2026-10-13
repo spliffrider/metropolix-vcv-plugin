@@ -1,5 +1,9 @@
 // This executable is a minimal test host, so it constructs Rack's engine.
 // The plugin itself only uses the public plugin API.
+#ifdef ARCH_WIN
+#define NOMINMAX
+#include <windows.h>
+#endif
 #include <engine/Engine.hpp>
 #undef PRIVATE
 #include "../src/Metropolix.hpp"
@@ -29,6 +33,7 @@ void require(bool value, const char* message) {
 #include "PickupRackTests.hpp"
 #include "MidiRackTests.hpp"
 #include "MxRackTests.hpp"
+#include "BackupRackTests.hpp"
 rack::Model nativeMetroModel,nativeMxModel;
 rack::Model* modelMetropolix=&nativeMetroModel;
 rack::Model* modelMX=&nativeMxModel;
@@ -310,6 +315,7 @@ int main() {
     pickupRackTests();
     midiRackTests();
     mxRackTests();
+    backupRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

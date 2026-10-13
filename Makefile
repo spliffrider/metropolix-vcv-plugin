@@ -16,7 +16,7 @@ DISTRIBUTABLES += docs/CLOCK-RESET.md
 DISTRIBUTABLES += docs/EDITING-WORKFLOWS.md
 DISTRIBUTABLES += docs/UI-SETUP.md
 DISTRIBUTABLES += docs/PRESET-PICKUP.md
-DISTRIBUTABLES += docs/MIDI.md docs/MX.md
+DISTRIBUTABLES += docs/MIDI.md docs/MX.md docs/BACKUPS.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk

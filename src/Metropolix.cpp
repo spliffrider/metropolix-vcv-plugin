@@ -1,3 +1,4 @@
+#include "BackupPlatform.hpp"
 #ifdef METROPOLIX_QA
 // Test builds use Rack's renderer capture; no test hooks enter the release DLL.
 #include <window/Window.hpp>
@@ -448,6 +449,7 @@ struct MainDisplay : widget::Widget {
 #include "WorkflowUI.hpp"
 #include "ConfirmationUI.hpp"
 #include "ModWorkflowUI.hpp"
+#include "BackupUI.hpp"
 #include "MidiUI.hpp"
 #include "MxUI.hpp"
 void openChainPage(Metropolix* m);
@@ -665,7 +667,7 @@ struct MetropolixWidget : ModuleWidget {
         auto* m = getModule<Metropolix>();
         if (!m) return;
         menu->addChild(new ui::MenuSeparator);
-        appendMidiMenu(menu,m);appendMxMenu(menu,m);
+        appendMidiMenu(menu,m);appendMxMenu(menu,m);appendBackupMenu(menu,m);
         menu->addChild(createCheckMenuItem("Expanded stage editor", "",
             [m] { return m->expanded.load() && !m->modEditor.load(); }, [m] { bool open=!m->expanded.load() || m->modEditor.load(); m->modEditor.store(false); m->uiMod.store(false); m->expanded.store(open); }));
         menu->addChild(createMenuItem("Selected track settings", "", [m] { trackSettingsMenu(m); }));
