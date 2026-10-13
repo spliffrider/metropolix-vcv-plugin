@@ -447,6 +447,7 @@ struct MainDisplay : widget::Widget {
 #include "WorkflowUI.hpp"
 #include "ConfirmationUI.hpp"
 #include "ModWorkflowUI.hpp"
+#include "MidiUI.hpp"
 void openChainPage(Metropolix* m);
 #include "SetupUI.hpp"
 #include "PickupUI.hpp"
@@ -662,6 +663,7 @@ struct MetropolixWidget : ModuleWidget {
         auto* m = getModule<Metropolix>();
         if (!m) return;
         menu->addChild(new ui::MenuSeparator);
+        appendMidiMenu(menu,m);
         menu->addChild(createCheckMenuItem("Expanded stage editor", "",
             [m] { return m->expanded.load() && !m->modEditor.load(); }, [m] { bool open=!m->expanded.load() || m->modEditor.load(); m->modEditor.store(false); m->uiMod.store(false); m->expanded.store(open); }));
         menu->addChild(createMenuItem("Selected track settings", "", [m] { trackSettingsMenu(m); }));

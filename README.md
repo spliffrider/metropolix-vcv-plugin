@@ -4,9 +4,11 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.23.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.24.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.23.0/MetropolixLab-2.23.0-win-x64.vcvplugin)** · **[Pickup demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.23.0/Pickup-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.23.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.24.0/MetropolixLab-2.24.0-win-x64.vcvplugin)** · **[MIDI demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.24.0/MIDI-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.24.0)**
+
+2.24.0 adds [MIDI](docs/MIDI.md): notes/velocity, track and MOD CCs, clock/transport, root and queued program changes, with a real MIDI-CV demo.
 
 2.23.0 adds [preset pickup](docs/PRESET-PICKUP.md): saved pitch/CTRL values, individual takeover, visible targets, exact undo and persistence.
 
@@ -176,7 +178,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.23.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.24.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -248,7 +250,7 @@ The original twelve internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-This build does **not** yet include MIDI, MX expansion or hardware SysEx interchange. MIDI/MX interfaces and final display/detail polishing remain in development.
+MIDI notes/CCs, clock/transport, root and program change are available. MX expansion, hardware SysEx interchange and final display/detail polishing remain in development. See [MIDI behavior and manual ambiguities](docs/MIDI.md).
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, Analog/Acid rate calibration, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 

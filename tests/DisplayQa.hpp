@@ -206,6 +206,21 @@ const DisplayCase cases[]={
     {"preset-pitch-thru",Metropolix::PRESET_SETUP_PAGE,3,0,0,false},
     {"preset-ctrl-thru",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
     {"preset-ctrl-jump",Metropolix::PRESET_SETUP_PAGE,5,0,0,false},
+    {"track-menu-11",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-12",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-13",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-14",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"track-menu-15",Metropolix::TRACK_MENU_PAGE,0,0,0,false},
+    {"midi-setup-0",Metropolix::MIDI_SETUP_PAGE,1,0,0,false},
+    {"midi-setup-1",Metropolix::MIDI_SETUP_PAGE,1,0,0,false},
+    {"midi-setup-2",Metropolix::MIDI_SETUP_PAGE,1,0,0,false},
+    {"midi-setup-3",Metropolix::MIDI_SETUP_PAGE,1,0,0,false},
+    {"midi-setup-4",Metropolix::MIDI_SETUP_PAGE,1,0,0,false},
+    {"mod-midi-channel",Metropolix::MOD_MENU_PAGE,1,0,0,true},
+    {"mod-midi-cc",Metropolix::MOD_MENU_PAGE,1,0,0,true},
+    {"bpm-midi",Metropolix::BPM_PAGE,0,0,0,false},
+    {"cv-velocity",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -297,7 +312,13 @@ if(qaFrame>=20 && index<count) {
 
         if(test.page==Metropolix::UI_SETUP_PAGE){m->uiSetupCursor.store(setupName=="ui-setup-top"?0:setupName=="ui-setup-confirm"?2:7);m->params[Metropolix::ENC_CONFIRM].setValue(1);m->params[Metropolix::CV_OUT_DELAY].setValue(21);}
         if(setupName=="aux-pending" || setupName=="mod-pending" || setupName=="length-pending"){int id=screenParam(m);m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftOrigin=m->getParamQuantity(id)->getValue();m->uiDraftValue=setupName=="length-pending"?4:metro::ModTempo;}
-        if(setupName=="mod-menu")m->modMenuCursor.store(1);
+        if(setupName=="mod-menu")m->modMenuCursor.store(3);
+        if(test.page==Metropolix::MIDI_SETUP_PAGE)m->midiSetupCursor.store(std::stoi(setupName.substr(11)));
+        if(setupName=="mod-midi-channel")m->modMenuCursor.store(0);
+        if(setupName=="mod-midi-cc"){m->modMenuCursor.store(1);m->params[Metropolix::midiModParam(1,Metropolix::MIDI_MOD_CC)].setValue(128);}
+        if(setupName=="bpm-midi"){m->params[Metropolix::CLOCK_SOURCE].setValue(3);m->externalClock.store(true);m->displayBpm.store(120);}
+        if(setupName=="cv-velocity"){m->params[Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE)].setValue(3);m->params[Metropolix::stageParam(0,2,Metropolix::CV)].setValue(2.5);}
+
         if(setupName=="stage-position-off")m->params[Metropolix::SHOW_POSITION].setValue(0);
         if(setupName=="bpm-divider"){m->params[Metropolix::CLOCK_SOURCE].setValue(2);m->externalClock.store(true);m->displayBpm.store(120);m->params[Metropolix::EXT_CLOCK_DIV].setValue(6);}
 

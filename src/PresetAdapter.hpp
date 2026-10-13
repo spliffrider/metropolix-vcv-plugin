@@ -7,9 +7,10 @@ static constexpr int FORMAT4_PARAMS = FORMAT3_PARAMS + 2;
 static constexpr int FORMAT5_PARAMS = FORMAT4_PARAMS + CV_RAMPS + 16 - CV_TYPE_1;
 static constexpr int FORMAT6_PARAMS = FORMAT5_PARAMS + 6;
 static constexpr int FORMAT7_PARAMS = FORMAT6_PARAMS + 6;
-static constexpr int SNAPSHOT_PARAMS = FORMAT7_PARAMS + 2;
-static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index<FORMAT3_PARAMS?SWING_1 + index - TOTAL_PULSES - 1:index<FORMAT5_PARAMS?SLIDE_TYPE_1+index-FORMAT3_PARAMS:index<FORMAT6_PARAMS?OUTPUT_TRACK_OPTIONS+index-FORMAT5_PARAMS:index<FORMAT7_PARAMS?TRACK_BEHAVIOR+index-FORMAT6_PARAMS:TRACK_GLOBAL_RESET_1+index-FORMAT7_PARAMS; }
-static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : id>=SLIDE_TYPE_1 && id<CV_RAMPS+16?FORMAT3_PARAMS+id-SLIDE_TYPE_1:id>=OUTPUT_TRACK_OPTIONS && id<OUTPUT_TRACK_OPTIONS+6?FORMAT5_PARAMS+id-OUTPUT_TRACK_OPTIONS:id>=TRACK_BEHAVIOR && id<TRACK_BEHAVIOR+6?FORMAT6_PARAMS+id-TRACK_BEHAVIOR:id>=TRACK_GLOBAL_RESET_1 && id<=TRACK_GLOBAL_RESET_2?FORMAT7_PARAMS+id-TRACK_GLOBAL_RESET_1:-1; }
+static constexpr int FORMAT8_PARAMS = FORMAT7_PARAMS + 2;
+static constexpr int SNAPSHOT_PARAMS = FORMAT8_PARAMS + MIDI_CLOCK_OUT-MIDI_TRACK;
+static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index<FORMAT3_PARAMS?SWING_1 + index - TOTAL_PULSES - 1:index<FORMAT5_PARAMS?SLIDE_TYPE_1+index-FORMAT3_PARAMS:index<FORMAT6_PARAMS?OUTPUT_TRACK_OPTIONS+index-FORMAT5_PARAMS:index<FORMAT7_PARAMS?TRACK_BEHAVIOR+index-FORMAT6_PARAMS:index<FORMAT8_PARAMS?TRACK_GLOBAL_RESET_1+index-FORMAT7_PARAMS:MIDI_TRACK+index-FORMAT8_PARAMS; }
+static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : id>=SLIDE_TYPE_1 && id<CV_RAMPS+16?FORMAT3_PARAMS+id-SLIDE_TYPE_1:id>=OUTPUT_TRACK_OPTIONS && id<OUTPUT_TRACK_OPTIONS+6?FORMAT5_PARAMS+id-OUTPUT_TRACK_OPTIONS:id>=TRACK_BEHAVIOR && id<TRACK_BEHAVIOR+6?FORMAT6_PARAMS+id-TRACK_BEHAVIOR:id>=TRACK_GLOBAL_RESET_1 && id<=TRACK_GLOBAL_RESET_2?FORMAT7_PARAMS+id-TRACK_GLOBAL_RESET_1:id>=MIDI_TRACK && id<MIDI_CLOCK_OUT?FORMAT8_PARAMS+id-MIDI_TRACK:-1; }
 using Snapshot = metro::PresetSnapshot<SNAPSHOT_PARAMS>;
 #include "PickupAdapter.hpp"
 struct PresetCommand {
@@ -24,6 +25,12 @@ struct PresetRecall {
     int slot = -1;
 };
 std::array<Snapshot, 64> presetBank{};
+struct MidiBankUpdate {int slot=0;Snapshot snapshot;};
+std::array<Snapshot,64> midiPresetBank{};
+metro::PresetMailbox<MidiBankUpdate,65> midiBankUpdates;
+MidiBankUpdate midiAudioBankUpdate;
+std::array<bool,64> midiBankDirty{}; // UI thread, under presetMutex
+bool audioPendingMidi=false;
 std::mutex presetMutex;
 metro::PresetMailbox<PresetCommand, 2> presetCommands;
 metro::PresetMailbox<PresetRecall, 8> presetRecalls;
@@ -86,7 +93,10 @@ void putPreset(int slot, const Snapshot& s) {
     if(chainEnabled.load()) {auto state=getChainState();state.enabled=false;setChainState(state);}
     std::lock_guard<std::mutex> lock(presetMutex);
     presetBank[slot] = s;
+    midiBankDirty[slot]=true;sendMidiBankLocked();
 }
+void sendMidiBankLocked(){for(int slot=0;slot<64;++slot)if(midiBankDirty[slot]){MidiBankUpdate update;update.slot=slot;update.snapshot=presetBank[slot];if(!midiBankUpdates.push(update))return;midiBankDirty[slot]=false;}}
+void sendMidiBank(){std::lock_guard<std::mutex> lock(presetMutex);sendMidiBankLocked();}
 // UI submissions are transferred at most once per frame, after draining all
 // recall receipts. Thus at most two new receipts can arrive before the next
 // frame (one existing queued load and one new command); eight cells suffice.
@@ -140,7 +150,8 @@ void applyPendingPreset(bool atClock) {
     for(int i=0;i<10;++i)if(event.pickupBefore[i]!=event.pickupAfter[i] || event.physicalBefore[i]!=event.physicalAfter[i])event.pickupMask|=1u<<i;
     // This push cannot overflow: the UI drains receipts before sending a
     // command, and without another command only one pending load can finish.
-    presetRecalls.push(event);
+    if(!audioPendingMidi)presetRecalls.push(event);
+    audioPendingMidi=false;
     lastLoadedSlot.store(audioPendingSlot);
     audioPendingSlot = -1;
     pendingSlot.store(-1);
@@ -154,6 +165,7 @@ void processPresetCommands(bool run, bool external, bool reset) {
     auto& c = audioPresetCommand;
     bool consumed = presetCommands.pop(c);
     if (consumed) {
+        if(c.kind!=PresetCommand::PanelEdit)audioPendingMidi=false;
         if(c.kind==PresetCommand::PanelEdit){for(int i=0;i<10;++i)if(c.pickupMask & (1u<<i)){params[panelParam(i)].setValue(c.physical[i]);panelPickup[i]=c.pickup[i];}readSettings();}
         else if(c.kind==PresetCommand::Initialize){pendingPreset=c.snapshot;audioPendingSlot=-2;applyPendingPreset(false);}
         else if (c.kind == PresetCommand::Restore) {
@@ -195,6 +207,7 @@ void resetPresetRuntime() {
     presetCommands.clear(); presetRecalls.clear(); presetUiCommands.clear();
     presetCommandInFlight.store(false);
     audioPendingSlot = -1; pendingSlot.store(-1); lastLoadedSlot.store(-1);
+    audioPendingMidi=false;
     presetTiming.reset(); presetPulse.store(0); presetNotice.store(0);
     presetWasRunning = false; presetWasExternal = false;
 }
@@ -214,14 +227,15 @@ void presetsFromJson(json_t* root) {
     std::lock_guard<std::mutex> lock(presetMutex);
     presetBank = {};
     int format = int(json_integer_value(json_object_get(root, "presetFormat")));
-    if (format >= 1 && format <= 8) {
+    if (format >= 1 && format <= 9) {
         json_t* slots = json_object_get(root, "presets");
         for (int slot = 0; slot < 64; ++slot) {
             json_t* values = json_array_get(slots, slot);
-            int count = format == 1 ? TOTAL_PULSES + 1 : format==2?TOTAL_PULSES+3:format==3?FORMAT3_PARAMS:format==4?FORMAT4_PARAMS:format==5?FORMAT5_PARAMS:format==6?FORMAT6_PARAMS:format==7?FORMAT7_PARAMS:SNAPSHOT_PARAMS;
+            int count = format == 1 ? TOTAL_PULSES + 1 : format==2?TOTAL_PULSES+3:format==3?FORMAT3_PARAMS:format==4?FORMAT4_PARAMS:format==5?FORMAT5_PARAMS:format==6?FORMAT6_PARAMS:format==7?FORMAT7_PARAMS:format==8?FORMAT8_PARAMS:SNAPSHOT_PARAMS;
             if (!json_is_array(values) || json_array_size(values) != size_t(count)) continue;
             Snapshot s; s.occupied = true;
             for(int i=0;i<SNAPSHOT_PARAMS;++i)s.values[i]=paramQuantities[presetParam(i)]->defaultValue;
+            if(format<9){for(int t=0;t<2;++t)s.values[presetIndex(midiTrackParam(t,MIDI_CHANNEL))]=0;for(int l=0;l<8;++l)s.values[presetIndex(midiModParam(l,MIDI_MOD_CHANNEL))]=0;}
             for (int i = 0; i < count; ++i) {
                 json_t* value = json_array_get(values, i);
                 if (!json_is_number(value)) { s.occupied = false; break; }
@@ -231,5 +245,6 @@ void presetsFromJson(json_t* root) {
         }
     }
     presetBankIndex.store(metro::clamp(int(json_integer_value(json_object_get(root, "presetBank"))), 0, 7));
+    midiBankUpdates.clear();midiPresetBank=presetBank;midiBankDirty.fill(false);
     presetSaveAction.store(0);
 }

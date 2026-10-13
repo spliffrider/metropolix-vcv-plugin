@@ -54,7 +54,7 @@ int screenParam(Metropolix* m) {
     switch(m->uiPage.load()) {
         case Metropolix::TRACK_MENU_PAGE: return f?trackMenuParam(m):-1;
         case Metropolix::LOOPY_PAGE: return Metropolix::LOOPY_PULSES;
-        case Metropolix::BPM_PAGE: return m->externalClock.load()?Metropolix::EXT_CLOCK_DIV:Metropolix::TEMPO;
+        case Metropolix::BPM_PAGE: return m->integer(Metropolix::CLOCK_SOURCE)==3?-1:m->externalClock.load()?Metropolix::EXT_CLOCK_DIV:Metropolix::TEMPO;
         case Metropolix::CLOCK_OUT_PAGE: return f?(m->integer(Metropolix::CLOCK_OUT_DIV)>1?Metropolix::CLOCK_OUT_OFFSET:-1):Metropolix::CLOCK_OUT_DIV;
         case Metropolix::SCALE_PAGE: return f ? (m->scaleEditing.load()?Metropolix::SCALE_NOTE:Metropolix::SCALE) : m->scaleRootParam();
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
@@ -73,6 +73,8 @@ int screenParam(Metropolix* m) {
         case Metropolix::SETUP_PAGE: return f && m->setupCursor.load()==0?Metropolix::RANGE:-1;
         case Metropolix::GLOBAL_SETUP_PAGE:return f?globalMenuParam(m):-1;
         case Metropolix::UI_SETUP_PAGE:return f?uiSetupParam(m):-1;
+        case Metropolix::MIDI_SETUP_PAGE:return f?midiSetupParam(m):-1;
+        case Metropolix::MOD_MENU_PAGE:return f?modMenuParam(m):-1;
         case Metropolix::MOD_ASSIGN_PAGE:return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))))?-1:Metropolix::modParam(l,f?Metropolix::MOD_ASSIGNMENT:Metropolix::MOD_DESTINATION);
         case Metropolix::TUNER_PAGE:return Metropolix::TUNER_OCTAVE;
         case Metropolix::PRESET_SETUP_PAGE: return f==7?Metropolix::INIT_PRESET:Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
@@ -114,7 +116,7 @@ void encoderPress(Metropolix* m) {
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
     if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::UI_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
-    if(p==Metropolix::MOD_MENU_PAGE){initModLane(m,m->modMenuCursor.load()!=0);return;}
+    if(p==Metropolix::MOD_MENU_PAGE || p==Metropolix::MIDI_SETUP_PAGE){midiEncoderPress(m);return;}
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }
     if(p==Metropolix::SAVE_PAGE) { m->presetSaveAction.store((m->presetSaveAction.load()+1)%3); return; }

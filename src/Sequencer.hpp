@@ -93,6 +93,7 @@ struct Settings {
 
 struct TrackState {
     TrackOutputEvents outputEvents;
+    uint64_t stageSerial=0;
     int stage = -1;
     int position = -1;
     int pulse = 0;
@@ -216,6 +217,7 @@ public:
     }
 
     float effectiveTempo() const {return clamp(settings.bpm+modulation.globalRoutes[ModTempo]*80.f,.1f,400.f);}
+    void resetExternalTiming(){haveExternalEdge=false;externalElapsed=0;externalPeriod=15./effectiveTempo();}
     const LoopyRequest& currentLoopy() const {return routedLoopy;}
 
     void seed(uint32_t value) {
@@ -229,7 +231,7 @@ public:
     }
 
     void resetTrackOnly(int t) {
-        float pitch=tracks[t].pitch;tracks[t]=TrackState();tracks[t].pitch=tracks[t].targetPitch=pitch;
+        float pitch=tracks[t].pitch;uint64_t serial=tracks[t].stageSerial;tracks[t]=TrackState();tracks[t].stageSerial=serial;tracks[t].pitch=tracks[t].targetPitch=pitch;
         tracks[t].outputEvents.pulses[TrackOutputEvents::First].fire();tracks[t].outputEvents.firstDue=false;
         loopTracks[t]=playerTracks[t]=tracks[t];loopPlaying[t]=playerPlaying[t]=false;loopMasks[t]=playerMasks[t]=0;loopCounts[t]=0;
         swingTiming[t].reset();pendingAccumReset[t]=false;resetPulse.fire();
@@ -243,7 +245,9 @@ public:
             auto& state=tracks[t];
             // CV pitch holds on reset until the next played note.
             float pitch = state.pitch;
+            uint64_t serial=state.stageSerial;
             state = TrackState();
+            state.stageSerial=serial;
             state.pitch = pitch;
             state.targetPitch = pitch;
             if(manual){state.outputEvents.pulses[TrackOutputEvents::First].fire();state.outputEvents.firstDue=false;}
@@ -645,7 +649,9 @@ private:
             bool hasPitch = state.hasPitch;
             int divider = state.divider;
             bool skipInverted=state.skipInverted;
+            uint64_t serial=state.stageSerial;
             state = TrackState();
+            state.stageSerial=serial;
             state.pitch = state.targetPitch = state.startPitch = pitch;
             state.hasPitch = hasPitch;
             state.cvValue=cvValue;
@@ -692,6 +698,7 @@ private:
             if (voiceMode==0 && state.stage >= 0 && state.stage != modulo(state.position + offset, 8))
                 state.position = -1;
             if (!nextStage(t)) { state.gate = 0.f; state.cv = 0.f; return; }
+            ++state.stageSerial;
             state.outputEvents.pulses[TrackOutputEvents::NewStage].fire();
             state.slideFromPrevious=precedingStage>=0 && slideEnabled(t,precedingStage);
             state.pulse = 0;

@@ -1,4 +1,22 @@
-# Validation and fidelity status — 2.23.0
+# Validation and fidelity status — 2.24.0
+
+## MIDI — 2.24.0
+
+Twenty-four portable suites pass. MidiTests adds 1,652,451 assertions for
+all channels/notes/velocities, note-off/legato order, CC ranges and clock rates.
+Native Rack tests record actual MIDI bytes and timestamps for input/output
+clock/transport, program-load delay, root, velocity/CV type, eight ratchets,
+Hold, all slide types, Always amount, live CC/channel reassignment, track swap,
+disconnect/removal, reset clock phase and schema/format migration. Fixed
+audio-owned preset copies avoid taking the preset mutex on the audio thread.
+
+Widget callbacks test MIDI menu navigation, vertical value dragging, native
+undo and actual save/reopen; 140 OLED cases include the MIDI screens and CC
+readout. An actual Rack Loopback16 → two Core MIDI-CV → two synth voice patch
+records 12 seconds at 48 kHz: RMS .426539/.469804 V, peak 1.59845/1.29377 V.
+Both voices receive pitch/gate exclusively through MIDI. This verifies the
+Rack path; it does not establish hardware/DAW equivalence. See [MIDI](MIDI.md)
+for explicit mappings, the clock contradiction and known interpretations.
 
 ## Preset pickup — 2.23.0
 
@@ -443,7 +461,7 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The remaining hardware MOD/AUX destinations; remaining CTRL destinations; ALT+AUX selective randomization; Loopy routing/Queue options are still open. MIDI, MX, and firmware backup interchange are also absent. These should be implemented with their own manual examples and host tests, not inferred from the existence of similarly named controls.
+The routing, ALT workflows, Loopy and MIDI listed in the latest sections now have implementation and host tests. Remaining work includes MX, documented software backup/interchange, secondary UI details and physical hardware/DAW comparisons. Hardware SysEx compatibility requires a verified payload specification.
 
 ## Reproduce
 
