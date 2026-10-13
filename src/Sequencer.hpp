@@ -32,6 +32,8 @@ struct StageEdit {
     bool slide = false;
     bool skip = false;
     float cv = 0.f;
+    int pitchOverride = -1; // Chromatic anchor, C0..C5; -1 follows the slider.
+    int gateOverride = -1; // -1 follows track, 0 Rest, 1..99%, 100 Hold.
 };
 struct Track {
     int length = 8;
@@ -46,6 +48,7 @@ struct Track {
     bool autoAccumReset = false;
     int transpose = 0;
     float gateLength = 0.5f;
+    float gateScale = 1.f;
     float slideTime = 0.25f;
     float swing = 50.f;
     int accumLimit = 9;
@@ -319,7 +322,9 @@ private:
         const auto& ctrl=controls.values[t];
         float slider=clamp(settings.stages[state.stage].pitch,0.f,1.f);
         if(ctrl[CtrlSliderInvert]>0)slider=1-slider;
-        int base = nearestDegree(slider * 12.f * clamp(settings.octaves, 1, 4)
+        const int overrideNote=settings.tracks[t].stages[state.stage].pitchOverride;
+        float source=overrideNote<0?slider*12.f*clamp(settings.octaves,1,4):float(clamp(overrideNote,0,60));
+        int base = nearestDegree(source
             + (modulation.routes[t][ModPitchPre]+ctrl[CtrlPitchPre])*12.f, settings.scale);
         int note = degreeToSemitone(base + state.activeAccumulation, settings.scale);
         const auto& route = modulation.routes[t];
@@ -438,13 +443,25 @@ private:
         const auto& panel = settings.stages[state.stage];
         const auto& edit = config.stages[state.stage];
         int eventId = -1;
-        float gateLength = clamp(config.gateLength + modulation.routes[t][ModGateLength] * .2f, 0.f, .99f);
+        // Stage Rest affects only the output, never the accumulator clock.
+        // Preserve the unoverridden ratchet events for its accumulation.
+        float inherited=clamp(config.gateLength + modulation.routes[t][ModGateLength]*.2f,0.f,config.gateLength>=1.f?1.f:.99f);
+        // Keep pre-2.10 modulation's 1% positive minimum, then apply Scale.
+        if(inherited>0.f)inherited=std::max(.01f,inherited);
+        float source=edit.gateOverride<0?inherited:clamp(edit.gateOverride,0,100)*.01f;
+        float gateLength=source*clamp(config.gateScale,0.f,1.f);
+        float accumLength=inherited*clamp(config.gateScale,0.f,1.f);
         int ratchets = clamp(edit.ratchets + static_cast<int>(std::round(modulation.routes[t][ModRatchet] * 1.4f + controls.values[t][CtrlRatchet]*7.f)), 1, 8);
-        bool gate = !muted(t) && gateLength > 0.f && state.allowed && gateHigh(panel.gate, state.pulse,
+        bool accumulationGate = !muted(t) && accumLength > 0.f && state.allowed && gateHigh(
+            panel.gate==Rest?Rest:accumLength>=1.f?Hold:panel.gate, state.pulse,
             state.age / state.duration, pulses(t,state.stage), clamp(config.pulseDivision, 1, 8),
             config.gateStretch, config.ratchetMode, ratchets,
-            std::max(gateLength, .01f), state.duration, &eventId);
-        if (gate && edit.accumTrigger == AccumRatchet && eventId != state.lastRatchetEvent) {
+            accumLength, state.duration, &eventId);
+        bool gate = edit.gateOverride==0?false:
+            !muted(t) && gateLength>0.f && state.allowed && gateHigh(panel.gate==Rest?Rest:gateLength>=1.f?Hold:panel.gate,
+                state.pulse,state.age/state.duration,pulses(t,state.stage),clamp(config.pulseDivision,1,8),
+                config.gateStretch,config.ratchetMode,ratchets,gateLength,state.duration);
+        if (accumulationGate && edit.accumTrigger == AccumRatchet && eventId != state.lastRatchetEvent) {
             accumulate(t);
             state.lastRatchetEvent = eventId;
         }

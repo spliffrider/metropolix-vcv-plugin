@@ -13,10 +13,11 @@ void require(bool value, const char* message) {
 #include "PresetRackTests.hpp"
 #include "ChainRackTests.hpp"
 #include "SwingRackTests.hpp"
+#include "OverrideRackTests.hpp"
 
 int main() {
     static_assert(Metropolix::OUTPUT_SOURCE_A==402 && Metropolix::OUTPUT_SOURCE_B==403,"legacy parameters stay at their original IDs");
-    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::RUN_MODE==428 && Metropolix::SWING_1==429 && Metropolix::NUM_PARAMS==431,"Swing appends without changing existing IDs");
+    static_assert(Metropolix::AUX_PARAMS==404 && Metropolix::ACCUM_MODE==413 && Metropolix::CTRL_PARAMS==415 && Metropolix::TOTAL_PULSES==421 && Metropolix::RUN_MODE==428 && Metropolix::SWING_1==429 && Metropolix::GATE_SCALE_1==431 && Metropolix::STAGE_OVERRIDES==433 && Metropolix::NUM_PARAMS==465,"Overrides append without changing existing IDs");
     static_assert(Metropolix::CLOCK_IN==0 && Metropolix::RESET_IN==1 && Metropolix::AUX_X_IN==2 && Metropolix::NUM_OUTPUTS==7,"legacy cable endpoints preserved");
     rack::random::init();
     rack::Context context;
@@ -97,7 +98,7 @@ int main() {
         json_t* malformed = json_pack("{s:i, s:i, s:i}", "selectedTrack", 100, "selectedStage", -20, "selectedRow", 77);
         restored.dataFromJson(malformed);
         json_decref(malformed);
-        require(restored.selectedTrack.load() == 1 && restored.selectedStage.load() == 0 && restored.selectedRow.load() == 5, "out-of-range saved UI state is clamped");
+        require(restored.selectedTrack.load() == 1 && restored.selectedStage.load() == 0 && restored.selectedRow.load() == 7, "out-of-range saved UI state is clamped");
         json_t* previousUi=json_pack("{s:i,s:i,s:i}","schemaVersion",5,"uiPage",Metropolix::LENGTH_PAGE,"uiField",1);
         restored.dataFromJson(previousUi);json_decref(previousUi);
         require(restored.uiField.load()==0 && restored.uiHome.load()==0, "old LEN offset selection migrates without selecting pulse length");
@@ -275,6 +276,7 @@ int main() {
     presetRackTests();
     chainRackTests();
     swingRackTests();
+    overrideRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);

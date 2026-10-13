@@ -1,10 +1,11 @@
-# Feature status — 2.9.0 public alpha
+# Feature status — 2.10.0 public alpha
 
 Assessment date: 2026-10-13. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
-2.9.0 adds per-track Swing, a CTRL destination and AUX/MOD offsets; see the [Swing guide](SWING.md).
+2.10.0 adds per-stage pitch/gate overrides, Gate Scale and the track gate Hold endpoint; see the [override guide](STAGE-OVERRIDES.md).
+2.9.0 added per-track Swing, a CTRL destination and AUX/MOD offsets; see the [Swing guide](SWING.md).
 2.8.0 added 32-link preset chains, repeats, per-link mutes and eight saved chains.
 2.7.0 added 64 internal presets, selective recall, queued loading and Total Pulses.
 2.6.0 added both CTRL performance knobs with 23 supported destinations.
@@ -27,9 +28,9 @@ configuration, preset workflows, and external interfaces.
 
 | Area | Available now | Principal remaining work |
 | --- | --- | --- |
-| Eight-stage, two-track sequencing | Shared pitch/pulse/gate controls; independent track settings; pitch/gate outputs | Stage pitch and gate-length overrides; additional track options |
+| Eight-stage, two-track sequencing | Shared pitch/pulse/gate controls; independent track settings; pitch/gate outputs; per-stage pitch/gate overrides | Additional track options |
 | Traversal and timing | All 21 play orders, reverse, length, offset, clock/pulse division, fixed pulse lengths, Swing, reset, internal/external clock | Hardware clock/reset modes and configuration |
-| Gate/stage variation | Four gate types; three ratchet modes; stretching; Stage/Pulse probability; skip; slide; stage CV | Other slide models; gate scaling; full stage-CV type behavior |
+| Gate/stage variation | Four gate types; three ratchet modes; stretching; Stage/Pulse probability; skip; slide; stage CV; gate scaling and length Hold | Other slide models; full stage-CV type behavior |
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset | Remaining reset/routing options; hardware comparison of mixed sources and live changes |
 | Pitch/scales | Seven scales, root, transpose, slider range, pitch pre/post/offset modulation | Full scale library, user scales, scale shortcuts/locking and associated workflows |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute | Nine internal destinations implemented; many further destinations and destination-specific display units remain |

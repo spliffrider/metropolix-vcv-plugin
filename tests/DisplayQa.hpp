@@ -94,6 +94,9 @@ const DisplayCase cases[]={
     {"swing-mod",Metropolix::SWING_PAGE,0,0,0,true},
     {"slide-time",Metropolix::SLIDE_PAGE,0,0,0,false},
     {"gate-length",Metropolix::GATE_PAGE,0,0,0,false},
+    {"gate-scale",Metropolix::GATE_PAGE,1,0,0,false},
+    {"stage-pitch-override",Metropolix::STAGE_PAGE,0,0,Metropolix::PITCH_OVERRIDE,false},
+    {"stage-gate-override",Metropolix::STAGE_PAGE,0,0,Metropolix::GATE_OVERRIDE,false},
     {"stage-slide",Metropolix::STAGE_PAGE,0,0,Metropolix::SLIDE,false},
     {"stage-skip",Metropolix::STAGE_PAGE,0,0,Metropolix::SKIP,false},
     {"stage-ratchet",Metropolix::STAGE_PAGE,0,0,Metropolix::RATCHETS,false},
@@ -126,6 +129,10 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+        if(test.row>=Metropolix::PITCH_OVERRIDE && !test.mod) {
+            const int pitches[]={-1,12,28,60,7,-1,40,55},gates[]={-1,0,82,100,13,-1,88,1};
+            for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);
+        }
         if(test.page==Metropolix::SWING_PAGE)m->params[Metropolix::swingParam(m->selectedTrack.load())].setValue(std::string(test.name)=="swing-max"?78:50);
         if(test.page==Metropolix::CHAIN_PAGE) {
             Metropolix::ChainState state;

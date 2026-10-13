@@ -1,4 +1,4 @@
-# Metropolix Lab 2.9.0 — Windows alpha quick start
+# Metropolix Lab 2.10.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/MetropolixLab-2.9.0-win-x64.vcvplugin)
-- [Swing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/Swing-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/MetropolixLab-2.10.0-win-x64.vcvplugin)
+- [Stage override performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.10.0/Stage-overrides-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.9.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.10.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.9.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.10.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -32,11 +32,11 @@ There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
 
-For Swing, open **[Swing-performance.vcv](../examples/Swing-performance.vcv)**,
+For stage overrides, open **[Stage-overrides-performance.vcv](../examples/Stage-overrides-performance.vcv)**,
 choose your AUDIO device and level, then press RUN. Select a track and click
-SWING; try 50%, 66%, and 78%, independent track values, stage shortcuts,
-encoder long-press reset, CTRL assignment, and AUX/MOD offsets. Skips should
-change traversal without restarting the groove. See the [Swing guide](SWING.md).
+EDIT → PITCH/GATE; try Sync, ALT changes, clear, Rest and Hold, Gate Scale
+and undo. The four presets change melody and articulation over shared sliders.
+See the [override guide](STAGE-OVERRIDES.md).
 
 For the automatic arrangement, open **[Chain-performance.vcv](../examples/Chain-performance.vcv)**,
 select your AUDIO device, and watch the OLED follow seven links over 32 bars.
@@ -127,13 +127,20 @@ Accumulator mode, or use ALT → LIM. See the
 
 [Full controls guide](https://github.com/spliffrider/metropolix-vcv-plugin/blob/main/docs/HARDWARE-UI.md)
 
+## Stage overrides — new in 2.10.0
+
+Try EDIT → PITCH/GATE, Sync, ALT all-stage edits and clears, Rest with ACCUM,
+track Gate Scale, and undo/redo. Save/reopen your patch. The downloadable
+[stage override demo](../examples/Stage-overrides-performance.vcv) starts stopped.
+See the [controls guide](STAGE-OVERRIDES.md); hardware comparisons are welcome.
+
 ## Known limitations
 
-**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy, stage pitch/gate-length overrides, most remaining MOD
+**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy, most remaining MOD
 destinations, the full scale library/user scales and hardware bank interchange,
 remaining accumulator reset/routing options, MIDI, MX, and SysEx.
 
-**Fixed options:** Tempo slide, 100% gate scale, and /1 external input clock
+**Fixed options:** Tempo slide and /1 external input clock
 division. Each incoming clock edge is one sixteenth note. Some internal MOD
 gains are implementation choices pending hardware comparison. The front panel
 is not a promise that every printed function is implemented.

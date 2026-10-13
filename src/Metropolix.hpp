@@ -25,6 +25,43 @@ struct ModVoltageQuantity : ParamQuantity {
     }
 };
 
+struct GateLengthQuantity : ParamQuantity {
+    std::string getDisplayValueString() override { return getValue()>=100?"Hold":ParamQuantity::getDisplayValueString(); }
+    std::string getUnit() override { return getValue()>=100?"":unit; }
+    void setDisplayValueString(std::string s) override { if(s=="Hold" || s=="hold")setValue(100);else ParamQuantity::setDisplayValueString(s); }
+};
+struct GateOverrideQuantity : ParamQuantity {
+    std::string getDisplayValueString() override {
+        int v=int(std::round(getValue()));return v<0?"-- (track)":v==0?"Rest":std::to_string(v)+"%";
+    }
+    void setDisplayValueString(std::string s) override {
+        if(s=="--" || s=="track")setValue(-1);
+        else if(s=="Rest" || s=="rest")setValue(0);
+        else if(s=="Hold" || s=="hold")setValue(100);
+        else ParamQuantity::setDisplayValueString(s);
+    }
+};
+struct PitchOverrideQuantity : ParamQuantity {
+    int scaleParam=-1;
+    int scale() const { return module && scaleParam>=0?int(std::round(module->params[scaleParam].getValue())):0; }
+    void setValue(float v) override {
+        ParamQuantity::setValue(v<-.5f?-1.f:float(metro::degreeToSemitone(metro::nearestDegree(metro::clamp(v,0.f,60.f),scale()),scale())));
+    }
+    std::string getDisplayValueString() override {
+        if(getValue()<0)return "-- (slider)";
+        static const char* names[]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+        int note=metro::degreeToSemitone(metro::nearestDegree(getValue(),scale()),scale());
+        return std::string(names[note%12])+std::to_string(note/12);
+    }
+    void setDisplayValueString(std::string s) override {
+        if(s=="--" || s=="slider"){setValue(-1);return;}
+        static const char* names[]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+        for(int n=0;n<12;++n)for(int octave=0;octave<=5;++octave)
+            if(s==std::string(names[n])+std::to_string(octave)){setValue(float(n+12*octave));return;}
+        try { setValue(std::stof(s)); } catch(...) {}
+    }
+};
+
 struct Metropolix : Module {
     enum ParamIds {
         TEMPO, RUN, RESET, ROOT, SCALE, RANGE,
@@ -50,10 +87,12 @@ struct Metropolix : Module {
         QUEUE_PULSES, LOAD_DELAY, LOAD_PITCH, LOAD_SWITCHES, LOAD_CTRL, LOAD_AUX,
         RUN_MODE,
         SWING_1, SWING_2,
-        NUM_PARAMS
+        GATE_SCALE_1, GATE_SCALE_2,
+        STAGE_OVERRIDES,
+        NUM_PARAMS = STAGE_OVERRIDES + 32
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
-    enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV };
+    enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
     enum ExtraTrackParams { REVERSED, PULSE_DIV, PULSE_LIMIT, GATE_STRETCH, RATCHET_MODE, ACCUM_AUTO_RESET };
     enum AccumOptions { NEGATIVE_LIMIT, BIPOLAR, ACCUM_ORDER };
     enum StageOptions { PROB_TARGET, ACCUM_TRIGGER };
@@ -65,7 +104,8 @@ struct Metropolix : Module {
     enum OutputIds { PITCH_1, GATE_1, PITCH_2, GATE_2, CLOCK_OUT, A_OUT, B_OUT, NUM_OUTPUTS };
     enum LightIds { POSITION_1, POSITION_2 = POSITION_1 + 8, NUM_LIGHTS = POSITION_2 + 8 };
     static int trackParam(int t, int p) { return TRACK + t * TRACK_STRIDE + p; }
-    static int stageParam(int t, int stage, int row) { return trackParam(t, 9 + row * 8 + stage); }
+    static int stageParam(int t, int stage, int row) { return row<6?trackParam(t,9+row*8+stage):STAGE_OVERRIDES+t*16+(row-PITCH_OVERRIDE)*8+stage; }
+    static int gateScaleParam(int t) { return GATE_SCALE_1+t; }
     static int extraParam(int t, int p) { return EXTRA_TRACK + t * EXTRA_STRIDE + p; }
     static int accumParam(int t, int p) { return ACCUM_OPTIONS + t * ACCUM_OPTIONS_STRIDE + p; }
     static int stageOption(int t, int s, int p) { return STAGE_OPTIONS + t * 16 + p * 8 + s; }
@@ -190,7 +230,8 @@ struct Metropolix : Module {
             configSwitch(accumParam(t, ACCUM_ORDER), 0, 3, 0, name + "accumulator order", {"Wrap", "Pendulum", "Random", "Hold"});
             configSwitch(accumModeParam(t), 0, 1, 0, name + "accumulator mode", {"Stage", "Track"});
             configParam(trackParam(t, TRANSPOSE), -24, 24, 0, name + "transpose", " semitones")->snapEnabled = true;
-            configParam(trackParam(t, GATE_LENGTH), 1, 99, 50, name + "gate length", "%");
+            configParam<GateLengthQuantity>(trackParam(t, GATE_LENGTH), 1, 100, 50, name + "gate length", "%");
+            configParam(gateScaleParam(t),0,100,100,name+"gate scale","%")->snapEnabled=true;
             configParam(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide time", "% of a pulse");
             configParam(swingParam(t), 50, 78, 50, name + "swing", "%")->snapEnabled = true;
             configParam(trackParam(t, ACCUM_LIMIT), 1, 28, 9, name + "positive accumulator limit", " scale degrees")->snapEnabled = true;
@@ -203,6 +244,9 @@ struct Metropolix : Module {
                 configSwitch(stageParam(t, s, SLIDE), 0, 1, 0, prefix + "slide", {"Off", "On"});
                 configSwitch(stageParam(t, s, SKIP), 0, 1, 0, prefix + "skip", {"Off", "On"});
                 configParam(stageParam(t, s, CV), -5, 5, 0, prefix + "CV", " V");
+                auto* pitch=configParam<PitchOverrideQuantity>(stageParam(t,s,PITCH_OVERRIDE),-1,60,-1,prefix+"pitch override");
+                pitch->scaleParam=SCALE; pitch->snapEnabled=true;
+                configParam<GateOverrideQuantity>(stageParam(t,s,GATE_OVERRIDE),-1,100,-1,prefix+"gate override")->snapEnabled=true;
                 configSwitch(stageOption(t, s, PROB_TARGET), 0, 1, 0, prefix + "probability target", {"Stage", "Pulse"});
                 configSwitch(stageOption(t, s, ACCUM_TRIGGER), 0, 2, 0, prefix + "accumulator trigger", {"Stage", "Pulse", "Ratchet"});
             }
@@ -333,6 +377,7 @@ struct Metropolix : Module {
             track.autoAccumReset = integer(extraParam(t, ACCUM_AUTO_RESET)) != 0;
             track.transpose = integer(trackParam(t, TRANSPOSE));
             track.gateLength = params[trackParam(t, GATE_LENGTH)].getValue() * 0.01f;
+            track.gateScale=params[gateScaleParam(t)].getValue()*.01f;
             track.slideTime = params[trackParam(t, SLIDE_TIME)].getValue() * 0.01f;
             track.swing = params[swingParam(t)].getValue();
             track.accumLimit = integer(trackParam(t, ACCUM_LIMIT));
@@ -351,6 +396,8 @@ struct Metropolix : Module {
                 edit.slide = integer(stageParam(t, s, SLIDE)) != 0;
                 edit.skip = integer(stageParam(t, s, SKIP)) != 0;
                 edit.cv = params[stageParam(t, s, CV)].getValue();
+                edit.pitchOverride=integer(stageParam(t,s,PITCH_OVERRIDE));
+                edit.gateOverride=integer(stageParam(t,s,GATE_OVERRIDE));
             }
         }
     }
@@ -421,10 +468,10 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(12));
+        json_object_set_new(root, "schemaVersion", json_integer(13));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(2));
+        json_object_set_new(root, "presetFormat", json_integer(3));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));
@@ -445,6 +492,8 @@ struct Metropolix : Module {
         return root;
     }
     void dataFromJson(json_t* root) override {
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<13)
+            for(int id=GATE_SCALE_1;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<12)
             for(int t=0;t<2;++t)params[swingParam(t)].setValue(50.f);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<9)
@@ -479,7 +528,7 @@ struct Metropolix : Module {
         selectedLane.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedLane"))), 0, 7));
         selectedTrack.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedTrack"))), 0, 1));
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));
-        selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 5));
+        selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
         uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(SWING_PAGE)));

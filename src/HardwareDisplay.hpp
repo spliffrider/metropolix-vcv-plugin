@@ -34,7 +34,7 @@ struct HardwareDisplay : HardwareControl {
             int d=integer(Metropolix::modParam(metroModule->selectedLane.load(),Metropolix::MOD_DESTINATION));
             return d?Metropolix::modDestinations()[d]:"UNASSIGNED";
         }
-        const char* names[]={"RATCHET","PROBABILITY","ACCUM","SLIDE","SKIP","CV"};
+        const char* names[]={"RATCHET","PROBABILITY","ACCUM","SLIDE","SKIP","CV","PITCH","GATE"};
         return names[metroModule->selectedRow.load()];
     }
     void footer(OledCanvas& c,bool detailed=false) const {
@@ -43,6 +43,7 @@ struct HardwareDisplay : HardwareControl {
         if(detailed && m)left+=string::f(":%d",m->selectedStage.load()+1);
         std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":
             m && m->uiPage.load()==Metropolix::CTRL_PAGE?string::f("CTRL %d",m->selectedCtrl.load()+1):functionName();
+        if(overridePage(m) && m->uiAlt.load())right="EDIT ALL / ALT";
         if(m && m->uiMod.load()) {
             int source=m->selectedLane.load()+2;
             bool a=integer(Metropolix::OUTPUT_SOURCE_A)==source,b=integer(Metropolix::OUTPUT_SOURCE_B)==source;
@@ -103,7 +104,8 @@ struct HardwareDisplay : HardwareControl {
                 int post=m?static_cast<int>(std::round(m->pitchPost[t].load()*12.f)):0;
                 c.right(102,y,string::f("%+d",pre));c.right(127,y,string::f("%+d",post));
                 for(int s=0;s<8;++s) {
-                    int deg=metro::nearestDegree(value(Metropolix::PITCH+s)*12*integer(Metropolix::RANGE,3),scale);
+                    int anchor=integer(Metropolix::stageParam(t,s,Metropolix::PITCH_OVERRIDE),-1);
+                    int deg=metro::nearestDegree(anchor<0?value(Metropolix::PITCH+s)*12*integer(Metropolix::RANGE,3):float(anchor),scale);
                     int note=metro::modulo(metro::degreeToSemitone(deg,scale)+root+integer(Metropolix::trackParam(t,Metropolix::TRANSPOSE)),12);
                     c.text(s*16,y+10,notes[note],false);
                     if(used(t,s) && !effectiveSkip(t,s)) {
@@ -161,7 +163,21 @@ struct HardwareDisplay : HardwareControl {
         bool mod=m->uiMod.load(),detail=m->uiStageDetail.load();
         auto id=[&](int stage){return mod?Metropolix::modParam(l,Metropolix::MOD_VALUE+stage):Metropolix::stageParam(t,stage,row);};
         bool gates=mod && (integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION)))));
-        if((!mod && (row==Metropolix::SLIDE || row==Metropolix::SKIP)) || gates) {
+        if(!mod && row>=Metropolix::PITCH_OVERRIDE) {
+            bool pitch=row==Metropolix::PITCH_OVERRIDE;
+            int selected=integer(id(s),-1);
+            std::string label=selected<0?"--":pitch?m->getParamQuantity(id(s))->getDisplayValueString():selected==0?"Rest":string::f("%d%%",selected);
+            c.fit(1,4,39,label);c.corners(0,0,40,25);c.turn(3,16);
+            if(pitch){c.text(0,30,"Sync",false);c.circle(5,41,2,true);}
+            for(int i=0;i<8;++i) {
+                int x=44+i*10,v=integer(id(i),-1),h=pitch?int(std::max(0,v)*.7f):int(std::max(0,v)*.42f);
+                bool active=i==s;
+                if(v<0)c.box(x,47,8,3);
+                else if(!pitch && v==0)c.box(x,47,8,3),c.fill(x,48,8,2);
+                else {h=std::max(2,h);c.box(x,48-h,8,h);if(active)c.fill(x,48-h,8,h);}
+                if(active)c.arrow(x+4,1);
+            }
+        } else if((!mod && (row==Metropolix::SLIDE || row==Metropolix::SKIP)) || gates) {
             for(int i=0;i<8;++i) {
                 int x=8+i*16;bool on=value(id(i))>=(gates?1.5f:.5f);
                 if(!mod && row==Metropolix::SKIP) { if(on){c.line(x-4,21,x+4,29);c.line(x+4,21,x-4,29);}else c.box(x-4,21,9,9); }
@@ -205,7 +221,7 @@ struct HardwareDisplay : HardwareControl {
             bool narrow=!mod && row!=Metropolix::SLIDE && row!=Metropolix::SKIP && row!=Metropolix::CV;
             int x=narrow?44+playing*10:2+playing*16;c.line(x,53,x+(narrow?7:10),53);
         }
-        footer(c,detail);
+        footer(c,detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
     }
     OledCanvas render() const {
         OledCanvas c;auto* m=metroModule;int page=m?m->uiPage.load():Metropolix::HOME;
@@ -256,8 +272,12 @@ struct HardwareDisplay : HardwareControl {
                 if(owner>=0){c.circle(7,20,6);c.text(5,18,std::to_string(owner+1));}else c.turn(3,17);
             }
         } else if(page==Metropolix::GATE_PAGE) {
-            field(c,0,"GATE LENGTH",string::f("%.0f%%",value(Metropolix::trackParam(t,Metropolix::GATE_LENGTH),50)),true);
-            c.text(2,31,"GATE SCALE");c.fit(20,41,105,"100%",1);
+            if(mod){c.text(2,3,"GATE");c.text(2,23,"NOTE TRACKS ONLY");}
+            else {
+                float length=value(Metropolix::trackParam(t,Metropolix::GATE_LENGTH),50);
+                field(c,0,"GATE LENGTH",length>=100?"Hold":string::f("%.0f%%",length),f==0);
+                field(c,29,"GATE SCALE",string::f("%.0f%%",value(Metropolix::gateScaleParam(t),100)),f==1);
+            }
         } else if(page==Metropolix::A_PAGE || page==Metropolix::B_PAGE) {
             int source=integer(page==Metropolix::A_PAGE?Metropolix::OUTPUT_SOURCE_A:Metropolix::OUTPUT_SOURCE_B);
             c.text(2,2,page==Metropolix::A_PAGE?"OUTPUT A":"OUTPUT B");c.right(125,12,source<2?"CV":"Mod",false);

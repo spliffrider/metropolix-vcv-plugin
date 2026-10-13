@@ -61,7 +61,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::DIV_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_DIVISION) : (f?Metropolix::extraParam(t,Metropolix::PULSE_DIV):Metropolix::trackParam(t,Metropolix::DIVISION));
         case Metropolix::SWING_PAGE: return mod ? -1 : Metropolix::swingParam(t);
         case Metropolix::SLIDE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::SLIDE_TIME);
-        case Metropolix::GATE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
+        case Metropolix::GATE_PAGE: return mod ? -1 : f?Metropolix::gateScaleParam(t):Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
         case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
         case Metropolix::A_PAGE: return Metropolix::OUTPUT_SOURCE_A;
         case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
@@ -98,13 +98,14 @@ void encoderPress(Metropolix* m) {
         auto* q=m->getParamQuantity(id);setWithHistory(q,1-q->getValue());return;
     }
     if(p==Metropolix::STAGE_PAGE) {
+        if(overridePage(m) && m->selectedRow.load()==Metropolix::PITCH_OVERRIDE){syncPitchOverrides(m);return;}
         int id=-1, count=2, t=m->selectedTrack.load(),s=m->selectedStage.load();
         if(m->uiMod.load())id=Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_RAMP+s);
         else if(m->selectedRow.load()==Metropolix::PROBABILITY)id=Metropolix::stageOption(t,s,Metropolix::PROB_TARGET);
         else if(m->selectedRow.load()==Metropolix::ACCUMULATION){id=Metropolix::stageOption(t,s,Metropolix::ACCUM_TRIGGER);count=3;}
         if(id>=0){auto* q=m->getParamQuantity(id);setWithHistory(q,(static_cast<int>(q->getValue())+1)%count);}return;
     }
-    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE ||
+    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE || (p==Metropolix::GATE_PAGE && !m->uiMod.load()) ||
        (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
 }
@@ -147,6 +148,9 @@ struct HardwareControl : ValueKnob {
     bool longFired=false;
     double heldSince=0, longSeconds=1;
     int controllerOwner=-1;
+    std::function<std::vector<int>()> groupedParams;
+    std::vector<int> gestureIds;
+    std::vector<float> gestureBefore;
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
     ~HardwareControl() { clearTip(); }
     void bind() {
@@ -207,6 +211,8 @@ struct HardwareControl : ValueKnob {
         if(dragAction) dragAction();
         if(navigating && navigationStart)navigationStart();
         ValueKnob::onDragStart(e);
+        gestureIds=groupedParams?groupedParams():std::vector<int>{};gestureBefore.clear();
+        for(int id:gestureIds)gestureBefore.push_back(metroModule->params[id].getValue());
     }
     void onDragMove(const event::DragMove& e) override {
         moved+=e.mouseDelta.norm();
@@ -214,9 +220,43 @@ struct HardwareControl : ValueKnob {
             navigationDelta-=e.mouseDelta.y;
             int turns=static_cast<int>(navigationDelta/22.f);
             if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
-        } else ValueKnob::onDragMove(e);
+        } else {
+            ValueKnob::onDragMove(e);
+            if(gestureIds.size()>1 && overridePage(metroModule)) {
+                auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
+                if(it!=gestureIds.end()) {
+                    int index=int(it-gestureIds.begin()),scale=metroModule->integer(Metropolix::SCALE);
+                    bool pitch=metroModule->selectedRow.load()==Metropolix::PITCH_OVERRIDE;
+                    auto degree=[&](float v){return v<0?-1:metro::nearestDegree(v,scale);};
+                    float current=metroModule->params[paramId].getValue();
+                    float delta=pitch?float(degree(current)-degree(gestureBefore[index])):current-gestureBefore[index];
+                    for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId) {
+                        float v=gestureBefore[i]+delta;
+                        if(pitch){int d=metro::clamp(degree(gestureBefore[i])+int(delta),-1,metro::scaleAt(scale).count*5);v=d<0?-1.f:float(metro::degreeToSemitone(d,scale));}
+                        metroModule->getParamQuantity(gestureIds[i])->setValue(v);
+                    }
+                }
+            }
+        }
     }
-    void onDragEnd(const event::DragEnd& e) override { if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return; ValueKnob::onDragEnd(e); if(navigating && navigationEnd)navigationEnd();if(releaseAction)releaseAction();dragging=false;clearTip(); }
+    void onDragEnd(const event::DragEnd& e) override {
+        if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity()) && (moved>=3 || longFired);
+        std::vector<float> after;
+        if(batch) {
+            for(int id:gestureIds)after.push_back(metroModule->params[id].getValue());
+            // Finish Rack's cursor/drag state with no native parameter change;
+            // then record all affected values as one normal Rack undo action.
+            auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
+            if(it!=gestureIds.end())metroModule->params[paramId].setValue(gestureBefore[it-gestureIds.begin()]);
+        }
+        ValueKnob::onDragEnd(e);
+        if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit gate or stage overrides");}
+        gestureIds.clear();gestureBefore.clear();
+        if(navigating && navigationEnd)navigationEnd();
+        if(releaseAction)releaseAction();
+        dragging=false;clearTip();
+    }
     void onAction(const event::Action&) override { if(moved<3.f && !longFired && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()) app::Knob::onDoubleClick(e); }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu); }
