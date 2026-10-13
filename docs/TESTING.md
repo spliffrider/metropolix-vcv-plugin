@@ -1,4 +1,4 @@
-# Metropolix Lab 2.7.0 — Windows alpha quick start
+# Metropolix Lab 2.7.1 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,9 +6,9 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.0/MetropolixLab-2.7.0-win-x64.vcvplugin)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.1/MetropolixLab-2.7.1-win-x64.vcvplugin)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.7.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.7.1)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -22,7 +22,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.7.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.7.1-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -64,7 +64,7 @@ downstream patch routing rather than a stopped sequencer.
 
 ## Try the preset banks
 
-Download [Preset-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.0/Preset-performance.vcv).
+Download [Preset-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.1/Preset-performance.vcv).
 The red bank has four related patterns. Select a filled slot on LOAD and let the
 current eight-bar phrase finish, or use Queue Pulses = 16/32 for quicker changes.
 Check that melody, MOD and gate changes start together. Try cancellation,
@@ -91,6 +91,11 @@ Accumulator mode, or use ALT → LIM. See the
 
 - Move pitch sliders, pulse-count switches, and gate switches. Check that the
   sequence reacts and both tracks remain independent where appropriate.
+- Try small slider adjustments: pulse/gate switches should move one position
+  at a time. A held drag should show its current value until release. Check
+  **View → Bloom** on the pitch lights and lettering such as **Ping Pong** or
+  **Step** at your usual zoom. Report your Rack sensitivity and Windows scaling
+  if controls still feel too fast or text looks broken.
 - Hold BPM/LEN/DIV or a numeric stage value and drag up/down. Up should increase;
   down should decrease. Try fine dragging, right-click entry, and undo/redo.
 - Select EDIT, choose a function, then select a stage. Try ratchets, probability,

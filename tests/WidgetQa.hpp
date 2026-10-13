@@ -83,6 +83,10 @@ void MetropolixWidget::qaStep() {
     auto closeMenus=[] {
         for(auto* w:APP->scene->children)if(w->visible && dynamic_cast<ui::MenuOverlay*>(w))w->requestDelete();
     };
+    if(std::getenv("METROPOLIX_POLISH_QA")) {
+        #include "UiPolishQa.hpp"
+        return;
+    }
     if(std::getenv("METROPOLIX_DISPLAY_QA")) {
         #include "DisplayQa.hpp"
         return;

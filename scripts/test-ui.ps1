@@ -1,4 +1,4 @@
-param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio)
+param([string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe', [switch]$Audio, [switch]$Modulation, [switch]$Hardware, [switch]$Display, [switch]$Aux, [switch]$Musical, [switch]$Variations, [switch]$Accumulator, [switch]$Controls, [switch]$Presets, [switch]$PresetAudio, [switch]$Polish)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Hardware) { $Modulation = $true }
@@ -19,7 +19,16 @@ try {
     $profile = Join-Path $projectRoot 'tmp\rack-qa'
     $output = Join-Path $projectRoot $(if ($Presets) { 'tmp\preset-ui-qa' } elseif ($PresetAudio) { 'tmp\preset-audio-qa' } elseif ($Display) { 'tmp\display-qa' } elseif ($Controls) { 'tmp\ctrl-qa' } elseif ($Accumulator) { 'tmp\accumulator-qa' } elseif ($Variations) { 'tmp\variations-qa' } elseif ($Musical) { 'tmp\musical-qa' } elseif ($Aux) { 'tmp\aux-qa' } elseif ($Hardware) { 'tmp\hardware-qa' } elseif ($Modulation) { 'tmp\mod-qa' } elseif ($Audio) { 'tmp\audio-qa' } else { 'tmp\qa' })
     $plugin = Join-Path $profile 'plugins-win-x64\MetropolixLab'
+    if ($Polish) { $output = Join-Path $projectRoot 'tmp\polish-qa'; $env:METROPOLIX_POLISH_QA = '1' }
     New-Item -ItemType Directory -Force -Path $plugin, $output | Out-Null
+    # A killed test leaves a truncated log, which Rack interprets as a crash on
+    # the next launch and presents a modal before loading the explicit patch.
+    # Keep the evidence, but give only this isolated QA profile a fresh log.
+    $qaLog = Join-Path $profile 'log.txt'
+    if (Test-Path -LiteralPath $qaLog) {
+        $previousLog = Join-Path $output ('previous-rack-' + [guid]::NewGuid().ToString('N') + '.log')
+        Move-Item -LiteralPath $qaLog -Destination $previousLog
+    }
     Copy-Item -LiteralPath 'build\ui-test\plugin.dll', 'plugin.json', 'README.md' -Destination $plugin -Force
     Copy-Item -LiteralPath 'res' -Destination $plugin -Recurse -Force
     $manifest = Get-Content -LiteralPath 'plugin.json' -Raw | ConvertFrom-Json
@@ -30,8 +39,8 @@ try {
     $env:METROPOLIX_QA_DIR = $output.Replace('\', '/')
     $patch = Join-Path $projectRoot 'examples\Hybrid-demo.vcv'
     if ($Presets) { $env:METROPOLIX_PRESET_UI_QA = '1' }
-    if ($Display) {
-        $env:METROPOLIX_DISPLAY_QA = '1'
+    if ($Display -or $Polish) {
+        if ($Display) { $env:METROPOLIX_DISPLAY_QA = '1' }
         $displayPatch = Get-Content -LiteralPath 'examples\Hardware-panel-demo.vcv' -Raw | ConvertFrom-Json
         $displayPatch.modules = @($displayPatch.modules | Where-Object plugin -eq 'MetropolixLab')
         $displayPatch.cables = @()
@@ -76,8 +85,10 @@ try {
         }
     }
     $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
+    Copy-Item -LiteralPath $qaLog -Destination (Join-Path $output 'rack.log') -Force
     Write-Output $report
     $completion = if ($Presets) { 'PASS PRESET UI QA COMPLETE' } elseif ($Display) { 'PASS DISPLAY QA COMPLETE' } elseif ($Audio) { 'PASS AUDIO QA COMPLETE' } else { 'PASS UI QA COMPLETE' }
+    if ($Polish) { $completion = 'PASS UI POLISH QA COMPLETE' }
     if ($process.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains($completion)) {
         throw 'UI test failed; inspect tmp/rack-qa/log.txt and tmp/qa/report.txt.'
     }
@@ -113,5 +124,6 @@ try {
     Remove-Item Env:METROPOLIX_PRESET_UI_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_PRESET_REOPEN_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_PRESET_AUDIO_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_POLISH_QA -ErrorAction SilentlyContinue
     Pop-Location
 }

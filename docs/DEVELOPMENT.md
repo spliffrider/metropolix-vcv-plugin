@@ -54,11 +54,16 @@ The repository retains the panel reference image, UI assets, source attribution,
 demo patches, and generated example audio. GitHub stores the source history;
 keep local backups of personal patches separately.
 
-GitHub Actions runs the five portable C++ engine suites on pushes and pull
+GitHub Actions runs the seven portable C++ engine suites on pushes and pull
 requests. It does not run Rack, validate the Windows DLL, or exercise the UI.
 Run the Windows build, Rack integration, and applicable UI/audio checks from
 README for changes to plugin behavior or rendering. Test DLLs must never be
 installed or published as production plugins.
+
+For slider/readout/light/OLED changes, run `scripts/test-ui.ps1 -Polish` and
+`python scripts/inspect-ui-polish.py` (Pillow required), then inspect
+`tmp/polish-qa/comparison.png`. The test profile is isolated from the user's
+Rack profile; previous test logs are archived alongside its reports.
 
 The existing project metadata and third-party asset attribution are preserved.
 Making the repository public does not change its declared software license.

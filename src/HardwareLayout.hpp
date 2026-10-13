@@ -99,7 +99,10 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             c->metroModule=m; c->stage=s; c->kind=static_cast<HardwareSlider::Kind>(k);
             int id=ids[k]; c->binding=[id] { return id; };
             c->box=Rect(Vec(233+s*35.7f,ys[k]),Vec(22,heights[k]));
-            c->customSpeed=1000.f/(heights[k]-18.f);
+            // At Rack's default sensitivity: 400 px over the pitch range and
+            // about 24 px per pulse/gate step, independent of panel height.
+            const float speeds[]={2.5f,6.f,14.f};
+            c->customSpeed=speeds[k];
             c->help=k==0?"Shared pitch slider; root, scale, and track settings shape the resulting note.":k==1?"Clock pulses spent on this shared stage (1-8).":"Shared gate mode: Rest, Single, Multiple, or Hold.";
             c->bind(); addParam(c);
         }

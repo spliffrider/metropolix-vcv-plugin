@@ -1,4 +1,41 @@
-# Validation and fidelity status — 2.7.0
+# Validation and fidelity status — 2.7.1
+
+## UI polish — 2.7.1
+
+Tester feedback identified excessive slider sensitivity, missing adjustment
+readouts, pitch LEDs that ignored Bloom, and malformed OLED descenders.
+The slider multipliers now give a 400-pixel pitch range and approximately
+24 pixels per pulse/gate step at Rack's default sensitivity. Live readouts use
+the actual ParamQuantity, including its units and named choices. They honor
+Tooltips off, persist outside the control while held, and clear on release.
+Optional grid bindings stay fixed during a drag, preserving the correct undo.
+
+Pitch lenses use Rack's LightWidget emissive layer and native halo. Their
+brightness combines both track-position lights, with a dim idle level. The
+hardware-style casing remains in the ordinary panel layer. Lowercase g/j/p/q/y
+now have two complete descender rows; g and q no longer share a bitmap. Bitmap
+pixels render as one filtered texture, preventing internal seams while keeping
+small strokes visible at fractional zooms. CTRL-owned accumulator labels
+also use a supported dim shade instead of disappearing from the renderer.
+
+`scripts/test-ui.ps1 -Polish` checks actual Rack widget callbacks: 10-pixel
+adjustments, single-step 24-pixel switch drags, upward/downward changes, live
+readouts, pointer leave, one undo/redo, disabled tooltips, optional grid binding,
+and cursor release. Front-buffer captures cover Bloom off/on, dim room lighting,
+and 75/100/125/150/200% zoom. The existing widget suite, all 32 display states,
+Rack host integration and seven portable engine suites also pass. These are
+usability/rendering checks, not evidence of physical hardware equivalence.
+
+Additional lifecycle checks remove a held control through Rack's event system,
+render and remove a module-browser preview, release/recreate OLED textures,
+and exit Rack normally. Windows Computer Use capture timed out twice, so native
+OS mouse injection was not verified. The isolated test-launch script now
+archives its preceding log before launch: abruptly stopped test sessions had
+triggered Rack's recovery dialog and prevented the requested QA patch loading.
+User profiles are not involved in that reset.
+
+Implementation references: Rack's [Knob](https://github.com/VCVRack/Rack/blob/v2/src/app/Knob.cpp)
+and [LightWidget](https://github.com/VCVRack/Rack/blob/v2/src/app/LightWidget.cpp).
 
 ## Preset banks and queued loading — 2.7.0
 
