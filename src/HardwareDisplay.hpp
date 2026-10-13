@@ -311,6 +311,17 @@ struct HardwareDisplay : HardwareControl {
                 field(c,0,"GATE LENGTH",length>=100?"Hold":string::f("%.0f%%",length),f==0);
                 field(c,29,"GATE SCALE",string::f("%.0f%%",value(Metropolix::gateScaleParam(t),100)),f==1);
             }
+        } else if(page==Metropolix::TRACK_MENU_PAGE) {
+            int cursor=m?m->trackMenuCursor.load():0,start=std::min(std::max(cursor-1,0),TrackMenuCount-3);
+            for(int row=0;row<3;++row){int item=start+row,y=2+row*17;
+                if(item==cursor){c.corners(0,y-1,128,15);c.turn(1,y+3);}
+                c.text(12,y+1,trackMenuName(item));
+                if(m){int id=trackMenuParam(m,item);
+                    if(id>=0){std::string value=m->getParamQuantity(id)->getDisplayValueString();if(item==1 && m->integer(id)==0)value="Shared";c.right(126,y+8,value);}
+                }
+                if(item==cursor && f)c.line(68,y+14,126,y+14);
+            }
+            c.text(1,57,string::f("TRK %d MENU",t+1));return c;
         } else if(page==Metropolix::A_PAGE || page==Metropolix::B_PAGE) {
             int source=m?shownOutputSource(m):0;auto selection=metro::outputSelection(source);
             bool pending=m && m->outputDraft[outputIndex(m)].load()>=0;

@@ -109,3 +109,9 @@ Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
 Internal presets retain the earlier plugin selector/root recall behavior, unlike
 the hardware global classification; custom definitions and locks stay global.
+
+## Track menu — 2.17.0
+
+ALT → TRK opens browsing/editing with toggles, long reset and Init Trk Defaults.
+Independent pulse/gate sources and Rest Pitch complement slider range/direction
+and velocity; transpose now spans −60…+60. See [Track options](TRACK-OPTIONS.md).

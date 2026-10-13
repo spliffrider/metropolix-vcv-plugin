@@ -1,4 +1,21 @@
-# Validation and fidelity status — 2.16.0
+# Validation and fidelity status — 2.17.0
+
+## Track options — 2.17.0
+
+Seventeen portable suites pass. TrackOptionsTests contributes 3,761,450 checks:
+uniform pulse/gate sources match equivalently programmed switches across all
+21 orders, skipped stages, accumulation, fixed lengths, stretching and ratchets;
+shared switches remain unchanged. Rest Pitch Hold/Update, silent rests, all slide
+types, CTRL pulse offsets and every transpose value −60…+60 are covered.
+Rack host checks independent actual gates/traversal, native values, format7
+persistence and format6 migration. Callback tests cover ALT → TRK, browsing,
+upward dragging, binary toggles, numeric endpoints, one-action long reset and
+whole-track init/undo, then save/reopen with cursor and bank preserved.
+The display suite adds ten menu states. Real stereo playback checks all four
+source/Rest Pitch scenes across seven chain links, including velocity and MOD
+percussion cables. Twelve-second stereo RMS is .227002/.267341 V, peaks
+1.11651/1.2889 V and DC .000239/.000215 V. Hardware and native OS input comparison remain separate.
+See [Track options](TRACK-OPTIONS.md) for precedence and remaining configuration.
 
 ## A/B output routing — 2.16.0
 

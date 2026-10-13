@@ -99,6 +99,7 @@ void overrideMenu(ui::Menu* menu,Metropolix* m) {
 }
 const char* notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
+void resetTrackMenu(Metropolix* m,bool all,bool record);
 void trackSettingsMenu(Metropolix* m) {
     if (!m) return;
     int t = m->selectedTrack.load();
@@ -118,6 +119,9 @@ void trackSettingsMenu(Metropolix* m) {
     choice("Velocity",Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE),{"50%","75%","100%","Track CV"});
     choice("Slider octaves",Metropolix::outputTrackParam(t,Metropolix::SLIDER_OCTAVES),{"Follow shared range","1 octave","2 octaves","3 octaves","4 octaves"});
     choice("Slider direction",Metropolix::outputTrackParam(t,Metropolix::SLIDER_DIRECTION),{"Normal","Inverted"});
+    choice("Pulse-count source",Metropolix::trackBehaviorParam(t,Metropolix::PULSE_SOURCE),{"Switch","1","2","3","4","5","6","7","8"});
+    choice("Gate-type source",Metropolix::trackBehaviorParam(t,Metropolix::GATE_SOURCE),Metropolix::gateSourceLabels());
+    choice("Rest pitch",Metropolix::trackBehaviorParam(t,Metropolix::REST_PITCH),{"Hold","Update"});
     std::vector<std::string> divisions;
     for (int i = 1; i <= 8; ++i) divisions.push_back("/ " + std::to_string(i));
     choice("Pulse-count division", Metropolix::extraParam(t, Metropolix::PULSE_DIV), divisions, 1);
@@ -135,6 +139,7 @@ void trackSettingsMenu(Metropolix* m) {
     for (int i = 1; i <= 28; ++i) limits.push_back(std::to_string(i) + " degrees");
     choice("Positive accumulation limit", Metropolix::trackParam(t, Metropolix::ACCUM_LIMIT), limits, 1);
     choice("Negative accumulation limit", Metropolix::accumParam(t, Metropolix::NEGATIVE_LIMIT), limits, 1);
+    menu->addChild(createMenuItem("Initialize this track","",[m]{resetTrackMenu(m,true,true);}));
     menu->addChild(new ui::MenuSeparator);
     menu->addChild(createMenuItem("Open stage editor", "", [m] {
         m->uiMod.store(false); m->modEditor.store(false); m->expanded.store(true);
@@ -430,6 +435,7 @@ struct MainDisplay : widget::Widget {
 #include "StageCvUI.hpp"
 #include "ClockUI.hpp"
 #include "OutputUI.hpp"
+#include "TrackMenuUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

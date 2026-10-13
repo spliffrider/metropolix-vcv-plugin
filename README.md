@@ -4,11 +4,15 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.16.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.17.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.16.0/MetropolixLab-2.16.0-win-x64.vcvplugin)** · **[Velocity and percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.16.0/Output-routing-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.16.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.17.0/MetropolixLab-2.17.0-win-x64.vcvplugin)** · **[Track-options performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.17.0/Track-options-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.17.0)**
 
-2.16.0 adds **all A/B signal functions**, pending-choice confirmation, velocity,
+2.17.0 adds **the ALT → TRK menu**, independent uniform pulse/gate sources,
+Rest Pitch Hold/Update, transpose −60…+60 and track initialization with undo.
+See [Track options](docs/TRACK-OPTIONS.md) and its changing performance demo.
+
+2.16.0 added **all A/B signal functions**, pending-choice confirmation, velocity,
 per-track slider range/direction and three CTRL destinations. Its demo patches
 velocity into the bass and an independent MOD clock into percussion. See the
 [output routing guide](docs/OUTPUT-ROUTING.md).
@@ -160,7 +164,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.16.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.17.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -244,6 +248,8 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-rack.ps1
 .\scripts\test-ui.ps1
 .\scripts\test-ui.ps1 -Aux
+.\scripts\test-ui.ps1 -Tracks
+.\scripts\test-ui.ps1 -TrackAudio
 .\scripts\test-ui.ps1 -Outputs
 .\scripts\test-ui.ps1 -OutputAudio
 .\scripts\test-ui.ps1 -Outputs
@@ -269,7 +275,7 @@ The musical check records 24 seconds from the actual stereo mix in Rack at
 DC offset, and finite samples. These are technical checks; listening feedback
 is still needed to judge the composition and timbre.
 
-The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 79 screen states in `tmp/display-qa`.
+The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 89 screen states in `tmp/display-qa`.
 
 Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Other platforms have not been built or tested.
 
