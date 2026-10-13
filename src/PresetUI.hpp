@@ -26,6 +26,7 @@ struct PresetLoadChange : history::ModuleAction {
 void pumpPresetUi(Metropolix* m) {
     Metropolix::PresetRecall event;
     while (m->presetRecalls.pop(event)) {
+        m->cancelDraft();
         auto* h = new PresetLoadChange;
         h->moduleId = m->id; h->recall = event;
         h->name = event.slot<0?"initialize Metropolix preset":string::f("load Metropolix preset %d-%d", event.slot / 8 + 1, event.slot % 8 + 1);

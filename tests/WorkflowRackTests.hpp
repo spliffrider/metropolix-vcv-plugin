@@ -1,6 +1,6 @@
 void workflowRackTests(){
     using M=Metropolix;auto m=std::unique_ptr<M>(new M);Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;
-    static_assert(M::INIT_PRESET==727 && M::NUM_PARAMS==728 && M::SNAPSHOT_PARAMS==492,"Init setting is global and preserves format8 snapshot");
+    static_assert(M::INIT_PRESET==727 && M::FORMAT21_NUM_PARAMS==728 && M::SNAPSHOT_PARAMS==492,"Init setting is global and preserves format8 snapshot");
     for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(0);
     m->params[M::PITCH].setValue(.77f);m->params[M::CLOCK_SOURCE].setValue(1);m->params[M::BOTTOM_PITCH].setValue(7);m->params[M::trackParam(0,M::TRANSPOSE)].setValue(45);m->params[M::stageParam(1,3,M::RATCHETS)].setValue(8);m->params[M::TRACK_GLOBAL_RESET_1].setValue(0);
     m->requestInitialize();m->sendPresetCommand();for(int f=0;f<64;++f)m->process(args);

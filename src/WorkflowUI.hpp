@@ -31,6 +31,7 @@ void captureWorkflowBaseline(Metropolix* m){
     json_array_foreach(json_object_get(json,"params"),index,entry){int id=int(json_integer_value(json_object_get(entry,"id")));if(id>=0 && id<Metropolix::NUM_PARAMS)m->workflowBaseline[id]=float(json_number_value(json_object_get(entry,"value")));}json_decref(json);
 }
 void workflowWrite(Metropolix* m,const std::vector<int>& ids,const std::vector<float>& values,const std::string& name){
+    m->cancelDraft();
     if(ids.size()!=values.size())return;
     std::vector<float> before;for(size_t i=0;i<ids.size();++i){int id=ids[i];before.push_back(m->params[id].getValue());if(m->ctrlOwner(id)<0){auto* q=m->getParamQuantity(id);if(dynamic_cast<RoutingAssignmentQuantity*>(q))m->params[id].setValue(values[i]);else q->setValue(values[i]);}}
     parameterHistory(m,ids,before,name);

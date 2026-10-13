@@ -12,8 +12,8 @@ struct HardwareDisplay : HardwareControl {
     void onContextDestroy(const ContextDestroyEvent& e) override {
         clearDisplayImages();HardwareControl::onContextDestroy(e);
     }
-    int integer(int id,int fallback=0) const { return metroModule?metroModule->integer(id):fallback; }
-    float value(int id,float fallback=0.f) const { return metroModule?metroModule->params[id].getValue():fallback; }
+    int integer(int id,int fallback=0) const { return metroModule?int(std::round(metroModule->uiValue(id))):fallback; }
+    float value(int id,float fallback=0.f) const { return metroModule?metroModule->uiValue(id):fallback; }
     bool effectiveSkip(int t,int s) const {
         bool invert=false;
         for(int k=0;k<2;++k) {
@@ -39,6 +39,7 @@ struct HardwareDisplay : HardwareControl {
     }
     void footer(OledCanvas& c,bool detailed=false) const {
         auto* m=metroModule;
+        if(pendingConfirmation(m)){c.fill(0,54,128,10,0);c.text(1,56,"? PRESS ENCODER");return;}
         if(m && m->workflowUntil>system::getTime()){c.fill(0,54,128,10,0);c.text(1,56,m->workflowMessage);return;}
         if(m && m->workflowStageHeld){c.text(1,56,string::f(m->workflowLaneCopy?"COPY LANE %d":"COPY STAGE %d",m->workflowStageSource+1));return;}
         if(m && m->heldTrackReset.load() && !workflowTrackIds(m,m->selectedTrack.load()).empty()){c.text(1,56,string::f("COPY TRK %d",m->heldTrackReset.load()&1?1:2));return;}
@@ -65,7 +66,8 @@ struct HardwareDisplay : HardwareControl {
     }
     void field(OledCanvas& c,int y,const std::string& name,const std::string& v,bool selected,int w=128,int size=2) const {
         c.text(2,y+2,name);
-        c.fit(18,y+10,w-22,v,size);
+        std::string shown=v;if(selected && pendingConfirmation(metroModule))shown+=" ?";
+        c.fit(18,y+10,w-22,shown,size);
         if(selected){
             c.corners(0,y,w,27);
             int owner=metroModule?metroModule->ctrlOwner(screenParam(metroModule)):-1;
@@ -178,7 +180,8 @@ struct HardwareDisplay : HardwareControl {
         if(!mod && row>=Metropolix::PITCH_OVERRIDE) {
             bool pitch=row==Metropolix::PITCH_OVERRIDE;
             int selected=integer(id(s),-1);
-            std::string label=selected<0?"--":pitch?m->getParamQuantity(id(s))->getDisplayValueString():selected==0?"Rest":string::f("%d%%",selected);
+            std::string label=selected<0?"--":pitch?previewDisplayString(m,id(s)):selected==0?"Rest":string::f("%d%%",selected);
+            if(pitch && pendingConfirmation(m) && label.size()>2 && label.substr(label.size()-2)==" ?")label.resize(label.size()-2);
             c.fit(1,4,39,label);c.corners(0,0,40,25);c.turn(3,16);
             if(pitch){c.text(0,30,"Sync",false);c.circle(5,41,2,true);}
             for(int i=0;i<8;++i) {
@@ -237,10 +240,11 @@ struct HardwareDisplay : HardwareControl {
             }
         }
         int playing=mod?m->modStage[l].load():m->playStage[t].load();
-        if(playing>=0) {
+        if(playing>=0 && integer(Metropolix::SHOW_POSITION,1)) {
             bool narrow=!mod && row!=Metropolix::SLIDE && row!=Metropolix::SKIP && row!=Metropolix::CV;
             int x=narrow?44+playing*10:2+playing*16;c.line(x,53,x+(narrow?7:10),53);
         }
+        if(pendingConfirmation(m))c.text(32,19,"?");
         footer(c,detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
     }
     OledCanvas render() const {
@@ -260,7 +264,7 @@ struct HardwareDisplay : HardwareControl {
             bool ext=m && m->externalClock.load();
             field(c,0,ext?"EXTERNAL":"INTERNAL",string::f("%.1f",ext?m->displayBpm.load():value(Metropolix::TEMPO,120)),!ext);
             if(!ext && m && std::abs(m->displayBpm.load()-value(Metropolix::TEMPO,120))>.05f){c.fill(15,9,111,16,0);c.text(17,12,string::f("%.1f",m->displayBpm.load()),true);c.text(17,20,"MOD",true);c.fit(58,10,67,string::f("%.1f",value(Metropolix::TEMPO,120)),2);}
-            field(c,29,ext?"EXT CLOCK DIV":"TAP TEMPO",ext?"/1":"Tap BPM",false,128,1);
+            field(c,29,ext?"EXT CLOCK DIV":"TAP TEMPO",ext?"/"+std::to_string(integer(Metropolix::EXT_CLOCK_DIV,1)):"Tap BPM",ext,128,1);
         } else if(page==Metropolix::CLOCK_OUT_PAGE) {
             field(c,0,"CLK OUT","/"+std::to_string(integer(Metropolix::CLOCK_OUT_DIV,1)),f==0);
             field(c,29,"CLK OFFSET",std::to_string(metro::ClockOutput::offset(integer(Metropolix::CLOCK_OUT_OFFSET),integer(Metropolix::CLOCK_OUT_DIV,1))),f==1);
@@ -321,7 +325,7 @@ struct HardwareDisplay : HardwareControl {
                 if(item==cursor){c.corners(0,y-1,128,15);c.turn(1,y+3);}
                 c.text(12,y+1,trackMenuName(item));
                 if(m){int id=trackMenuParam(m,item);
-                    if(id>=0){std::string value=m->getParamQuantity(id)->getDisplayValueString();if(item==1 && m->integer(id)==0)value="Shared";c.right(126,y+8,value);}
+                    if(id>=0){std::string value=previewDisplayString(m,id);if(item==1 && m->integer(id)==0)value="Shared";c.right(126,y+8,value);}
                 }
                 if(item==cursor && f)c.line(68,y+14,126,y+14);
             }
@@ -337,12 +341,13 @@ struct HardwareDisplay : HardwareControl {
             std::string assignment=metro::outputTargetCount(selection.kind)?string::f(metro::outputIsMod(selection.kind)?"Mod %d":"Trk %d",selection.target+1):"Global";
             if(pending && f==1)assignment+=" ?";
             field(c,29,"OUTPUT ASSIGN",assignment,f==1 && metro::outputTargetCount(selection.kind),128,1);
-        } else if(page==Metropolix::AUX_PAGE) {
+        } else if(page==Metropolix::AUX_PAGE || page==Metropolix::MOD_ASSIGN_PAGE) {
             int input=m?m->selectedAux.load():0;
-            int dest=integer(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION));
-            int target=integer(Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT));
-            float voltage=m?m->auxVoltage[input].load():0.f;
-            field(c,0,string::f("AUX %c PARAM",'X'+input),Metropolix::modDestinations()[dest],f==0,128,1);
+            bool internal=page==Metropolix::MOD_ASSIGN_PAGE;int lane=m?m->selectedLane.load():0;
+            int dest=integer(internal?Metropolix::modParam(lane,Metropolix::MOD_DESTINATION):Metropolix::auxParam(input,Metropolix::AUX_DESTINATION));
+            int target=integer(internal?Metropolix::modParam(lane,Metropolix::MOD_ASSIGNMENT):Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT));
+            float voltage=m?(internal?m->modVoltage[lane].load():m->auxVoltage[input].load()):0.f;
+            field(c,0,internal?string::f("MOD %d PARAM",lane+1):string::f("AUX %c PARAM",'X'+input),Metropolix::modDestinations()[dest],f==0,128,1);
             if(metro::modGateDestination(static_cast<metro::ModDestination>(dest))) {
                 c.box(116,2,9,7);if(voltage>=1.5f)c.fill(118,4,5,3);
             } else {
@@ -351,7 +356,7 @@ struct HardwareDisplay : HardwareControl {
                 if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
             }
             bool global=metro::modGlobalDestination(static_cast<metro::ModDestination>(dest));
-            field(c,29,"AUX ASSIGN",global?"Global":string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1 && !global,128,1);
+            field(c,29,internal?"MOD ASSIGN":"AUX ASSIGN",global?"Global":(internal?string::f("MOD %d > ",lane+1):string::f("CV %c > ",'X'+input))+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1 && !global,128,1);
         } else if(page==Metropolix::LOOPY_PAGE) {
             int count=integer(Metropolix::LOOPY_PULSES),both=integer(Metropolix::LOOPY_TARGET);
             field(c,0,"LOOP PULSES",count?std::to_string(count):"Auto",true,128,2);
@@ -451,14 +456,16 @@ struct HardwareDisplay : HardwareControl {
                 c.text(38,57,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
             } else c.text(1,57,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
             return c;
-        } else if(page==Metropolix::SETUP_PAGE || page==Metropolix::GLOBAL_SETUP_PAGE) {
-            bool global=page==Metropolix::GLOBAL_SETUP_PAGE;int cursor=m?(global?m->globalCursor.load():m->setupCursor.load()):0,count=global?GlobalMenuCount:SetupMenuCount;
+        } else if(page==Metropolix::SETUP_PAGE || page==Metropolix::GLOBAL_SETUP_PAGE || page==Metropolix::UI_SETUP_PAGE) {
+            bool global=page==Metropolix::GLOBAL_SETUP_PAGE,ui=page==Metropolix::UI_SETUP_PAGE;int cursor=m?(ui?m->uiSetupCursor.load():global?m->globalCursor.load():m->setupCursor.load()):0,count=ui?UiSetupCount:global?GlobalMenuCount:SetupMenuCount;
             int start=std::min(std::max(cursor-1,0),count-3);
-            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+2,global?globalMenuName(item):setupMenuName(item));
-                int id=global?globalMenuParam(m,item):item==0?Metropolix::RANGE:-1;
-                if(m && id>=0){std::string value=m->getParamQuantity(id)->getDisplayValueString();if(id==Metropolix::CLOCK_SOURCE && integer(id)==0)value="Auto";if(id==Metropolix::CLOCK_RUNNING_ONLY && integer(id)==2)value="Legacy";if(id==Metropolix::RESET_INPUT_MODE){const char* names[]={"Reset","Run","Run-C"};value=names[integer(id)];}if(id==Metropolix::RUN_MODE)value=integer(id)?"Pause":"Stop";c.right(126,y+10,value);}
+            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+2,ui?uiSetupName(item):global?globalMenuName(item):setupMenuName(item));
+                int id=ui?uiSetupParam(m,item):global?globalMenuParam(m,item):item==0?Metropolix::RANGE:-1;
+                if(m && id>=0){std::string value=previewDisplayString(m,id);if(id==Metropolix::CLOCK_SOURCE && integer(id)==0)value="Auto";if(id==Metropolix::CLOCK_RUNNING_ONLY && integer(id)==2)value="Legacy";if(id==Metropolix::RESET_INPUT_MODE){const char* names[]={"Reset","Run","Run-C"};value=names[integer(id)];}if(id==Metropolix::RUN_MODE)value=integer(id)?"Pause":"Stop";if(id==Metropolix::RUN_ON_BOOT && integer(id)==2)value="Patch";if(id==Metropolix::CV_OUT_DELAY)value+=" ms";if(m->uiDraftParam==id && value.find("?")==std::string::npos)value+=" ?";c.right(126,y+10,value);}
                 if(item==cursor){c.corners(0,y-1,128,16);if(f)c.turn(1,y+4);else c.arrow(3,y+5,true);}
-            }c.text(1,56,global?"GLOBAL SETUP":"SETUP MENU");return c;
+            }c.text(1,56,ui?"UI SETUP":global?"GLOBAL SETUP":"SETUP MENU");return c;
+        } else if(page==Metropolix::MOD_MENU_PAGE){
+            int cursor=m?m->modMenuCursor.load():0;c.text(12,5,string::f("Init Lane %d Defaults",l+1));c.text(12,25,"Init All Lanes");c.corners(0,cursor?21:1,128,16);c.arrow(3,cursor?29:9,true);c.text(1,56,string::f("MOD %d MENU",l+1));return c;
         } else if(page==Metropolix::TUNER_PAGE){
             c.text(1,2,"TUNER");c.text(13,22,"Pitch");c.right(126,18,string::f("C%+d",integer(Metropolix::TUNER_OCTAVE)),2);c.turn(1,23);
             c.text(13,44,"Gate");c.right(126,44,integer(Metropolix::TUNER_GATE)?"Clock":"High");c.text(1,56,"EXIT TO RESUME");return c;
@@ -472,6 +479,6 @@ struct HardwareDisplay : HardwareControl {
         rect(vg,0,0,box.size.x,box.size.y,nvgRGB(23,25,25),.8f);
         rect(vg,1,1,box.size.x-2,box.size.y-2,nvgRGB(0,5,7),.3f);
         nvgSave(vg);nvgTranslate(vg,3,3);nvgScale(vg,(box.size.x-6)/128.f,(box.size.y-6)/64.f);
-        nvgScissor(vg,0,0,128,64);render().paint(vg,displayImages[vg]);nvgRestore(vg);
+        nvgScissor(vg,0,0,128,64);render().paint(vg,displayImages[vg],value(Metropolix::SCREEN_LEVEL,4)*.25f);nvgRestore(vg);
     }
 };

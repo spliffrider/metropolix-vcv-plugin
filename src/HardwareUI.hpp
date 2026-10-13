@@ -54,7 +54,7 @@ int screenParam(Metropolix* m) {
     switch(m->uiPage.load()) {
         case Metropolix::TRACK_MENU_PAGE: return f?trackMenuParam(m):-1;
         case Metropolix::LOOPY_PAGE: return Metropolix::LOOPY_PULSES;
-        case Metropolix::BPM_PAGE: return m->externalClock.load()?-1:Metropolix::TEMPO;
+        case Metropolix::BPM_PAGE: return m->externalClock.load()?Metropolix::EXT_CLOCK_DIV:Metropolix::TEMPO;
         case Metropolix::CLOCK_OUT_PAGE: return f?(m->integer(Metropolix::CLOCK_OUT_DIV)>1?Metropolix::CLOCK_OUT_OFFSET:-1):Metropolix::CLOCK_OUT_DIV;
         case Metropolix::SCALE_PAGE: return f ? (m->scaleEditing.load()?Metropolix::SCALE_NOTE:Metropolix::SCALE) : m->scaleRootParam();
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
@@ -72,6 +72,8 @@ int screenParam(Metropolix* m) {
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
         case Metropolix::SETUP_PAGE: return f && m->setupCursor.load()==0?Metropolix::RANGE:-1;
         case Metropolix::GLOBAL_SETUP_PAGE:return f?globalMenuParam(m):-1;
+        case Metropolix::UI_SETUP_PAGE:return f?uiSetupParam(m):-1;
+        case Metropolix::MOD_ASSIGN_PAGE:return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))))?-1:Metropolix::modParam(l,f?Metropolix::MOD_ASSIGNMENT:Metropolix::MOD_DESTINATION);
         case Metropolix::TUNER_PAGE:return Metropolix::TUNER_OCTAVE;
         case Metropolix::PRESET_SETUP_PAGE: return f==7?Metropolix::INIT_PRESET:Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
@@ -82,6 +84,7 @@ void screenPage(Metropolix* m, int page) {
     if(!m) return;
     if(page!=Metropolix::TUNER_PAGE)m->tunerActive.store(false);
     if(m->uiPage.load()==Metropolix::LOOPY_PAGE && page!=Metropolix::LOOPY_PAGE && m->loopyHeld.load() && m->integer(Metropolix::RUN))m->latchLoopy();
+    m->cancelDraft();
     m->loopyMuteHeld.store(false);
     if(page!=Metropolix::SCALE_PAGE)m->scaleEditing.store(false);
     m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
@@ -89,6 +92,7 @@ void screenPage(Metropolix* m, int page) {
 }
 void encoderPress(Metropolix* m) {
     if(!m) return;
+    if(confirmDraft(m))return;
     int p=m->uiPage.load();
     if(trackMenuPage(m)){trackMenuEncoderPress(m);return;}
     if(outputPage(m)){outputEncoderPress(m);return;}
@@ -108,8 +112,9 @@ void encoderPress(Metropolix* m) {
         return;
     }
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
-    if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
+    if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::UI_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
+    if(p==Metropolix::MOD_MENU_PAGE){initModLane(m,m->modMenuCursor.load()!=0);return;}
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }
     if(p==Metropolix::SAVE_PAGE) { m->presetSaveAction.store((m->presetSaveAction.load()+1)%3); return; }
@@ -122,12 +127,12 @@ void encoderPress(Metropolix* m) {
         if(cvPage(m)){cvEncoderPress(m);return;}
         if(overridePage(m) && m->selectedRow.load()==Metropolix::PITCH_OVERRIDE){syncPitchOverrides(m);return;}
         int id=-1, count=2, t=m->selectedTrack.load(),s=m->selectedStage.load();
-        if(m->uiMod.load())id=Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_RAMP+s);
+        if(m->uiMod.load()){modStagePress(m);return;}
         else if(m->selectedRow.load()==Metropolix::PROBABILITY)id=Metropolix::stageOption(t,s,Metropolix::PROB_TARGET);
         else if(m->selectedRow.load()==Metropolix::ACCUMULATION){id=Metropolix::stageOption(t,s,Metropolix::ACCUM_TRIGGER);count=3;}
         if(id>=0){auto* q=m->getParamQuantity(id);setWithHistory(q,(static_cast<int>(q->getValue())+1)%count);}return;
     }
-    if(p==Metropolix::CLOCK_OUT_PAGE || p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE || (p==Metropolix::GATE_PAGE && !m->uiMod.load()) ||
+    if(p==Metropolix::CLOCK_OUT_PAGE || p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::MOD_ASSIGN_PAGE || p==Metropolix::CTRL_PAGE || (p==Metropolix::GATE_PAGE && !m->uiMod.load()) ||
        (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
 }
@@ -194,6 +199,7 @@ struct HardwareControl : ValueKnob {
     float moved=0;
     float customSpeed=0;
     bool doubleClickReset=true;
+    bool confirmationCapable=false,confirming=false;
     bool longFired=false;
     double heldSince=0, longSeconds=1;
     int controllerOwner=-1;
@@ -206,6 +212,7 @@ struct HardwareControl : ValueKnob {
         if(dragging) return;
         int id=binding ? binding() : -1;
         controllerOwner=metroModule?metroModule->ctrlOwner(id):-1;
+        confirming=confirmationCapable && requiresConfirmation(metroModule,id);
         module=(metroModule && id>=0 && controllerOwner<0) ? metroModule : nullptr;
         paramId=id>=0 ? id : 0;
         if(auto* q=getParamQuantity()) speed=customSpeed>0?customSpeed:(q->snapEnabled && q->getRange()>0?std::max(.7f,30.f/q->getRange()):.7f);
@@ -215,6 +222,7 @@ struct HardwareControl : ValueKnob {
         std::string s=q ? q->getString() : name;
         if(controllerOwner>=0 && metroModule) s=metroModule->getParamQuantity(paramId)->getString()+string::f("\nControlled by CTRL %d. Turn that knob; right-click to change its assignment.",controllerOwner+1);
         if(!help.empty()) s += "\n"+help;
+        if(metroModule && paramId==metroModule->uiDraftParam)s+="\nPending: "+previewDisplayString(metroModule,paramId)+". Press encoder to apply.";
         if(detailHelp) s += "\n"+detailHelp();
         if(q) s += "\nHold + drag up/down to increase/decrease. Ctrl = fine. Right-click = values/reset.";
         return s;
@@ -266,18 +274,20 @@ struct HardwareControl : ValueKnob {
     }
     void onDragMove(const event::DragMove& e) override {
         moved+=e.mouseDelta.norm();
-        if(navigating && navigationTurn) {
+        if(confirming && getParamQuantity())turnDraft(metroModule,paramId,e.mouseDelta.y,navigationDelta,APP->window->getMods() & GLFW_MOD_CONTROL);
+        else if(navigating && navigationTurn) {
             navigationDelta-=e.mouseDelta.y;
             int turns=static_cast<int>(navigationDelta/22.f);
             if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
         } else {
             ValueKnob::onDragMove(e);
-            if(gestureIds.size()>1 && cvPage(metroModule) && !cvGate(metroModule)) {
+            if(gestureIds.size()>1 && ((cvPage(metroModule) && !cvGate(metroModule)) || (modStagePage(metroModule) && !modStageGates(metroModule)))) {
                 auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
                 if(it!=gestureIds.end()) {
                     auto type=static_cast<metro::TrackCvType>(metroModule->integer(Metropolix::cvTypeParam(metroModule->selectedTrack.load())));
-                    float delta=metroModule->params[paramId].getValue()-metro::trackCvVoltage(gestureBefore[it-gestureIds.begin()],type);
-                    for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId)metroModule->getParamQuantity(gestureIds[i])->setValue(metro::trackCvVoltage(gestureBefore[i],type)+delta);
+                    bool mod=modStagePage(metroModule);
+                    float delta=metroModule->params[paramId].getValue()-(mod?gestureBefore[it-gestureIds.begin()]:metro::trackCvVoltage(gestureBefore[it-gestureIds.begin()],type));
+                    for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId)metroModule->getParamQuantity(gestureIds[i])->setValue((mod?gestureBefore[i]:metro::trackCvVoltage(gestureBefore[i],type))+delta);
                 }
             }
             if(gestureIds.size()>1 && overridePage(metroModule)) {
@@ -286,7 +296,7 @@ struct HardwareControl : ValueKnob {
                     int index=int(it-gestureIds.begin());
                     int id=metroModule->integer(Metropolix::SCALE_LOCK);if(id<0)id=metroModule->integer(Metropolix::SCALE);
                     auto scale=metroModule->uiScale(id);
-                    bool pitch=metroModule->selectedRow.load()==Metropolix::PITCH_OVERRIDE;
+                    bool pitch=!metroModule->uiMod.load() && metroModule->selectedRow.load()==Metropolix::PITCH_OVERRIDE;
                     int offDegree=metro::nearestDegree(0,scale)-1,maxDegree=metro::nearestDegree(60,scale);
                     auto degree=[&](float v){return v<0?offDegree:metro::nearestDegree(v,scale);};
                     float current=metroModule->params[paramId].getValue();
@@ -320,7 +330,7 @@ struct HardwareControl : ValueKnob {
         dragging=false;clearTip();
     }
     void onAction(const event::Action&) override { if(moved<3.f && !longFired && action) action(); }
-    void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()) app::Knob::onDoubleClick(e); }
+    void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();app::Knob::onDoubleClick(e);} }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu); }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg; float x=box.size.x/2, y=box.size.y/2, r=std::min(x,y)-.7f;
@@ -334,7 +344,7 @@ struct HardwareControl : ValueKnob {
             NVGcolor bottom=look==DARK_BUTTON?nvgRGB(17,20,20):nvgRGB(198,202,209);
             if(look==BLUE_BUTTON){top=nvgRGB(199,209,228);bottom=nvgRGB(137,155,184);}
             if(look==CREAM_BUTTON){top=nvgRGB(249,247,234);bottom=nvgRGB(205,205,193);}
-            if(on) { top=activeColor?activeColor():lightColor; bottom=color::mult(top,.77f); }
+            if(on) { top=color::mult(activeColor?activeColor():lightColor,metroModule?metroModule->params[Metropolix::BUTTON_LEVEL].getValue()*.25f:1); bottom=color::mult(top,.77f); }
             else if(dimActive && dimActive()) { top=color::mult(activeColor?activeColor():lightColor,.42f);bottom=color::mult(top,.77f); }
             disc(vg,x,y,r-.7f,nvgRGB(232,234,231));metalDisc(vg,x,y,r-1.5f,top,bottom);
             nvgBeginPath(vg);nvgArc(vg,x,y,r-2.1f,-2.8f,-.45f,NVG_CW);nvgStrokeWidth(vg,.45f);nvgStrokeColor(vg,nvgRGBA(255,255,255,145));nvgStroke(vg);
@@ -387,7 +397,8 @@ struct HardwareSlider : HardwareControl {
         pitchLight->box.pos=Vec(box.size.x/2-2,handleCenter()-5.1f);
         float brightness=metroModule?std::max(metroModule->lights[Metropolix::POSITION_1+stage].getBrightness(),
             metroModule->lights[Metropolix::POSITION_2+stage].getBrightness()):0.f;
-        pitchLight->color=color::mult(nvgRGB(255,51,13),.45f+.55f*brightness);
+        float level=metroModule?metroModule->params[Metropolix::SLIDER_LEVEL].getValue()*.25f:1;
+        pitchLight->color=color::mult(nvgRGB(255,51,13),(.45f+.55f*brightness)*level);
     }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg;

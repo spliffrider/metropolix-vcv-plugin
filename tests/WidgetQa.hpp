@@ -188,6 +188,10 @@ void MetropolixWidget::qaStep() {
         #include "AccumulatorRoutingWidgetQa.hpp"
         return;
     }
+    if(std::getenv("METROPOLIX_SETUP_OPTIONS_QA")){
+#include "SetupWidgetQa.hpp"
+        return;
+    }
     if(std::getenv("METROPOLIX_WORKFLOW_UI_QA")){
 #include "WorkflowWidgetQa.hpp"
         return;
@@ -368,9 +372,9 @@ void MetropolixWidget::qaStep() {
         APP->history->undo();check(q->getValue()==0,"AUX knob drag is one undo");
         drag(knob,100);check(q->getValue()<0,"AUX knob downward drag inverts amount");APP->history->undo();
         click(find("AUX X assignment"));check(m->selectedAux.load()==0 && m->uiPage.load()==Metropolix::AUX_PAGE,"AUX button opens correct screen");
-        drag(find("AUX X assignment"),-100);check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_DESTINATION))>0,"held AUX assignment button changes destination");APP->history->undo();
+        drag(find("AUX X assignment"),-100);check(pendingConfirmation(m),"AUX button previews a mandatory confirmation");click(find("Encoder"));check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_DESTINATION))>0,"held AUX assignment button changes destination");APP->history->undo();
         click(find("Encoder"));check(screenParam(m)==Metropolix::auxParam(0,Metropolix::AUX_ASSIGNMENT),"AUX encoder click switches to target tracks");
-        drag(find("Encoder"),-100);check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_ASSIGNMENT))>0,"AUX encoder edits target tracks");APP->history->undo();
+        drag(find("Encoder"),-100);click(find("Encoder"));check(m->integer(Metropolix::auxParam(0,Metropolix::AUX_ASSIGNMENT))>0,"AUX encoder edits target tracks");APP->history->undo();
         check(knob->tooltipText().find("Effective input")!=std::string::npos,"AUX hover includes live voltage and route");
         press(find("AUX Y assignment"),GLFW_MOUSE_BUTTON_RIGHT);
     }
