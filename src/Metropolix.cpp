@@ -428,6 +428,7 @@ struct MainDisplay : widget::Widget {
 #include "ScaleUI.hpp"
 #include "SlideUI.hpp"
 #include "StageCvUI.hpp"
+#include "ClockUI.hpp"
 #include "HardwareUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"

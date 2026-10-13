@@ -120,6 +120,9 @@ const DisplayCase cases[]={
     {"stage-accumulator",Metropolix::STAGE_PAGE,0,0,Metropolix::ACCUMULATION,false},
     {"stage-cv",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
     {"mod-voltage",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"clock-default",Metropolix::CLOCK_OUT_PAGE,0,0,0,false},
+    {"clock-offset",Metropolix::CLOCK_OUT_PAGE,1,0,0,false},
+    {"clock-max",Metropolix::CLOCK_OUT_PAGE,1,0,0,false},
     {"output-a",Metropolix::A_PAGE,0,0,0,false},
     {"output-b",Metropolix::B_PAGE,0,0,0,false},
     {"aux-cv",Metropolix::AUX_PAGE,0,0,Metropolix::SLIDE,false},
@@ -163,6 +166,7 @@ if(qaFrame>=20 && index<count) {
             for(int s=0;s<8;++s)m->params[Metropolix::stageParam(m->selectedTrack.load(),s,test.row)].setValue(test.row==Metropolix::PITCH_OVERRIDE?pitches[s]:gates[s]);
         }
         m->clearLoopy();
+        if(test.page==Metropolix::CLOCK_OUT_PAGE){std::string name=test.name;m->params[Metropolix::CLOCK_OUT_DIV].setValue(name=="clock-default"?1:name=="clock-max"?256:4);m->params[Metropolix::CLOCK_OUT_OFFSET].setValue(name=="clock-max"?255:name=="clock-default"?0:2);}
         if(test.page==Metropolix::SLIDE_PAGE)m->params[Metropolix::slideTypeParam(m->selectedTrack.load())].setValue(std::string(test.name)=="slide-analog"?1:std::string(test.name)=="slide-acid"?2:0);
         m->scaleEditing.store(false);m->params[Metropolix::SCALE_LOCK].setValue(-1);m->params[Metropolix::SCALE].setValue(1);
         if(test.page==Metropolix::SCALE_PAGE) {

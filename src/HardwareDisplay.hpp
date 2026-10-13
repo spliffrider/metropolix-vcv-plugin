@@ -256,6 +256,9 @@ struct HardwareDisplay : HardwareControl {
             bool ext=m && m->externalClock.load();
             field(c,0,ext?"EXTERNAL":"INTERNAL",string::f("%.1f",ext?m->displayBpm.load():value(Metropolix::TEMPO,120)),!ext);
             field(c,29,ext?"EXT CLOCK DIV":"TAP TEMPO",ext?"/1":"Tap BPM",false,128,1);
+        } else if(page==Metropolix::CLOCK_OUT_PAGE) {
+            field(c,0,"CLK OUT","/"+std::to_string(integer(Metropolix::CLOCK_OUT_DIV,1)),f==0);
+            field(c,29,"CLK OFFSET",std::to_string(metro::ClockOutput::offset(integer(Metropolix::CLOCK_OUT_OFFSET),integer(Metropolix::CLOCK_OUT_DIV,1))),f==1);
         } else if(page==Metropolix::SCALE_PAGE) {
             int shown=integer(Metropolix::SCALE,1),locked=integer(Metropolix::SCALE_LOCK,-1);
             bool edit=m && m->scaleEditing.load();

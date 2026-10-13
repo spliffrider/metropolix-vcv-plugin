@@ -158,6 +158,10 @@ void MetropolixWidget::qaStep() {
         #include "ScaleWidgetQa.hpp"
         return;
     }
+    if(std::getenv("METROPOLIX_CLOCK_UI_QA")) {
+        #include "ClockOutputWidgetQa.hpp"
+        return;
+    }
     if(std::getenv("METROPOLIX_STAGE_CV_UI_QA")) {
         #include "StageCvWidgetQa.hpp"
         return;

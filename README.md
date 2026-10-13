@@ -4,11 +4,15 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.14.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.15.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.14.0/MetropolixLab-2.14.0-win-x64.vcvplugin)** · **[Stage CV demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.14.0/Stage-CV-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.14.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/MetropolixLab-2.15.0-win-x64.vcvplugin)** · **[Clock output demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/Clock-output-demo.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.15.0)**
 
-2.14.0 adds the **three stage-CV types and Step/sRamp/pRamp transitions**,
+2.15.0 adds **global CLK output division `/1`–`/256` and pulse offset**,
+with the hardware ALT → CLK display, mouse editing, menus and paired reset.
+See the [clock output guide](docs/CLOCK-OUTPUT.md).
+
+2.14.0 added the **three stage-CV types and Step/sRamp/pRamp transitions**,
 with the hardware TYPE screen, whole-pattern ALT edits, gate inversion/rotation,
 stored-value undo and a filter performance demo. See the [stage CV guide](docs/STAGE-CV.md).
 
@@ -151,7 +155,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.14.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.15.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -200,7 +204,7 @@ Opening an optional grid changes the width from 34 HP to 66 HP. Rack finds an av
 | GATE 1 / 2 | 5 V gate for the corresponding track |
 | CLOCK IN | Automatically selects external clock; one edge is one sixteenth note |
 | RESET | Rising edge resets playback and accumulators; a 1 ms clock guard follows |
-| CLK OUT | 5 V / 1 ms pulse on each base clock tick |
+| CLK OUT | 5 V / 1 ms master clock triggers, global division /1–/256 and offset 0–division−1 |
 | OUT A / OUT B | Assignable to Track 1 CV, Track 2 CV, or MOD 1–8; default to the two tracks' CV |
 
 With CLOCK IN connected, RUN arms playback and the next eligible clock edge begins the sequence. With no cable, the internal 0.1–400 BPM clock runs. Track clock division applies after the base clock. Stopping lowers gates and stage CV, while pitch holds. RUN starts a fresh sequence.

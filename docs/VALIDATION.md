@@ -1,4 +1,22 @@
-# Validation and fidelity status — 2.12.0
+# Validation and fidelity status — 2.15.0
+
+## Clock output — 2.15.0
+
+The fifteen portable suites pass. ClockOutputTests adds 33,784,625 checks:
+all 256 divisors and every legal offset, trigger duration at 44.1/48/96 kHz,
+internal/external master clocks, track timing independence, reset, pause and
+live division changes. The Rack host verifies the actual CLK output, numeric
+entry, global settings excluded from presets, format5 unchanged at 478 entries,
+schema18 migration and patch persistence.
+
+Rack widget tests cover ALT → CLK, encoder/display upward drags, offset limits,
+paired long reset with exactly one history action, /1's zero range, menus and
+native save/reopen. The twelve-second real patch recording observes 24 `/4`
+offset2 triggers at 0.5-second intervals through a cable, with 1 ms widths.
+Stereo RMS is .430438/.469797 V; peaks 1.59849/1.29476 V; DC approximately
+−.000045/−.000106 V. Trigger phase during live edits and transport, dormant
+offset restoration, and pulse width are documented implementation choices.
+Physical hardware has not been used for comparison.
 
 ## Stage overrides — 2.10.0
 

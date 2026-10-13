@@ -108,6 +108,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->help="HOME: drag or click to browse four overviews. Editing: drag the active value; click performs the encoder action. Right-click for direct access.";
     display->action=[m] { encoderPress(m); };
     display->extraMenu=[m](ui::Menu* menu) {
+        if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE)appendClockMenu(menu,m);
         overrideMenu(menu,m);
         if(cvPage(m) || (m && m->uiPage.load()==Metropolix::CV_TYPE_PAGE))appendCvMenu(menu,m);
         if(m && m->uiPage.load()==Metropolix::SCALE_PAGE)appendScaleMenu(menu,m);
@@ -128,6 +129,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         else m->uiHome.store(metro::modulo(m->uiHome.load()+d,4));
     };
     display->rightAction=[display,stageEditor,laneMenu,m] {
+        if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE && screenParam(m)<0){appendClockMenu(createMenu(),m);return;}
         if(presetPage(m) || chainPage(m))appendPresetMenu(createMenu(),m);
         else if(screenParam(m)>=0) display->createContextMenu();
         else if(m && m->uiMod.load()) laneMenu(); else stageEditor();
@@ -139,6 +141,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     encoder->action=[m] { encoderPress(m); };
     encoder->extraMenu=display->extraMenu;
     encoder->rightAction=[encoder,m] {
+        if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE && !encoder->getParamQuantity()){appendClockMenu(createMenu(),m);return;}
         if(presetPage(m) || chainPage(m))appendPresetMenu(createMenu(),m);
         else if(encoder->getParamQuantity())encoder->createContextMenu();
         else {auto* menu=createMenu();menu->addChild(createMenuLabel(encoder->help));}
@@ -148,6 +151,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         c->groupedParams=[m] {
             if(overridePage(m))return overrideParams(m);
             if(cvPage(m))return cvParams(m);
+            if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE)return std::vector<int>{Metropolix::CLOCK_OUT_DIV,Metropolix::CLOCK_OUT_OFFSET};
             std::vector<int> ids;
             if(m && !m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE)
                 for(int id:{Metropolix::trackParam(m->selectedTrack.load(),Metropolix::GATE_LENGTH),Metropolix::gateScaleParam(m->selectedTrack.load())})if(m->ctrlOwner(id)<0)ids.push_back(id);
@@ -171,7 +175,8 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         };
     }
     encoder->longAction=[m]{
-        if(m && m->uiPage.load()==Metropolix::SCALE_PAGE)scaleEditPress(m);
+        if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE)resetClockOutput(m,false);
+        else if(m && m->uiPage.load()==Metropolix::SCALE_PAGE)scaleEditPress(m);
         else if(cvPage(m))resetCv(m,false,false);
         else if(m && m->uiPage.load()==Metropolix::CV_TYPE_PAGE)m->getParamQuantity(screenParam(m))->setValue(0);
         else if(m && m->uiPage.load()==Metropolix::SLIDE_PAGE)resetSlide(m,false);
@@ -183,7 +188,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         }
         else if(m && m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load())m->getParamQuantity(Metropolix::swingParam(m->selectedTrack.load()))->setValue(50.f);
     };
-    encoder->longEnabled=[m]{return m && (cvPage(m) || m->uiPage.load()==Metropolix::CV_TYPE_PAGE || (m->uiPage.load()==Metropolix::SCALE_PAGE && metro::userScale(m->integer(Metropolix::SCALE))) || (m->uiPage.load()==Metropolix::SLIDE_PAGE && !m->uiMod.load()) || overridePage(m) || (!m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) || (m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
+    encoder->longEnabled=[m]{return m && (m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || cvPage(m) || m->uiPage.load()==Metropolix::CV_TYPE_PAGE || (m->uiPage.load()==Metropolix::SCALE_PAGE && metro::userScale(m->integer(Metropolix::SCALE))) || (m->uiPage.load()==Metropolix::SLIDE_PAGE && !m->uiMod.load()) || overridePage(m) || (!m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) || (m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
     auto* exit=control("EXIT",214,229,15,HardwareControl::DARK_BUTTON);
     exit->help="Return to the home overview. Right-click for optional editors.";
     exit->action=[m] { if(m) { if(m->chainQuick){m->chainQuickCancel=true;return;}if(chainPage(m) && m->chainEdit.load()){m->chainEdit.store(0);m->chainCreating=false;return;} screenPage(m,Metropolix::HOME); m->uiEdit.store(false); m->uiAlt.store(false); m->uiChooseFunction.store(false); } };
@@ -360,9 +365,10 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 else if(s==1) openPresetPage(m,true);
                 else if(s==2)screenPage(m,Metropolix::A_PAGE);
                 else if(s==3)screenPage(m,Metropolix::B_PAGE);
+                else if(s==4)screenPage(m,Metropolix::CLOCK_OUT_PAGE);
                 else if(s==6){m->uiMod.store(false);screenPage(m,Metropolix::ACCUM_PAGE);}
                 else if(s==7){if(m->uiMod.load())modSettingsMenu(m,m->selectedLane.load());else screenPage(m,Metropolix::CV_TYPE_PAGE);}
-                else unavailable(s==4?"Clock output configuration":"MX expander");
+                else unavailable("MX expander");
                 return;
             }
             if(presetPage(m) && !m->uiChooseFunction.load()) { activatePresetSlot(m,s);return; }
@@ -441,6 +447,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         c->dimActive=[m] { return (presetPage(m) || chainPage(m)) && !m->uiChooseFunction.load(); };
         c->rightAction=[c,m,s] {
             if(!m)return;
+            if(m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || (m->uiAlt.load() && s==4)){appendClockMenu(createMenu(),m);return;}
             if(m->uiPage.load()==Metropolix::SLIDE_PAGE){auto* menu=createMenu();if(!m->uiMod.load())menu->addChild(createMenuItem("Set slide amount: "+std::to_string(metro::slideShortcut(s))+"%","",[m,s]{setWithHistory(m->getParamQuantity(Metropolix::trackParam(m->selectedTrack.load(),Metropolix::SLIDE_TIME)),metro::slideShortcut(s));}));appendSlideMenu(menu,m);return;}
             if(m->uiPage.load()==Metropolix::SCALE_PAGE){auto* menu=createMenu();menu->addChild(createMenuItem("Recall scale shortcut "+std::to_string(s+1),"",[m,s]{scaleShortcut(m,s,false);}));menu->addChild(createMenuItem("Save scale/root to shortcut "+std::to_string(s+1),"",[m,s]{scaleShortcut(m,s,true);}));appendScaleMenu(menu,m);return;}
             if(m->uiPage.load()==Metropolix::LOOPY_PAGE || m->loopyMuteHeld.load()){appendLoopyMenu(createMenu(),m,s);return;}

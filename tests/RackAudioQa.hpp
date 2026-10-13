@@ -89,6 +89,19 @@ struct RackAudioQaWidget : ModuleWidget {
             report << (channelGood ? "PASS " : "FAIL ") << "channel " << ch + 1
                 << ": RMS=" << rms << " V, peak=" << peak[ch] << " V, DC=" << dc << " V\n";
         }
+        if(std::getenv("METROPOLIX_CLOCK_AUDIO_QA")) {
+            std::ofstream csv(std::string(directory)+"/clock-triggers.csv");csv<<"frame,seconds,width_frames\n";
+            std::vector<int> edges;int width=0;bool timing=m->cvConnected;
+            for(int frame=0;frame<m->frames;++frame){
+                float v=m->cvSamples[frame*2];timing &= v==0 || v==5;
+                if(v>0){if(!width)edges.push_back(frame);++width;}
+                else if(width){timing &= width>=47 && width<=49;csv<<edges.back()<<','<<edges.back()/48000.0<<','<<width<<'\n';width=0;}
+            }
+            for(size_t i=1;i<edges.size();++i)timing &= std::abs(edges[i]-edges[i-1]-24000)<=1;
+            timing &= edges.size()>=23 && edges.size()<=24 && !edges.empty() && edges.front()>=11998 && edges.front()<=12034;
+            good &= timing;
+            report<<(timing?"PASS ":"FAIL ")<<"CLOCK AUDIO TIMING: /4 offset2 through actual cable, "<<edges.size()<<" triggers at 0.5 second intervals\n";
+        }
         wav.close();
         good &= !wav.fail();
         if (m->performance) {

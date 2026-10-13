@@ -7,6 +7,15 @@
 #include <mutex>
 #include <deque>
 
+struct ClockOffsetQuantity : ParamQuantity {
+    int divisionParam=-1;
+    float getMaxValue() override {return module && divisionParam>=0?float(metro::ClockOutput::division(int(std::round(module->params[divisionParam].getValue())))-1):255.f;}
+    float getValue() override {return metro::clamp(ParamQuantity::getValue(),0.f,getMaxValue());}
+};
+struct ClockDivisionQuantity : ParamQuantity {
+    std::string getDisplayValueString() override {return "/"+ParamQuantity::getDisplayValueString();}
+    void setDisplayValueString(std::string s) override {if(!s.empty() && s[0]=='/')s.erase(0,1);ParamQuantity::setDisplayValueString(s);}
+};
 struct ModVoltageQuantity : ParamQuantity {
     int typeParam = -1;
     int destinationParam = -1;
@@ -120,7 +129,7 @@ struct Metropolix : Module {
         LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET,
         SCALE_LOCK, USER_SCALES, SCALE_NOTE = USER_SCALES + metro::UserScaleCount*2,
         SCALE_SHORTCUTS, SLIDE_TYPE_1 = SCALE_SHORTCUTS + 16, SLIDE_TYPE_2,
-        CV_TYPE_1, CV_TYPE_2, CV_RAMPS, NUM_PARAMS = CV_RAMPS + 16
+        CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -214,7 +223,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -259,6 +268,8 @@ struct Metropolix : Module {
     }
     Metropolix() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+        auto* clkDiv=configParam<ClockDivisionQuantity>(CLOCK_OUT_DIV,1,256,1,"CLK output division");clkDiv->snapEnabled=true;clkDiv->randomizeEnabled=false;
+        auto* clkOffset=configParam<ClockOffsetQuantity>(CLOCK_OUT_OFFSET,0,255,0,"CLK output offset"," pulses");clkOffset->snapEnabled=true;clkOffset->randomizeEnabled=false;clkOffset->divisionParam=CLOCK_OUT_DIV;
         auto* loop=configParam<LoopyPulseQuantity>(LOOPY_PULSES,0,64,0,"Loopy pulses");loop->snapEnabled=true;loop->randomizeEnabled=false;
         configSwitch(LOOPY_TARGET,0,1,0,"Loopy target",{"Current track","Tracks 1+2"})->randomizeEnabled=false;
         configParam(TEMPO, 0.1f, 400.f, 120.f, "Tempo", " BPM")->randomizeEnabled = false;
@@ -386,6 +397,8 @@ struct Metropolix : Module {
         }
         paramQuantities[RUN]->description = "Click to start or stop. Stopping silences gates and modulation; pitch holds.";
         paramQuantities[RESET]->description = "Press to restart note tracks, MOD lanes, and accumulators.";
+        paramQuantities[CLOCK_OUT_DIV]->description = "Divide the unswung master clock by /1 to /256. Global: internal preset recall retains this setting.";
+        paramQuantities[CLOCK_OUT_OFFSET]->description = "Shift divided CLK triggers later by 0 to division minus one master pulses. Long encoder press resets both CLK fields.";
         for (int t=0; t<2; ++t)
             paramQuantities[accumModeParam(t)]->description = "Stage changes each stage independently. Track carries accumulation across the whole phrase. Takes effect on the next track clock pulse.";
         sequencer.seed(random::u32());
@@ -443,6 +456,8 @@ struct Metropolix : Module {
             }
         }
         c.bpm = params[TEMPO].getValue();
+        c.clockOutDivision=metro::ClockOutput::division(integer(CLOCK_OUT_DIV));
+        c.clockOutOffset=metro::ClockOutput::offset(integer(CLOCK_OUT_OFFSET),c.clockOutDivision);
         c.root = integer(ROOT);
         c.scale = integer(SCALE);
         c.lockedScale = integer(SCALE_LOCK);
@@ -568,7 +583,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(17));
+        json_object_set_new(root, "schemaVersion", json_integer(18));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(5));
@@ -594,6 +609,8 @@ struct Metropolix : Module {
     void dataFromJson(json_t* root) override {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<18)
+            for(int id=CLOCK_OUT_DIV;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<17)
             for(int id=CV_TYPE_1;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<16)
@@ -641,7 +658,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CV_TYPE_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(CLOCK_OUT_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));

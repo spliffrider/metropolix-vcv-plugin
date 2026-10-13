@@ -54,6 +54,7 @@ int screenParam(Metropolix* m) {
     switch(m->uiPage.load()) {
         case Metropolix::LOOPY_PAGE: return Metropolix::LOOPY_PULSES;
         case Metropolix::BPM_PAGE: return m->externalClock.load()?-1:Metropolix::TEMPO;
+        case Metropolix::CLOCK_OUT_PAGE: return f?(m->integer(Metropolix::CLOCK_OUT_DIV)>1?Metropolix::CLOCK_OUT_OFFSET:-1):Metropolix::CLOCK_OUT_DIV;
         case Metropolix::SCALE_PAGE: return f ? (m->scaleEditing.load()?Metropolix::SCALE_NOTE:Metropolix::SCALE) : m->scaleRootParam();
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
         case Metropolix::LENGTH_PAGE:
@@ -126,7 +127,7 @@ void encoderPress(Metropolix* m) {
         else if(m->selectedRow.load()==Metropolix::ACCUMULATION){id=Metropolix::stageOption(t,s,Metropolix::ACCUM_TRIGGER);count=3;}
         if(id>=0){auto* q=m->getParamQuantity(id);setWithHistory(q,(static_cast<int>(q->getValue())+1)%count);}return;
     }
-    if(p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE || (p==Metropolix::GATE_PAGE && !m->uiMod.load()) ||
+    if(p==Metropolix::CLOCK_OUT_PAGE || p==Metropolix::SCALE_PAGE || p==Metropolix::LENGTH_PAGE || p==Metropolix::AUX_PAGE || p==Metropolix::CTRL_PAGE || (p==Metropolix::GATE_PAGE && !m->uiMod.load()) ||
        (p==Metropolix::DIV_PAGE && !m->uiMod.load()))
         m->uiField.store(1-m->uiField.load());
 }
@@ -207,7 +208,7 @@ struct HardwareControl : ValueKnob {
         controllerOwner=metroModule?metroModule->ctrlOwner(id):-1;
         module=(metroModule && id>=0 && controllerOwner<0) ? metroModule : nullptr;
         paramId=id>=0 ? id : 0;
-        if(auto* q=getParamQuantity()) speed=customSpeed>0?customSpeed:(q->snapEnabled?std::max(.7f,30.f/q->getRange()):.7f);
+        if(auto* q=getParamQuantity()) speed=customSpeed>0?customSpeed:(q->snapEnabled && q->getRange()>0?std::max(.7f,30.f/q->getRange()):.7f);
     }
     std::string tooltipText() {
         auto* q=getParamQuantity();
@@ -307,8 +308,9 @@ struct HardwareControl : ValueKnob {
             for(int id:gestureIds)after.push_back(metroModule->params[id].getValue());
             // Finish Rack's cursor/drag state with no native parameter change;
             // then record all affected values as one normal Rack undo action.
-            auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
-            if(it!=gestureIds.end())metroModule->params[paramId].setValue(gestureBefore[it-gestureIds.begin()]);
+            // Restore dependent limits/types too, so effective quantity getters
+            // equal the native drag origin before it checks for an undo action.
+            for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(gestureBefore[i]);
         }
         ValueKnob::onDragEnd(e);
         if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit track settings");}

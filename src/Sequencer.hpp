@@ -15,6 +15,7 @@
 #include "Scales.hpp"
 #include "SlideTiming.hpp"
 #include "StageCv.hpp"
+#include "ClockOutput.hpp"
 
 namespace metro {
 
@@ -67,6 +68,7 @@ struct Track {
 };
 struct Settings {
     float bpm = 120.f;
+    int clockOutDivision = 1, clockOutOffset = 0;
     int root = 0;
     int scale = 1;
     int lockedScale = -1;
@@ -176,7 +178,7 @@ public:
         loopMasks.fill(0); playerMasks.fill(0); voiceMode=0;
         phase = 0.0;
         firstTick = true;
-        clockRemaining = 0.0;
+        clockOutput.reset();
         clock = 0.f;
         modulation.reset();
         for (auto& timing : swingTiming) timing.reset();
@@ -248,7 +250,7 @@ public:
                 if (swingTiming[t].advance(dt)) performTick(t, swingTiming[t].duration);
             if (tick) {
                 firstTick = false;
-                clockRemaining = 0.001;
+                clockOutput.tick(settings.clockOutDivision,settings.clockOutOffset);
                 for (int t = 0; t < 2; ++t) {
                     auto& state = tracks[t];
                     const auto& config = settings.tracks[t];
@@ -286,10 +288,8 @@ public:
             if(loopy.stages & 255u)modulation.render(settings.modLanes, 0.0, settings.auxInputs);
             modulation.outputs.fill(0.f);
             stagePlayer(dt);
-            clockRemaining = 0.0;
         }
-        clock = running && clockRemaining > 0.0 ? 5.f : 0.f;
-        clockRemaining -= dt;
+        clock = clockOutput.render(dt,running);
         resetIgnore = std::max(0.0, resetIgnore - dt);
         for (int output = 0; output < 2; ++output) {
             int source = clamp(settings.outputSources[output], 0, 9);
@@ -305,7 +305,7 @@ private:
     double phase = 0.0;
     double externalElapsed = 0.0;
     double externalPeriod = 0.125;
-    double clockRemaining = 0.0;
+    ClockOutput clockOutput;
     double resetIgnore = 0.0;
     RandomSource random[2], loopRandom[2];
     std::array<float,2> playerCv{};
