@@ -15,7 +15,8 @@ void MetropolixWidget::qaStep() {
             if(qaFrame==120)m->releaseLoopyStage(2);
             if(qaFrame==180){m->params[Metropolix::LOOPY_PULSES].setValue(5);m->requestLoopy(18);m->latchLoopy();}
             if(qaFrame==360)m->clearLoopy();
-            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((momentary && returned && (range&2u) && (range&16u) && !(range&~30u))?"PASS ":"FAIL ")<<"LOOPY PERFORMANCE COMPLETE: momentary stage and latched range performed in real stereo patch\n";}
+            // Stages 2/3/4 use 1+2+2 pulses: the five-pulse loop never reaches stage 5.
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((momentary && returned && (range&14u)==14u && !(range&~14u))?"PASS ":"FAIL ")<<"LOOPY PERFORMANCE COMPLETE: momentary stage and latched range performed in real stereo patch: momentary="<<momentary<<", returned="<<returned<<", observed stages mask="<<range<<"\n";}
         }
         if(std::getenv("METROPOLIX_CHAIN_AUDIO_QA")) {
             if(qaFrame==2) {
