@@ -16,7 +16,7 @@ bank navigation, non-editing slot drags, settings, recall undo/redo and queued
 save blocking. A second Rack process reopens the saved native .vcv file and
 verifies bank contents, empty slots, load preferences and a cleared queue.
 The short Rack recording completes four transitions, with
-stereo RMS 0.340/0.346 V, peaks 1.629/1.624 V and DC below 0.00028 V. This is
+stereo RMS 0.339/0.345 V, peaks 1.607/1.624 V and DC below 0.00021 V. This is
 signal validation, not a claim of listening or physical hardware equivalence.
 
 Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metropolix manual 1.6 (2025-09-24)](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf). Page numbers below are the printed page numbers; the PDF cover adds one to the file page index.
