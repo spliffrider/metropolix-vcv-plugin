@@ -19,7 +19,7 @@ The active stage moves through the selected lane's graph. Its live voltage is sh
 
 ## Suggested checks
 
-1. **Transport and sound.** Listen for two separate voices. RUN should stop both voices and lower A/B to zero; pitch outputs hold. RUN starts a fresh traversal. RESET restarts all note and MOD sequences.
+1. **Transport and sound.** Listen for two separate voices. RUN should stop both voices and lower routed MOD voltages to zero (global CTRL/Root and static Velocity outputs can remain active); pitch outputs hold. RUN starts a fresh traversal. RESET restarts all note and MOD sequences.
 2. **Edit a voltage.** Select MOD 1. Drag a stage value vertically, or right-click for numeric entry. Watch the change on A when that stage plays. Rack Undo should restore the edit. Changes to MOD 1 should not rewrite MOD 2's values.
 3. **Steps and ramps.** Select MOD 2. Change a RAMP cell to STEP. That stage should jump directly to its target instead of taking the stage duration to get there. Change it back and vary DIV: a larger division makes the stage and ramp longer.
 4. **Independent timing.** Change MOD 1's LENGTH, OFFSET, or ORDER. Its traversal should change while MOD 2 keeps its own settings. Right-click a MOD selector to try reverse direction or a fixed pulse length. RESET makes comparisons easier.

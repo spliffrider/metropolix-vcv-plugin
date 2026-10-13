@@ -1,4 +1,26 @@
-# Validation and fidelity status — 2.15.0
+# Validation and fidelity status — 2.16.0
+
+## A/B output routing — 2.16.0
+
+All sixteen portable suites pass. OutputRoutingTests has 178,586 checks for all
+38 stable source/target IDs, First/Last across 21 orders and fixed lengths 1–64,
+skips/all-skipped tracks, probability, manual reset, Loopy, raw/ranged sliders,
+velocity offsets, output swapping and all eight MOD clocks. Trigger timing is
+checked at 44.1/48/96 kHz. Rack-library checks verify every actual A/B voltage,
+factory defaults, CTRL ownership, format6 banks, format5 migration and persistence.
+
+Actual widget callbacks verify pending versus applied choices, confirmation,
+track assignment, EXIT cancellation, menus, one-action long reset and undo,
+native Rack save/reopen and discarded pending choices. The display suite adds
+all sixteen function types. The public demonstration records actual stereo
+audio plus velocity/MOD-clock cables. In a fixed 120 BPM first-scene timing
+check, A spans 0–5 V and B produces 32 /3 triggers of 1 ms over twelve seconds.
+Stereo RMS is .212932/.218993 V, peaks 1.04887/1.106 V, DC approximately
+−.000037 V. The distributed patch retains its four-scene/seven-link arrangement.
+
+These establish documented implementation behavior, not physical firmware
+equivalence or native OS mouse/focus behavior. See [Output routing](OUTPUT-ROUTING.md)
+for timing, reset, Loopy and assignment interpretations.
 
 ## Clock output — 2.15.0
 

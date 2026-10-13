@@ -3,12 +3,13 @@
 #include <algorithm>
 #include <cmath>
 #include "PlayOrder.hpp"
+#include "OutputRouting.hpp"
 
 namespace metro {
 enum ModType { ModBipolar, ModUnipolar, ModGate };
 enum ModDestination { ModNone, ModOctave, ModPitchPre, ModPitchPost, ModPitchOffset,
-    ModGateLength, ModProbability, ModRatchet, ModMute, ModSwing, ModUserScale, ModDestinationCount };
-inline bool modGateDestination(ModDestination destination) { return destination == ModMute; }
+    ModGateLength, ModProbability, ModRatchet, ModMute, ModSwing, ModUserScale, ModVelocity, ModOutputSwap, ModDestinationCount };
+inline bool modGateDestination(ModDestination destination) { return destination == ModMute || destination==ModOutputSwap; }
 template <class T> T modClamp(T v, T lo, T hi) { return std::max(lo, std::min(hi, v)); }
 
 // AUX pp.154-156: continuous CV is attenuverted; a gate destination uses
@@ -55,6 +56,8 @@ struct ModLaneState {
 struct Modulation {
     std::array<ModLaneState, 8> lanes;
     std::array<float, 8> outputs{};
+    std::array<OutputPulse,8> clockPulses;
+    std::array<float,8> clocks{};
     std::array<std::array<float, ModDestinationCount>, 2> routes{};
     std::array<RandomSource, 8> random;
 
@@ -70,6 +73,7 @@ struct Modulation {
     }
     void silence() {
         outputs.fill(0.f);
+        clocks.fill(0.f);for(auto& pulse:clockPulses)pulse.clear();
         for (auto& track : routes) track.fill(0.f);
     }
     static float stageValue(const ModLane& lane, int stage) {
@@ -92,6 +96,7 @@ struct Modulation {
             const auto& config = configs[i];
             int division = modClamp(config.division, 1, 64);
             if (state.divider == 0 || state.divider >= division) {
+                clockPulses[i].fire();
                 state.start = voltage(config, state);
                 if ((config.pulseLimit > 0 && state.count >= modClamp(config.pulseLimit, 1, 64)) || state.offset != config.offset) {
                     state.order.reset();
@@ -113,6 +118,7 @@ struct Modulation {
         for (int i = 0; i < 8; ++i) {
             const auto& config = configs[i];
             auto& state = lanes[i];
+            float clock=clockPulses[i].render(dt);clocks[i]=config.mute?0.f:clock;
             state.value = voltage(config, state);
             outputs[i] = config.mute ? 0.f : state.value;
             state.age = std::min(state.age + dt, state.duration);

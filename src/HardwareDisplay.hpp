@@ -107,7 +107,8 @@ struct HardwareDisplay : HardwareControl {
                 c.right(102,y,string::f("%+d",pre));c.right(127,y,string::f("%+d",post));
                 for(int s=0;s<8;++s) {
                     int anchor=integer(Metropolix::stageParam(t,s,Metropolix::PITCH_OVERRIDE),-1);
-                    int deg=metro::nearestDegree(anchor<0?value(Metropolix::PITCH+s)*12*integer(Metropolix::RANGE,3):float(anchor),scale);
+                    float sliderPitch=m?m->uiSliderPosition(t,s)*12*m->uiSliderOctaves(t):value(Metropolix::PITCH+s)*36.f;
+                    int deg=metro::nearestDegree(anchor<0?sliderPitch:float(anchor),scale);
                     int note=metro::modulo(metro::degreeToSemitone(deg,scale)+root+integer(Metropolix::trackParam(t,Metropolix::TRANSPOSE)),12);
                     c.text(s*16,y+10,notes[note],false);
                     if(used(t,s) && !effectiveSkip(t,s)) {
@@ -311,9 +312,13 @@ struct HardwareDisplay : HardwareControl {
                 field(c,29,"GATE SCALE",string::f("%.0f%%",value(Metropolix::gateScaleParam(t),100)),f==1);
             }
         } else if(page==Metropolix::A_PAGE || page==Metropolix::B_PAGE) {
-            int source=integer(page==Metropolix::A_PAGE?Metropolix::OUTPUT_SOURCE_A:Metropolix::OUTPUT_SOURCE_B);
-            c.text(2,2,page==Metropolix::A_PAGE?"OUTPUT A":"OUTPUT B");c.right(125,12,source<2?"CV":"Mod",false);
-            field(c,29,"OUTPUT ASSIGN",source<2?string::f("Trk %d",source+1):string::f("Mod %d",source-1),true,128,1);
+            int source=m?shownOutputSource(m):0;auto selection=metro::outputSelection(source);
+            bool pending=m && m->outputDraft[outputIndex(m)].load()>=0;
+            std::string name=metro::outputKindName(selection.kind);if(pending && f==0)name+=" ?";
+            field(c,0,page==Metropolix::A_PAGE?"OUTPUT A":"OUTPUT B",name,f==0,128,1);
+            std::string assignment=metro::outputTargetCount(selection.kind)?string::f(metro::outputIsMod(selection.kind)?"Mod %d":"Trk %d",selection.target+1):"Global";
+            if(pending && f==1)assignment+=" ?";
+            field(c,29,"OUTPUT ASSIGN",assignment,f==1 && metro::outputTargetCount(selection.kind),128,1);
         } else if(page==Metropolix::AUX_PAGE) {
             int input=m?m->selectedAux.load():0;
             int dest=integer(Metropolix::auxParam(input,Metropolix::AUX_DESTINATION));

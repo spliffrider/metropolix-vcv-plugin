@@ -4,7 +4,7 @@ void stageCvRackTests(){
     m->params[M::cvTypeParam(0)].setValue(metro::UnipolarCv);m->params[M::cvTypeParam(1)].setValue(metro::GateCv);
     for(int s=0;s<8;++s){m->params[M::cvRampParam(0,s)].setValue(s%3);m->params[M::cvRampParam(1,s)].setValue((s+1)%3);}
     m->readSettings();require(m->sequencer.settings.tracks[0].cvType==metro::UnipolarCv && m->sequencer.settings.tracks[1].cvType==metro::GateCv && m->sequencer.settings.tracks[0].stages[5].cvRamp==metro::CvPulseRamp,"CV type/transition reach actual engine independently");
-    require(M::SNAPSHOT_PARAMS==478 && M::presetParam(460)==687 && M::presetParam(477)==704 && M::presetIndex(704)==477 && M::presetIndex(M::LOOPY_PULSES)<0,"format 5 appends CV types and sixteen transitions, excluding global settings");
+    require(M::FORMAT5_PARAMS==478 && M::presetParam(460)==687 && M::presetParam(477)==704 && M::presetIndex(704)==477 && M::presetIndex(M::LOOPY_PULSES)<0,"format 5 appends CV types and sixteen transitions, excluding global settings");
     auto preset=m->capturePreset();m->putPreset(0,preset);json_t* data=m->dataToJson();json_t* params=m->paramsToJson();other->paramsFromJson(params);other->dataFromJson(data);json_decref(params);
     require(other->integer(M::cvTypeParam(0))==1 && other->integer(M::cvTypeParam(1))==2 && other->getPreset(0).values==preset.values,"CV models and format 5 preset roundtrip");
     auto* slot=json_array_get(json_object_get(data,"presets"),0);while(json_array_size(slot)>460)json_array_remove(slot,json_array_size(slot)-1);

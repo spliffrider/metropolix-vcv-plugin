@@ -11,7 +11,7 @@ enum CtrlDestination { CtrlNone, CtrlAccumMode, CtrlAccumPolar, CtrlTempo,
     CtrlPitchPost, CtrlPitchPre, CtrlOrder, CtrlProbability, CtrlPulseCount,
     CtrlPulseDiv, CtrlPulsesLength, CtrlRatchet, CtrlRoot, CtrlSkipInvert,
     CtrlSlideAmount, CtrlSliderInvert, CtrlStagesLength, CtrlStagesOffset,
-    CtrlOutputSwap, CtrlSwing, CtrlUserScale, CtrlDestinationCount };
+    CtrlOutputSwap, CtrlSwing, CtrlUserScale, CtrlVelocity, CtrlSliderRange, CtrlGateScale, CtrlDestinationCount };
 
 inline float ctrlClamp(float v) { return std::isfinite(v)?std::max(-1.f,std::min(1.f,v)):0.f; }
 struct Control {
@@ -24,7 +24,7 @@ inline bool ctrlDirect(CtrlDestination d) {
     switch(d) {
         case CtrlAccumMode: case CtrlAccumPolar: case CtrlTempo: case CtrlClockDiv:
         case CtrlGateLength: case CtrlOrder: case CtrlPulseDiv: case CtrlPulsesLength:
-        case CtrlSlideAmount: case CtrlStagesLength: case CtrlStagesOffset: case CtrlSwing: return true;
+        case CtrlSlideAmount: case CtrlStagesLength: case CtrlStagesOffset: case CtrlSwing: case CtrlSliderRange: case CtrlGateScale: return true;
         default: return false;
     }
 }
@@ -43,6 +43,8 @@ inline float ctrlDirectValue(CtrlDestination d,float value) {
         case CtrlStagesLength: return std::round(1+7*u);
         case CtrlStagesOffset: return std::round(7*u);
         case CtrlSwing: return std::round(50+28*u);
+        case CtrlSliderRange: return std::round(1+3*u);
+        case CtrlGateScale: return 100*u;
         default: return 0;
     }
 }

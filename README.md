@@ -4,11 +4,16 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.15.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.16.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/MetropolixLab-2.15.0-win-x64.vcvplugin)** · **[Clock output demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.15.0/Clock-output-demo.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.15.0)**
+**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.16.0/MetropolixLab-2.16.0-win-x64.vcvplugin)** · **[Velocity and percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.16.0/Output-routing-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.16.0)**
 
-2.15.0 adds **global CLK output division `/1`–`/256` and pulse offset**,
+2.16.0 adds **all A/B signal functions**, pending-choice confirmation, velocity,
+per-track slider range/direction and three CTRL destinations. Its demo patches
+velocity into the bass and an independent MOD clock into percussion. See the
+[output routing guide](docs/OUTPUT-ROUTING.md).
+
+2.15.0 added **global CLK output division `/1`–`/256` and pulse offset**,
 with the hardware ALT → CLK display, mouse editing, menus and paired reset.
 See the [clock output guide](docs/CLOCK-OUTPUT.md).
 
@@ -155,7 +160,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.15.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.16.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -205,13 +210,13 @@ Opening an optional grid changes the width from 34 HP to 66 HP. Rack finds an av
 | CLOCK IN | Automatically selects external clock; one edge is one sixteenth note |
 | RESET | Rising edge resets playback and accumulators; a 1 ms clock guard follows |
 | CLK OUT | 5 V / 1 ms master clock triggers, global division /1–/256 and offset 0–division−1 |
-| OUT A / OUT B | Assignable to Track 1 CV, Track 2 CV, or MOD 1–8; default to the two tracks' CV |
+| OUT A / OUT B | All sixteen routing functions; defaults A = Track 1 CV, B = Track 1 First Pulse; see [Output routing](docs/OUTPUT-ROUTING.md) |
 
 With CLOCK IN connected, RUN arms playback and the next eligible clock edge begins the sequence. With no cable, the internal 0.1–400 BPM clock runs. Track clock division applies after the base clock. Stopping lowers gates and stage CV, while pitch holds. RUN starts a fresh sequence.
 
 MOD lanes advance one stage per divided base-clock pulse, independently of the note tracks' pulse counts. Bipolar lanes span -5 to +5 V, unipolar lanes span 0 to +5 V, and gate lanes output 0 or +5 V. A ramp travels from the previous voltage to the current stage's target across the whole stage. Muted lanes keep advancing but contribute no voltage or internal modulation. Stop silences all MOD outputs; reset restarts their traversal.
 
-The ten available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, Swing, and Scale (User). Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
+The twelve available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, Swing, Scale (User), Velocity and Track Out Swap. Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
 
 ## Implemented
 
@@ -220,8 +225,8 @@ The ten available internal destinations are Octave, Pitch Pre, Pitch Post, Pitch
 - Per-stage probability with Stage/Pulse targeting; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate stage CV with Step/sRamp/pRamp transitions.
 - Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
 - All 49 factory scales/chords, 100 custom scales with stored roots, locking, eight Scale/Root shortcuts, and Scale (User) modulation; slider range 1–4 octaves.
-- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, ten internal destinations, track assignment, and assignable A/B outputs.
-- Three AUX CV/gate inputs, attenuverters, the same ten destinations, per-input track assignments, live meters, and logical gate inversion.
+- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, twelve internal destinations, track assignment, and assignable A/B outputs.
+- Three AUX CV/gate inputs, attenuverters, the same twelve destinations, per-input track assignments, live meters, and logical gate inversion.
 - Independent 50–78% Swing per note track, with CTRL control and AUX/MOD offsets, shortcuts, reset, and desktop editing.
 - Rack parameter automation, numeric entry, undo/redo, and patch/preset serialization.
 
@@ -239,6 +244,10 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-rack.ps1
 .\scripts\test-ui.ps1
 .\scripts\test-ui.ps1 -Aux
+.\scripts\test-ui.ps1 -Outputs
+.\scripts\test-ui.ps1 -OutputAudio
+.\scripts\test-ui.ps1 -Outputs
+.\scripts\test-ui.ps1 -OutputAudio
 .\scripts\test-ui.ps1 -StageCv
 .\scripts\test-ui.ps1 -CvAudio
 .\scripts\test-ui.ps1 -Slides
@@ -260,7 +269,7 @@ The musical check records 24 seconds from the actual stereo mix in Rack at
 DC offset, and finite samples. These are technical checks; listening feedback
 is still needed to judge the composition and timbre.
 
-The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 28 screen states in `tmp/display-qa`.
+The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 79 screen states in `tmp/display-qa`.
 
 Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Other platforms have not been built or tested.
 

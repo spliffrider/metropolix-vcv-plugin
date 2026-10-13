@@ -66,8 +66,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::CV_TYPE_PAGE: return mod?Metropolix::modParam(l,Metropolix::MOD_TYPE):Metropolix::cvTypeParam(t);
         case Metropolix::GATE_PAGE: return mod ? -1 : f?Metropolix::gateScaleParam(t):Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
         case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
-        case Metropolix::A_PAGE: return Metropolix::OUTPUT_SOURCE_A;
-        case Metropolix::B_PAGE: return Metropolix::OUTPUT_SOURCE_B;
+        case Metropolix::A_PAGE: case Metropolix::B_PAGE: return -1; // Unconfirmed choices use navigation, not the audio parameter.
         case Metropolix::AUX_PAGE: return Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
         case Metropolix::SETUP_PAGE: return f==3?Metropolix::RANGE:-1;
@@ -82,10 +81,12 @@ void screenPage(Metropolix* m, int page) {
     m->loopyMuteHeld.store(false);
     if(page!=Metropolix::SCALE_PAGE)m->scaleEditing.store(false);
     m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
+    m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
 }
 void encoderPress(Metropolix* m) {
     if(!m) return;
     int p=m->uiPage.load();
+    if(outputPage(m)){outputEncoderPress(m);return;}
     if(p==Metropolix::SLIDE_PAGE && !m->uiMod.load()) {
         int id=Metropolix::slideTypeParam(m->selectedTrack.load());
         setWithHistory(m->getParamQuantity(id),metro::nextSlideType(m->integer(id)));return;

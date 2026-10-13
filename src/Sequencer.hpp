@@ -52,6 +52,9 @@ struct Track {
     RatchetMode ratchetMode = MultiplyRatchets;
     bool autoAccumReset = false;
     int transpose = 0;
+    int sliderOctaves = 0; // 0 follows the shared legacy range.
+    bool sliderInverted = false;
+    int velocitySource = 2; // 50%, 75%, 100%, or Track CV.
     float gateLength = 0.5f;
     float gateScale = 1.f;
     float slideTime = 0.25f;
@@ -79,10 +82,11 @@ struct Settings {
     std::array<ModLane, 8> modLanes;
     std::array<AuxInput, 3> auxInputs;
     std::array<Control,2> controls;
-    std::array<int, 2> outputSources{{0,1}}; // 0/1 = track CV, 2..9 = MOD 1..8
+    std::array<int, 2> outputSources{{0,1}}; // Stable IDs decoded by OutputRouting.
 };
 
 struct TrackState {
+    TrackOutputEvents outputEvents;
     int stage = -1;
     int position = -1;
     int pulse = 0;
@@ -143,6 +147,50 @@ public:
     bool resumeOnRun = false;
     unsigned chainMutes = 0;
     float clock = 0.f;
+    bool swapped() const {
+        if(controls.swap || modulation.routes[0][ModOutputSwap]>=1.5f || modulation.routes[1][ModOutputSwap]>=1.5f)return true;
+        // The global external gate also works while the transport is stopped.
+        for(const auto& input:settings.auxInputs)if(input.destination==ModOutputSwap && input.effectiveVoltage()>=1.5f)return true;
+        return false;
+    }
+    int sliderOctaves(int t) const {return clamp(settings.tracks[t].sliderOctaves?settings.tracks[t].sliderOctaves:settings.octaves,1,4);}
+    float sliderPosition(int t,int stage,bool orient=true) const {
+        if(stage<0 || stage>7)return 0;
+        float value=clamp(settings.stages[stage].pitch,0.f,1.f);
+        float invert=controls.values[t][CtrlSliderInvert];
+        if(orient && (settings.tracks[t].sliderInverted!=(invert>0)))value=1-value;
+        return value;
+    }
+    float velocity(int t) const {
+        const auto& state=sounding(t);int source=clamp(settings.tracks[t].velocitySource,0,3);
+        const float levels[]={2.5f,3.75f,5.f};
+        float base=source==3?state.cv:levels[source];
+        return clamp(base+modulation.routes[t][ModVelocity]+controls.values[t][CtrlVelocity]*5.f,0.f,5.f);
+    }
+    float outputVoltage(int source) const {
+        auto selection=outputSelection(source);int t=selection.target;
+        if(outputIsTrack(selection.kind) && swapped())t=1-t;
+        const auto& state=sounding(t<2?t:0);
+        switch(selection.kind){
+            case OutCtrl1Bipolar: return ctrlClamp(settings.controls[0].value)*5.f;
+            case OutCtrl1Unipolar: return (ctrlClamp(settings.controls[0].value)+1)*2.5f;
+            case OutCtrl2Bipolar: return ctrlClamp(settings.controls[1].value)*5.f;
+            case OutCtrl2Unipolar: return (ctrlClamp(settings.controls[1].value)+1)*2.5f;
+            case OutTrackCv: return state.cv;
+            case OutFirstPulse: return tracks[t].outputEvents.values[TrackOutputEvents::First];
+            case OutLastPulse: return tracks[t].outputEvents.values[TrackOutputEvents::Last];
+            case OutModClock: return running?modulation.clocks[t]:0.f;
+            case OutModCv: return running?modulation.outputs[t]:0.f;
+            case OutNewStage: return state.outputEvents.values[TrackOutputEvents::NewStage];
+            case OutReset: return resetOutput;
+            case OutRoot: return (scaleRoot(t)+std::round(controls.values[t][CtrlRoot]*12.f))/12.f;
+            case OutRun: return running?5.f:0.f;
+            case OutSlider: return sliderPosition(t,state.stage,false)*5.f;
+            case OutSliderRange: return sliderPosition(t,state.stage)*sliderOctaves(t);
+            case OutVelocity: return velocity(t);
+            default: return 0;
+        }
+    }
     int scaleIndex(int t) const {
         int index=clamp(settings.lockedScale>=0?settings.lockedScale:settings.scale,0,ScaleCount-1);
         return settings.lockedScale>=0?modulatedUserScale(index,
@@ -165,13 +213,14 @@ public:
         modulation.seed(value);
     }
 
-    void reset() {
+    void reset(bool manual=false) {
         for (auto& state : tracks) {
             // CV pitch holds on reset until the next played note.
             float pitch = state.pitch;
             state = TrackState();
             state.pitch = pitch;
             state.targetPitch = pitch;
+            if(manual){state.outputEvents.pulses[TrackOutputEvents::First].fire();state.outputEvents.firstDue=false;}
         }
         loopTracks = tracks; playerTracks = tracks;
         loopPlaying.fill(false); playerPlaying.fill(false);
@@ -180,6 +229,7 @@ public:
         firstTick = true;
         clockOutput.reset();
         clock = 0.f;
+        resetPulse.fire();
         modulation.reset();
         for (auto& timing : swingTiming) timing.reset();
         aux.fill(0.f);
@@ -220,9 +270,10 @@ public:
         if (run != running) {
             running = run;
             if (running && !resumeOnRun) reset();
+            if(!running){for(auto& state:tracks)state.outputEvents.clear();for(auto& state:loopTracks)state.outputEvents.clear();for(auto& state:playerTracks)state.outputEvents.clear();}
         }
         if (resetEdge) {
-            reset();
+            reset(true);
             resetIgnore = 0.001;
         }
 
@@ -260,6 +311,7 @@ public:
                         // accumulated offsets. No synthetic clock/gate is emitted.
                         state.skipInverted=invert;state.stage=state.position=-1;
                         state.pulse=state.divider=state.totalPulses=0;state.playOrder.reset();
+                        state.outputEvents.firstDue=true;
                     }
                     int division = clamp(config.division, 1, 64);
                     if (state.divider == 0 || state.divider >= division) {
@@ -291,10 +343,12 @@ public:
         }
         clock = clockOutput.render(dt,running);
         resetIgnore = std::max(0.0, resetIgnore - dt);
+        resetOutput=resetPulse.render(dt);
+        for(auto& state:tracks)state.outputEvents.render(dt);
+        for(auto& state:loopTracks)state.outputEvents.render(dt);
+        for(auto& state:playerTracks)state.outputEvents.render(dt);
         for (int output = 0; output < 2; ++output) {
-            int source = clamp(settings.outputSources[output], 0, 9);
-            if(controls.swap && source<2)source=1-source;
-            aux[output] = source < 2 ? sounding(source).cv : running ? modulation.outputs[source - 2] : 0.f;
+            aux[output] = outputVoltage(settings.outputSources[output]);
         }
     }
 
@@ -306,6 +360,8 @@ private:
     double externalElapsed = 0.0;
     double externalPeriod = 0.125;
     ClockOutput clockOutput;
+    OutputPulse resetPulse;
+    float resetOutput=0;
     double resetIgnore = 0.0;
     RandomSource random[2], loopRandom[2];
     std::array<float,2> playerCv{};
@@ -330,6 +386,7 @@ private:
                 auto& state=playerTracks[t];bool have=state.hasPitch || tracks[t].hasPitch;
                 float from=playerPlaying[t]?state.pitch:tracks[t].pitch;
                 state=tracks[t];state.stage=lower();
+                state.outputEvents=TrackOutputEvents();state.outputEvents.firstDue=false;
                 state.activeAccumulation=state.accumMode==TrackAccumulation?state.trackAccumulation:state.accumulator[state.stage];
                 voiceMode=2;state.targetPitch=stagePitch(t);voiceMode=0;
                 const auto& config=settings.tracks[t];
@@ -351,6 +408,7 @@ private:
         if(!loopPlaying[t] || loopMasks[t]!=(loopy.stages&255u)) {
             loopTracks[t]=tracks[t];loopTracks[t].stage=loopTracks[t].position=-1;
             loopTracks[t].pulse=0;loopTracks[t].lastRatchetEvent=-1;
+            loopTracks[t].outputEvents=TrackOutputEvents();
             loopCounts[t]=0;loopMasks[t]=loopy.stages&255u;
         }
         loopPlaying[t]=true;
@@ -407,10 +465,9 @@ private:
     float stagePitch(int t) const {
         const auto& state = voice(t);
         const auto& ctrl=controls.values[t];
-        float slider=clamp(settings.stages[state.stage].pitch,0.f,1.f);
-        if(ctrl[CtrlSliderInvert]>0)slider=1-slider;
+        float slider=sliderPosition(t,state.stage);
         const int overrideNote=settings.tracks[t].stages[state.stage].pitchOverride;
-        float source=overrideNote<0?slider*12.f*clamp(settings.octaves,1,4):float(clamp(overrideNote,0,60));
+        float source=overrideNote<0?slider*12.f*sliderOctaves(t):float(clamp(overrideNote,0,60));
         Scale scale=currentScale(t);
         int base = nearestDegree(source
             + (modulation.routes[t][ModPitchPre]+ctrl[CtrlPitchPre])*12.f, scale);
@@ -476,6 +533,10 @@ private:
                 state.trackAccumDirection = trackAccumDirection;
             }
         }
+        if(voiceMode==0) {
+            if(state.outputEvents.firstDue){state.outputEvents.pulses[TrackOutputEvents::First].fire();state.outputEvents.firstDue=false;}
+            if(config.pulseLimit>0 && state.totalPulses+1>=clamp(config.pulseLimit,1,64))state.outputEvents.pulses[TrackOutputEvents::Last].fire();
+        }
         // Apply mode edits at a track-clock boundary, keeping both banks until
         // reset. A mode switch cannot create an extra ratchet halfway through a pulse.
         if (state.accumMode != config.accumMode) {
@@ -502,6 +563,7 @@ private:
             if (voiceMode==0 && state.stage >= 0 && state.stage != modulo(state.position + config.offset, 8))
                 state.position = -1;
             if (!nextStage(t)) { state.gate = 0.f; state.cv = 0.f; return; }
+            state.outputEvents.pulses[TrackOutputEvents::NewStage].fire();
             state.slideFromPrevious=precedingStage>=0 && config.stages[precedingStage].slide;
             state.pulse = 0;
             state.lastRatchetEvent = -1;

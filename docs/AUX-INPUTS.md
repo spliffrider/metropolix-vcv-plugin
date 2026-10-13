@@ -80,3 +80,7 @@ Loopy, and swing remain unfinished. There has been no physical-hardware check.
 
 Scale (User), added in 2.12.0, uses whole-volt offsets inside the locked user
 scale bank and can target either or both tracks. See [Scales](SCALES.md).
+
+Since 2.16.0, Velocity adds −5…+5 V and Track Out Swap is a global gate
+destination with the same gate inversion/threshold handling as Mute. See
+[Output routing](OUTPUT-ROUTING.md) for all track-based A/B signals.
