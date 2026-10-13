@@ -107,7 +107,7 @@ struct HardwareTooltip : ui::Tooltip {
         if(parent) box=box.nudge(parent->box.zeroPos());
     }
 };
-struct HardwareControl : app::Knob {
+struct HardwareControl : ValueKnob {
     enum Look { BUTTON, DARK_BUTTON, WHITE_KNOB, BLACK_KNOB, ENCODER, INVISIBLE, SOCKET, BLUE_BUTTON, CREAM_BUTTON };
     Look look=BUTTON;
     Metropolix* metroModule=nullptr;
@@ -156,13 +156,13 @@ struct HardwareControl : app::Knob {
     }
     void onEnter(const event::Enter&) override {
         bind();
-        if(!settings::tooltips || tip) return;
+        if(!settings::tooltips || tip || dragging) return;
         auto* tooltip=new HardwareTooltip; tooltip->owner=this; tip=tooltip;
         tip->text=tooltipText(); APP->scene->addChild(tip);
     }
-    void onLeave(const event::Leave& e) override { clearTip(); app::Knob::onLeave(e); }
+    void onLeave(const event::Leave& e) override { clearTip(); ValueKnob::onLeave(e); }
     void step() override {
-        bind(); app::Knob::step();
+        bind(); ValueKnob::step();
         if(tip) { tip->text=tooltipText(); tip->box.pos=getAbsoluteOffset(box.size); }
     }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
@@ -179,10 +179,11 @@ struct HardwareControl : app::Knob {
         app::ParamWidget::onButton(e);
     }
     void onDragStart(const event::DragStart& e) override {
+        if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
         bind(); dragging=true; moved=0; clearTip();
         navigating=navigationMode && navigationMode(); navigationDelta=0;
         if(dragAction) dragAction();
-        app::Knob::onDragStart(e);
+        ValueKnob::onDragStart(e);
     }
     void onDragMove(const event::DragMove& e) override {
         moved+=e.mouseDelta.norm();
@@ -190,9 +191,9 @@ struct HardwareControl : app::Knob {
             navigationDelta-=e.mouseDelta.y;
             int turns=static_cast<int>(navigationDelta/22.f);
             if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
-        } else app::Knob::onDragMove(e);
+        } else ValueKnob::onDragMove(e);
     }
-    void onDragEnd(const event::DragEnd& e) override { app::Knob::onDragEnd(e); dragging=false; }
+    void onDragEnd(const event::DragEnd& e) override { if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return; ValueKnob::onDragEnd(e); dragging=false; }
     void onAction(const event::Action&) override { if(moved<3.f && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()) app::Knob::onDoubleClick(e); }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu); }
@@ -232,17 +233,41 @@ struct HardwareControl : app::Knob {
     }
 };
 
+// The lens keeps its rectangular hardware shape; Rack handles the emissive
+// layer and halo, including View > Bloom and dark-room brightness.
+struct PitchSliderLight : app::LightWidget {
+    PitchSliderLight() { box.size=Vec(4,10.2f); }
+    void drawBackground(const DrawArgs&) override {}
+    void drawLight(const DrawArgs& args) override {
+        rect(args.vg,0,0,box.size.x,box.size.y,color,.5f);
+        stroke(args.vg,1.2f,.6f,1.2f,box.size.y-.9f,color::mult(color,1.5f),.65f);
+    }
+};
+
 struct HardwareSlider : HardwareControl {
     enum Kind { PITCH_SLIDER, PULSE_SWITCH, GATE_SWITCH };
     Kind kind=PITCH_SLIDER;
     int stage=0;
-    HardwareSlider() { box.size=Vec(22,82); }
+    PitchSliderLight* pitchLight=nullptr;
+    HardwareSlider() { box.size=Vec(22,82);pitchLight=new PitchSliderLight;addChild(pitchLight); }
+    float handleHeight() const { return kind==PULSE_SWITCH?25.f:16.f; }
+    float handleCenter() {
+        auto* q=getParamQuantity();float v=q?q->getScaledValue():.35f;
+        float handle=handleHeight();
+        return handle/2+2+(1-v)*(box.size.y-handle-4);
+    }
+    void step() override {
+        HardwareControl::step();
+        pitchLight->visible=kind==PITCH_SLIDER;
+        pitchLight->box.pos=Vec(box.size.x/2-2,handleCenter()-5.1f);
+        float brightness=metroModule?std::max(metroModule->lights[Metropolix::POSITION_1+stage].getBrightness(),
+            metroModule->lights[Metropolix::POSITION_2+stage].getBrightness()):0.f;
+        pitchLight->color=color::mult(nvgRGB(255,51,13),.45f+.55f*brightness);
+    }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg;
         float x=box.size.x/2, h=box.size.y;
-        auto* q=getParamQuantity(); float v=q?q->getScaledValue():.35f;
-        float handle=kind==PULSE_SWITCH?25.f:kind==GATE_SWITCH?16.f:16.f;
-        float cy=handle/2+2+(1-v)*(h-handle-4);
+        float handle=handleHeight(),cy=handleCenter();
         float half=kind==PITCH_SLIDER?4.3f:6.5f;
         rect(vg,x-half-.5f,0,half*2+1,h,nvgRGB(111,108,94),.7f);
         rect(vg,x-half,1,half*2,h-2,kind==PULSE_SWITCH?nvgRGB(105,65,26):nvgRGB(7,10,8),.5f);
@@ -258,9 +283,6 @@ struct HardwareSlider : HardwareControl {
         if(kind==PITCH_SLIDER) {
             nvgBeginPath(vg);nvgRect(vg,x-4.5f,cy-8,9,16);nvgFillPaint(vg,nvgLinearGradient(vg,x-4.5f,cy,x+4.5f,cy,nvgRGB(84,86,81),nvgRGB(214,215,208)));nvgFill(vg);
             rect(vg,x-3.1f,cy-6.1f,6.2f,12.2f,nvgRGB(31,24,17),.3f);
-            bool playing=metroModule && (metroModule->playStage[0].load()==stage || metroModule->playStage[1].load()==stage);
-            rect(vg,x-2,cy-5.1f,4,10.2f,playing?nvgRGB(255,51,13):nvgRGB(181,23,7),.5f);
-            stroke(vg,x-.8f,cy-4.5f,x-.8f,cy+4.2f,nvgRGB(255,174,95),.65f);
             for(float yy:{cy-7,cy-5.9f,cy+6,cy+7.1f})stroke(vg,x-4.1f,yy,x+4.1f,yy,nvgRGB(222,227,223),.5f);
         } else {
             rect(vg,x-5.6f,cy-handle/2+1,11.2f,handle-2,nvgRGB(61,66,71),.5f);

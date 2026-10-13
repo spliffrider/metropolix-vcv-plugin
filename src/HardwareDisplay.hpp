@@ -1,6 +1,17 @@
 #include "OledCanvas.hpp"
 
 struct HardwareDisplay : HardwareControl {
+    // Rack can render into its normal and framebuffer NanoVG contexts. Each
+    // needs its own image handle, released before the window context closes.
+    std::map<NVGcontext*,int> displayImages;
+    void clearDisplayImages() {
+        for(auto& entry:displayImages)if(entry.second>0)nvgDeleteImage(entry.first,entry.second);
+        displayImages.clear();
+    }
+    ~HardwareDisplay() { clearDisplayImages(); }
+    void onContextDestroy(const ContextDestroyEvent& e) override {
+        clearDisplayImages();HardwareControl::onContextDestroy(e);
+    }
     int integer(int id,int fallback=0) const { return metroModule?metroModule->integer(id):fallback; }
     float value(int id,float fallback=0.f) const { return metroModule?metroModule->params[id].getValue():fallback; }
     bool effectiveSkip(int t,int s) const {
@@ -278,7 +289,7 @@ struct HardwareDisplay : HardwareControl {
                 else v=n?"Auto":"Manual";
                 int y=(i-first)*17;
                 int owner=m?m->ctrlOwner(id):-1;
-                c.text(13,y+5,labels[i],true,1,owner>=0?150:255);c.right(126,y+5,v);
+                c.text(13,y+5,labels[i],true,1,owner>=0?155:255);c.right(126,y+5,v);
                 if(owner>=0){c.circle(6,y+8,6);c.text(4,y+6,std::to_string(owner+1));}
                 if(i==f){c.corners(0,y,128,16);if(owner<0)c.turn(1,y+5);}
             }
@@ -324,6 +335,6 @@ struct HardwareDisplay : HardwareControl {
         rect(vg,0,0,box.size.x,box.size.y,nvgRGB(23,25,25),.8f);
         rect(vg,1,1,box.size.x-2,box.size.y-2,nvgRGB(0,5,7),.3f);
         nvgSave(vg);nvgTranslate(vg,3,3);nvgScale(vg,(box.size.x-6)/128.f,(box.size.y-6)/64.f);
-        nvgScissor(vg,0,0,128,64);render().paint(vg);nvgRestore(vg);
+        nvgScissor(vg,0,0,128,64);render().paint(vg,displayImages[vg]);nvgRestore(vg);
     }
 };

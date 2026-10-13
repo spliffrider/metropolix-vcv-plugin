@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.7.0
+# Hardware panel and desktop interaction — 2.7.1
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -13,6 +13,8 @@ and author metadata also identify sensiburner. This is an independent homage.
 
 - **Drag upward to increase; downward to decrease.** This applies to pitch faders, pulse-count/gate switches, the display's active value, the encoder, numeric buttons such as BPM/LEN/DIV, and values in the optional editors. Integer and toggle settings snap to valid values. Ctrl-drag provides fine adjustment. Release ends one undoable edit.
 - **Hover for help.** Controls identify their value and purpose. Ports retain Rack cable behavior and tooltips. Controls for unfinished features explain their status.
+- **Read values while dragging.** A compact popup follows the edited parameter on the panel, display, encoder and optional grids. It stays visible if the pointer leaves the control while held. Rack's Tooltips preference controls both hover help and adjustment readouts.
+- **Gentler sliders.** At Rack's default linear sensitivity, pitch takes approximately 400 mouse pixels across its range; pulse-count and gate switches take about 24 pixels per step. Rack's global sensitivity and fine-adjustment modifiers still apply. Pitch-slider lights follow **View → Bloom** and remain illuminated when room brightness is reduced.
 - **Right-click for direct access.** Numeric controls provide Rack value entry and reset; named settings such as ORDER offer their choices. TRK 1/2 expose track settings. MOD offers lane selection and its expanded editor. EDIT opens the stage editor; EXIT offers either editor and a close action.
 - **HOME:** turn the encoder with a vertical drag, or click the encoder/display, to browse four views: stage positions, base notes, panel values, and CV/MOD activity. EXIT returns to HOME. The note view excludes accumulation and modulation from its stage notes; the pre/post readouts show the corresponding live routes.
 - **Click a settings button** to put its setting on the display. Drag the encoder or display to change its active value. Click the encoder/display to switch root/scale, stages/pulses, or clock/pulse-count division. On LEN, ALT selects offset; on SCALE, ALT switches between scale and root.

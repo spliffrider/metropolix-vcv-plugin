@@ -65,13 +65,13 @@ struct OledCanvas {
             case '>':return "0842480";
             case 'a':return "00E1FHF";case 'b':return "GGUHHHU";case 'c':return "00FGGGF";
             case 'd':return "11FHHHF";case 'e':return "00EHVGF";case 'f':return "648U888";
-            case 'g':return "00FHHF1";case 'h':return "GGUHHHH";case 'i':return "404444E";
-            case 'j':return "20222IC";case 'k':return "GGIKO KI";case 'l':return "C44444E";
+            case 'g':return "00FHHHF1E";case 'h':return "GGUHHHH";case 'i':return "404444E";
+            case 'j':return "2022222IC";case 'k':return "GGIKO KI";case 'l':return "C44444E";
             case 'm':return "00ULLLL";case 'n':return "00UHHHH";case 'o':return "00EHHHE";
-            case 'p':return "00UHHUG";case 'q':return "00FHHF1";case 'r':return "00NOGGG";
+            case 'p':return "00UHHHUGG";case 'q':return "00FHHHF11";case 'r':return "00NOGGG";
             case 's':return "00FGE1U";case 't':return "88U8886";case 'u':return "00HHHJF";
             case 'v':return "00HHHA4";case 'w':return "00HHLLA";case 'x':return "00HA4AH";
-            case 'y':return "00HHF1E";case 'z':return "00V248V";
+            case 'y':return "00HHHHF1E";case 'z':return "00V248V";
             default:return "0000000";
         }
     }
@@ -81,7 +81,9 @@ struct OledCanvas {
         for(char c:s) {
             Glyph g=tiny?small(static_cast<char>(std::toupper(c))):Glyph{5,large(c)};
             int row=0;
-            for(const char* p=g.rows;*p && row<(tiny?5:7);++p) {
+            // Large letters share a seven-row baseline; g/j/p/q/y extend two
+            // rows below it. All display fields reserve this nine-row height.
+            for(const char* p=g.rows;*p && row<(tiny?5:9);++p) {
                 if(*p==' ')continue;
                 int mask=bits(*p);
                 for(int i=0;i<g.w;++i)if(mask & (1<<(g.w-1-i)))fill(x+i*scale,y+row*scale,scale,scale,v);
@@ -96,21 +98,19 @@ struct OledCanvas {
         else if(width(s,false,1)<=w)right(x+w,y+3,s,false,1);
         else { std::string shortText=s;while(!shortText.empty() && width(shortText)>w)shortText.pop_back();right(x+w,y+4,shortText); }
     }
-    void paint(NVGcontext* vg) const {
-        // Coalesce whole rectangles, avoiding antialias seams between rows in
-        // solid stage blocks while retaining the native grid in small letters.
-        bool painted[64][128]={};
-        for(uint8_t shade:{uint8_t(90),uint8_t(155),uint8_t(255)}) {
-            nvgBeginPath(vg);
-            for(int y=0;y<64;++y)for(int x=0;x<128;) {
-                if(pixels[y][x]!=shade || painted[y][x]){++x;continue;}
-                int start=x;while(x<128 && pixels[y][x]==shade && !painted[y][x])++x;
-                int h=1;
-                for(int yy=y+1;yy<64;++yy){bool same=true;for(int xx=start;xx<x;++xx)if(pixels[yy][xx]!=shade || painted[yy][xx]){same=false;break;}if(!same)break;++h;}
-                for(int yy=y;yy<y+h;++yy)for(int xx=start;xx<x;++xx)painted[yy][xx]=true;
-                nvgRect(vg,start,y,x-start,h);
-            }
-            nvgFillColor(vg,nvgRGBA(172,222,242,shade));nvgFill(vg);
+    void paint(NVGcontext* vg,int& image) const {
+        // One filtered bitmap avoids seams between adjoining vector rectangles
+        // and keeps subpixel strokes visible when Rack zooms the OLED down.
+        uint8_t rgba[64][128][4];
+        for(int y=0;y<64;++y)for(int x=0;x<128;++x) {
+            rgba[y][x][0]=172;rgba[y][x][1]=222;rgba[y][x][2]=242;
+            rgba[y][x][3]=pixels[y][x];
         }
+        const auto* data=reinterpret_cast<const unsigned char*>(rgba);
+        if(image<=0)image=nvgCreateImageRGBA(vg,128,64,0,data);
+        else nvgUpdateImage(vg,image,data);
+        if(image<=0)return;
+        nvgBeginPath(vg);nvgRect(vg,0,0,128,64);
+        nvgFillPaint(vg,nvgImagePattern(vg,0,0,128,64,0,image,1));nvgFill(vg);
     }
 };

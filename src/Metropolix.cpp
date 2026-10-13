@@ -182,7 +182,8 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
 
 // All views bind to the same ParamQuantity, preserving Rack automation, reset,
 // numeric entry, patch serialization, and undo in both compact and open views.
-struct ValueCell : app::Knob {
+#include "ValueKnob.hpp"
+struct ValueCell : ValueKnob {
     Metropolix* metroModule = nullptr;
     int trackProperty = -1;
     int stageColumn = -1;
@@ -204,7 +205,7 @@ struct ValueCell : app::Knob {
         speed = 0.55f;
     }
     void step() override {
-        if (metroModule) {
+        if (metroModule && !dragStarted) {
             int t = metroModule->selectedTrack.load();
             if (trackProperty >= 0) paramId = Metropolix::trackParam(t, trackProperty);
             if (stageRow >= 0) paramId = Metropolix::stageParam(t, stageColumn, stageRow);
@@ -212,7 +213,7 @@ struct ValueCell : app::Knob {
                 metroModule->selectedStage.load(), metroModule->selectedRow.load());
             if (modProperty >= 0) paramId = Metropolix::modParam(metroModule->selectedLane.load(), modProperty);
         }
-        app::Knob::step();
+        ValueKnob::step();
         if (auto* q = getParamQuantity()) speed = q->snapEnabled ? std::max(1.f, 30.f / q->getRange()) : 1.f;
     }
     std::string valueText() {
@@ -244,12 +245,13 @@ struct ValueCell : app::Knob {
         return metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE)) == metro::ModGate
             || metro::modGateDestination(static_cast<metro::ModDestination>(metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
     }
-    void onDragStart(const event::DragStart& e) override { dragDistance = 0.f; dragStarted=!locked(); if(dragStarted)app::Knob::onDragStart(e); }
-    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(dragStarted && !locked())app::Knob::onDragMove(e); }
+    void onDragStart(const event::DragStart& e) override { if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return; dragDistance = 0.f; dragStarted=!locked(); if(dragStarted)ValueKnob::onDragStart(e); }
+    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(dragStarted && !locked())ValueKnob::onDragMove(e); }
     void onDragEnd(const event::DragEnd& e) override {
         // Automation may assign a CTRL while this drag is active. Always finish
         // a started Rack gesture so cursor capture and history are released.
-        if(dragStarted)app::Knob::onDragEnd(e);
+        if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        if(dragStarted)ValueKnob::onDragEnd(e);
         dragStarted=false;
     }
     void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
