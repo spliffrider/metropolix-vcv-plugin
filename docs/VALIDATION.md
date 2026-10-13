@@ -1,4 +1,35 @@
-# Validation and fidelity status — 2.8.0
+# Validation and fidelity status — 2.9.0
+
+## Swing — 2.9.0
+
+The ninth portable suite has 49,506 assertions. At 44.1/48/96 kHz it checks
+every integer amount from 50–78%, internal/external clocking, and /1, /3, /7
+track divisions. Actual gate onsets and track transitions follow the expected
+long/short pair, with no cumulative drift; global CLK and MOD traversal stay
+straight. Additional cases cover skipped stages, odd fixed pulse lengths,
+ratchet modes and accumulation, Tempo slide, pending-pulse reset/stop/pause,
+stalled external input, sudden acceleration, live CV changes and opposing
+AUX/MOD offsets. Timing tolerance is two samples; each pair retains its length.
+
+Rack-library tests cover both Swing parameters, CTRL range/assignment/ownership,
+new bank persistence, format-1 migration to straight Swing, recall/undo, and
+same-edge chain loading. `scripts/test-ui.ps1 -Swing` verifies the real button,
+encoder, display and shortcut callbacks, context choices, one-gesture undo,
+long reset, ownership locking and optional grid binding. A second Rack process
+opens its saved file and confirms the page, values and bank entries.
+
+Preset/chain UI and native-file reopen checks, the default widget suite,
+`-Polish`, and all 38 `-Display` states remain regression checks. Actual OLED
+captures are inspected against the manual's Swing page, including the right
+aligned large percentage. `-SwingAudio` compresses the demo to eight global
+pulses per link and confirms all seven links and straight/swung values during
+12 seconds of real stereo playback. RMS is 0.363/0.373 V, peak 1.607/1.734 V,
+and DC about -0.000209 V. No subjective listening assessment is claimed.
+
+No physical Metropolix comparison has been made. Pair latching, automatic
+track-wrap parity, gate/slide treatment, and extreme external-tempo handling
+are documented interpretations; see [Swing operation](SWING.md). Windows OS
+mouse/focus behavior remains a separate user playtest.
 
 ## Preset chains — 2.8.0
 
@@ -100,12 +131,12 @@ Checked on Windows x64 with Rack Free 2.6.6 and VCV Free 2.6.4. Reference: [Metr
 | Reset, p.134 | Manual retains accumulation across a fixed-length automatic restart; Auto clears it |
 | MOD lanes, pp.137–145 | Literal stepped voltages, divided gates, full-stage ramps, unipolar clipping, 1.5 V gate threshold, independent timing, mute/stop/reset, offset wrapping, fixed pulse length, reverse, and all eight A/B sources at 44.1/48/96 kHz |
 | MOD routing, pp.147, 157–162 | Base settings preserved; pre/post/continuous pitch paths, octave thresholds, track assignment, mute toggling, probability suppression, gate-length rest, emitted ratchet edges, multiple-lane summing, and route removal |
-| Rack host | All 429 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
+| Rack host | All 431 parameters, 64 preset slots and chain storage round-trip through Rack serialization; note/MOD/AUX UI state restores; legacy order/limit/AUX/mode/Swing migration; internal/external transport, Schmitt edges, reset priority, unipolar numeric entry, actual assignable A/B voltages, and AUX voltage/disconnection |
 | Rack UI | Shared parameter bindings, independent tracks and MOD lanes, undo/redo, toggle handling, rectangular fader hit area, both widths, collision avoidance, stage/MOD editor switching, and patch restoration |
 | Real signal path | 12-second, 48 kHz stereo recording inside Rack: sequencer → VCV oscillators and envelopes → VCAs; non-silent finite output, bounded peaks, and low DC on both channels |
 | MOD signals in Rack | The modulation demo's A/B cables recorded by the test module: A reaches -2 and +2 V; B reaches 0 and +5 V with continuous ramps; both voices remain audible in the captured signal |
 
-The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 395,400 accumulator/probability assertions, 119 MOD assertions, 53,903 AUX assertions, 129,095 CTRL assertions, and 5,601,646 preset assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
+The automated suites contain 40,091 base-engine assertions, 64,738 manual/order/gate assertions, 395,400 accumulator/probability assertions, 119 MOD assertions, 60,635 AUX assertions, 129,097 CTRL assertions, 5,601,646 preset assertions, 9,713,498 chain assertions, and 49,506 Swing assertions. Many are repeated sample or boundary checks; these numbers do not represent that many separate test scenarios. Host, editor, and audio checks run separately.
 
 Actual Rack renderer images of both views were inspected. Windows Computer Use capture repeatedly failed with `window capture timed out: timed out waiting on channel`; native capture attempts were stopped. Editor tests dispatch Rack widget events from a dedicated test build, and image capture uses Rack's own renderer. Physical mouse/drag behavior and operating-system focus handling remain unverified in that session.
 

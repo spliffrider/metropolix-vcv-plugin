@@ -1,4 +1,4 @@
-# Metropolix Lab 2.8.0 — Windows alpha quick start
+# Metropolix Lab 2.9.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
@@ -6,10 +6,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.8.0/MetropolixLab-2.8.0-win-x64.vcvplugin)
-- [Evolving preset-chain demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.8.0/Chain-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/MetropolixLab-2.9.0-win-x64.vcvplugin)
+- [Swing performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.9.0/Swing-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.8.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.9.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -23,7 +23,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.8.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.9.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -32,7 +32,13 @@ There is no separate installer or GitHub account requirement to download.
 
 ## Hear something immediately
 
-For the new automatic arrangement, open **[Chain-performance.vcv](../examples/Chain-performance.vcv)**,
+For Swing, open **[Swing-performance.vcv](../examples/Swing-performance.vcv)**,
+choose your AUDIO device and level, then press RUN. Select a track and click
+SWING; try 50%, 66%, and 78%, independent track values, stage shortcuts,
+encoder long-press reset, CTRL assignment, and AUX/MOD offsets. Skips should
+change traversal without restarting the groove. See the [Swing guide](SWING.md).
+
+For the automatic arrangement, open **[Chain-performance.vcv](../examples/Chain-performance.vcv)**,
 select your AUDIO device, and watch the OLED follow seven links over 32 bars.
 Hold SETUP to open Preset Chains. Disable the chain before editing or loading
 individual presets. Try repeats, per-link mutes, pause/resume, reset, undo and
@@ -84,7 +90,7 @@ Download [CTRL-performance.vcv](https://github.com/spliffrider/metropolix-vcv-pl
 CTRL 1 changes Track 2 pulse counts; CTRL 2 adds ratchet fills. Both start at
 noon, preserving the original evolving arrangement. Right-click either for
 assignments and exact centre. See the [CTRL guide](CTRL-KNOBS.md) for ranges,
-direct parameter ownership, and six unavailable destinations.
+direct parameter ownership, and five unavailable destinations.
 
 ## Compare accumulator modes
 
@@ -123,7 +129,7 @@ Accumulator mode, or use ALT → LIM. See the
 
 ## Known limitations
 
-**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy, swing, stage pitch/gate-length overrides, most remaining MOD
+**Currently inactive or incomplete:** additional AUX/CTRL destinations, Loopy, stage pitch/gate-length overrides, most remaining MOD
 destinations, the full scale library/user scales and hardware bank interchange,
 remaining accumulator reset/routing options, MIDI, MX, and SysEx.
 

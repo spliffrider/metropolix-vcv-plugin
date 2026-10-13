@@ -1,6 +1,11 @@
 // Members of Metropolix. Banks are accessed by UI/serialization only. The audio
 // thread receives a fixed-size copy and owns the pending load and pulse clocks.
-using Snapshot = metro::PresetSnapshot<TOTAL_PULSES + 1>;
+// Format 2 appends two swing values to the original compact format. Global
+// preset preferences and RUN_MODE stay outside the musical snapshot.
+static constexpr int SNAPSHOT_PARAMS = TOTAL_PULSES + 3;
+static int presetParam(int index) { return index <= TOTAL_PULSES ? index : SWING_1 + index - TOTAL_PULSES - 1; }
+static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id <= SWING_2 ? TOTAL_PULSES + 1 + id - SWING_1 : -1; }
+using Snapshot = metro::PresetSnapshot<SNAPSHOT_PARAMS>;
 struct PresetCommand {
     enum Kind { Load, Cancel, Restore } kind = Cancel;
     Snapshot snapshot, other;
@@ -34,25 +39,26 @@ void configurePresets() {
     configSwitch(LOAD_CTRL, 0, 2, 1, "Preset CTRL load", {"Off", "Assigns", "Jump (assignments and positions)"});
     configSwitch(LOAD_AUX, 0, 1, 1, "Preset AUX load", {"Off", "Assigns"});
     configSwitch(RUN_MODE, 0, 1, 0, "Chain Run button", {"Run/Stop (restart)", "Run/Pause (resume)"});
-    for (int id = TOTAL_PULSES; id < NUM_PARAMS; ++id) paramQuantities[id]->randomizeEnabled = false;
+    for (int id = TOTAL_PULSES; id <= RUN_MODE; ++id) paramQuantities[id]->randomizeEnabled = false;
 }
 
 Snapshot capturePreset() {
     Snapshot s;
     s.occupied = true;
-    for (int id = 0; id <= TOTAL_PULSES; ++id) s.values[id] = params[id].getValue();
+    for (int i = 0; i < SNAPSHOT_PARAMS; ++i) s.values[i] = params[presetParam(i)].getValue();
     return s;
 }
 // Used on the UI thread with Engine::moduleToJson(), which excludes process().
 Snapshot presetFromParamsJson(json_t* array) {
     Snapshot s;
     s.occupied = true;
-    for (int id = 0; id <= TOTAL_PULSES; ++id) s.values[id] = paramQuantities[id]->defaultValue;
+    for (int i = 0; i < SNAPSHOT_PARAMS; ++i) s.values[i] = paramQuantities[presetParam(i)]->defaultValue;
     size_t i; json_t* entry;
     json_array_foreach(array, i, entry) {
         int id = static_cast<int>(json_integer_value(json_object_get(entry, "id")));
         json_t* value = json_object_get(entry, "value");
-        if (id >= 0 && id <= TOTAL_PULSES && json_is_number(value)) s.values[id] = sanitizePresetValue(id, json_number_value(value));
+        int index = presetIndex(id);
+        if (id >= 0 && index >= 0 && json_is_number(value)) s.values[index] = sanitizePresetValue(id, json_number_value(value));
     }
     return s;
 }
@@ -111,8 +117,8 @@ void applyPendingPreset(bool atClock) {
     PresetRecall event;
     event.slot = audioPendingSlot;
     event.before = capturePreset();
-    for (int id = ROOT; id <= TOTAL_PULSES; ++id)
-        if (recallParam(id)) params[id].setValue(pendingPreset.values[id]);
+    for (int i = ROOT; i < SNAPSHOT_PARAMS; ++i)
+        if (recallParam(presetParam(i))) params[presetParam(i)].setValue(pendingPreset.values[i]);
     readSettings();
     event.after = capturePreset();
     // This push cannot overflow: the UI drains receipts before sending a
@@ -134,8 +140,8 @@ void processPresetCommands(bool run, bool external, bool reset) {
         if (c.kind == PresetCommand::Restore) {
             audioPendingSlot = -1;
             pendingSlot.store(-1);
-            for (int id = 0; id <= TOTAL_PULSES; ++id)
-                if (c.snapshot.values[id] != c.other.values[id]) params[id].setValue(c.snapshot.values[id]);
+            for (int i = 0; i < SNAPSHOT_PARAMS; ++i)
+                if (c.snapshot.values[i] != c.other.values[i]) params[presetParam(i)].setValue(c.snapshot.values[i]);
             readSettings();
             sequencer.reset();
             presetTiming.reset();
@@ -187,16 +193,19 @@ void presetsFromJson(json_t* root) {
     resetPresetRuntime();
     std::lock_guard<std::mutex> lock(presetMutex);
     presetBank = {};
-    if (json_integer_value(json_object_get(root, "presetFormat")) == 1) {
+    int format = int(json_integer_value(json_object_get(root, "presetFormat")));
+    if (format == 1 || format == 2) {
         json_t* slots = json_object_get(root, "presets");
         for (int slot = 0; slot < 64; ++slot) {
             json_t* values = json_array_get(slots, slot);
-            if (!json_is_array(values) || json_array_size(values) != TOTAL_PULSES + 1) continue;
+            int count = format == 1 ? TOTAL_PULSES + 1 : SNAPSHOT_PARAMS;
+            if (!json_is_array(values) || json_array_size(values) != size_t(count)) continue;
             Snapshot s; s.occupied = true;
-            for (int id = 0; id <= TOTAL_PULSES; ++id) {
-                json_t* value = json_array_get(values, id);
+            for (int t = 0; t < 2; ++t) s.values[presetIndex(swingParam(t))] = 50.f;
+            for (int i = 0; i < count; ++i) {
+                json_t* value = json_array_get(values, i);
                 if (!json_is_number(value)) { s.occupied = false; break; }
-                s.values[id] = sanitizePresetValue(id, json_number_value(value));
+                s.values[i] = sanitizePresetValue(presetParam(i), json_number_value(value));
             }
             if (s.occupied) presetBank[slot] = s;
         }

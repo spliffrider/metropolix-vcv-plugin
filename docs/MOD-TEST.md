@@ -36,4 +36,4 @@ If something behaves unexpectedly, save the patch and note the selected track/la
 
 Engine tests, Rack parameter save/load, editor events and undo, and a 12-second Rack signal recording pass. Through connected Rack cables, A measured **-2 to +2 V**, B measured **0 to +5 V**, and both audio voices were non-silent with finite, bounded output. `examples/Modulation-preview.wav` is the recording.
 
-Physical mouse handling and listening on your selected audio device are still part of your playtest. This release implements eight internal MOD destinations; it does not yet implement every destination from the hardware. See `VALIDATION.md` for scaling assumptions and fidelity limits.
+Physical mouse handling and listening on your selected audio device are still part of your playtest. As of 2.9.0 there are nine internal MOD destinations, including [Swing](SWING.md); further hardware destinations remain incomplete. See `VALIDATION.md` for scaling assumptions and fidelity limits.

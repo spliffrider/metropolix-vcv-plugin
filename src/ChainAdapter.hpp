@@ -51,7 +51,7 @@ void sendChainCommand() {
 void applyChainLink(bool atClock) {
     int link=chainPosition.link;
     const auto& s=audioChain.presets[link];
-    if(s.occupied)for(int id=ROOT;id<=TOTAL_PULSES;++id)if(recallParam(id))params[id].setValue(s.values[id]);
+    if(s.occupied)for(int i=ROOT;i<SNAPSHOT_PARAMS;++i)if(recallParam(presetParam(i)))params[presetParam(i)].setValue(s.values[i]);
     // An empty referenced preset retains the currently playing settings,
     // while this link's repeats and mute flags still apply (manual p.178).
     sequencer.chainMutes=audioChain.chain.links[link].mutes;

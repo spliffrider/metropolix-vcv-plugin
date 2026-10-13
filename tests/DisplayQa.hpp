@@ -89,6 +89,9 @@ const DisplayCase cases[]={
     {"order",Metropolix::ORDER_PAGE,0,0,0,false},
     {"length",Metropolix::LENGTH_PAGE,0,0,0,false},
     {"division",Metropolix::DIV_PAGE,1,0,0,false},
+    {"swing-straight",Metropolix::SWING_PAGE,0,0,Metropolix::SLIDE,false},
+    {"swing-max",Metropolix::SWING_PAGE,0,0,Metropolix::SLIDE,false},
+    {"swing-mod",Metropolix::SWING_PAGE,0,0,0,true},
     {"slide-time",Metropolix::SLIDE_PAGE,0,0,0,false},
     {"gate-length",Metropolix::GATE_PAGE,0,0,0,false},
     {"stage-slide",Metropolix::STAGE_PAGE,0,0,Metropolix::SLIDE,false},
@@ -123,6 +126,7 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
+        if(test.page==Metropolix::SWING_PAGE)m->params[Metropolix::swingParam(m->selectedTrack.load())].setValue(std::string(test.name)=="swing-max"?78:50);
         if(test.page==Metropolix::CHAIN_PAGE) {
             Metropolix::ChainState state;
             if(std::string(test.name)!="chain-empty")for(int i=0;i<32;++i) {metro::ChainLink l;l.slot=i==31?55:i;l.repeats=i==31?64:i+1;l.mutes=i%8;state.working.insert(i,l);}

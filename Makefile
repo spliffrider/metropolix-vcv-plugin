@@ -6,6 +6,7 @@ DISTRIBUTABLES += docs/HARDWARE-UI.md docs/MOD-TEST.md docs/UI-TARGET.md
 DISTRIBUTABLES += docs/VALIDATION.md docs/DEVELOPMENT.md docs/TESTING.md docs/FEATURE-STATUS.md
 DISTRIBUTABLES += docs/AUX-INPUTS.md docs/CTRL-KNOBS.md docs/PRESETS.md
 DISTRIBUTABLES += docs/PRESET-CHAINS.md
+DISTRIBUTABLES += docs/SWING.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 EXTRA_LDFLAGS += -static-libgcc
 include $(RACK_DIR)/plugin.mk
@@ -29,6 +30,8 @@ test:
 	./build/tests/preset-tests.exe
 	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic -pthread tests/ChainTests.cpp -o build/tests/chain-tests.exe
 	./build/tests/chain-tests.exe
+	$(CXX) -std=c++11 -O2 -Wall -Wextra -Werror -pedantic tests/SwingTests.cpp -o build/tests/swing-tests.exe
+	./build/tests/swing-tests.exe
 
 .PHONY: rack-test-build
 rack-test-build:

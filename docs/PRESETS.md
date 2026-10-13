@@ -54,6 +54,11 @@ Hardware **Thru** pickup is not offered here: recalled virtual knobs/sliders
 move to their saved positions, and mouse drags continue from those positions.
 External MIDI-controller pickup is not implemented.
 
+As of 2.9.0, both track Swing values are stored and recalled with each pattern.
+Format-1 banks from earlier releases migrate with 50% Swing, preserving their
+straight timing. Format 2 appends two values; other recall policies are
+unchanged. See [Swing timing and controls](SWING.md).
+
 ## When loads happen
 
 **Instant** loads immediately and resets note tracks, MOD lanes and accumulation.

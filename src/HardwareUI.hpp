@@ -59,6 +59,7 @@ int screenParam(Metropolix* m) {
             if(m->uiAlt.load())return mod?Metropolix::modParam(l,Metropolix::MOD_OFFSET):Metropolix::trackParam(t,Metropolix::OFFSET);
             return mod?Metropolix::modParam(l,f?Metropolix::MOD_PULSE_LIMIT:Metropolix::MOD_LENGTH):(f?Metropolix::extraParam(t,Metropolix::PULSE_LIMIT):Metropolix::trackParam(t,Metropolix::LENGTH));
         case Metropolix::DIV_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_DIVISION) : (f?Metropolix::extraParam(t,Metropolix::PULSE_DIV):Metropolix::trackParam(t,Metropolix::DIVISION));
+        case Metropolix::SWING_PAGE: return mod ? -1 : Metropolix::swingParam(t);
         case Metropolix::SLIDE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::SLIDE_TIME);
         case Metropolix::GATE_PAGE: return mod ? -1 : Metropolix::trackParam(t,Metropolix::GATE_LENGTH);
         case Metropolix::STAGE_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_VALUE+m->selectedStage.load()) : Metropolix::stageParam(t,m->selectedStage.load(),m->selectedRow.load());
