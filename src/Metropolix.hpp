@@ -25,6 +25,10 @@ struct ModVoltageQuantity : ParamQuantity {
     }
 };
 
+struct LoopyPulseQuantity : ParamQuantity {
+    std::string getDisplayValueString() override {return getValue()<.5f?"Auto":ParamQuantity::getDisplayValueString();}
+    void setDisplayValueString(std::string s) override {if(s=="Auto" || s=="auto")setValue(0);else ParamQuantity::setDisplayValueString(s);}
+};
 struct GateLengthQuantity : ParamQuantity {
     std::string getDisplayValueString() override { return getValue()>=100?"Hold":ParamQuantity::getDisplayValueString(); }
     std::string getUnit() override { return getValue()>=100?"":unit; }
@@ -89,7 +93,7 @@ struct Metropolix : Module {
         SWING_1, SWING_2,
         GATE_SCALE_1, GATE_SCALE_2,
         STAGE_OVERRIDES,
-        NUM_PARAMS = STAGE_OVERRIDES + 32
+        LOOPY_PULSES = STAGE_OVERRIDES + 32, LOOPY_TARGET, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -178,7 +182,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> uiHome{0};
     std::atomic<bool> uiStageDetail{false};
@@ -194,8 +198,35 @@ struct Metropolix : Module {
     double meterClockElapsed=0.0;
     bool meterClockSeen=false, meterWasExternal=false;
 
+    // A single atomic command publishes the held stage boundaries.
+    // Latching and held gestures are transient: opening a patch cannot hold gates.
+    std::atomic<unsigned> loopyCommand{0}, loopyHeld{0}, loopyMuteCommands{0};
+    std::atomic<bool> loopyLatched{false}, loopyMuteHeld{false}, loopyMuteUsed{false};
+    void clearLoopy() {loopyCommand.store(0);loopyHeld.store(0);loopyLatched.store(false);}
+    void requestLoopy(unsigned stages) {
+        loopyCommand.store(stages&255u);
+    }
+    void pressLoopyStage(int stage) {
+        unsigned mask=loopyHeld.fetch_or(1u<<stage)|(1u<<stage);requestLoopy(mask);
+    }
+    void releaseLoopyStage(int stage) {
+        unsigned mask=loopyHeld.fetch_and(~(1u<<stage))&~(1u<<stage);
+        if(!loopyLatched.load())requestLoopy(mask);
+    }
+    void latchLoopy() {if(loopyCommand.load()&255u)loopyLatched.store(true);}
+    void muteLoopy(int index) {loopyMuteUsed.store(true);loopyMuteCommands.fetch_xor(1u<<index);}
+    void applyLoopyMutes() {
+        unsigned mask=loopyMuteCommands.exchange(0);
+        for(int i=0;i<10;++i)if(mask&(1u<<i)) {
+            int id=i<2?trackParam(i,MUTE):modParam(i-2,MOD_MUTE);
+            params[id].setValue(integer(id)?0.f:1.f);
+        }
+        if(mask)readSettings();
+    }
     Metropolix() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+        auto* loop=configParam<LoopyPulseQuantity>(LOOPY_PULSES,0,64,0,"Loopy pulses");loop->snapEnabled=true;loop->randomizeEnabled=false;
+        configSwitch(LOOPY_TARGET,0,1,0,"Loopy target",{"Current track","Tracks 1+2"})->randomizeEnabled=false;
         configParam(TEMPO, 0.1f, 400.f, 120.f, "Tempo", " BPM")->randomizeEnabled = false;
         configSwitch(RUN, 0, 1, 0, "Transport", {"Stopped", "Running"})->randomizeEnabled = false;
         configButton(RESET, "Reset position and accumulators");
@@ -427,9 +458,13 @@ struct Metropolix : Module {
         bool run = params[RUN].getValue() > 0.5f;
         processChainCommands(run, external, resetEdge || button);
         processPresetCommands(run, external, resetEdge || button);
-        sequencer.process(args.sampleTime, run, external, clockEdge, resetEdge || button, [this] { presetClock(); });
+        unsigned gesture=loopyCommand.load();
+        sequencer.loopy.stages=gesture&255u;sequencer.loopy.targets=integer(LOOPY_TARGET)?3u:1u<<selectedTrack.load();
+        sequencer.loopy.pulses=integer(LOOPY_PULSES);
+        if(!run)applyLoopyMutes();
+        sequencer.process(args.sampleTime, run, external, clockEdge, resetEdge || button, [this] { presetClock(); applyLoopyMutes(); });
         for (int t = 0; t < 2; ++t) {
-            const auto& state = sequencer.tracks[t];
+            const auto& state = sequencer.sounding(t);
             int physical=sequencer.controls.swap?1-t:t;
             outputs[PITCH_1 + 2 * physical].setVoltage(state.pitch);
             outputs[GATE_1 + 2 * physical].setVoltage(state.gate);
@@ -442,7 +477,7 @@ struct Metropolix : Module {
                 pitchPre[t].store(sequencer.modulation.routes[t][metro::ModPitchPre]+sequencer.controls.values[t][metro::CtrlPitchPre], std::memory_order_relaxed);
                 pitchPost[t].store(sequencer.modulation.routes[t][metro::ModPitchPost]+sequencer.controls.values[t][metro::CtrlPitchPost], std::memory_order_relaxed);
                 for (int s = 0; s < 8; ++s)
-                    lights[POSITION_1 + t * 8 + s].setBrightness(sequencer.running && state.stage == s ? 1.f : 0.f);
+                    lights[POSITION_1 + t * 8 + s].setBrightness((sequencer.running || sequencer.playerPlaying[t]) && state.stage == s ? 1.f : 0.f);
             }
         }
         outputs[CLOCK_OUT].setVoltage(sequencer.clock);
@@ -460,6 +495,7 @@ struct Metropolix : Module {
 
     void onReset(const ResetEvent& e) override {
         Module::onReset(e);
+        clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         resetPresetRuntime();
         resetChainRuntime();
         { std::lock_guard<std::mutex> lock(presetMutex);chainState.enabled=false;chainEnabled.store(false); }
@@ -468,7 +504,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(13));
+        json_object_set_new(root, "schemaVersion", json_integer(14));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(3));
@@ -492,6 +528,9 @@ struct Metropolix : Module {
         return root;
     }
     void dataFromJson(json_t* root) override {
+        clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
+        if(json_integer_value(json_object_get(root,"schemaVersion"))<14)
+            for(int id=LOOPY_PULSES;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<13)
             for(int id=GATE_SCALE_1;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<12)
@@ -531,7 +570,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(SWING_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(LOOPY_PAGE)));
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:uiPage.load()==SETUP_PAGE?3:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));

@@ -231,7 +231,8 @@ struct HardwareDisplay : HardwareControl {
             c.text(1,3,mod?"SELECT MOD LANE":"SELECT EDIT FUNCTION");
             const char* labels[]={"SLIDE","SKIP","PITCH","GATE","RATCH","PROB","ACCUM","CV"};
             for(int i=0;i<8;++i){int x=(i%4)*32,y=17+(i/4)*17;c.text(x+2,y,mod?string::f("MOD %d",i+1):labels[i]);c.text(x+2,y+8,std::to_string(i+1));}
-            footer(c);return c;
+            if(m && m->loopyMuteHeld.load()){c.fill(0,54,128,10,0);c.text(1,56,"MUTE TRK/LANE");return c;}
+        footer(c);return c;
         }
         if(page==Metropolix::HOME){home(c);return c;}
         if(page==Metropolix::STAGE_PAGE){stage(c);return c;}
@@ -296,6 +297,13 @@ struct HardwareDisplay : HardwareControl {
                 if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
             }
             field(c,29,"AUX ASSIGN",string::f("CV %c > ",'X'+input)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
+        } else if(page==Metropolix::LOOPY_PAGE) {
+            int count=integer(Metropolix::LOOPY_PULSES),both=integer(Metropolix::LOOPY_TARGET);
+            field(c,0,"LOOP PULSES",count?std::to_string(count):"Auto",true,128,2);
+            field(c,29,"LOOP TARGET",both?"1+2":"Current Trk",false,128,1);
+            if(m && m->loopyLatched.load()){c.box(1,58,6,5);c.box(2,55,4,5);c.text(11,57,"LATCHED");}
+            else c.text(1,57,m && m->loopyMuteHeld.load()?"MUTE TRK/LANE":string::f("TRK %d :",t+1)+(integer(Metropolix::RUN)?"LOOP STAGES":"PLAY STAGES"));
+            return c;
         } else if(page==Metropolix::CTRL_PAGE) {
             int knob=m?m->selectedCtrl.load():0;
             int dest=integer(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION));
@@ -394,6 +402,7 @@ struct HardwareDisplay : HardwareControl {
             c.text(1,56,"SETUP MENU");return c;
         }
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
+        if(m && m->loopyMuteHeld.load()){c.fill(0,54,128,10,0);c.text(1,56,"MUTE TRK/LANE");return c;}
         footer(c);return c;
     }
     void draw(const DrawArgs& args) override {

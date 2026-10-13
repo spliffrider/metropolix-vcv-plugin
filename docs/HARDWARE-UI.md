@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.10.0
+# Hardware panel and desktop interaction — 2.11.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -77,12 +77,18 @@ knob. Older patches and presets clear CTRL assignments, preserving their
 existing panel values; previous AUX/mode migrations are unchanged. Temporary
 ALT state clears on load.
 
-AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). Loopy, MX, and ALT+AUX selective randomization remain unimplemented, with explanatory help.
+AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). MX and ALT+AUX selective randomization remain unimplemented, with explanatory help.
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 
-Some visible readouts describe fixed behavior: slide type is Tempo, gate scale is 100%, and external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. SETUP now opens a selectable menu with Preset Settings and [Preset Chains](PRESET-CHAINS.md); holding SETUP opens chains, with encoder/stage holds for deletion/saving. Other long-press shortcuts and remaining secondary functions are incomplete. Numeric editing and context menus are intentional computer conveniences.
+Some visible readouts describe fixed behavior: slide type is Tempo, external clock division is /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B selection directly chooses one of the existing track-CV/MOD sources. SETUP now opens a selectable menu with Preset Settings and [Preset Chains](PRESET-CHAINS.md); holding SETUP opens chains, with encoder/stage holds for deletion/saving. Other long-press shortcuts and remaining secondary functions are incomplete. Numeric editing and context menus are intentional computer conveniences.
 
 ## Verification
 
-The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 38 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 44 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+
+## Loopy performance
+
+The ∞ control now provides temporary loops, stopped audition and performance mutes.
+Mouse range menus and a latched-loop display complement the original stage buttons.
+See [Loopy operation, saving and hardware-comparison limits](LOOPY.md).

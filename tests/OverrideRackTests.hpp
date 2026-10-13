@@ -31,7 +31,7 @@ void overrideRackTests() {
     pq->setDisplayValueString("D#2");require(m.integer(pitch)==26,"numeric note editing quantizes to current scale");
     pq->setDisplayValueString("--");require(m.integer(pitch)==-1,"numeric entry removes pitch override");
     auto* gq=m.getParamQuantity(gate);gq->setDisplayValueString("Rest");require(m.integer(gate)==0 && gq->getDisplayValueString()=="Rest","numeric entry accepts Rest");gq->setDisplayValueString("hold");require(m.integer(gate)==100,"numeric entry accepts Hold");
-    require(M::presetIndex(M::RUN_MODE)<0 && M::presetIndex(M::LOAD_PITCH)<0 && M::presetParam(M::SNAPSHOT_PARAMS-1)==M::NUM_PARAMS-1,"snapshot excludes preferences and includes every appended field");
+    require(M::presetIndex(M::RUN_MODE)<0 && M::presetIndex(M::LOAD_PITCH)<0 && M::presetParam(M::SNAPSHOT_PARAMS-1)==M::LOOPY_PULSES-1,"snapshot excludes preferences and includes every appended field");
     // A same-edge chain load must read its first stage's new overrides before output.
     saved=m.capturePreset();saved.values[M::presetIndex(M::stageParam(0,0,M::PITCH_OVERRIDE))]=12;saved.values[M::presetIndex(M::stageParam(0,0,M::GATE_OVERRIDE))]=0;
     m.putPreset(1,saved);auto state=m.getChainState();state.working.insert(0,metro::ChainLink{});state.working.links[0].slot=1;state.enabled=true;m.setChainState(state);m.sendChainCommand();m.params[M::RUN].setValue(1);m.process(args);

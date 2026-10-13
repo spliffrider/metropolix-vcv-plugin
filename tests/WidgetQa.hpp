@@ -6,6 +6,17 @@ void MetropolixWidget::qaStep() {
     ++qaFrame; const std::string dir(directory);
     if(std::getenv("METROPOLIX_VIDEO_QA")) { videoStep(); return; }
     if(std::getenv("METROPOLIX_AUDIO_QA")) {
+        if(std::getenv("METROPOLIX_LOOPY_AUDIO_QA")) {
+            static bool momentary=false,returned=false;static unsigned range=0;
+            if(qaFrame>40 && qaFrame<110)momentary |= m->playStage[1].load()==2;
+            if(qaFrame>200 && qaFrame<350){int stage=m->playStage[1].load();if(stage>=0)range |= 1u<<stage;}
+            if(qaFrame>400 && qaFrame<480){int stage=m->playStage[1].load();returned |= stage==0 || stage>4;}
+            if(qaFrame==30){m->selectedTrack.store(1);m->params[Metropolix::LOOPY_TARGET].setValue(0);m->params[Metropolix::LOOPY_PULSES].setValue(0);m->pressLoopyStage(2);}
+            if(qaFrame==120)m->releaseLoopyStage(2);
+            if(qaFrame==180){m->params[Metropolix::LOOPY_PULSES].setValue(5);m->requestLoopy(18);m->latchLoopy();}
+            if(qaFrame==360)m->clearLoopy();
+            if(qaFrame==480){std::ofstream log(dir+"/report.txt",std::ios::app);log<<((momentary && returned && (range&2u) && (range&16u) && !(range&~30u))?"PASS ":"FAIL ")<<"LOOPY PERFORMANCE COMPLETE: momentary stage and latched range performed in real stereo patch\n";}
+        }
         if(std::getenv("METROPOLIX_CHAIN_AUDIO_QA")) {
             if(qaFrame==2) {
                 json_t* json=APP->engine->moduleToJson(m),*data=json_object_get(json,"data");
@@ -121,6 +132,10 @@ void MetropolixWidget::qaStep() {
     }
     if(std::getenv("METROPOLIX_SWING_UI_QA")) {
         #include "SwingWidgetQa.hpp"
+        return;
+    }
+    if(std::getenv("METROPOLIX_LOOPY_UI_QA")) {
+        #include "LoopyWidgetQa.hpp"
         return;
     }
     if(std::getenv("METROPOLIX_OVERRIDE_UI_QA")) {
@@ -269,7 +284,7 @@ void MetropolixWidget::qaStep() {
     if(qaFrame==70) {
         check(box.size.x==510 && !editor->visible && !modPanel->visible,"optional editors close to hardware width");
         check(m->uiPage.load()==Metropolix::HOME && !m->uiAlt.load(),"EXIT returns to home");
-        auto* stub=find("Loopy"); check(stub && stub->tooltipText().find("not implemented")!=std::string::npos,"unfinished hardware control explains its status");
+        auto* stub=find("Loopy"); check(stub && stub->tooltipText().find("momentary loop")!=std::string::npos,"Loopy control explains its performance gestures");
         auto* knob=find("AUX X attenuverter");auto* q=m->getParamQuantity(Metropolix::auxParam(0,Metropolix::AUX_AMOUNT));
         drag(knob,-100);check(q->getValue()>0,"AUX knob upward drag increases amount");
         APP->history->undo();check(q->getValue()==0,"AUX knob drag is one undo");

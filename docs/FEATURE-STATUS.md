@@ -1,10 +1,11 @@
-# Feature status — 2.10.0 public alpha
+# Feature status — 2.11.0 public alpha
 
 Assessment date: 2026-10-13. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
-2.10.0 adds per-stage pitch/gate overrides, Gate Scale and the track gate Hold endpoint; see the [override guide](STAGE-OVERRIDES.md).
+2.11.0 adds Loopy, Stage Player, latching and performance mutes; see the [Loopy guide](LOOPY.md).
+2.10.0 added per-stage pitch/gate overrides, Gate Scale and the track gate Hold endpoint; see the [override guide](STAGE-OVERRIDES.md).
 2.9.0 added per-track Swing, a CTRL destination and AUX/MOD offsets; see the [Swing guide](SWING.md).
 2.8.0 added 32-link preset chains, repeats, per-link mutes and eight saved chains.
 2.7.0 added 64 internal presets, selective recall, queued loading and Total Pulses.
@@ -35,19 +36,19 @@ configuration, preset workflows, and external interfaces.
 | Pitch/scales | Seven scales, root, transpose, slider range, pitch pre/post/offset modulation | Full scale library, user scales, scale shortcuts/locking and associated workflows |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute | Nine internal destinations implemented; many further destinations and destination-specific display units remain |
 | A/B and performance routing | A/B can carry either track CV or any MOD lane; AUX X/Y/Z attenuverters and nine destinations; 24 CTRL destinations; routes can target either/both tracks | Full A/B signal choices, additional AUX destinations, ALT+AUX selective randomization; five unavailable CTRL destinations listed in [CTRL guide](CTRL-KNOBS.md) |
-| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo | Loopy, stage-player/latching workflows, hardware copy/paste and selective randomization workflows |
+| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching | Loopy AUX/MOD routing and Queue options, hardware copy/paste and selective randomization workflows |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover help, context menus, vertical dragging, numeric entry, undo, optional grids | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains and Quick Chain | Custom Init, pickup, MIDI, MX expansion and SysEx interchange |
 
-The current 431 parameters include repeated stage/lane controls; that number is
-not a count of 431 distinct hardware features. Implemented behavior can still
+The current 467 parameters include repeated stage/lane controls; that number is
+not a count of 467 distinct hardware features. Implemented behavior can still
 differ in edge cases or where the manual leaves details unspecified. See
 [validation and known interpretations](VALIDATION.md).
 
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows testers**. The engine suites, Rack
-host/persistence checks, widget callback tests, 38 display states, and recorded
+host/persistence checks, widget callback tests, 44 display states, and recorded
 stereo/CV paths pass on the documented setup. The musical baseline also received
 an initial user playtest. Broad testing on other computers, long sessions,
 different zoom/DPI settings, and interactions with other plugins is still needed.

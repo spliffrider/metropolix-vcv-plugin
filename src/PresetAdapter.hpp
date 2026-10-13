@@ -1,10 +1,10 @@
 // Members of Metropolix. Banks are accessed by UI/serialization only. The audio
 // thread receives a fixed-size copy and owns the pending load and pulse clocks.
 // Format 3 appends stage overrides and Gate Scale after format 2's Swing. Global
-// preset preferences and RUN_MODE stay outside the musical snapshot.
-static constexpr int SNAPSHOT_PARAMS = TOTAL_PULSES + 1 + NUM_PARAMS - SWING_1;
+// preset preferences, RUN_MODE and Loopy settings stay outside the musical snapshot.
+static constexpr int SNAPSHOT_PARAMS = TOTAL_PULSES + 1 + LOOPY_PULSES - SWING_1;
 static int presetParam(int index) { return index <= TOTAL_PULSES ? index : SWING_1 + index - TOTAL_PULSES - 1; }
-static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < NUM_PARAMS ? TOTAL_PULSES + 1 + id - SWING_1 : -1; }
+static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : -1; }
 using Snapshot = metro::PresetSnapshot<SNAPSHOT_PARAMS>;
 struct PresetCommand {
     enum Kind { Load, Cancel, Restore } kind = Cancel;

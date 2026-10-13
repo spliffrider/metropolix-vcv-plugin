@@ -12,12 +12,6 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         auto* menu=createMenu(); menu->addChild(createMenuLabel(name));
         menu->addChild(createMenuLabel("This hardware function is not implemented yet."));
     };
-    auto placeholder=[&](const std::string& name,float x,float y,float size,HardwareControl::Look look) {
-        auto* c=control(name,x,y,size,look);
-        c->help="This hardware function is not implemented yet.";
-        c->action=[unavailable,name] { unavailable(name); }; c->rightAction=c->action;
-        return c;
-    };
     auto choice=[](ui::Menu* menu,Metropolix* module,const std::string& label,int id,std::vector<std::string> values,int offset=0) {
         if(!module) return;
         auto* q=module->getParamQuantity(id);
@@ -115,6 +109,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->action=[m] { encoderPress(m); };
     display->extraMenu=[m](ui::Menu* menu) {
         overrideMenu(menu,m);
+        if(m && m->uiPage.load()==Metropolix::LOOPY_PAGE)appendLoopyMenu(menu,m);
         if(m && m->uiPage.load()==Metropolix::AUX_PAGE)appendAuxMenu(menu,m,m->selectedAux.load());
         if(m && m->uiPage.load()==Metropolix::CTRL_PAGE)appendCtrlMenu(menu,m,m->selectedCtrl.load());
         if(m && (presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::PRESET_SETUP_PAGE))appendPresetMenu(menu,m);
@@ -187,20 +182,26 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     for(int t=0;t<2;++t) {
         auto* c=control(string::f("TRK %d",t+1),145+t*31,272,16,HardwareControl::BLUE_BUTTON);
         c->help="Select this note track. Right-click for its settings and the stage editor.";
-        c->action=[m,t] { if(m) { if(chainPage(m) && (m->chainQuick || m->chainEdit.load())){chainMute(m,t);return;} m->selectedTrack.store(t); m->uiMod.store(false); m->modEditor.store(false); m->uiChooseFunction.store(false); } };
-        c->active=[m,t] { if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return !(mask&(1u<<t)) || std::fmod(system::getTime(),.3)<.15;}return m && !m->uiMod.load() && m->selectedTrack.load()==t; };
-        c->activeColor=[m,t]{if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return mask&(1u<<t)?nvgRGB(240,55,40):nvgRGB(245,220,60);}return nvgRGB(135,187,227);};
+        c->action=[m,t] { if(m) { if(m->loopyMuteHeld.load()){m->muteLoopy(t);return;} if(chainPage(m) && (m->chainQuick || m->chainEdit.load())){chainMute(m,t);return;} m->selectedTrack.store(t); m->uiMod.store(false); m->modEditor.store(false); m->uiChooseFunction.store(false); } };
+        c->active=[m,t] { if(m && m->loopyMuteHeld.load())return !m->integer(Metropolix::trackParam(t,Metropolix::MUTE)) || std::fmod(system::getTime(),.3)<.15; if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return !(mask&(1u<<t)) || std::fmod(system::getTime(),.3)<.15;}return m && !m->uiMod.load() && m->selectedTrack.load()==t; };
+        c->activeColor=[m,t]{if(m && m->loopyMuteHeld.load())return m->integer(Metropolix::trackParam(t,Metropolix::MUTE))?nvgRGB(240,55,40):nvgRGB(245,220,60);if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return mask&(1u<<t)?nvgRGB(240,55,40):nvgRGB(245,220,60);}return nvgRGB(135,187,227);};
         c->rightAction=[m,t] { if(m) { m->selectedTrack.store(t); m->uiMod.store(false); m->uiChooseFunction.store(false); trackSettingsMenu(m); } };
     }
     auto* mod=control("MOD",207,272,16,HardwareControl::BLUE_BUTTON);
     mod->help="Select modulation editing. Stage buttons select stages; encoder edits volts. Right-click to choose a lane or open the grid.";
-    mod->action=[m] { if(m) { if(chainPage(m) && (m->chainQuick || m->chainEdit.load())){chainMute(m,2);return;} m->uiMod.store(true); m->modEditor.store(true); m->uiChooseFunction.store(false); if(m->uiPage.load()!=Metropolix::HOME)screenPage(m,Metropolix::STAGE_PAGE); } };
-    mod->active=[m] { if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return !(mask&4) || std::fmod(system::getTime(),.3)<.15;}return m && m->uiMod.load(); }; mod->rightAction=laneMenu;
-    mod->activeColor=[m]{if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return mask&4?nvgRGB(240,55,40):nvgRGB(245,220,60);}return nvgRGB(135,187,227);};
+    mod->action=[m] { if(m) { if(m->loopyMuteHeld.load()){bool any=false;for(int l=0;l<8;++l)any|=!m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE));for(int l=0;l<8;++l)if(bool(m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE)))!=any)m->muteLoopy(l+2);return;} if(chainPage(m) && (m->chainQuick || m->chainEdit.load())){chainMute(m,2);return;} m->uiMod.store(true); m->modEditor.store(true); m->uiChooseFunction.store(false); if(m->uiPage.load()!=Metropolix::HOME)screenPage(m,Metropolix::STAGE_PAGE); } };
+    mod->active=[m] { if(m && m->loopyMuteHeld.load()){bool all=true;for(int l=0;l<8;++l)all &= m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE))!=0;return !all || std::fmod(system::getTime(),.3)<.15;} if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return !(mask&4) || std::fmod(system::getTime(),.3)<.15;}return m && m->uiMod.load(); }; mod->rightAction=laneMenu;
+    mod->activeColor=[m]{if(m && m->loopyMuteHeld.load()){bool all=true;for(int l=0;l<8;++l)all &= m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE))!=0;return all?nvgRGB(240,55,40):nvgRGB(245,220,60);}if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return mask&4?nvgRGB(240,55,40):nvgRGB(245,220,60);}return nvgRGB(135,187,227);};
     auto* run=createParam<TransportButton>(Vec(13,298),m,Metropolix::RUN); addParam(run);
     auto* reset=createParam<TransportButton>(Vec(75.4f,298),m,Metropolix::RESET);
     reset->reset=true; reset->momentary=true; addParam(reset);
-    placeholder("Loopy",52.2f,306,16,HardwareControl::BLUE_BUTTON);
+    auto* loopy=control("Loopy",52.2f,306,16,HardwareControl::BLUE_BUTTON);
+    loopy->help="Click to enter Loopy. Hold a stage for a momentary loop or stopped audition. Right-click a stage to latch a range. Hold this button for track/MOD mutes; its menu also offers mouse mute mode.";
+    loopy->dragAction=[m]{if(m){m->loopyMuteHeld.store(true);m->loopyMuteUsed.store(false);}};
+    loopy->releaseAction=[m]{if(m)m->loopyMuteHeld.store(false);};
+    loopy->action=[m]{if(!m || m->loopyMuteUsed.load())return;if(m->uiPage.load()==Metropolix::LOOPY_PAGE){if(m->loopyLatched.load())m->clearLoopy();else if(m->integer(Metropolix::RUN))m->latchLoopy();}else openLoopy(m);};
+    loopy->rightAction=[m]{appendLoopyMenu(createMenu(),m);};
+    loopy->active=[m]{return m && ((m->loopyCommand.load()&255u) || m->loopyMuteHeld.load());};
 
     // A short click selects a screen; a held vertical drag edits its primary
     // value directly. Opening a menu never steals the start of a value drag.
@@ -296,24 +297,29 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         auto* c=control(std::string("Stage ")+std::to_string(s+1)+" / "+names[s],244+s*35.7f,340,16,HardwareControl::BLUE_BUTTON);
         c->binding=[m,s,trackGate] {
             if(trackGate->dragging && m && m->uiPage.load()==Metropolix::GATE_PAGE)return -1;
-            if(!m || (m->uiAlt.load() && !overridePage(m)) || m->uiChooseFunction.load() || presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::SWING_PAGE) return -1;
+            if(!m || m->loopyMuteHeld.load() || m->uiPage.load()==Metropolix::LOOPY_PAGE || (m->uiAlt.load() && !overridePage(m)) || m->uiChooseFunction.load() || presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::SWING_PAGE) return -1;
             return m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s):Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load());
         };
         c->help="EDIT then a function, then select a stage. Hold + drag edits this stage. Slide/Skip clicks toggle. Right-click for values.";
         c->groupedParams=[m]{return overrideParams(m);};
         c->detailHelp=[m,s] {
+            if(m && m->loopyMuteHeld.load())return std::string("Click to mute/unmute MOD lane ")+std::to_string(s+1)+". Running mutes take effect on a clock pulse.";
+            if(m && m->uiPage.load()==Metropolix::LOOPY_PAGE)return std::string("Hold to loop this stage while running, or audition its frozen pitch/CV while stopped. Right-click during playback to latch a two-boundary range.");
             if(m && m->uiPage.load()==Metropolix::SWING_PAGE)return std::string("Swing shortcut: ")+std::to_string(metro::swingShortcut(s))+"%. Click to apply to the selected note track.";
             if(!presetPage(m))return std::string();
             int slot=m->presetBankIndex.load()*8+s;
             return string::f("Preset %d-%d: %s. Click to load/save; right-click for slot actions. Turn encoder to change bank.",slot/8+1,slot%8+1,m->getPreset(slot).occupied?"saved":"empty");
         };
         if(s==6)c->help+=" ALT + this button opens LIM: click the encoder to select Mode, then drag to choose Stage or Track.";
-        c->dragAction=[m,s,trackGate] { if(m && !m->uiAlt.load() && !m->uiChooseFunction.load() && !presetPage(m) && !chainPage(m) && m->uiPage.load()!=Metropolix::SWING_PAGE && !(trackGate->dragging && m->uiPage.load()==Metropolix::GATE_PAGE)) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
+        c->dragAction=[m,s,trackGate] { if(m && m->uiPage.load()==Metropolix::LOOPY_PAGE && !m->loopyMuteHeld.load()){m->pressLoopyStage(s);return;} if(m && !m->loopyMuteHeld.load() && !m->uiAlt.load() && !m->uiChooseFunction.load() && !presetPage(m) && !chainPage(m) && m->uiPage.load()!=Metropolix::SWING_PAGE && !(trackGate->dragging && m->uiPage.load()==Metropolix::GATE_PAGE)) { m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiStageDetail.store(true); } };
+        c->releaseAction=[m,s]{if(m)m->releaseLoopyStage(s);};
         c->longSeconds=2;c->longAction=[m,s]{if(chainPage(m) && !m->chainEdit.load() && !m->chainQuick)chainSave(m,s);};
         c->longEnabled=[m]{return chainPage(m) && !m->chainEnabled.load() && !m->chainEdit.load() && !m->chainQuick;};
         int row=rows[s];
         c->action=[this,m,s,row,unavailable,trackGate] {
             if(!m)return;
+            if(m->loopyMuteHeld.load()){m->muteLoopy(s+2);return;}
+            if(m->uiPage.load()==Metropolix::LOOPY_PAGE)return;
             if(chainPage(m)){chainStage(m,s);return;}
             if(trackGate->dragging && m->uiPage.load()==Metropolix::GATE_PAGE) {
                 const int shortcuts[]={1,15,30,45,60,75,90,100};int id=screenParam(m);
@@ -357,6 +363,8 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         };
         c->active=[m,s] {
             if(!m)return false;
+            if(m->loopyMuteHeld.load())return !m->integer(Metropolix::modParam(s,Metropolix::MOD_MUTE)) || std::fmod(system::getTime(),.3)<.15;
+            if(m->uiPage.load()==Metropolix::LOOPY_PAGE)return true;
             if(chainPage(m)) {
                 auto state=m->getChainState();
                 if(m->chainQuick || m->chainEdit.load()==1)return m->getPreset(8*m->presetBankIndex.load()+s).occupied;
@@ -384,6 +392,11 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         c->activeColor=[m,s] {
             const NVGcolor colors[]={nvgRGB(235,54,46),nvgRGB(249,142,33),nvgRGB(241,220,63),nvgRGB(88,214,121),nvgRGB(76,222,233),nvgRGB(95,137,248),nvgRGB(218,82,222),nvgRGB(213,224,246)};
             if(!m)return colors[7];
+            if(m->loopyMuteHeld.load())return m->integer(Metropolix::modParam(s,Metropolix::MOD_MUTE))?nvgRGB(240,55,40):nvgRGB(245,220,60);
+            if(m->uiPage.load()==Metropolix::LOOPY_PAGE) {
+                if(m->loopyCommand.load()&(1u<<s))return nvgRGB(90,165,248);
+                return m->integer(Metropolix::RUN) && std::fmod(system::getTime()*2+s*.13,1.)<.5?nvgRGB(249,135,186):nvgRGB(135,187,227);
+            }
             if(chainPage(m) && !m->chainQuick && m->chainEdit.load()!=1)return nvgRGB(240,245,248);
             if(chainPage(m))return m->presetBankIndex.load()==7?nvgRGB(249,135,186):colors[m->presetBankIndex.load()];
             if(m->uiChooseFunction.load())return colors[s];
@@ -394,6 +407,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         c->dimActive=[m] { return (presetPage(m) || chainPage(m)) && !m->uiChooseFunction.load(); };
         c->rightAction=[c,m,s] {
             if(!m)return;
+            if(m->uiPage.load()==Metropolix::LOOPY_PAGE || m->loopyMuteHeld.load()){appendLoopyMenu(createMenu(),m,s);return;}
             if(chainPage(m)){appendChainMenu(createMenu(),m);return;}
             if(m->uiPage.load()==Metropolix::SWING_PAGE){if(!m->uiMod.load()){m->selectedStage.store(s);auto* menu=createMenu();menu->addChild(createMenuItem(std::to_string(metro::swingShortcut(s))+"% swing","",[m,s]{setWithHistory(m->getParamQuantity(Metropolix::swingParam(m->selectedTrack.load())),metro::swingShortcut(s));}));}return;}
             if(presetPage(m)){presetSlotMenu(m,s);return;}
