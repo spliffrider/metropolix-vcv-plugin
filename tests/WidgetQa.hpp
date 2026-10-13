@@ -188,6 +188,10 @@ void MetropolixWidget::qaStep() {
         #include "AccumulatorRoutingWidgetQa.hpp"
         return;
     }
+    if(std::getenv("METROPOLIX_MX_UI_QA")){
+#include "MxWidgetQa.hpp"
+        return;
+    }
     if(std::getenv("METROPOLIX_MIDI_UI_QA")){
 #include "MidiWidgetQa.hpp"
         return;

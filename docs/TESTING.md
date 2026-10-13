@@ -1,10 +1,10 @@
-# Metropolix Lab 2.24.0 — Windows alpha quick start
+# Metropolix Lab 2.25.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. Some hardware controls are still placeholders; see Known limitations.
 
-2.24.0 adds [MIDI](MIDI.md), including track notes/CCs, MOD CCs, clock/transport, root and queued program changes.
+2.25.0 adds [MX expansion](MX.md), including eight clock/stage outputs and seven modes.
 
 2.23.0 adds [preset pickup](PRESET-PICKUP.md), keeping physical controls in place until they reach their recalled sounding values.
 
@@ -12,10 +12,10 @@ welcome. Some hardware controls are still placeholders; see Known limitations.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.24.0/MetropolixLab-2.24.0-win-x64.vcvplugin)
-- [MIDI performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.24.0/MIDI-performance.vcv)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.25.0/MetropolixLab-2.25.0-win-x64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.25.0/MX-performance.vcv)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.24.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.25.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -29,7 +29,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.24.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.25.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -170,13 +170,12 @@ See the [controls guide](STAGE-OVERRIDES.md); hardware comparisons are welcome.
 
 ## Known limitations
 
-**Currently inactive or incomplete:** MX expansion, hardware SysEx
-interchange, remaining setup preferences, encoder confirmation and hardware
-pickup behavior. All 38 AUX/MOD and 29 CTRL destinations are implemented.
+**Currently incomplete:** software bank backup/interchange and undocumented
+hardware SysEx interchange. Setup preferences, encoder confirmation, pickup,
+MIDI, all seven MX modes, all 38 AUX/MOD and 29 CTRL destinations are implemented.
 
-**Fixed options:** /1 external input clock
-division. Each incoming clock edge is one sixteenth note. Some internal MOD
-gains are implementation choices pending hardware comparison. The front panel
+External analog input division is adjustable /1–/256. MIDI clocks use 24 PPQN.
+Some internal MOD gains are implementation choices pending hardware comparison. The front panel
 is not a promise that every printed function is implemented.
 
 No physical hardware comparison or broad multi-computer stability test has been
@@ -267,3 +266,11 @@ monitor/DAW, check Slide Toggle/Amount, stopped CC learn, incoming Root/PC,
 queued loading, Start/Continue/Stop and held-note release. Save/reopen and undo
 the settings. See [the MIDI guide](MIDI.md), including the manual's clock
 contradiction, voltage/note mapping and the limits of this software comparison.
+
+## MX — new in 2.25.0
+
+Open the MX performance example, choose AUDIO, and press RUN. MX sits at the
+right of the sequencer and triggers kick/snare/hats from actual track stages.
+Try ALT → stage6 (MX), preview/confirm modes and track/MOD assignments, undo,
+long default reset, mute, swap, Loopy Stage Player and save/reopen. The [MX
+guide](MX.md) lists every output and the clock prediction interpretations.

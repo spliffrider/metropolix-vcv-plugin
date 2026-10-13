@@ -1,6 +1,7 @@
 // A test-only sink records the actual stereo signal sent to Rack's AUDIO module.
 // It is absent from production builds and distributable manifests.
 #include <atomic>
+#include <array>
 #include <fstream>
 #include <vector>
 #include <cmath>
@@ -14,7 +15,9 @@ struct RackAudioQa : Module {
                         std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
     std::vector<float> samples;
     std::vector<float> cvSamples;
-    const bool performance = std::getenv("METROPOLIX_PERFORMANCE_VIDEO") != nullptr;
+    const bool mxTest=std::getenv("METROPOLIX_MX_AUDIO_QA")!=nullptr;
+    const bool performance = std::getenv("METROPOLIX_PERFORMANCE_VIDEO") != nullptr || mxTest;
+    std::array<float,8> previousMx{};std::array<unsigned,8> mxEdges{};bool mxSignalGood=true;
     std::vector<float> trace;
     float tracePeak[10] = {};
     bool cvConnected = false;
@@ -27,6 +30,7 @@ struct RackAudioQa : Module {
         if (ready.load(std::memory_order_relaxed) || !inputs[0].isConnected() || !inputs[1].isConnected()) return;
         samples[cursor * 2] = inputs[0].getVoltage();
         samples[cursor * 2 + 1] = inputs[1].getVoltage();
+        if(mxTest){int high=0;for(int out=0;out<8;++out){float v=inputs[out+2].getVoltage();mxSignalGood &= inputs[out+2].isConnected() && (v==0 || v==5);if(v>0){++high;if(previousMx[out]==0)++mxEdges[out];}previousMx[out]=v;}mxSignalGood &= high<=1;}
         if (performance) {
             for (int i = 0; i < 10; ++i) {
                 float v = inputs[i + 2].getVoltage();
@@ -120,9 +124,10 @@ struct RackAudioQaWidget : ModuleWidget {
         }
         wav.close();
         good &= !wav.fail();
+        if(m->mxTest){bool mxGood=m->mxSignalGood;report<<"MX stage cable edges:";for(auto count:m->mxEdges){report<<' '<<count;mxGood &= count>0;}report<<'\n'<<(mxGood?"PASS ":"FAIL ")<<"MX AUDIO SIGNALS: all eight 0/5V stage outputs observed through actual cables; at most one stage high\n";good &= mxGood;}
         if (m->performance) {
             std::ofstream trace(std::string(directory) + "/signals.csv");
-            trace << "seconds,pitch1,gate1,pitch2,gate2,kick,snare,hat,bass_peak,lead_peak,drum_peak\n";
+            trace << (m->mxTest?"seconds,mx1,mx2,mx3,mx4,mx5,mx6,mx7,mx8,kick_envelope,snare_envelope\n":"seconds,pitch1,gate1,pitch2,gate2,kick,snare,hat,bass_peak,lead_peak,drum_peak\n");
             for (int block = 0; block < m->frames / 480; ++block) {
                 trace << (block + 1) / 100.0;
                 for (int i = 0; i < 10; ++i) trace << ',' << m->trace[block * 10 + i];

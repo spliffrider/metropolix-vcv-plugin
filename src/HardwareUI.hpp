@@ -74,6 +74,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::GLOBAL_SETUP_PAGE:return f?globalMenuParam(m):-1;
         case Metropolix::UI_SETUP_PAGE:return f?uiSetupParam(m):-1;
         case Metropolix::MIDI_SETUP_PAGE:return f?midiSetupParam(m):-1;
+        case Metropolix::MX_SETUP_PAGE:return mxParam(m);
         case Metropolix::MOD_MENU_PAGE:return f?modMenuParam(m):-1;
         case Metropolix::MOD_ASSIGN_PAGE:return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))))?-1:Metropolix::modParam(l,f?Metropolix::MOD_ASSIGNMENT:Metropolix::MOD_DESTINATION);
         case Metropolix::TUNER_PAGE:return Metropolix::TUNER_OCTAVE;
@@ -116,6 +117,7 @@ void encoderPress(Metropolix* m) {
     if(p==Metropolix::CHAIN_PAGE) {chainEncoderPress(m);return;}
     if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::UI_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
+    if(p==Metropolix::MX_SETUP_PAGE){m->uiField.store(mxAssignment(m)<0?0:1-m->uiField.load());return;}
     if(p==Metropolix::MOD_MENU_PAGE || p==Metropolix::MIDI_SETUP_PAGE){midiEncoderPress(m);return;}
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }

@@ -1,4 +1,29 @@
-# Validation and fidelity status — 2.24.0
+# Validation and fidelity status — 2.25.0
+
+## MX expander — 2.25.0
+
+Twenty-five portable suites pass. MxTests adds 86,705 assertions for all seven
+modes, divider/offset phase, multiplied-clock rates at 44.1/48/96 kHz, missing
+clock behavior, probability statistics, mute/stage selection and gates that
+hold through Rest/zero note probability. Native Rack tests exercise actual
+double-buffer/output signals, track swap, stopped Loopy Stage Player, MOD mute,
+targeted reset phase preservation, exact 2 ms output delay plus one-sample bus
+latency, malformed assignment bounds, detach and schema28 persistence.
+
+The MX widget test passes mandatory mode/assignment confirmation with Enc Confirm
+Off, display/encoder dragging, bounds, undo/redo, grouped long defaults, EXIT
+cancellation and actual save/reopen. The 20 prior UI regression modes pass;
+151 OLED cases include eleven MX states/previews. Nine enlarged MX bitmap
+captures and the actual Rack percussion patch screenshot were visually inspected.
+
+A 12-second actual Rack bass/lead/percussion recording at 48 kHz observes each
+of all eight MX stage outputs through a cable (six rising edges per output),
+with 0/5V values and at most one stage high. RMS is .201091/.202401 V; peaks are
+1.32221/1.13008 V; DC is .000503372/.000502125 V. Kick, noise snare and hats use
+the stage gates. Hardware timing, external device interaction and subjective
+listening remain unverified. [MX](MX.md) documents assumptions where the manual
+does not specify trigger widths, correlation or external-clock prediction.
+
 
 ## MIDI — 2.24.0
 

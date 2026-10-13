@@ -6,6 +6,7 @@
 #include "../tests/VideoCaptureState.hpp"
 #endif
 #include "Metropolix.hpp"
+#include "Mx.hpp"
 #ifdef METROPOLIX_QA
 #include <patch.hpp>
 #endif
@@ -448,6 +449,7 @@ struct MainDisplay : widget::Widget {
 #include "ConfirmationUI.hpp"
 #include "ModWorkflowUI.hpp"
 #include "MidiUI.hpp"
+#include "MxUI.hpp"
 void openChainPage(Metropolix* m);
 #include "SetupUI.hpp"
 #include "PickupUI.hpp"
@@ -663,7 +665,7 @@ struct MetropolixWidget : ModuleWidget {
         auto* m = getModule<Metropolix>();
         if (!m) return;
         menu->addChild(new ui::MenuSeparator);
-        appendMidiMenu(menu,m);
+        appendMidiMenu(menu,m);appendMxMenu(menu,m);
         menu->addChild(createCheckMenuItem("Expanded stage editor", "",
             [m] { return m->expanded.load() && !m->modEditor.load(); }, [m] { bool open=!m->expanded.load() || m->modEditor.load(); m->modEditor.store(false); m->uiMod.store(false); m->expanded.store(open); }));
         menu->addChild(createMenuItem("Selected track settings", "", [m] { trackSettingsMenu(m); }));
@@ -683,3 +685,6 @@ struct MetropolixWidget : ModuleWidget {
 #endif
 
 Model* modelMetropolix = createModel<Metropolix, MetropolixWidget>("Metropolix");
+
+#include "MxPanel.hpp"
+Model* modelMX = createModel<Mx, MxWidget>("MX");

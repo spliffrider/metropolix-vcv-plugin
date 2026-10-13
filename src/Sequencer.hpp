@@ -159,6 +159,8 @@ public:
     bool resumeOnRun = false;
     unsigned chainMutes = 0;
     float clock = 0.f, masterClock = 0.f;
+    bool masterTick=false;double masterPeriod=.125;std::uint64_t resetSerial=0;
+    bool trackMuted(int t) const {return muted(t);}
     unsigned manualResetForce = 0;
     bool swapped() const {
         if(controls.swap || modulation.routes[0][ModOutputSwap]>=1.5f || modulation.routes[1][ModOutputSwap]>=1.5f)return true;
@@ -238,6 +240,7 @@ public:
     }
     void reset(bool manual=false) {
         if(manual && manualResetForce){for(int t=0;t<2;++t)if(manualResetForce & (1u<<t))resetTrackOnly(t);if(manualResetForce & 4u)modulation.reset();resetPulse.fire();return;}
+        ++resetSerial;
         if(!manual){pendingAccumReset.fill(false);accumResetHigh.fill(false);trackResetHigh.fill(false);}
         for (int t=0;t<2;++t) {
             if(manual && !settings.tracks[t].globalReset && !(manualResetForce & (1u<<t)))continue;
@@ -380,6 +383,7 @@ public:
             modulation.outputs.fill(0.f);
             stagePlayer(dt);
         }
+        masterTick=tick;masterPeriod=period;
         if(tick){firstTick=false;clockOutput.tick(settings.clockOutDivision,settings.clockOutOffset);masterPulse.fire();}
         if(running || !settings.clockRunningOnly)phase+=dt;
         clock = clockOutput.render(dt,running || !settings.clockRunningOnly);
