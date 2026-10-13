@@ -1,6 +1,6 @@
 void clockConfigRackTests(){
     using M=Metropolix;using namespace metro;
-    static_assert(M::CLOCK_SOURCE==719 && M::NUM_PARAMS==727 && M::FORMAT7_PARAMS==490 && M::SNAPSHOT_PARAMS==492,"configuration appends parameters and freezes format7");
+    static_assert(M::CLOCK_SOURCE==719 && M::FORMAT20_NUM_PARAMS==727 && M::FORMAT7_PARAMS==490 && M::SNAPSHOT_PARAMS==492,"configuration appends parameters and freezes format7");
     Module::ProcessArgs args;args.sampleRate=48000;args.sampleTime=1.f/48000;
     auto make=[](){auto m=std::unique_ptr<M>(new M);for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(0);return m;};
     auto frames=[&](M& m,int n){for(int f=0;f<n;++f)m.process(args);};

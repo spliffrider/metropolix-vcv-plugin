@@ -12,7 +12,7 @@ static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index
 static int presetIndex(int id) { return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : id>=SLIDE_TYPE_1 && id<CV_RAMPS+16?FORMAT3_PARAMS+id-SLIDE_TYPE_1:id>=OUTPUT_TRACK_OPTIONS && id<OUTPUT_TRACK_OPTIONS+6?FORMAT5_PARAMS+id-OUTPUT_TRACK_OPTIONS:id>=TRACK_BEHAVIOR && id<TRACK_BEHAVIOR+6?FORMAT6_PARAMS+id-TRACK_BEHAVIOR:id>=TRACK_GLOBAL_RESET_1 && id<=TRACK_GLOBAL_RESET_2?FORMAT7_PARAMS+id-TRACK_GLOBAL_RESET_1:-1; }
 using Snapshot = metro::PresetSnapshot<SNAPSHOT_PARAMS>;
 struct PresetCommand {
-    enum Kind { Load, Cancel, Restore } kind = Cancel;
+    enum Kind { Load, Cancel, Restore, Initialize } kind = Cancel;
     Snapshot snapshot, other;
     int slot = -1;
 };
@@ -96,6 +96,13 @@ void requestPreset(int slot) {
     else presetNotice.store(0);
     presetUiCommands.push_back(c);
 }
+void requestInitialize() {
+    if(chainEnabled.load()){auto state=getChainState();state.enabled=false;setChainState(state);}
+    PresetCommand c;c.kind=PresetCommand::Initialize;c.slot=-2;int init=integer(INIT_PRESET);
+    if(init)c.snapshot=getPreset(init-1);
+    if(!c.snapshot.occupied){c.snapshot.occupied=true;for(int i=0;i<SNAPSHOT_PARAMS;++i)c.snapshot.values[i]=paramQuantities[presetParam(i)]->defaultValue;}
+    presetUiCommands.push_back(c);
+}
 void cancelPreset() {
     presetUiCommands.push_back(PresetCommand{});
     presetNotice.store(4);
@@ -142,7 +149,8 @@ void processPresetCommands(bool run, bool external, bool reset) {
     auto& c = audioPresetCommand;
     bool consumed = presetCommands.pop(c);
     if (consumed) {
-        if (c.kind == PresetCommand::Restore) {
+        if(c.kind==PresetCommand::Initialize){pendingPreset=c.snapshot;audioPendingSlot=-2;applyPendingPreset(false);}
+        else if (c.kind == PresetCommand::Restore) {
             audioPendingSlot = -1;
             pendingSlot.store(-1);
             for (int i = 0; i < SNAPSHOT_PARAMS; ++i)

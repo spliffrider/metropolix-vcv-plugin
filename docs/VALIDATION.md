@@ -1,4 +1,15 @@
-# Validation and fidelity status — 2.20.0
+# Validation and fidelity status — 2.21.0
+
+## Editing workflows — 2.21.0
+
+Twenty-one portable suites pass. WorkflowTests adds 3,080,107 checks for
+discrete/continuous bounds, unbiased discrete endpoints, the small-option
+20% morph rate, large-range step limits and logical gate CV. Rack integration
+checks initialized/custom/empty Init presets, recall policies, undo receipts,
+format 8 persistence and schema migration. Native callbacks check multiple
+stage pastes, toggle suppression, track screen/menu and whole MOD copies,
+ALT baseline restore, paired AUX long clear, Init undo/redo, save/reopen and 113 OLED states.
+See [Editing workflows](EDITING-WORKFLOWS.md) for boundary interpretations.
 
 ## Clock/reset configuration — 2.20.0
 

@@ -1,5 +1,5 @@
-constexpr int SetupMenuCount=4, GlobalMenuCount=6;
-const char* setupMenuName(int n){const char* names[]={"Slider Octaves","Presets Setup...","Preset Chains...","Global Setup..."};return names[metro::clamp(n,0,SetupMenuCount-1)];}
+constexpr int SetupMenuCount=5, GlobalMenuCount=6;
+const char* setupMenuName(int n){const char* names[]={"Slider Octaves","Presets Setup...","Preset Chains...","Global Setup...","Init Preset..."};return names[metro::clamp(n,0,SetupMenuCount-1)];}
 const char* globalMenuName(int n){const char* names[]={"Clock Src","Clk/Rset Out","Reset Input","Bottom Pitch","Run Btn","Tuner..."};return names[metro::clamp(n,0,GlobalMenuCount-1)];}
 int globalMenuParam(Metropolix* m,int item=-1){if(!m)return -1;const int ids[]={Metropolix::CLOCK_SOURCE,Metropolix::CLOCK_RUNNING_ONLY,Metropolix::RESET_INPUT_MODE,Metropolix::BOTTOM_PITCH,Metropolix::RUN_MODE,-1};return ids[metro::clamp(item<0?m->globalCursor.load():item,0,GlobalMenuCount-1)];}
 void openTuner(Metropolix* m){if(!m)return;m->uiPage.store(Metropolix::TUNER_PAGE);m->uiField.store(0);m->uiAlt.store(false);m->uiChooseFunction.store(false);m->tunerActive.store(true);}
@@ -19,7 +19,8 @@ void setupEncoderPress(Metropolix* m){
             case 0:m->uiField.store(1-m->uiField.load());break;
             case 1:m->uiPage.store(Metropolix::PRESET_SETUP_PAGE);m->uiField.store(0);break;
             case 2:openChainPage(m);break;
-            default:openGlobalSetup(m);break;
+            case 3:openGlobalSetup(m);break;
+            default:m->requestInitialize();break;
         }
     }else if(m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE){
         int id=globalMenuParam(m);if(id<0){openTuner(m);return;}

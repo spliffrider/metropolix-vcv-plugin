@@ -3,6 +3,7 @@
 #include "Sequencer.hpp"
 #include "Presets.hpp"
 #include "Chains.hpp"
+#include "Workflows.hpp"
 #include <atomic>
 #include <mutex>
 #include <deque>
@@ -143,7 +144,7 @@ struct Metropolix : Module {
         CV_TYPE_1, CV_TYPE_2, CV_RAMPS, CLOCK_OUT_DIV = CV_RAMPS + 16, CLOCK_OUT_OFFSET,
         OUTPUT_TRACK_OPTIONS, OUTPUT_TRACK_STRIDE=3,
         TRACK_BEHAVIOR=OUTPUT_TRACK_OPTIONS+2*OUTPUT_TRACK_STRIDE, TRACK_BEHAVIOR_STRIDE=3, FORMAT19_NUM_PARAMS=TRACK_BEHAVIOR+2*TRACK_BEHAVIOR_STRIDE,
-        CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, NUM_PARAMS
+        CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, FORMAT20_NUM_PARAMS, INIT_PRESET=FORMAT20_NUM_PARAMS, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -261,6 +262,13 @@ struct Metropolix : Module {
         LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
+    std::vector<float> workflowBaseline, workflowClipboard;
+    int workflowClipKind=0, workflowClipTag=-1, workflowStageSource=-1;
+    bool workflowCopyUsed=false, workflowLaneCopy=false, workflowEditUsed=false;
+    unsigned workflowStageHeld=0;
+    std::string workflowMessage;double workflowUntil=0;
+    metro::RandomSource workflowRandomSource;
+    void clearWorkflows(){workflowBaseline.clear();workflowClipboard.clear();workflowClipKind=0;workflowClipTag=-1;workflowStageHeld=0;workflowCopyUsed=workflowLaneCopy=workflowEditUsed=false;workflowMessage.clear();workflowUntil=0;}
     std::atomic<int> trackMenuCursor{0}, setupCursor{0}, globalCursor{0};
     std::atomic<bool> tunerActive{false}, transportRunning{false};
     std::atomic<unsigned> heldTrackReset{0};
@@ -453,6 +461,8 @@ struct Metropolix : Module {
         configSwitch(BOTTOM_PITCH,0,12,12,"Bottom pitch",{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B","Root"});
         configParam(TUNER_OCTAVE,-5,5,0,"Tuner pitch"," octaves (C0 = 0 V)")->snapEnabled=true;
         configSwitch(TUNER_GATE,0,1,0,"Tuner gates",{"High","Clock"});
+        std::vector<std::string> initLabels{"Off"};for(int slot=0;slot<64;++slot)initLabels.push_back(std::to_string(slot/8+1)+"-"+std::to_string(slot%8+1));
+        configSwitch(INIT_PRESET,0,64,0,"Init preset",initLabels);workflowRandomSource.state=random::u32();
         paramQuantities[RUN]->description="Run button transport. A connected Reset jack in Run/Run-C mode overrides this saved choice; the light follows actual playback.";
         paramQuantities[RESET]->description="Reset tracks with Global Reset On. Hold a TRK button to force that track's reset even with Global Reset Off.";
         for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id){paramQuantities[id]->randomizeEnabled=false;paramQuantities[id]->snapEnabled=true;}
@@ -646,7 +656,7 @@ struct Metropolix : Module {
     }
 
     void onReset(const ResetEvent& e) override {
-        Module::onReset(e);tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);
+        Module::onReset(e);tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         resetPresetRuntime();
@@ -657,7 +667,7 @@ struct Metropolix : Module {
     }
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "schemaVersion", json_integer(23));
+        json_object_set_new(root, "schemaVersion", json_integer(24));
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
         json_object_set_new(root, "presetFormat", json_integer(8));
@@ -686,10 +696,11 @@ struct Metropolix : Module {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
-        tunerActive.store(false);heldTrackReset.store(0);
+        tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();
         int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
         int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
-        trackMenuCursor.store(metro::clamp(cursor,0,10));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,3));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
+        trackMenuCursor.store(metro::clamp(cursor,0,10));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,4));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
+        if(schema<24)params[INIT_PRESET].setValue(0);
         if(schema<23)for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(json_integer_value(json_object_get(root,"schemaVersion"))<20)
             for(int id=TRACK_BEHAVIOR;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
@@ -750,7 +761,7 @@ struct Metropolix : Module {
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
         uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(TUNER_PAGE)));
         if(uiPage.load()==TUNER_PAGE){uiPage.store(GLOBAL_SETUP_PAGE);globalCursor.store(5);}
-        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?6:uiPage.load()==ACCUM_PAGE?5:1));
+        uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?7:uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
         uiStageDetail.store(json_is_true(json_object_get(root,"uiStageDetail")));
         if(json_integer_value(json_object_get(root,"schemaVersion"))<6 && uiPage.load()==LENGTH_PAGE)uiField.store(0);

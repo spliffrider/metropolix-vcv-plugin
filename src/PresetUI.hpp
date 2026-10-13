@@ -28,7 +28,7 @@ void pumpPresetUi(Metropolix* m) {
     while (m->presetRecalls.pop(event)) {
         auto* h = new PresetLoadChange;
         h->moduleId = m->id; h->recall = event;
-        h->name = string::f("load Metropolix preset %d-%d", event.slot / 8 + 1, event.slot % 8 + 1);
+        h->name = event.slot<0?"initialize Metropolix preset":string::f("load Metropolix preset %d-%d", event.slot / 8 + 1, event.slot % 8 + 1);
         APP->history->push(h);
     }
     m->sendPresetCommand();
@@ -93,6 +93,8 @@ void appendPresetMenu(ui::Menu* menu, Metropolix* m) {
         menu->addChild(createIndexSubmenuItem(label, values, [q] { return size_t(q->getValue()); },
             [q](size_t i) { setWithHistory(q, float(i)); }));
     };
+    menu->addChild(createMenuItem("Initialize preset","",[m]{m->requestInitialize();}));
+    menu->addChild(createIndexSubmenuItem("Set Init preset",dynamic_cast<SwitchQuantity*>(m->getParamQuantity(Metropolix::INIT_PRESET))->labels,[m]{return size_t(m->integer(Metropolix::INIT_PRESET));},[m](size_t slot){setWithHistory(m->getParamQuantity(Metropolix::INIT_PRESET),float(slot));}));
     choice("Load delay", Metropolix::LOAD_DELAY, {"Instant", "Queue Pulses", "Total Pulses"});
     choice("Pitch load", Metropolix::LOAD_PITCH, {"Off: keep sliders", "Jump: recall sliders"});
     choice("Switch load", Metropolix::LOAD_SWITCHES, {"Off: keep switches", "Jump: recall switches"});

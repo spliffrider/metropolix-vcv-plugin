@@ -188,6 +188,11 @@ const DisplayCase cases[]={
     {"chain-empty",Metropolix::CHAIN_PAGE,0,0,0,false},
     {"chain-edit",Metropolix::CHAIN_PAGE,0,0,0,false},
     {"chain-end",Metropolix::CHAIN_PAGE,0,0,0,false},
+    {"setup-init",Metropolix::SETUP_PAGE,0,0,0,false},
+    {"preset-init",Metropolix::PRESET_SETUP_PAGE,7,0,0,false},
+    {"workflow-stage-copy",Metropolix::STAGE_PAGE,0,0,Metropolix::PROBABILITY,false},
+    {"workflow-lane-copy",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"workflow-restore",Metropolix::LENGTH_PAGE,0,0,0,false},
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
 int index=(qaFrame-20)/6;
@@ -196,7 +201,11 @@ if(qaFrame>=20 && index<count) {
     if((qaFrame-20)%6==0) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
-        m->uiAlt.store(false);
+        m->uiAlt.store(false);m->clearWorkflows();
+        if(std::string(test.name)=="setup-init")m->setupCursor.store(4);
+        if(std::string(test.name)=="preset-init")m->params[Metropolix::INIT_PRESET].setValue(64);
+        if(std::string(test.name)=="workflow-stage-copy" || std::string(test.name)=="workflow-lane-copy"){m->workflowStageHeld=1;m->workflowStageSource=0;m->workflowLaneCopy=test.mod;}
+        if(std::string(test.name)=="workflow-restore"){m->workflowMessage="ALT STATE RESTORED";m->workflowUntil=system::getTime()+2;}
         if(!test.mod && (test.row==Metropolix::CV || test.page==Metropolix::CV_TYPE_PAGE)) {
             std::string name=test.name;int t=m->selectedTrack.load();
             int type=name.find("unipolar")!=std::string::npos?1:name.find("gates")!=std::string::npos?2:0;
