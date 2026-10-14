@@ -1,8 +1,23 @@
-# Modulation playtest — 2.52.0
+# Modulation playtest — 2.54.0
 
 Open `examples/Hardware-panel-demo.vcv` in Rack. It is already running and patched. Right-click **MOD**, then choose **Open MOD editor** to expose the grid used in these checks. The older `Modulation-demo.vcv` uses the same musical settings. Use **File > Save As** to keep your own test copy. Choose your output device in the AUDIO module to hear the two voices. The patch's two VCAs are set to 32%.
 
 Metropolix Lab produces control voltages, not audio. Its pitch and gate outputs drive the oscillators, envelopes, and VCAs below it. The first Scope monitors OUT A and OUT B; the second monitors PITCH 1 and GATE 1. Signals should appear even without an audio device selected.
+
+## Select lanes on ORDER, LEN and DIV
+
+With MOD selected, open ORDER, LEN or DIV. Click a stage button 1–8 without
+ALT or another held shortcut button to select MOD lane 1–8. The settings
+screen and its active field stay open; the lit button shows the selected lane.
+The encoder or OLED then edits that lane's setting. Lane selection leaves
+stage voltages, gate toggles and Undo untouched, including during mouse movement.
+
+Switching to a different lane cancels the previous lane's pending setting.
+Selecting the same lane retains it. Hover a button for lane-specific help;
+right-click selects the lane and offers **Lane settings** and **Edit stage
+values**. Those menu links retain the clicked lane if selection later changes.
+EDIT lane selection, ALT functions and held timing/order shortcuts remain
+available. This follows the supplied firmware 1.6 manual, printed p145.
 
 ## Destination-controlled CV type
 
