@@ -22,6 +22,12 @@ inline bool modGateDestination(ModDestination destination) {
     }
 }
 inline bool modGlobalDestination(ModDestination destination){return destination==ModOutputSwap || destination==ModTempo || destination==ModLoopy || destination==ModLoopyPulses || destination==ModLoopyOffset;}
+// Manual p192: an internal destination fixes its lane to Bipolar or Gate.
+// Keep the saved type for unassigned lanes (including lanes sent to A/B).
+inline ModType effectiveModType(ModType saved, ModDestination destination) {
+    if(destination<=ModNone || destination>=ModDestinationCount)return saved;
+    return modGateDestination(destination)?ModGate:ModBipolar;
+}
 template <class T> T modClamp(T v, T lo, T hi) { return std::max(lo, std::min(hi, v)); }
 
 // AUX pp.154-156: continuous CV is attenuverted; a gate destination uses
@@ -94,16 +100,18 @@ struct Modulation {
     }
     static float stageValue(const ModLane& lane, int stage) {
         float value = lane.values[stage];
-        if (lane.type == ModGate || modGateDestination(lane.destination)) return value >= 1.5f ? 5.f : 0.f;
-        return modClamp(value, lane.type == ModUnipolar ? 0.f : -5.f, 5.f);
+        ModType type=effectiveModType(lane.type,lane.destination);
+        if (type == ModGate) return value >= 1.5f ? 5.f : 0.f;
+        return modClamp(value, type == ModUnipolar ? 0.f : -5.f, 5.f);
     }
     static float voltage(const ModLane& config, const ModLaneState& state) {
         if (state.stage < 0) return 0.f;
         float target = stageValue(config, state.stage);
-        bool ramp = config.ramps[state.stage] && config.type != ModGate && !modGateDestination(config.destination);
+        ModType type=effectiveModType(config.type,config.destination);
+        bool ramp = config.ramps[state.stage] && type != ModGate;
         double mix = ramp ? modClamp(state.age / state.duration, 0.0, 1.0) : 1.0;
         float value = state.start + (target - state.start) * mix;
-        return modClamp(value, config.type == ModUnipolar ? 0.f : -5.f, 5.f);
+        return modClamp(value, type == ModUnipolar ? 0.f : -5.f, 5.f);
     }
     void tick(const std::array<ModLane, 8>& configs, double basePeriod) {
         const std::array<bool, 8> enabled{{true,true,true,true,true,true,true,true}};

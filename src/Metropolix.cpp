@@ -180,10 +180,10 @@ void modSettingsMenu(Metropolix* m, int lane) {
     auto choice=[menu,m,lane](const std::string& label,int property,std::vector<std::string> values,bool disabled=false) {
         auto* q=m->getParamQuantity(Metropolix::modParam(lane,property));
         menu->addChild(createIndexSubmenuItem(label,values,
-            [q] { return static_cast<size_t>(q->getValue()); },
+            [q] { if(auto* type=dynamic_cast<ModTypeQuantity*>(q))return static_cast<size_t>(type->type());return static_cast<size_t>(q->getValue()); },
             [q](size_t i) { setWithHistory(q,static_cast<float>(i)); },disabled));
     };
-    choice("CV type",Metropolix::MOD_TYPE,{"Bipolar","Unipolar","Gate"});
+    choice("CV type",Metropolix::MOD_TYPE,{"Bipolar","Unipolar","Gate"},m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION))!=metro::ModNone);
     choice("Internal destination",Metropolix::MOD_DESTINATION,Metropolix::modDestinations());
     choice("Destination tracks",Metropolix::MOD_ASSIGNMENT,{"Track 1","Track 2","Both tracks"},metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION)))));
     choice("Mute",Metropolix::MOD_MUTE,{"Off","On"});
@@ -263,7 +263,7 @@ struct ValueCell : ValueKnob {
     bool dragCancelled = false;
     bool rawDrag=false;
     float rawBefore=0;
-    bool locked() const { return metroModule && metroModule->ctrlOwner(paramId)>=0; }
+    bool locked() const {if(!metroModule)return false;if(metroModule->ctrlOwner(paramId)>=0)return true;auto* type=dynamic_cast<ModTypeQuantity*>(metroModule->getParamQuantity(paramId));return type && type->forced();}
 
     ValueCell() {
         box.size = Vec(40, 24);
@@ -289,6 +289,7 @@ struct ValueCell : ValueKnob {
         auto* q = getParamQuantity();
         if (!q) return "--";
         if(dynamic_cast<ModVoltageQuantity*>(q))return q->getDisplayValueString()+q->getUnit();
+        if(auto* type=dynamic_cast<ModTypeQuantity*>(q))return type->type()==metro::ModGate?"Gate":type->type()==metro::ModUnipolar?"Uni +":"Bi ±";
         if(auto* assignment=dynamic_cast<RoutingAssignmentQuantity*>(q))if(assignment->global())return "Global";
         if (modProperty >= Metropolix::MOD_RAMP) return q->getValue() > .5f ? "RAMP" : "STEP";
         if (modGateCell()) return q->getValue() >= 1.5f ? "ON" : "OFF";
@@ -304,7 +305,8 @@ struct ValueCell : ValueKnob {
         font(args.vg);
         rect(args.vg, 0, 0, box.size.x, box.size.y, dark ? ink() : nvgRGB(244, 243, 235));
         line(args.vg, 2, box.size.y - 1, box.size.x - 2, box.size.y - 1, nvgRGB(190, 191, 184));
-        std::string label=locked()?string::f("C%d ",metroModule->ctrlOwner(paramId)+1)+valueText():valueText();
+        int owner=metroModule?metroModule->ctrlOwner(paramId):-1;
+        std::string label=owner>=0?string::f("C%d ",owner+1)+valueText():valueText();
         nvgFontSize(args.vg,10.5f);float width=nvgTextBounds(args.vg,0,0,label.c_str(),nullptr,nullptr);
         float size=width>box.size.x-6?std::max(6.f,10.5f*(box.size.x-6)/width):10.5f;
         text(args.vg, box.size.x / 2, box.size.y / 2, label, size,
@@ -319,8 +321,7 @@ struct ValueCell : ValueKnob {
         if(metroModule && row==Metropolix::CV && modProperty<0)return metroModule->integer(Metropolix::cvTypeParam(metroModule->selectedTrack.load()))==metro::GateCv;
         if (!metroModule || modProperty < Metropolix::MOD_VALUE || modProperty >= Metropolix::MOD_RAMP) return false;
         int lane = metroModule->selectedLane.load();
-        return metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE)) == metro::ModGate
-            || metro::modGateDestination(static_cast<metro::ModDestination>(metroModule->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
+        return metroModule->effectiveModType(lane)==metro::ModGate;
     }
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
@@ -558,8 +559,8 @@ struct ModGraph : widget::Widget {
         if (!module) return;
         int lane = module->selectedLane.load();
         int stage = module->modStage[lane].load();
-        int type = module->integer(Metropolix::modParam(lane, Metropolix::MOD_TYPE));
-        bool gated = type == metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(module->integer(Metropolix::modParam(lane, Metropolix::MOD_DESTINATION))));
+        int type = module->effectiveModType(lane);
+        bool gated = type == metro::ModGate;
         float lastY = 25;
         for (int s = 0; s < 8; ++s) {
             float value = module->params[Metropolix::modParam(lane, Metropolix::MOD_VALUE + s)].getValue();

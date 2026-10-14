@@ -22,10 +22,10 @@ std::array<ValueCell*,8> cells{};for(auto* w:modPanel->children)if(auto* c=dynam
 auto* display=find("Metropolix display");bool core=true,offsets=true,zero=true,confirmation=true,clock=true;int edits=0,clockEdits=0;
 auto probe=[&](ValueKnob* c,int lane,int stage,int type,int destination,bool alt,float dy){
     setup(lane,stage,type,destination,alt);bool panel=dynamic_cast<HardwareControl*>(c)!=nullptr;if(auto* cell=dynamic_cast<ValueCell*>(c))cell->step();int selected=M::modParam(lane,M::MOD_VALUE+stage);auto origin=raw();auto* previous=last();c->onDragStart(start);move.mouseDelta=Vec(0,dy);c->onDragMove(move);auto edited=raw(),expected=edited;
-    bool gate=type==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(destination));
+    bool gate=(destination==metro::ModNone && type==metro::ModGate) || metro::modGateDestination(static_cast<metro::ModDestination>(destination));
     for(int i=0;i<M::NUM_PARAMS;++i){bool allowed=false;for(int s=0;s<8;++s)allowed |= i==M::modParam(lane,M::MOD_VALUE+s) && (s==stage || (panel && alt));if(!allowed)core &= edited[i]==origin[i];}
     if(dy==0)zero &= edited==origin;
-    if(dy!=0 && panel && alt && !gate){float minimum=type==metro::ModUnipolar?0.f:-5.f;float delta=edited[selected]-metro::clamp(origin[selected],minimum,5.f);for(int s=0;s<8;++s){int next=M::modParam(lane,M::MOD_VALUE+s);offsets &= std::abs(edited[next]-metro::clamp(metro::clamp(origin[next],minimum,5.f)+delta,minimum,5.f))<.00001f;}}
+    if(dy!=0 && panel && alt && !gate){float minimum=destination==metro::ModNone && type==metro::ModUnipolar?0.f:-5.f;float delta=edited[selected]-metro::clamp(origin[selected],minimum,5.f);for(int s=0;s<8;++s){int next=M::modParam(lane,M::MOD_VALUE+s);offsets &= std::abs(edited[next]-metro::clamp(metro::clamp(origin[next],minimum,5.f)+delta,minimum,5.f))<.00001f;}}
     if(std::abs(dy)<3){for(int s=0;s<8;++s)if(s==stage || (panel && alt)){int next=M::modParam(lane,M::MOD_VALUE+s);if(gate)expected[next]=edited[next]>=1.5f?0:5;else if(panel)expected[M::modParam(lane,M::MOD_RAMP+s)]=1;}}
     c->onDragEnd(end);core &= raw()==expected && sequence(previous,origin,edited,raw()) && released(c);++edits;
 };

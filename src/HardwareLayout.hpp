@@ -180,7 +180,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     };
     encoder->confirmationCapable=true;encoder->navigationMode=display->navigationMode;encoder->navigationTurn=display->navigationTurn;
     for(auto* c:{static_cast<HardwareControl*>(display),encoder}) {
-        c->detailHelp=[m]{return factoryPage(m)?factoryHelp(m):backupHelp(m);};
+        c->detailHelp=[m]{if(m && m->uiMod.load() && m->uiPage.load()==Metropolix::CV_TYPE_PAGE)return m->getParamQuantity(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_TYPE))->getDescription();return factoryPage(m)?factoryHelp(m):backupHelp(m);};
         c->groupedParams=[m] {
             if(m && m->uiPage.load()==Metropolix::MX_SETUP_PAGE)return std::vector<int>{Metropolix::MX_MODE,Metropolix::MX_TRACK,Metropolix::MX_LANE};
             if(m && m->uiPage.load()==Metropolix::UI_SETUP_PAGE)return std::vector<int>{uiSetupParam(m)};
@@ -472,7 +472,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 else if(s==3)screenPage(m,Metropolix::B_PAGE);
                 else if(s==4)screenPage(m,Metropolix::CLOCK_OUT_PAGE);
                 else if(s==6){m->uiMod.store(false);screenPage(m,Metropolix::ACCUM_PAGE);}
-                else if(s==7){if(m->uiMod.load())modSettingsMenu(m,m->selectedLane.load());else screenPage(m,Metropolix::CV_TYPE_PAGE);}
+                else if(s==7)screenPage(m,Metropolix::CV_TYPE_PAGE);
                 else openMx(m);
                 return;
             }
@@ -490,7 +490,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             m->selectedStage.store(s); m->uiPage.store(Metropolix::STAGE_PAGE); m->uiEdit.store(true); m->uiStageDetail.store(true);
             if(m->uiMod.load()) {
                 int l=m->selectedLane.load();
-                bool gate=m->integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))));
+                bool gate=m->effectiveModType(l)==metro::ModGate;
                 if(gate){auto* q=m->getParamQuantity(Metropolix::modParam(l,Metropolix::MOD_VALUE+s));setWithHistory(q,q->getValue()>=1.5f?0.f:5.f);}
             }
             int current=m->selectedRow.load();

@@ -14,6 +14,23 @@ void tick(metro::Sequencer& seq) { seq.process(.002, true, true, true, false); }
 int main() {
     using namespace metro;
     {
+        // Manual p192: internal assignment determines the sounding type;
+        // stored preferences only select the unassigned/output-only mode.
+        for(int destination=0;destination<ModDestinationCount;++destination)
+        for(int saved=0;saved<3;++saved){
+            ModLane lane;lane.destination=static_cast<ModDestination>(destination);lane.type=static_cast<ModType>(saved);
+            bool gate=modGateDestination(lane.destination) || (destination==ModNone && saved==ModGate);
+            bool unipolar=destination==ModNone && saved==ModUnipolar;
+            for(float value:{-5.f,-3.25f,0.f,1.49f,1.5f,2.25f,5.f}){
+                lane.values[0]=value;float expected=gate?(value>=1.5f?5.f:0.f):(unipolar?std::max(0.f,value):value);
+                near(Modulation::stageValue(lane,0),expected,"assigned MOD type follows destination without clipping or quantizing continuous values");
+                check(int(lane.type)==saved && lane.values[0]==value,"effective MOD mode preserves saved type and stage data");
+            }
+            lane.values[0]=4;lane.ramps[0]=true;ModLaneState state;state.stage=0;state.start=-4;state.age=.25;state.duration=1;
+            near(Modulation::voltage(lane,state),gate?5.f:unipolar?0.f:-2.f,"MOD ramps and limits use the destination's effective mode");
+        }
+    }
+    {
         Sequencer seq;
         seq.settings.outputSources = {{2,3}};
         seq.settings.modLanes[0].values = {{-2,-1,0,1,2,1,0,-1}};
