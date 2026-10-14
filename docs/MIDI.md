@@ -86,6 +86,10 @@ Instant/Queue/Total load delay, rejects empty slots and enabled chains, and uses
 an audio-owned bank cache. A burst uses its most recent program request. These
 external automation recalls do not create Rack undo entries.
 
+Gate destinations send CC 0/127 regardless of a saved Bipolar lane type; stopped
+learning uses the effective gate value. Voltage destinations retain their normal
+bipolar/unipolar mapping.
+
 ## Example and verification
 
 Open `examples/MIDI-performance.vcv`, select an AUDIO device and press RUN.
@@ -104,6 +108,5 @@ patch is recorded for both audio channels. Physical MIDI hardware/DAW behavior
 and comparisons with a Metropolix remain unverified.
 
 Hardware SysEx interchange is not included: the manual describes transfers
-without documenting the device's payload format. Plugin backup/interchange
-will use a documented software format; it must not be presented as hardware
-SysEx compatibility.
+without documenting the device's payload format. [Portable backups](BACKUPS.md) use a documented software JSON format. These files
+do not provide hardware SysEx compatibility.

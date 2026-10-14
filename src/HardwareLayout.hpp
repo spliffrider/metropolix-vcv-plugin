@@ -233,13 +233,15 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     };
     encoder->longEnabled=[m]{return m && (m->uiPage.load()==Metropolix::MX_SETUP_PAGE || (m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE && midiSetupParam(m)>=0) || (m->uiPage.load()==Metropolix::MOD_MENU_PAGE && modMenuParam(m)>=0) || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || (m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE && globalMenuParam(m)>=0) || m->uiPage.load()==Metropolix::AUX_PAGE || m->uiPage.load()==Metropolix::MOD_ASSIGN_PAGE || modStagePage(m) || (trackMenuPage(m) && (trackMenuParam(m)<0 || m->ctrlOwner(trackMenuParam(m))<0)) || outputPage(m) || m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || cvPage(m) || m->uiPage.load()==Metropolix::CV_TYPE_PAGE || (m->uiPage.load()==Metropolix::SCALE_PAGE && metro::userScale(m->integer(Metropolix::SCALE))) || (m->uiPage.load()==Metropolix::SLIDE_PAGE && !m->uiMod.load()) || overridePage(m) || (!m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) || (m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
     auto* exit=control("EXIT",214,229,15,HardwareControl::DARK_BUTTON);
-    exit->help="Return to the home overview. Right-click for optional editors.";
-    exit->action=[m] { if(m) { if(m->chainQuick){m->chainQuickCancel=true;return;}if(chainPage(m) && m->chainEdit.load()){m->chainEdit.store(0);m->chainCreating=false;return;} screenPage(m,Metropolix::HOME); m->uiEdit.store(false); m->uiAlt.store(false); m->uiChooseFunction.store(false); } };
+    exit->help="Step back from a submenu or return HOME. Hold for more than one second to sync recalled pitch/CTRL pickup values to their visible panel positions. Right-click for optional editors.";
+    exit->action=[m] { if(m) { if(m->chainQuick){m->chainQuickCancel=true;return;}if(chainPage(m) && m->chainEdit.load()){m->chainEdit.store(0);m->chainCreating=false;return;} screenPage(m,parentPage(m)); m->uiEdit.store(false); m->uiAlt.store(false); m->uiChooseFunction.store(false); } };
+    exit->longAction=[m]{syncPanel(m);};
     exit->rightAction=[stageEditor,modEditor,m] {
         auto* menu=createMenu();
         menu->addChild(createMenuItem("Open stage editor","",stageEditor));
         menu->addChild(createMenuItem("Open MOD editor","",modEditor));
         menu->addChild(createMenuItem("Close optional editor","",[m] { if(m)m->expanded.store(false); }));
+        menu->addChild(createMenuItem("Sync to visible panel positions","",[m]{syncPanel(m);}));
     };
     for(int t=0;t<2;++t) {
         auto* c=control(string::f("TRK %d",t+1),145+t*31,272,16,HardwareControl::BLUE_BUTTON);

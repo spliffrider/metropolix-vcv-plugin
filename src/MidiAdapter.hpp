@@ -112,7 +112,7 @@ void processMidiOutput(const ProcessArgs& args,bool run,bool external,bool reset
         }
         voice.process(state.gate>=1.5f && !midiHeldSuppressed[t],key,channel,velocity,midiEvents[t],slide,emit);
     }
-    if(run && ccDue)for(int l=0;l<8;++l){int signature=integer(midiModParam(l,MIDI_MOD_CHANNEL))*256+integer(midiModParam(l,MIDI_MOD_CC));if(signature!=midiModConfig[l]){midiModLastCC[l]=-1;midiModConfig[l]=signature;}int value=metro::midiVoltage(sequencer.modulation.outputs[l],sequencer.settings.modLanes[l].type==metro::ModBipolar);if(value!=midiModLastCC[l]){midiCC(integer(midiModParam(l,MIDI_MOD_CHANNEL)),integer(midiModParam(l,MIDI_MOD_CC)),value);midiModLastCC[l]=value;}}
+    if(run && ccDue)for(int l=0;l<8;++l){int signature=integer(midiModParam(l,MIDI_MOD_CHANNEL))*256+integer(midiModParam(l,MIDI_MOD_CC));if(signature!=midiModConfig[l]){midiModLastCC[l]=-1;midiModConfig[l]=signature;}const auto& config=sequencer.settings.modLanes[l];int value=metro::midiVoltage(sequencer.modulation.outputs[l],config.type==metro::ModBipolar && !metro::modGateDestination(config.destination));if(value!=midiModLastCC[l]){midiCC(integer(midiModParam(l,MIDI_MOD_CHANNEL)),integer(midiModParam(l,MIDI_MOD_CC)),value);midiModLastCC[l]=value;}}
     if(update){
         if(midiParametersSeen && !run)for(int t=0;t<2;++t){int channel=midiTrackChannel(t);
             for(int s=0;s<8;++s){int id=stageParam(t,s,CV);if(midiLastParameters[id]!=int(std::lround(params[id].getValue()*10000)))midiCC(channel,integer(midiTrackParam(t,MIDI_CV_CC)),metro::midiVoltage(metro::trackCvVoltage(params[id].getValue(),effectiveCvType(t)),effectiveCvType(t)==metro::BipolarCv));
@@ -120,7 +120,7 @@ void processMidiOutput(const ProcessArgs& args,bool run,bool external,bool reset
             }
             int id=trackParam(t,SLIDE_TIME);if(midiLastParameters[id]!=int(std::lround(params[id].getValue()*10000)))midiCC(channel,integer(midiTrackParam(t,MIDI_AMOUNT_CC)),metro::midiValue(midiSlideAmount(t)));
         }
-        if(midiParametersSeen && !run)for(int l=0;l<8;++l)for(int s=0;s<8;++s){int id=modParam(l,MOD_VALUE+s);if(midiLastParameters[id]!=int(std::lround(params[id].getValue()*10000)))midiCC(integer(midiModParam(l,MIDI_MOD_CHANNEL)),integer(midiModParam(l,MIDI_MOD_CC)),metro::midiVoltage(params[id].getValue(),sequencer.settings.modLanes[l].type==metro::ModBipolar));}
+        if(midiParametersSeen && !run)for(int l=0;l<8;++l)for(int s=0;s<8;++s){int id=modParam(l,MOD_VALUE+s);const auto& config=sequencer.settings.modLanes[l];if(midiLastParameters[id]!=int(std::lround(params[id].getValue()*10000)))midiCC(integer(midiModParam(l,MIDI_MOD_CHANNEL)),integer(midiModParam(l,MIDI_MOD_CC)),metro::midiVoltage(effectiveModVoltage(l,params[id].getValue()),config.type==metro::ModBipolar && !metro::modGateDestination(config.destination)));}
         for(int id=0;id<NUM_PARAMS;++id)midiLastParameters[id]=int(std::lround(params[id].getValue()*10000));
         midiParametersSeen=true;
     }

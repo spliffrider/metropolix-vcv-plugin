@@ -9,6 +9,7 @@
 #include "MidiLogic.hpp"
 #include "MxLogic.hpp"
 #include "MxProtocol.hpp"
+#include "ModDisplay.hpp"
 #include <atomic>
 #include <mutex>
 #include <deque>
@@ -25,6 +26,7 @@ struct ClockDivisionQuantity : ParamQuantity {
 struct ModVoltageQuantity : ParamQuantity {
     int typeParam = -1;
     int destinationParam = -1;
+    metro::ModDestination destination()const{return module && destinationParam>=0?static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue())):metro::ModNone;}
     bool gate() const {return module && typeParam>=0 && destinationParam>=0 && (module->params[typeParam].getValue()==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue()))));}
     float getMinValue() override {
         if (module && typeParam >= 0 && destinationParam >= 0) {
@@ -39,8 +41,10 @@ struct ModVoltageQuantity : ParamQuantity {
         // voltage when a bipolar lane changes to a positive-only CV type.
         return metro::clamp(ParamQuantity::getValue(), getMinValue(), 5.f);
     }
-    std::string getDisplayValueString() override {return gate()?(getValue()>=1.5f?"On":"Off"):ParamQuantity::getDisplayValueString();}
-    std::string getUnit() override {return gate()?"":unit;}
+    float getDisplayValue()override{return gate()?getValue():metro::modDisplayValue(getValue(),destination());}
+    void setDisplayValue(float v)override{setValue(gate()?v:v/metro::modDisplay(destination()).multiplier);}
+    std::string getDisplayValueString() override {return gate()?(getValue()>=1.5f?"On":"Off"):metro::modDisplayText(getValue(),destination(),false);}
+    std::string getUnit() override {return gate()?"":metro::modDisplay(destination()).unit;}
     void setDisplayValueString(std::string s) override {if(gate() && (s=="On" || s=="on"))setValue(5);else if(gate() && (s=="Off" || s=="off"))setValue(0);else ParamQuantity::setDisplayValueString(s);}
 };
 struct RoutingAssignmentQuantity : SwitchQuantity {
@@ -60,6 +64,12 @@ struct TrackCvQuantity : ParamQuantity {
     std::string getDisplayValueString() override {return type()==metro::GateCv?(getValue()>=1.5f?"On":"Off"):ParamQuantity::getDisplayValueString();}
     std::string getUnit() override {return type()==metro::GateCv?"":unit;}
     void setDisplayValueString(std::string s) override {if(s=="On" || s=="on")setValue(5);else if(s=="Off" || s=="off")setValue(0);else ParamQuantity::setDisplayValueString(s);}
+};
+struct TrackCvTypeQuantity : SwitchQuantity {
+    int velocityParam=-1;
+    bool forced()const{return module && velocityParam>=0 && module->params[velocityParam].getValue()==3 && module->params[paramId].getValue()==metro::BipolarCv;}
+    std::string getDisplayValueString()override{return forced()?"Unipolar + (Velocity CV)":SwitchQuantity::getDisplayValueString();}
+    std::string getDescription()override{return forced()?"CV supplies velocity, so its sounding range is 0–5 V. The saved Bipolar choice returns when another velocity source is selected.":SwitchQuantity::getDescription();}
 };
 
 struct LoopyPulseQuantity : ParamQuantity {
@@ -208,6 +218,7 @@ struct Metropolix : Module {
     static int midiTrackParam(int track,int field){return MIDI_TRACK+track*MIDI_TRACK_STRIDE+field;}
     static int midiModParam(int lane,int field){return MIDI_MOD+lane*MIDI_MOD_STRIDE+field;}
     metro::TrackCvType effectiveCvType(int t){auto type=static_cast<metro::TrackCvType>(integer(cvTypeParam(t)));return type==metro::BipolarCv && integer(outputTrackParam(t,VELOCITY_SOURCE))==3?metro::UnipolarCv:type;}
+    float effectiveModVoltage(int lane,float value){auto type=static_cast<metro::ModType>(integer(modParam(lane,MOD_TYPE)));auto destination=static_cast<metro::ModDestination>(integer(modParam(lane,MOD_DESTINATION)));if(type==metro::ModGate || metro::modGateDestination(destination))return value>=1.5f?5.f:0.f;return metro::modClamp(value,type==metro::ModUnipolar?0.f:-5.f,5.f);}
     static std::vector<std::string> midiChannels(){std::vector<std::string> names{"--"};for(int n=1;n<=16;++n)names.push_back(std::to_string(n));return names;}
     static std::vector<std::string> midiCCs(){std::vector<std::string> names{"--"};for(int n=0;n<128;++n)names.push_back(std::to_string(n));return names;}
     static std::vector<std::string> gateSourceLabels(){return {"Switch","Single","Single + Rest","Multi","Multi + Rest","Hold","Hold + Rest"};}
@@ -421,7 +432,7 @@ struct Metropolix : Module {
             configParam(gateScaleParam(t),0,100,100,name+"gate scale","%")->snapEnabled=true;
             auto* slide=configParam<SlideAmountQuantity>(trackParam(t, SLIDE_TIME), 0, 100, 25, name + "slide amount", "%");slide->typeParam=slideTypeParam(t);
             configSwitch(slideTypeParam(t),0,2,0,name+"slide type",{"Tempo","Analog","Acid"});
-            configSwitch(cvTypeParam(t),0,2,0,name+"CV type",{"Bipolar ±","Unipolar +","Gate Toggle"});
+            auto* cvType=configSwitch<TrackCvTypeQuantity>(cvTypeParam(t),0,2,0,name+"CV type",{"Bipolar ±","Unipolar +","Gate Toggle"});cvType->velocityParam=outputTrackParam(t,VELOCITY_SOURCE);
             configSwitch(outputTrackParam(t,VELOCITY_SOURCE),0,3,2,name+"velocity source",{"50%","75%","100%","Track CV"});
             configSwitch(outputTrackParam(t,SLIDER_OCTAVES),0,4,0,name+"slider octaves",{"Follow shared range","1 octave","2 octaves","3 octaves","4 octaves"});
             configSwitch(outputTrackParam(t,SLIDER_DIRECTION),0,1,0,name+"slider direction",{"Normal","Inverted"});

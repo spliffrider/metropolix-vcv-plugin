@@ -37,6 +37,15 @@ struct HardwareDisplay : HardwareControl {
         const char* names[]={"RATCHET","PROBABILITY","ACCUM","SLIDE","SKIP","CV","PITCH","GATE"};
         return names[metroModule->selectedRow.load()];
     }
+    std::string modValueLabel(const OledCanvas& c,int lane,float volts) const {
+        auto destination=static_cast<metro::ModDestination>(integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION)));
+        std::string shown=metro::modDisplayText(volts,destination);if(c.width(shown)<=40)return shown;
+        auto spec=metro::modDisplay(destination);std::string unit=spec.unit;
+        if(unit==" pulses")unit="pl";else if(unit==" stages")unit="stg";else if(unit==" scales")unit="scl";else if(unit==" orders")unit="ord";else if(unit==" ratch")unit="rt";else unit.erase(std::remove(unit.begin(),unit.end(),' '),unit.end());
+        float value=metro::modDisplayValue(volts,destination);if(std::abs(value)<.000001f)value=0;
+        for(int precision=spec.decimals;precision>=0;--precision){char buffer[64];std::snprintf(buffer,sizeof(buffer),"%+.*f%s",precision,double(value),unit.c_str());shown=buffer;if(c.width(shown)<=40)break;}
+        return shown;
+    }
     void footer(OledCanvas& c,bool detailed=false) const {
         auto* m=metroModule;
         if(pendingConfirmation(m)){c.fill(0,54,128,10,0);c.text(1,56,"? PRESS ENCODER");return;}
@@ -215,12 +224,12 @@ struct HardwareDisplay : HardwareControl {
                     c.line(x-16,previous,end,y);if(end<x)c.line(end,y,x,y);
                 }
                 else {c.line(x-16,previous,x-16,y);c.line(x-16,y,x,y);}
-                if((detail && i==s) || (!mod && m->uiAlt.load()))c.box(x-2,y-2,5,5);
+                if((detail && i==s) || m->uiAlt.load())c.box(x-2,y-2,5,5);
                 if(detail && i==s)c.arrow(x,48,false);
                 previous=y;
             }
             if(detail) {
-                c.fill(0,0,43,43,0);c.fit(1,4,40,string::f("%+.2fV",mod?value(id(s)):cv(s)),1);c.corners(0,0,43,25);c.turn(3,16);
+                c.fill(0,0,43,43,0);c.fit(1,4,40,mod?modValueLabel(c,l,m->effectiveModVoltage(l,value(id(s)))):string::f("%+.2fV",cv(s)),1);c.corners(0,0,43,25);c.turn(3,16);
                 int ramp=mod?integer(Metropolix::modParam(l,Metropolix::MOD_RAMP+s)):integer(Metropolix::cvRampParam(t,s));
                 const char* ramps[]={"Step","sRmp","pRmp"};c.text(1,29,mod?(ramp?"Ramp":"Step"):ramps[metro::clamp(ramp,0,2)],false);
                 for(int k=0;k<(mod?2:3);++k)c.circle(5+k*7,41,2,k==ramp);
@@ -248,7 +257,7 @@ struct HardwareDisplay : HardwareControl {
         if(pendingConfirmation(m))c.text(32,19,"?");
         if(detail && (mod || row==Metropolix::CV)){
             int cc=integer(mod?Metropolix::midiModParam(l,Metropolix::MIDI_MOD_CC):Metropolix::midiTrackParam(t,Metropolix::MIDI_CV_CC));
-            if(cc>0){float voltage=mod?value(id(s)):metro::trackCvVoltage(value(id(s)),m->effectiveCvType(t));bool bipolar=mod?integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModBipolar:m->effectiveCvType(t)==metro::BipolarCv;c.text(1,48,string::f("CC %d:%d",cc-1,metro::midiVoltage(voltage,bipolar)));}
+            if(cc>0){float voltage=mod?m->effectiveModVoltage(l,value(id(s))):metro::trackCvVoltage(value(id(s)),m->effectiveCvType(t));bool bipolar=mod?(integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModBipolar && !gates):m->effectiveCvType(t)==metro::BipolarCv;c.text(1,48,string::f("CC %d:%d",cc-1,metro::midiVoltage(voltage,bipolar)));}
         }
         footer(c,detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
     }
@@ -300,7 +309,8 @@ struct HardwareDisplay : HardwareControl {
             if(!mod)field(c,29,"PULSE COUNT DIV","/"+std::to_string(integer(Metropolix::extraParam(t,Metropolix::PULSE_DIV),1)),f==1);
         } else if(page==Metropolix::CV_TYPE_PAGE) {
             const char* types[]={"Bipolar ±","Unipolar +","Gate Toggle"};
-            int type=mod?integer(Metropolix::modParam(l,Metropolix::MOD_TYPE)):m?int(m->effectiveCvType(t)):0;
+            int type=mod?integer(Metropolix::modParam(l,Metropolix::MOD_TYPE)):integer(Metropolix::cvTypeParam(t));
+            if(!mod && type==metro::BipolarCv && integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3)type=metro::UnipolarCv;
             field(c,0,"CV TYPE",types[metro::clamp(type,0,2)],true,128,1);
             if(!mod && m && integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3)c.text(1,40,"CV = VELOCITY");
         } else if(page==Metropolix::SLIDE_PAGE) {

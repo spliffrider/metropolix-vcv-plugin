@@ -2,8 +2,9 @@
 // Keep a compact readout alive even when the pointer leaves during a drag.
 struct AdjustmentTooltip : ui::Tooltip {
     app::ParamWidget* owner=nullptr;
+    std::function<std::string()> readout;
     void step() override {
-        if(auto* q=owner->getParamQuantity())text=q->getString();
+        if(readout)text=readout();else if(auto* q=owner->getParamQuantity())text=q->getString();
         ui::Tooltip::step();
         box.pos=owner->getAbsoluteOffset(owner->box.size).round();
         if(parent)box=box.nudge(parent->box.zeroPos());
@@ -13,6 +14,7 @@ struct AdjustmentTooltip : ui::Tooltip {
 struct ValueKnob : app::Knob {
     AdjustmentTooltip* adjustmentTip=nullptr;
     bool adjusting=false;
+    virtual std::string adjustmentText(){auto* q=getParamQuantity();return q?q->getString():std::string();}
     ~ValueKnob() { clearAdjustmentTip(); destroyTooltip(); }
     void clearAdjustmentTip() {
         if(!adjustmentTip)return;
@@ -23,9 +25,10 @@ struct ValueKnob : app::Knob {
         if(!adjusting || !settings::tooltips || !getParamQuantity()) { clearAdjustmentTip();return; }
         if(!adjustmentTip) {
             adjustmentTip=new AdjustmentTooltip;adjustmentTip->owner=this;
+            adjustmentTip->readout=[this]{return adjustmentText();};
             APP->scene->addChild(adjustmentTip);
         }
-        adjustmentTip->text=getParamQuantity()->getString();
+        adjustmentTip->text=adjustmentText();
     }
     void step() override { app::Knob::step();updateAdjustmentTip(); }
     void onEnter(const event::Enter& e) override { if(!adjusting)app::Knob::onEnter(e); }
