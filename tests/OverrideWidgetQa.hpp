@@ -55,7 +55,11 @@ if(qaFrame==6) {
     event::DragEnd end;end.context=&ctx;end.button=GLFW_MOUSE_BUTTON_LEFT;held->onDragEnd(end);
     check(m->integer(M::gateScaleParam(0))==15 && m->uiPage.load()==M::GATE_PAGE,"held GATE stage shortcut edits active Scale field");
     check(APP->history->actionIndex==index+1,"held gate shortcut is one undo");APP->history->undo();check(m->integer(M::gateScaleParam(0))==63,"gate shortcut undo");
-    click(find("Encoder"));m->params[M::ctrlParam(0,M::CTRL_DESTINATION)].setValue(metro::CtrlGateLength);
+    click(find("Encoder"));
+    // Keep the processing thread's direct CTRL value at the 75% fixture.
+    // A noon knob would legitimately write 50% while this hold is checked.
+    m->params[M::ctrlParam(0,M::CTRL_VALUE)].setValue((75.f-1.f)/49.f-1.f);
+    m->params[M::ctrlParam(0,M::CTRL_DESTINATION)].setValue(metro::CtrlGateLength);
     index=APP->history->actionIndex;longPress();check(m->integer(M::trackParam(0,M::GATE_LENGTH))==75 && m->integer(M::gateScaleParam(0))==100,"gate reset respects CTRL length ownership");
     check(APP->history->actionIndex==index+1,"reset from locked length still records Scale undo");APP->history->undo();check(m->integer(M::gateScaleParam(0))==63,"owned reset Scale undo");
     m->params[M::ctrlParam(0,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);

@@ -9,6 +9,9 @@ if(std::getenv("METROPOLIX_CTRLEDITOR_REOPEN_QA")) {
         check(!qaFailed,"CTRLEDITOR REOPEN QA COMPLETE");APP->window->close();
     }return;
 }
+if(qaFrame==3){
+#include "LiveCtrlWidgetQa.hpp"
+}
 auto raw=[&]{std::vector<float> a;for(auto& p:m->params)a.push_back(p.getValue());return a;};
 auto lastAction=[&]()->history::Action*{return APP->history->actions.empty()?nullptr:APP->history->actions.back();};
 auto exactUndo=[&](history::Action* previous,const std::vector<float>& before,const std::vector<float>& after){if(before==after)return lastAction()==previous;auto* action=lastAction();bool ok=action && action!=previous && (dynamic_cast<history::ComplexAction*>(action) || dynamic_cast<history::ParamChange*>(action));APP->history->undo();ok &= raw()==before;APP->history->redo();return ok && raw()==after;};
