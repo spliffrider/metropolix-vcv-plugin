@@ -351,8 +351,13 @@ struct HardwareControl : ValueKnob {
                 if(it!=gestureIds.end()) {
                     auto type=metroModule->effectiveCvType(metroModule->selectedTrack.load());
                     bool mod=modStagePage(metroModule);
-                    float delta=metroModule->params[paramId].getValue()-(mod?gestureBefore[it-gestureIds.begin()]:metro::trackCvVoltage(gestureBefore[it-gestureIds.begin()],type));
-                    for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId)metroModule->getParamQuantity(gestureIds[i])->setValue((mod?gestureBefore[i]:metro::trackCvVoltage(gestureBefore[i],type))+delta);
+                    auto origin=[&](size_t index){
+                        if(!mod)return metro::trackCvVoltage(gestureBefore[index],type);
+                        auto* q=metroModule->getParamQuantity(gestureIds[index]);
+                        return metro::clamp(gestureBefore[index],q->getMinValue(),q->getMaxValue());
+                    };
+                    float delta=metroModule->params[paramId].getValue()-origin(it-gestureIds.begin());
+                    for(size_t i=0;i<gestureIds.size();++i)if(gestureIds[i]!=paramId)metroModule->getParamQuantity(gestureIds[i])->setValue(origin(i)+delta);
                 }
             }
             if(gestureIds.size()>1 && overridePage(metroModule)) {
@@ -406,8 +411,9 @@ struct HardwareControl : ValueKnob {
             invalidateDraft(metroModule);invalidateOutputDrafts(metroModule);gestureIds.clear();gestureBefore.clear();
             if(releaseAction)releaseAction();dragging=false;pressMods=0;clearTip();return;
         }
-        bool cvMicro=moved>0 && moved<3 && cvPage(metroModule) && dynamic_cast<TrackCvQuantity*>(getParamQuantity()) && !gestureIds.empty();
-        bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity() || cvPage(metroModule)) && (moved>=3 || longFired || cvMicro);
+        bool rawQuantity=needsRawDragHistory(getParamQuantity()) && std::find(gestureIds.begin(),gestureIds.end(),paramId)!=gestureIds.end();
+        bool rawMicro=moved>0 && moved<3 && rawQuantity;
+        bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity() || cvPage(metroModule) || rawQuantity) && (moved>=3 || longFired || rawMicro);
         float pickupPhysicalAfter=pickupGestureParam>=0?metroModule->params[pickupGestureParam].getValue():0;
         if(pickupGestureParam>=0)metroModule->params[pickupGestureParam].setValue(pickupPhysicalBefore);
         std::vector<float> after;
@@ -419,12 +425,12 @@ struct HardwareControl : ValueKnob {
             // equal the native drag origin before it checks for an undo action.
             for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(gestureBefore[i]);
         }
-        // Tiny CV movement still qualifies for the existing click action.
+        // Tiny movement still qualifies for the existing click action.
         // Record its raw edit first, then let that click act on the new value.
-        finishingClick=cvMicro;ValueKnob::onDragEnd(e);finishingClick=false;
+        finishingClick=rawMicro;ValueKnob::onDragEnd(e);finishingClick=false;
         if(pickupGestureParam>=0){metroModule->params[pickupGestureParam].setValue(pickupPhysicalAfter);panelControlHistory(metroModule,pickupGestureParam,pickupPhysicalBefore,pickupPhysicalAfter,pickupBefore,pickupAfter,"move recalled control");pickupGestureParam=-1;}
         if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit track settings");}
-        if(cvMicro){event::Action click;onAction(click);}
+        if(rawMicro){event::Action click;onAction(click);}
         gestureIds.clear();gestureBefore.clear();
         if(navigating && navigationEnd)navigationEnd();
         if(releaseAction)releaseAction();

@@ -1,8 +1,26 @@
-# Modulation playtest — 2.2.0 interface / 2.1.0 musical baseline
+# Modulation playtest — 2.48.0
 
 Open `examples/Hardware-panel-demo.vcv` in Rack. It is already running and patched. Right-click **MOD**, then choose **Open MOD editor** to expose the grid used in these checks. The older `Modulation-demo.vcv` uses the same musical settings. Use **File > Save As** to keep your own test copy. Choose your output device in the AUDIO module to hear the two voices. The patch's two VCAs are set to 32%.
 
 Metropolix Lab produces control voltages, not audio. Its pitch and gate outputs drive the oscillators, envelopes, and VCAs below it. The first Scope monitors OUT A and OUT B; the second monitors PITCH 1 and GATE 1. Signals should appear even without an audio device selected.
+
+## Stored voltages, ALT and Undo
+
+A Unipolar or Gate setting can hide a negative voltage previously entered in
+Bipolar mode. Editing that stage now records the exact stored origin, so Undo
+restores it even when its displayed value was zero. This applies to the main
+encoder, OLED and optional MOD grid, including very small drags.
+
+ALT continuous voltage edits shift all eight effective voltages by the same
+amount, clamping each at its allowed limits. A negative stored value hidden
+by a positive-only type starts that shift at zero; it no longer makes the
+other stages jump. Undo restores all eight original stored values together.
+
+The existing three-pixel click threshold stays in place. A smaller drag can
+edit the value and then perform its genuine Gate/transition click; Undo
+reverses the click before the edit. Zero-distance movement makes no voltage
+write. With Enc. Confirm enabled, a voltage preview applies once without also
+changing a transition. ALT Gate rotation/inversion keeps its existing workflow.
 
 ## Expected starting behavior
 

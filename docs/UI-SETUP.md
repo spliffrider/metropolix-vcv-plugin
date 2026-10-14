@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.47.0
+# UI setup, confirmation and external clock input — 2.48.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -42,6 +42,15 @@ existing three-pixel click threshold can perform an edit and its normal click;
 Undo reverses the click first, then the voltage edit. See [CV editing](STAGE-CV.md).
 A movement callback with zero distance does not write a displayed/clamped value
 back into a stored parameter. Its normal release click still acts once.
+
+MOD voltage and clock-offset drags now have the same stored-value protection.
+Undo restores a negative MOD voltage hidden by a positive-only type, or an
+offset hidden by a smaller clock division. ALT MOD voltage editing shifts
+every stage from its effective voltage and preserves its relative offsets
+until a stage reaches its limit. See [MOD editing](MOD-TEST.md) and
+[CLK output](CLOCK-OUTPUT.md). A small edit is recorded before its genuine
+transition/Gate click or field navigation. Pure confirmation previews add no
+edit action until applied.
 
 ## Long-press resets and Undo
 
