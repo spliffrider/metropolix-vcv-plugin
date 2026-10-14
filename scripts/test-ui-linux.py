@@ -14,6 +14,9 @@ manifest=json.loads((root/'plugin.json').read_text());manifest['modules'].append
 (profile/'settings.json').write_text(json.dumps(dict(windowSize=[1600,950],windowPos=[0,0],sampleRate=48000,showTipsOnLaunch=False,autoCheckUpdates=False)))
 flags={'Fidelity':'FIDELITY_UI','Backup':'BACKUP_UI','Polish':'POLISH','Display':'DISPLAY','MxAudio':'MX_AUDIO','MidiAudio':'AUDIO'}
 env=os.environ.copy();env['METROPOLIX_QA_DIR']=str(output);env['METROPOLIX_'+flags[args.mode]+'_QA']='1'
+# The distributed Linux executable resolves libRack.so from its launch directory.
+# Explicitly use the application library, rather than the separate SDK host library.
+env['LD_LIBRARY_PATH']=str(rack.parent)+(os.pathsep+env['LD_LIBRARY_PATH'] if env.get('LD_LIBRARY_PATH') else '')
 source='MX-performance.vcv' if args.mode in ['Fidelity','MxAudio'] else 'MIDI-performance.vcv' if args.mode=='MidiAudio' else 'Hardware-panel-demo.vcv' if args.mode in ['Display','Polish'] else 'Hybrid-demo.vcv'
 patch=json.loads((root/'examples'/source).read_text())
 if args.mode in ['Display','Polish']:
@@ -36,7 +39,7 @@ def run(path,name):
     previous=profile/'log.txt'
     if previous.exists():shutil.move(str(previous),str(output/f'previous-{name}.log'))
     with (output/f'console-{name}.log').open('w') as log:
-        result=subprocess.run([str(rack),'-u',str(profile),'-s',str(rack.parent),str(path)],env=env,cwd=root,stdout=log,stderr=subprocess.STDOUT,timeout=120)
+        result=subprocess.run([str(rack),'-u',str(profile),'-s',str(rack.parent),str(path)],env=env,cwd=rack.parent,stdout=log,stderr=subprocess.STDOUT,timeout=120)
     if result.returncode:
         print((output/f'console-{name}.log').read_text()[-6000:]);raise RuntimeError(f'Rack exited {result.returncode}')
     report=(output/'report.txt').read_text();assert 'FAIL' not in report,report
