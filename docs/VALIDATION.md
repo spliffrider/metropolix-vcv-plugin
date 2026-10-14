@@ -1,4 +1,15 @@
-# Validation and fidelity status — 2.32.0
+# Validation and fidelity status — 2.33.0
+
+## Musical preset storage — 2.33.0
+
+Scale Lock and Loopy pulse/target settings now follow the manual's p.169 preset
+column. Format10 appends three values after all 518 frozen format9 positions;
+NUM786 and schema32 stay fixed. Native checks cover all locks/pulse counts,
+load policies, all old full formats1–9, old/new selective imports with unrelated
+slot preservation, queued boundaries, exact receipts, Init, chain and MIDI PC,
+and native pitch output. Actual Rack tests cover save/load, undo/redo, custom
+Init, legacy import and safe reopen. Old snapshots gain Unlocked/Auto/Current
+Track; new banks require 2.33. See [Preset storage](PRESET-STORAGE.md).
 
 ## ORDER shortcuts — 2.32.0
 
@@ -10,7 +21,7 @@ reset, target changes within a gesture, exact undo/redo and Rack save/reopen.
 Controller-owned fields are excluded from the gesture receipt. Four new ORDER
 screens extend display coverage to 181. The [ORDER guide](ORDER-SHORTCUTS.md)
 records software default pairs and storage boundaries. Scale Lock preset recall
-is the next confirmed manual gap (p.169).
+was corrected in 2.33 (manual p.169).
 
 ## Production runtime — 2.31.0
 
@@ -703,8 +714,8 @@ Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
 Internal presets recall Scale/Root settings, as the manual describes on p.112;
 the earlier claim that their recall differs from hardware was incorrect. Custom
-definitions and locks stay global in this plugin; their exact hardware preset
-boundary remains unverified.
+definitions remain global. As of 2.33, Scale Lock follows the preset storage
+column on p.169; see [Preset storage](PRESET-STORAGE.md).
 
 ## Slide models — 2.13.0
 

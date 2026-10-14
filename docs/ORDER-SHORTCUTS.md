@@ -43,8 +43,9 @@ Rack files and All/Settings backups save all sixteen shortcut values. Older
 settings schemas29–31 with 770 parameters still import and initialize the new
 shortcuts to plugin defaults. Current settings use schema32 and 786 parameters;
 their backups require 2.32 or later. Existing parameter IDs are unchanged.
-Musical presets remain format9 with 518 values; Presets-only and selective bank
-files retain their previous compatibility. See [Backups](BACKUPS.md).
+As of 2.33, musical presets use format10 with 521 values; the global ORDER
+shortcuts remain excluded. Older banks still import; new musical banks require
+2.33. See [Preset storage](PRESET-STORAGE.md) and [Backups](BACKUPS.md).
 
 Native tests cover all 3,360 target/slot/order/direction combinations, CTRL
 ownership, preset exclusion and old/new backup validation. Actual Rack callback

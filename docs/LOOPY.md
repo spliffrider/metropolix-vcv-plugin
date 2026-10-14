@@ -1,4 +1,4 @@
-# Loopy and Stage Player — 2.11.0
+# Loopy and Stage Player — 2.33.0
 
 Reference: Metropolix 1.6 manual, pp.39–46 and 169. The panel keeps the hardware's
 ∞ button and eight stage buttons; desktop menus make two-boundary loops practical
@@ -70,11 +70,13 @@ create Rack undo entries; the existing parameter context menus remain available.
 
 ## Saving, testing and limits
 
-Loop pulse count and target are global settings saved with the Rack patch,
-excluded from internal preset snapshots as on p.169. Existing preset formats and
-all previous parameter/cable IDs remain compatible. Held stages, latches and
-mouse mute mode clear on patch reopen/module Initialize. A saved patch cannot retain a held
-Stage Player gate. The new parameters are IDs 465–466; there are 467 total.
+Loop pulse count and target are stored in each musical preset as of 2.33,
+matching the preset column on manual p.169. They load with Instant/Queue/Total,
+custom Init, chains and MIDI program changes, and participate in recall undo.
+They also persist as live Rack patch settings. Held stages, latches and mouse
+mute mode clear on patch reopen/module Initialize; a patch cannot retain a
+held Stage Player gate. All parameter/cable IDs stay fixed. Old banks gain
+Auto / Current Track; new format10 banks require 2.33. See [Preset storage](PRESET-STORAGE.md).
 
 Open [Loopy-performance.vcv](../examples/Loopy-performance.vcv), select an AUDIO
 device and press RUN. It starts stopped with Track 2 selected and the chain
@@ -93,7 +95,7 @@ Foreground accumulator/probability state starts from the underlying track when
 Loopy begins, then runs independently. On release the underlying state resumes;
 foreground changes are not written back. This protects pattern continuation but
 is an interpretation requiring hardware feedback, especially for Track accumulators
-and random probability. Loopy AUX/MOD gate, pulse-count and offset destinations,
-Queue & Loopy options, simultaneous multi-touch and external hardware verification
-remain work for a later pass. An automated callback test does not establish native
+and random probability. Loopy AUX/MOD gate, pulse-count and offset routes and Queue & Loopy
+options are implemented; see [Complete routing](COMPLETE-ROUTING.md).
+Simultaneous native multi-touch and external hardware verification remain work. An automated callback test does not establish native
 mouse/focus behavior on every computer.

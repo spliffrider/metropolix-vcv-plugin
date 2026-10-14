@@ -1,4 +1,4 @@
-# Portable backups — 2.32.0
+# Portable backups — 2.33.0
 
 Open **SETUP → MIDI → Backup files…**, or use the module's right-click menu.
 Drag the encoder or display up/down to select an action. Click the encoder to
@@ -62,20 +62,23 @@ using a fully written temporary file in the same directory.
 Format 2 contains exactly `type`, `format`, `scope`, `selection` and `bank`.
 `scope` is `presets`. `selection` is either `{"kind":"filled"}` or
 `{"kind":"bank","bank":8}` (public bank numbers 1–8). `bank` contains
-`presetFormat: 9` and a `slots` array. Each entry has an absolute `slot` index
-0–63 and `values`, the existing 518-value musical snapshot. A Bank entry may
+`presetFormat: 10` and a `slots` array. Each entry has an absolute `slot` index
+0–63 and `values`, the 521-value musical snapshot. Legacy format9/518 files
+are accepted and gain Unlocked/Auto/Current Track for the three new fields. A Bank entry may
 use `null` for an empty slot; Filled entries must contain a snapshot.
 Duplicate IDs, foreign bank IDs, missing bank slots, wrong snapshot sizes and
 out-of-range values are rejected before import. The files contain no chains.
 
-Use **2.29.0 or later** to import selective files. For earlier builds, export
-All Presets or All instead. Existing 2.26–2.29 All/Settings/All Presets backups
+Use **2.33.0 or later** for new format10 musical banks, including All, All
+Presets, Filled and Bank exports. Older format9 selective files still import.
+Settings-only exports remain compatible with 2.32. See [Preset storage](PRESET-STORAGE.md). Existing 2.26–2.29 All/Settings/All Presets backups
 continue to import, including settings schemas29–31 with 770 parameters.
 Current settings use schema32 with 786 parameters to include the eight global
 ORDER/direction shortcut pairs; these settings backups require 2.32 or later.
 Older settings initialize the sixteen new shortcut values to plugin defaults.
-Selective files remain compatible with 2.29. Existing parameter IDs and format
-9/518-value musical snapshots stay fixed. The
+The first 518 musical snapshot positions and all parameter IDs remain fixed.
+Format10 appends Scale Lock and both Loopy settings; formats1–9 full banks and
+format9 selective files still import. The
 [example Bank 8 backup](../examples/Backup-bank-8.json) intentionally replaces
 Bank 8 with three occupied slots and five empty slots; try it in a spare patch.
 

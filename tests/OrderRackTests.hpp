@@ -1,7 +1,7 @@
 #include "../src/BackupRestore.hpp"
 void orderRackTests() {
     using M=Metropolix;using namespace metrobackup;
-    static_assert(M::FORMAT31_NUM_PARAMS==770 && M::ORDER_SHORTCUTS==770 && M::NUM_PARAMS==786 && M::SNAPSHOT_PARAMS==518,"order shortcuts append global IDs only");
+    static_assert(M::FORMAT31_NUM_PARAMS==770 && M::ORDER_SHORTCUTS==770 && M::NUM_PARAMS==786 && M::FORMAT9_PARAMS==518 && M::SNAPSHOT_PARAMS==521,"order shortcuts append global IDs only");
     rack::plugin::Plugin plugin;plugin.slug="MetropolixLab";plugin.version="2.32.0";modelMetropolix->plugin=&plugin;modelMetropolix->slug="Metropolix";plugin.models.push_back(modelMetropolix);rack::plugin::plugins.push_back(&plugin);
     auto m=std::unique_ptr<M>(new M),other=std::unique_ptr<M>(new M);m->model=other->model=modelMetropolix;m->id=831;other->id=832;
     for(bool mod:{false,true})for(int target=0;target<(mod?8:2);++target)for(int slot=0;slot<8;++slot)for(int order=0;order<21;++order)for(int direction=0;direction<2;++direction) {

@@ -1,4 +1,4 @@
-# Internal presets — 2.7.0
+# Internal presets — 2.33.0
 
 Metropolix Lab now holds **64 patterns in eight banks of eight**. Each module
 instance owns its banks. They are saved inside your Rack patch and native Rack
@@ -30,8 +30,9 @@ and restarts the sequence; it does not rewind playback time.
 
 ## What loads
 
-Track settings, stage edits, MOD lanes, root/scale and **Total Pulses** always
-load. The following choices are global to this module instance:
+Track settings, stage edits, MOD lanes, root/scale, **Scale Lock**, **Loopy
+pulse count/target** and **Total Pulses** always load. See [Preset storage](PRESET-STORAGE.md)
+for corrected boundaries, old-bank defaults and format10 compatibility. The following choices are global to this module instance:
 
 | Setting | Default | Choices |
 | --- | --- | --- |

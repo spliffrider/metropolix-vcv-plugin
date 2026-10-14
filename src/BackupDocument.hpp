@@ -25,7 +25,7 @@ inline const std::vector<StateField>& stateFields(){
     };return fields;
 }
 inline bool value(Metropolix* m,int id,json_t* j){if(!json_is_number(j))return false;double v=json_number_value(j);auto* q=m->paramQuantities[id];return std::isfinite(v) && v>=q->minValue && v<=q->maxValue;}
-inline int snapshotSize(int format){using M=Metropolix;const int counts[]={0,M::TOTAL_PULSES+1,M::TOTAL_PULSES+3,M::FORMAT3_PARAMS,M::FORMAT4_PARAMS,M::FORMAT5_PARAMS,M::FORMAT6_PARAMS,M::FORMAT7_PARAMS,M::FORMAT8_PARAMS,M::SNAPSHOT_PARAMS};return format>=1 && format<=9?counts[format]:0;}
+inline int snapshotSize(int format){return Metropolix::presetSize(format);}
 inline bool chain(json_t* links){if(!json_is_array(links) || json_array_size(links)>32)return false;for(size_t i=0;i<json_array_size(links);++i){auto* link=json_array_get(links,i);if(!json_is_object(link) || !integer(json_object_get(link,"slot"),0,63) || !integer(json_object_get(link,"repeats"),1,64) || !integer(json_object_get(link,"mutes"),0,7))return false;}return true;}
 inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& error){
     auto fail=[&](const char* message){error=message;return false;};
@@ -43,16 +43,17 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
         else if(type=="bank" && json_object_size(selection)==2 && integer(json_object_get(selection,"bank"),1,8))selectedBank=int(json_integer_value(json_object_get(selection,"bank")))-1;
         else return fail("Invalid preset bank selection.");
         auto* bank=json_object_get(document,"bank");auto* slots=json_object_get(bank,"slots");
-        if(!json_is_object(bank) || json_object_size(bank)!=2 || !integer(json_object_get(bank,"presetFormat"),9,9))return fail("Unsupported selective preset format.");
+        if(!json_is_object(bank) || json_object_size(bank)!=2 || !integer(json_object_get(bank,"presetFormat"),9,Metropolix::PRESET_FORMAT))return fail("Unsupported selective preset format.");
         if(!json_is_array(slots) || json_array_size(slots)>64 || (!filled && json_array_size(slots)!=8))return fail("Invalid selective slot count.");
+        int count=snapshotSize(int(json_integer_value(json_object_get(bank,"presetFormat"))));
         std::array<bool,64> seen{};
         for(size_t i=0;i<json_array_size(slots);++i){
             auto* entry=json_array_get(slots,i);auto* id=json_object_get(entry,"slot");auto* values=json_object_get(entry,"values");
             if(!json_is_object(entry) || json_object_size(entry)!=2 || !integer(id,0,63))return fail("Invalid selective slot entry.");
             int slot=int(json_integer_value(id));if(seen[slot] || (!filled && slot/8!=selectedBank))return fail("Duplicate or foreign preset slot.");seen[slot]=true;
             if(json_is_null(values)){if(filled)return fail("Filled selections cannot clear a slot.");continue;}
-            if(!json_is_array(values) || json_array_size(values)!=Metropolix::SNAPSHOT_PARAMS)return fail("Invalid selected preset size.");
-            for(int n=0;n<Metropolix::SNAPSHOT_PARAMS;++n)if(!value(m,Metropolix::presetParam(n),json_array_get(values,n)))return fail("Invalid selected preset value.");
+            if(!json_is_array(values) || json_array_size(values)!=size_t(count))return fail("Invalid selected preset size.");
+            for(int n=0;n<count;++n)if(!value(m,Metropolix::presetParam(n),json_array_get(values,n)))return fail("Invalid selected preset value.");
         }
         error.clear();return true;
     }
@@ -76,7 +77,7 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
         }
     }
     if(scope!=Settings){
-        auto* bank=json_object_get(document,"bank");if(!json_is_object(bank) || !integer(json_object_get(bank,"presetFormat"),1,9))return fail("Unsupported preset format.");
+        auto* bank=json_object_get(document,"bank");if(!json_is_object(bank) || !integer(json_object_get(bank,"presetFormat"),1,Metropolix::PRESET_FORMAT))return fail("Unsupported preset format.");
         auto* slots=json_object_get(bank,"presets");int count=snapshotSize(int(json_integer_value(json_object_get(bank,"presetFormat"))));if(!json_is_array(slots) || json_array_size(slots)!=64)return fail("A bank must contain 64 slots.");
         for(int slot=0;slot<64;++slot){auto* values=json_array_get(slots,slot);if(json_is_null(values))continue;if(!json_is_array(values) || json_array_size(values)!=size_t(count))return fail("Invalid preset size.");for(int i=0;i<count;++i)if(!value(m,Metropolix::presetParam(i),json_array_get(values,i)))return fail("Invalid preset value.");}
         if(json_object_size(bank)!=4)return fail("Unexpected bank fields.");
@@ -107,14 +108,24 @@ inline json_t* captureSelected(json_t* module,int bank){
         if(bank<0?json_is_null(values):slot/8!=bank)continue;
         auto* entry=json_pack("{s:i}","slot",slot);json_object_set(entry,"values",values);json_array_append_new(slots,entry);
     }
-    auto* exported=json_pack("{s:i}","presetFormat",9);json_object_set_new(exported,"slots",slots);json_object_set_new(root,"bank",exported);return root;
+    auto* exported=json_pack("{s:i}","presetFormat",Metropolix::PRESET_FORMAT);json_object_set_new(exported,"slots",slots);json_object_set_new(root,"bank",exported);return root;
 }
 inline json_t* merge(json_t* current,json_t* document,Scope scope){
     auto* merged=json_deep_copy(current);auto* data=json_object_get(merged,"data");
     if(scope!=Presets){json_object_set_new(merged,"params",json_deep_copy(json_object_get(document,"params")));json_object_update(data,json_object_get(document,"state"));}
     if(json_integer_value(json_object_get(document,"format"))==2){
         auto* slots=json_object_get(json_object_get(document,"bank"),"slots");auto* presets=json_object_get(data,"presets");
-        for(size_t i=0;i<json_array_size(slots);++i){auto* entry=json_array_get(slots,i);json_array_set(presets,size_t(json_integer_value(json_object_get(entry,"slot"))),json_object_get(entry,"values"));}
+        for(size_t i=0;i<json_array_size(slots);++i){
+            auto* entry=json_array_get(slots,i);auto* values=json_object_get(entry,"values");
+            if(json_is_null(values)){json_array_set(presets,size_t(json_integer_value(json_object_get(entry,"slot"))),values);continue;}
+            // A selective old file must be upgraded slot by slot. The receiving
+            // bank is already current; changing its format would lose untouched
+            // slots or discard old selected slots with a shorter prefix.
+            Json upgraded(json_deep_copy(values));
+            for(int n=int(json_array_size(upgraded.get()));n<Metropolix::SNAPSHOT_PARAMS;++n)
+                json_array_append_new(upgraded.get(),json_real(Metropolix::presetParam(n)==Metropolix::SCALE_LOCK?-1.f:0.f));
+            json_array_set(presets,size_t(json_integer_value(json_object_get(entry,"slot"))),upgraded.get());
+        }
     }else if(scope!=Settings)for(const char* key:{"presets","presetFormat","chains","chainFormat"})json_object_set(data,key,json_object_get(json_object_get(document,"bank"),key));
     // Transport resumes only after an explicit RUN/external transport command.
     auto* params=json_object_get(merged,"params");for(size_t i=0;i<json_array_size(params);++i){auto* p=json_array_get(params,i);if(json_integer_value(json_object_get(p,"id"))==Metropolix::RUN || json_integer_value(json_object_get(p,"id"))==Metropolix::RESET)json_object_set_new(p,"value",json_real(0));}

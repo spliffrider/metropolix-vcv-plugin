@@ -40,8 +40,9 @@ Both models are saved with the Rack patch and internal presets/chains.
 Parameter IDs 685–686 append the two types without changing earlier IDs.
 Settings schema 16 and preset format 4 add two fields to the existing compact
 458-field snapshot. Formats 1–3 still load; their absent models become Tempo,
-preserving the earlier plugin's behavior. Custom scale definitions, locks,
-shortcuts and global Loopy settings remain outside these 460-field snapshots.
+preserving the earlier plugin's behavior. Custom scale definitions and shortcuts
+remain global. As of 2.33, format10 appends Scale Lock and both Loopy settings
+after the frozen format9 prefix; see [Preset storage](PRESET-STORAGE.md).
 
 ## Calibration and comparison limits
 

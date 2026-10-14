@@ -1,4 +1,4 @@
-# Production runtime checks — 2.32.0
+# Production runtime checks — 2.33.0
 
 The runtime host loads the stripped binary included in the download. It uses
 Rack's public module API; the instrument implementation is not compiled into

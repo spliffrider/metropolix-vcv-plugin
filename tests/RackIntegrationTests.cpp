@@ -38,6 +38,7 @@ void require(bool value, const char* message) {
 #include "FactoryRackTests.hpp"
 #include "FidelityRackTests.hpp"
 #include "OrderRackTests.hpp"
+#include "PresetStorageRackTests.hpp"
 rack::Model nativeMetroModel,nativeMxModel;
 rack::Model* modelMetropolix=&nativeMetroModel;
 rack::Model* modelMX=&nativeMxModel;
@@ -324,6 +325,7 @@ int main() {
     factoryRackTests();
     fidelityRackTests();
     orderRackTests();
+    presetStorageRackTests();
     delete context.engine;
     context.engine = nullptr;
     rack::contextSet(nullptr);
