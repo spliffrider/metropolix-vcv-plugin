@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image,ImageChops
 
 p=argparse.ArgumentParser();p.add_argument('--rack',required=True,type=Path)
-p.add_argument('--mode',required=True,choices=['Pending','Scale','CtrlEditor','StagePattern','ScaleCopy','StagePair','Timing','Group','Storage','Order','Fidelity','Backup','Polish','Display','MxAudio','MidiAudio'])
+p.add_argument('--mode',required=True,choices=['Chain','Pending','Scale','CtrlEditor','StagePattern','ScaleCopy','StagePair','Timing','Group','Storage','Order','Fidelity','Backup','Polish','Display','MxAudio','MidiAudio'])
 args=p.parse_args();root=Path(__file__).resolve().parents[1];rack=args.rack.resolve()
 profile=root/'tmp/linux-rack-qa';output=root/f'tmp/linux-{args.mode.lower()}-qa'
 output.mkdir(parents=True,exist_ok=True);plugin=profile/'plugins-lin-x64/MetropolixLab';plugin.mkdir(parents=True,exist_ok=True)
@@ -13,7 +13,7 @@ for name in ['res']:shutil.copytree(root/name,plugin/name,dirs_exist_ok=True)
 manifest=json.loads((root/'plugin.json').read_text());manifest['modules'].append(dict(slug='AudioQA',name='Internal audio test'))
 (plugin/'plugin.json').write_text(json.dumps(manifest));shutil.copy2(root/'README.md',plugin/'README.md')
 (profile/'settings.json').write_text(json.dumps(dict(windowSize=[1600,950],windowPos=[0,0],sampleRate=48000,showTipsOnLaunch=False,autoCheckUpdates=False)))
-flags={'Pending':'PENDING_UI','Scale':'SCALE_UI','CtrlEditor':'CTRLEDITOR_UI','StagePattern':'STAGEPATTERN_UI','ScaleCopy':'SCALECOPY_UI','StagePair':'STAGEPAIR_UI','Timing':'TIMING_UI','Group':'GROUP_UI','Storage':'STORAGE_UI','Order':'ORDER_UI','Fidelity':'FIDELITY_UI','Backup':'BACKUP_UI','Polish':'POLISH','Display':'DISPLAY','MxAudio':'MX_AUDIO','MidiAudio':'AUDIO'}
+flags={'Chain':'CHAIN_UI','Pending':'PENDING_UI','Scale':'SCALE_UI','CtrlEditor':'CTRLEDITOR_UI','StagePattern':'STAGEPATTERN_UI','ScaleCopy':'SCALECOPY_UI','StagePair':'STAGEPAIR_UI','Timing':'TIMING_UI','Group':'GROUP_UI','Storage':'STORAGE_UI','Order':'ORDER_UI','Fidelity':'FIDELITY_UI','Backup':'BACKUP_UI','Polish':'POLISH','Display':'DISPLAY','MxAudio':'MX_AUDIO','MidiAudio':'AUDIO'}
 env=os.environ.copy();env['METROPOLIX_QA_DIR']=str(output);env['METROPOLIX_'+flags[args.mode]+'_QA']='1'
 # The distributed Linux executable resolves libRack.so from its launch directory.
 # Explicitly use the application library, rather than the separate SDK host library.
@@ -49,9 +49,9 @@ def run(path,name):
     report=(output/'report.txt').read_text();assert 'FAIL' not in report,report
     return report
 report=run(fixture,'initial')
-marker={'Pending':'PENDING UI','Scale':'SCALE UI','CtrlEditor':'CTRLEDITOR UI','StagePattern':'STAGEPATTERN UI','ScaleCopy':'SCALECOPY UI','StagePair':'STAGEPAIR UI','Timing':'TIMING UI','Group':'GROUP UI','Storage':'STORAGE UI','Order':'ORDER UI','Fidelity':'FIDELITY UI','Backup':'BACKUP UI','Polish':'UI POLISH','Display':'DISPLAY','MxAudio':'AUDIO','MidiAudio':'AUDIO'}[args.mode]
+marker={'Chain':'CHAIN UI','Pending':'PENDING UI','Scale':'SCALE UI','CtrlEditor':'CTRLEDITOR UI','StagePattern':'STAGEPATTERN UI','ScaleCopy':'SCALECOPY UI','StagePair':'STAGEPAIR UI','Timing':'TIMING UI','Group':'GROUP UI','Storage':'STORAGE UI','Order':'ORDER UI','Fidelity':'FIDELITY UI','Backup':'BACKUP UI','Polish':'UI POLISH','Display':'DISPLAY','MxAudio':'AUDIO','MidiAudio':'AUDIO'}[args.mode]
 assert 'PASS '+marker+' QA COMPLETE' in report,report
-if args.mode in ['Pending','Scale','CtrlEditor','StagePattern','ScaleCopy','StagePair','Timing','Group','Storage','Order','Fidelity','Backup']:
+if args.mode in ['Chain','Pending','Scale','CtrlEditor','StagePattern','ScaleCopy','StagePair','Timing','Group','Storage','Order','Fidelity','Backup']:
     env[f'METROPOLIX_{args.mode.upper()}_REOPEN_QA']='1';report=run(output/f'{args.mode.lower()}-roundtrip.vcv','reopen');assert f'PASS {args.mode.upper()} REOPEN QA COMPLETE' in report,report
 if args.mode=='Backup':
     env['METROPOLIX_FACTORY_REOPEN_QA']='1';report=run(output/'maintenance-disarmed.vcv','maintenance-reopen');assert 'PASS FACTORY REOPEN QA COMPLETE' in report,report
