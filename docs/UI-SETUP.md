@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.45.0
+# UI setup, confirmation and external clock input — 2.46.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,20 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Stationary clicks and Undo
+
+A press by itself, with no mouse movement, performs its normal click: field navigation,
+a toggle or a choice menu. If another control or automation changes a value
+during that press, its write is not recorded as your drag. An actual toggle or
+chosen menu value records its own Undo from the latest applied value.
+
+This applies to panel controls, the OLED and optional grid cells. Cursor
+capture and adjustment tips are released normally. Pointer movement retains
+its existing drag workflow, including small continuous edits. CTRL ownership
+still cancels a held edit when a controller takes over.
+Held GATE/SLIDE plus a stage button is an intentional shortcut edit. Those
+edits retain their Undo even when the held mouse stays still.
 
 ## Long-press resets and Undo
 

@@ -453,7 +453,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             if(int page=m->timingShortcutHeld.load()){timingShortcut(m,page,s,false);(page==Metropolix::LENGTH_PAGE?len:division)->moved=3;return;}
             if(m->orderShortcutHeld.load()){orderShortcut(m,s,false);order->moved=3;return;}
             if(m->workflowCopyUsed)return;
-            if(slideTime->dragging && m->uiPage.load()==Metropolix::SLIDE_PAGE){int id=Metropolix::trackParam(m->selectedTrack.load(),Metropolix::SLIDE_TIME);if(!m->uiMod.load() && m->ctrlOwner(id)<0)m->getParamQuantity(id)->setValue(metro::slideShortcut(s));return;}
+            if(slideTime->dragging && m->uiPage.load()==Metropolix::SLIDE_PAGE){int id=Metropolix::trackParam(m->selectedTrack.load(),Metropolix::SLIDE_TIME);if(!m->uiMod.load() && m->ctrlOwner(id)<0){m->getParamQuantity(id)->setValue(metro::slideShortcut(s));slideTime->shortcutEdited=true;}return;}
             if(m->scaleShortcutHeld.load()){scaleShortcut(m,s,false);scale->moved=3;return;}
             if(m->loopyMuteHeld.load()){m->muteLoopy(s+2);return;}
             if(m->uiPage.load()==Metropolix::LOOPY_PAGE)return;
@@ -461,7 +461,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             if(trackGate->dragging && m->uiPage.load()==Metropolix::GATE_PAGE) {
                 const int shortcuts[]={1,15,30,45,60,75,90,100};int id=screenParam(m);
                 // The held GATE gesture records its own single native undo.
-                if(id>=0 && m->ctrlOwner(id)<0)m->getParamQuantity(id)->setValue(float(shortcuts[s]));
+                if(id>=0 && m->ctrlOwner(id)<0){m->getParamQuantity(id)->setValue(float(shortcuts[s]));trackGate->shortcutEdited=true;}
                 return;
             }
             if(m->uiAlt.load() && !overridePage(m)) {
