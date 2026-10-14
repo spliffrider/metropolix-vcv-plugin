@@ -1,4 +1,4 @@
-# Portable backups — 2.30.0
+# Portable backups — 2.32.0
 
 Open **SETUP → MIDI → Backup files…**, or use the module's right-click menu.
 Drag the encoder or display up/down to select an action. Click the encoder to
@@ -8,7 +8,7 @@ submenu; EXIT returns to Backup files. Right-click offers the same choices.
 | Action | Saved contents |
 | --- | --- |
 | Export All | Current settings/state, all 64 preset slots, the working chain and eight saved chains |
-| Export Settings | All 770 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
+| Export Settings | All 786 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
 | Export Presets → All Presets | All 64 slots, including empty slots, the working chain and eight saved chains |
 | Export Presets → Filled Presets | Only occupied slots, keeping their original bank/slot addresses; no chains or live settings |
 | Export Presets → Bank 1–8 | Exactly eight slots in the selected bank, including explicit empty slots; no chains or live settings |
@@ -70,9 +70,11 @@ out-of-range values are rejected before import. The files contain no chains.
 
 Use **2.29.0 or later** to import selective files. For earlier builds, export
 All Presets or All instead. Existing 2.26–2.29 All/Settings/All Presets backups
-continue to import, including settings schemas29 and30; current settings use
-schema31 to remember the maintenance menu. Settings backups from 2.30 require
-2.30 or later. Selective files remain compatible with 2.29. The 770 parameter IDs and format
+continue to import, including settings schemas29–31 with 770 parameters.
+Current settings use schema32 with 786 parameters to include the eight global
+ORDER/direction shortcut pairs; these settings backups require 2.32 or later.
+Older settings initialize the sixteen new shortcut values to plugin defaults.
+Selective files remain compatible with 2.29. Existing parameter IDs and format
 9/518-value musical snapshots stay fixed. The
 [example Bank 8 backup](../examples/Backup-bank-8.json) intentionally replaces
 Bank 8 with three occupied slots and five empty slots; try it in a spare patch.

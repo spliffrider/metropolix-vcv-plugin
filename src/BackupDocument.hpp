@@ -13,7 +13,7 @@ inline bool integer(json_t* j,json_int_t lo,json_int_t hi){return json_is_intege
 struct StateField {const char* name;int low,high;bool boolean;};
 inline const std::vector<StateField>& stateFields(){
     static const std::vector<StateField> fields={
-        {"schemaVersion",29,31,false},{"midiSetupCursor",0,5,false},{"backupCursor",0,3,false},
+        {"schemaVersion",29,32,false},{"midiSetupCursor",0,5,false},{"backupCursor",0,3,false},
         {"backupPresetCursor",0,9,false},
         {"factoryCursor",0,1,false},
         {"uiSetupCursor",0,7,false},{"modMenuCursor",0,3,false},{"presetBank",0,7,false},
@@ -57,11 +57,12 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
         error.clear();return true;
     }
     if(scope!=Presets){
-        auto* parameters=json_object_get(document,"params");if(!json_is_array(parameters) || json_array_size(parameters)!=Metropolix::NUM_PARAMS)return fail("Incomplete parameter settings.");
-        std::array<bool,Metropolix::NUM_PARAMS> seen{};
-        for(size_t i=0;i<json_array_size(parameters);++i){auto* p=json_array_get(parameters,i);auto* id=json_object_get(p,"id");if(!integer(id,0,Metropolix::NUM_PARAMS-1))return fail("Invalid parameter ID.");int n=int(json_integer_value(id));if(seen[n] || !value(m,n,json_object_get(p,"value")))return fail("Duplicate or invalid parameter value.");seen[n]=true;}
-        auto* state=json_object_get(document,"state");if(!json_is_object(state) || !integer(json_object_get(state,"schemaVersion"),29,31))return fail("Unsupported settings version.");
+        auto* state=json_object_get(document,"state");if(!json_is_object(state) || !integer(json_object_get(state,"schemaVersion"),29,32))return fail("Unsupported settings version.");
         int schema=int(json_integer_value(json_object_get(state,"schemaVersion")));
+        int expected=schema<32?Metropolix::FORMAT31_NUM_PARAMS:Metropolix::NUM_PARAMS;
+        auto* parameters=json_object_get(document,"params");if(!json_is_array(parameters) || json_array_size(parameters)!=size_t(expected))return fail("Incomplete parameter settings.");
+        std::array<bool,Metropolix::NUM_PARAMS> seen{};
+        for(size_t i=0;i<json_array_size(parameters);++i){auto* p=json_array_get(parameters,i);auto* id=json_object_get(p,"id");if(!integer(id,0,expected-1))return fail("Invalid parameter ID.");int n=int(json_integer_value(id));if(seen[n] || !value(m,n,json_object_get(p,"value")))return fail("Duplicate or invalid parameter value.");seen[n]=true;}
         if(json_object_size(state)!=stateFields().size()+1-(schema<30?1:0)-(schema<31?1:0))return fail("Unexpected or missing settings fields.");
         for(const auto& field:stateFields()){
             if((schema<30 && std::strcmp(field.name,"backupPresetCursor")==0) || (schema<31 && std::strcmp(field.name,"factoryCursor")==0))continue;

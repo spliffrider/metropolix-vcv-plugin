@@ -1,4 +1,16 @@
-# Validation and fidelity status — 2.31.0
+# Validation and fidelity status — 2.32.0
+
+## ORDER shortcuts — 2.32.0
+
+The manual's p.74 held-ORDER shortcuts now save/recall order and direction as a
+pair across all ten targets. Native tests cover 3,360 combinations, global
+preset exclusion, CTRL ownership and schema29–31/770 versus schema32/786 backup
+validation. Actual Rack tests cover held and desktop gestures, paired long
+reset, target changes within a gesture, exact undo/redo and Rack save/reopen.
+Controller-owned fields are excluded from the gesture receipt. Four new ORDER
+screens extend display coverage to 181. The [ORDER guide](ORDER-SHORTCUTS.md)
+records software default pairs and storage boundaries. Scale Lock preset recall
+is the next confirmed manual gap (p.169).
 
 ## Production runtime — 2.31.0
 

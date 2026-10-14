@@ -92,6 +92,10 @@ const DisplayCase cases[]={
     {"scale-user",Metropolix::SCALE_PAGE,0,0,0,false},
     {"scale-edit",Metropolix::SCALE_PAGE,1,0,0,false},
     {"order",Metropolix::ORDER_PAGE,0,0,0,false},
+    {"order-brownian-reverse",Metropolix::ORDER_PAGE,1,0,0,false},
+    {"order-mod-reverse",Metropolix::ORDER_PAGE,1,0,0,true},
+    {"order-shortcut-saved",Metropolix::ORDER_PAGE,0,0,0,false},
+    {"order-ctrl-blocked",Metropolix::ORDER_PAGE,0,0,0,false},
     {"length",Metropolix::LENGTH_PAGE,0,0,0,false},
     {"division",Metropolix::DIV_PAGE,1,0,0,false},
     {"swing-straight",Metropolix::SWING_PAGE,0,0,Metropolix::SLIDE,false},
@@ -267,6 +271,7 @@ if(qaFrame>=20 && index<count) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
         m->uiAlt.store(false);m->clearWorkflows();m->cancelDraft();m->params[Metropolix::SHOW_POSITION].setValue(1);m->params[Metropolix::SCREEN_LEVEL].setValue(4);m->clearPickup();
+        m->orderShortcutHeld.store(false);m->orderShortcutUsed.store(false);
         m->params[Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE)].setValue(0);
         if(std::string(test.name)=="setup-init")m->setupCursor.store(4);
         if(std::string(test.name)=="preset-init")m->params[Metropolix::INIT_PRESET].setValue(64);
@@ -344,6 +349,9 @@ if(qaFrame>=20 && index<count) {
         if(std::string(test.name)=="aux-loopy-offset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModLoopyOffset);
         if(std::string(test.name)=="aux-track-reset")m->params[Metropolix::auxParam(1,Metropolix::AUX_DESTINATION)].setValue(metro::ModReset);
         std::string setupName=test.name;
+        if(test.page==Metropolix::ORDER_PAGE){auto ids=Metropolix::orderParams(test.mod,test.mod?m->selectedLane.load():m->selectedTrack.load());m->params[ids[0]].setValue(setupName=="order-brownian-reverse"?17:setupName=="order-mod-reverse"?19:0);m->params[ids[1]].setValue(test.field==1);}
+        if(setupName=="order-shortcut-saved"){m->workflowMessage="SHORTCUT 8 SAVED";m->workflowUntil=system::getTime()+5;}
+        if(setupName=="order-ctrl-blocked"){m->workflowMessage="ORDER OWNED BY CTRL";m->workflowUntil=system::getTime()+5;}
         if(setupName=="home-pickup"){m->params[Metropolix::LOAD_PITCH].setValue(Metropolix::PitchThru);m->params[Metropolix::LOAD_CTRL].setValue(Metropolix::CtrlThru);for(int i=0;i<10;++i){int id=Metropolix::panelParam(i);m->panelPickup[i].recall(i<8?.1f:-.8f,i<8?(.9f-i*.08f):.5f);m->params[id].setValue(i<8?.1f:-.8f);}m->publishPickup();}
         if(setupName=="preset-pitch-thru")m->params[Metropolix::LOAD_PITCH].setValue(Metropolix::PitchThru);
         if(setupName=="preset-ctrl-thru" || setupName=="preset-ctrl-jump")m->params[Metropolix::LOAD_CTRL].setValue(setupName=="preset-ctrl-thru"?Metropolix::CtrlThru:Metropolix::CtrlJump);

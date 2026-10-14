@@ -181,7 +181,7 @@ struct Metropolix : Module {
         CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, FORMAT20_NUM_PARAMS, INIT_PRESET=FORMAT20_NUM_PARAMS, FORMAT21_NUM_PARAMS, ENC_CONFIRM=FORMAT21_NUM_PARAMS, SHOW_POSITION, BUTTON_LEVEL, SLIDER_LEVEL, SCREEN_LEVEL, CV_OUT_DELAY, EXT_CLOCK_DIV, RUN_ON_BOOT, FORMAT22_NUM_PARAMS,
         MIDI_TRACK=FORMAT22_NUM_PARAMS, MIDI_TRACK_STRIDE=5,
         MIDI_MOD=MIDI_TRACK+2*MIDI_TRACK_STRIDE, MIDI_MOD_STRIDE=2,
-        MIDI_CLOCK_OUT=MIDI_MOD+8*MIDI_MOD_STRIDE, MIDI_TRANSPORT, MIDI_ROOT_CHANNEL, MIDI_PC_CHANNEL, MIDI_ZERO_NOTE, FORMAT24_NUM_PARAMS, MX_MODE=FORMAT24_NUM_PARAMS, MX_TRACK, MX_LANE, NUM_PARAMS
+        MIDI_CLOCK_OUT=MIDI_MOD+8*MIDI_MOD_STRIDE, MIDI_TRANSPORT, MIDI_ROOT_CHANNEL, MIDI_PC_CHANNEL, MIDI_ZERO_NOTE, FORMAT24_NUM_PARAMS, MX_MODE=FORMAT24_NUM_PARAMS, MX_TRACK, MX_LANE, FORMAT31_NUM_PARAMS, ORDER_SHORTCUTS=FORMAT31_NUM_PARAMS, NUM_PARAMS=ORDER_SHORTCUTS+16
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -224,6 +224,21 @@ struct Metropolix : Module {
     static std::vector<std::string> gateSourceLabels(){return {"Switch","Single","Single + Rest","Multi","Multi + Rest","Hold","Hold + Rest"};}
     static int userScaleParam(int slot,bool root=false) {return USER_SCALES+metro::clamp(slot,0,99)*2+int(root);}
     static int scaleShortcutParam(int slot,bool root=false) {return SCALE_SHORTCUTS+metro::clamp(slot,0,7)*2+int(root);}
+    static int orderShortcutParam(int slot,bool direction=false) {return ORDER_SHORTCUTS+metro::clamp(slot,0,7)*2+int(direction);}
+    static std::array<int,2> orderParams(bool mod,int target) {
+        return mod?std::array<int,2>{{modParam(target,MOD_ORDER),modParam(target,MOD_REVERSED)}}:
+            std::array<int,2>{{trackParam(target,ORDER),extraParam(target,REVERSED)}};
+    }
+    bool orderShortcut(int slot,bool save,bool mod,int target) {
+        if(slot<0 || slot>=8 || target<0 || target>=(mod?8:2))return false;
+        auto ids=orderParams(mod,target);
+        if(!save && (ctrlOwner(ids[0])>=0 || ctrlOwner(ids[1])>=0))return false;
+        for(int field=0;field<2;++field) {
+            int stored=orderShortcutParam(slot,field!=0);
+            params[save?stored:ids[field]].setValue(float(integer(save?ids[field]:stored)));
+        }
+        return true;
+    }
     static std::vector<std::string> ctrlDestinations() {
         return {"None", "Accum Mode", "Accum Polar", "Tempo", "Clock Div", "Direction",
             "Gate Length", "Octave", "Pitch Offset", "Pitch Post", "Pitch Pre", "Play Order",
@@ -343,6 +358,7 @@ struct Metropolix : Module {
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
     std::atomic<bool> uiChooseFunction{false};
     std::atomic<bool> scaleEditing{false},scaleShortcutHeld{false},scaleShortcutUsed{false};
+    std::atomic<bool> orderShortcutHeld{false},orderShortcutUsed{false};
     std::atomic<int> soundingScale[2];
     std::atomic<int> modStage[8];
     std::atomic<float> modVoltage[8];
@@ -541,6 +557,12 @@ struct Metropolix : Module {
         configSwitch(MX_MODE,0,6,0,"MX expander mode",{"Transport A","Transport B","Transport C","Prob Clocks","Mod Clocks","Stage Num","Mod Stage Num"});
         configSwitch(MX_TRACK,0,1,0,"MX track",{"TRK 1","TRK 2"});
         configSwitch(MX_LANE,0,7,0,"MX MOD lane",{"MOD 1","MOD 2","MOD 3","MOD 4","MOD 5","MOD 6","MOD 7","MOD 8"});
+        // Convenient software defaults; the manual does not list factory pairs.
+        const int orderDefaults[]={0,0,1,2,3,12,18,20};
+        for(int slot=0;slot<8;++slot) {
+            configSwitch(orderShortcutParam(slot),0,20,orderDefaults[slot],"Order shortcut "+std::to_string(slot+1),orderLabels());
+            configSwitch(orderShortcutParam(slot,true),0,1,slot==1?1:0,"Order shortcut direction "+std::to_string(slot+1),{"Forward","Reverse"});
+        }
         mx.seed(random::u32());
         for(int id=CLOCK_SOURCE;id<NUM_PARAMS;++id){paramQuantities[id]->randomizeEnabled=false;paramQuantities[id]->snapEnabled=true;}
         sequencer.seed(random::u32());
@@ -766,6 +788,7 @@ struct Metropolix : Module {
         Module::onReset(e);clearPickup();tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
+        orderShortcutHeld.store(false);orderShortcutUsed.store(false);
         resetPresetRuntime();
         resetChainRuntime();
         { std::lock_guard<std::mutex> lock(presetMutex);chainState.enabled=false;chainEnabled.store(false); }
@@ -791,7 +814,7 @@ struct Metropolix : Module {
         json_t* root = json_object();
         json_object_set_new(root,"midiInput",midiInput.toJson());json_object_set_new(root,"midiOutput",midiOutput.toJson());json_object_set_new(root,"midiSetupCursor",json_integer(midiSetupCursor.load()));
         json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
-        json_object_set_new(root, "schemaVersion", json_integer(31));
+        json_object_set_new(root, "schemaVersion", json_integer(32));
         json_object_set_new(root,"backupCursor",json_integer(backupCursor.load()));
         json_object_set_new(root,"backupPresetCursor",json_integer(backupPresetCursor.load()));
         json_object_set_new(root,"factoryCursor",json_integer(factoryCursor.load()));
@@ -824,6 +847,7 @@ struct Metropolix : Module {
         resetMidiRuntime();midiInput.fromJson(json_object_get(root,"midiInput"));midiOutput.fromJson(json_object_get(root,"midiOutput"));midiInput.setChannel(-1);midiOutput.setChannel(-1);
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
+        orderShortcutHeld.store(false);orderShortcutUsed.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
         tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
         uiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"uiSetupCursor"))),0,7));
@@ -911,6 +935,7 @@ struct Metropolix : Module {
         uiAlt.store(false);
         if(schema<27){for(int id=MIDI_TRACK;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);for(int t=0;t<2;++t)params[midiTrackParam(t,MIDI_CHANNEL)].setValue(0);for(int l=0;l<8;++l)params[midiModParam(l,MIDI_MOD_CHANNEL)].setValue(0);}
         if(schema<28)for(int id=MX_MODE;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
+        if(schema<32)for(int id=ORDER_SHORTCUTS;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(schema<26){if(integer(LOAD_PITCH)==1)params[LOAD_PITCH].setValue(PitchJump);if(integer(LOAD_CTRL)==2)params[LOAD_CTRL].setValue(CtrlJump);clearPickup();}else pickupFromJson(root);
         sequencer.reset();
         readSettings();
