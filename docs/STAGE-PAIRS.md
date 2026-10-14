@@ -35,6 +35,11 @@ Undo restores signed amounts and secondary choices exactly, including values
 clipped during an ALT edit. Unrelated fields and the other track stay intact;
 CTRL-owned parameters remain protected.
 
+Since 2.51.0, amount drags capture only amounts in Undo. An independent
+target/trigger change during the drag survives undoing that amount edit,
+including ALT edits and changes to any of the eight stages. Clicks and long
+paired resets retain their own target/trigger history.
+
 With Enc Confirm enabled, an ALT drag previews a change across all eight amounts.
 Press the encoder to apply it in one action. Targets/triggers stay unchanged
 during confirmation. Paired reset cancels any pending preview and applies the

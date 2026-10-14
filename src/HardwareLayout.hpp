@@ -207,6 +207,17 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
                 for(int id:{Metropolix::trackParam(m->selectedTrack.load(),Metropolix::SLIDE_TIME),Metropolix::slideTypeParam(m->selectedTrack.load())})if(m->ctrlOwner(id)<0)ids.push_back(id);
             return ids;
         };
+        // Paired-page holds reset the whole page, but turns edit only the
+        // selected field (or the ALT amount pattern). Keep partner writes
+        // outside the drag's Undo receipt.
+        c->dragParams=[m,c] {
+            if(stagePairPage(m))return stagePairIds(m,false,true);
+            if(m && (timingPage(m) || m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || m->uiPage.load()==Metropolix::ORDER_PAGE || m->uiPage.load()==Metropolix::GATE_PAGE || m->uiPage.load()==Metropolix::SLIDE_PAGE)) {
+                int id=screenParam(m);
+                return id>=0 && m->ctrlOwner(id)<0?std::vector<int>{id}:std::vector<int>{};
+            }
+            return c->groupedParams();
+        };
         auto before=std::make_shared<Metropolix::ChainState>();
         c->navigationStart=[m,before]{if(chainPage(m))*before=m->getChainState();};
         // Click/long actions record their own history; only turns need the
@@ -430,6 +441,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         };
         c->help="EDIT then a function, then select a stage. Hold + drag edits this stage. Slide/Skip clicks toggle. Right-click for values.";
         c->groupedParams=[m]{return m && m->timingShortcutHeld.load()?std::vector<int>{}:stagePairPage(m)?stagePairIds(m):simpleStagePage(m)?simpleStageIds(m):cvPage(m)?cvParams(m):overrideParams(m);};
+        c->dragParams=[m,c]{return stagePairPage(m) && !m->timingShortcutHeld.load()?stagePairIds(m,false,true):c->groupedParams();};
         c->detailHelp=[m,s] {
             if(m && m->timingShortcutHeld.load())return "Hold the panel button and click for "+timingShortcutLabel(m,m->timingShortcutHeld.load(),s)+".";
             if(m && (m->orderShortcutHeld.load() || m->uiPage.load()==Metropolix::ORDER_PAGE))return "Order shortcut "+orderShortcutLabel(m,s)+". Hold ORDER + click to recall; long stage press saves. Right-click offers both.";
