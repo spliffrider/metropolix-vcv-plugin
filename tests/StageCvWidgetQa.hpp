@@ -29,5 +29,5 @@ if(qaFrame==6){
     press(find("Encoder"),GLFW_MOUSE_BUTTON_RIGHT);check(seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Rotate gates backward";})!=nullptr,"CV menus provide desktop pattern operations");closeMenus();
     m->params[M::cvTypeParam(0)].setValue(1);m->params[M::cvTypeParam(1)].setValue(2);m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/cv-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/cv-gate-display.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/cv-gate-display.png");
 if(qaFrame==12){check(!qaFailed,"STAGE CV UI QA COMPLETE");APP->window->close();}

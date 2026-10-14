@@ -71,13 +71,13 @@ if(qaFrame==9) {
     slider(0)->getParamQuantity()->setValue(.5f);
     slider(0)->onDragStart(start);move.mouseDelta=Vec(0,-40);slider(0)->onDragMove(move);
 }
-if(qaFrame==13)APP->window->screenshot(dir+"/live-adjustment.png");
+if(qaFrame==13)metroqa::screenshot(dir+"/live-adjustment.png");
 if(qaFrame==14) { slider(0)->onDragEnd(end);settings::haloBrightness=0; }
-if(qaFrame==18)APP->window->screenshot(dir+"/bloom-off.png");
+if(qaFrame==18)metroqa::screenshot(dir+"/bloom-off.png");
 if(qaFrame==19)settings::haloBrightness=1;
-if(qaFrame==23)APP->window->screenshot(dir+"/bloom-on.png");
+if(qaFrame==23)metroqa::screenshot(dir+"/bloom-on.png");
 if(qaFrame==24)settings::rackBrightness=.2f;
-if(qaFrame==28)APP->window->screenshot(dir+"/dark-room.png");
+if(qaFrame==28)metroqa::screenshot(dir+"/dark-room.png");
 if(qaFrame==29) { settings::rackBrightness=1;settings::haloBrightness=.25f; }
 const float zooms[]={.75f,1.f,1.25f,1.5f,2.f};
 int i=(qaFrame-30)/6;
@@ -87,7 +87,7 @@ if(qaFrame>=30 && i<5) {
     // subsequent frames too, once the new zoom's scroll bounds have settled.
     APP->scene->rackScroll->setGridOffset(Vec(-1.f,-.05f));
     if((qaFrame-30)%6==3) {
-        APP->window->screenshot(dir+string::f("/zoom-%03d.png",int(100*zooms[i])));
+        metroqa::screenshot(dir+string::f("/zoom-%03d.png",int(100*zooms[i])));
         auto* display=find("Metropolix display");
         Vec pos=display->getAbsoluteOffset(Vec(0,0)),size=display->box.size.mult(zooms[i]);
         check(pos.x>=0 && pos.y>=30 && pos.x+size.x<1500 && pos.y+size.y<900,"OLED remains visible in zoom proof");

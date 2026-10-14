@@ -10,5 +10,5 @@ if(qaFrame==6){
     copyWorkflow(m,3,0);pasteWorkflow(m,3,1);check(m->integer(M::midiTrackParam(1,M::MIDI_CHANNEL))==16,"track menu copy includes MIDI choices");m->uiMod.store(true);copyWorkflow(m,4,0);pasteWorkflow(m,4,1);check(m->integer(M::midiModParam(1,M::MIDI_MOD_CC))==128,"whole MOD copy includes MIDI choices");m->uiMod.store(false);openMidiSetup(m);m->midiSetupCursor.store(3);auto* encoder=dynamic_cast<HardwareControl*>(find("Encoder"));int h2=APP->history->actionIndex;event::DragStart start;start.button=GLFW_MOUSE_BUTTON_LEFT;encoder->onDragStart(start);encoder->heldSince-=1.1;encoder->step();event::DragEnd end;end.button=GLFW_MOUSE_BUTTON_LEFT;encoder->onDragEnd(end);check(m->integer(M::MIDI_PC_CHANNEL)==0 && APP->history->actionIndex==h2+1,"long MIDI encoder reset records one action");APP->history->undo();check(m->integer(M::MIDI_PC_CHANNEL)==16,"long MIDI reset undo restores channel");
     savePresetSlot(m,0,false,false);openMidiSetup(m);m->midiSetupCursor.store(3);APP->patch->save(dir+"/midi-roundtrip.vcv");
 }
-if(qaFrame==9)APP->window->screenshot(dir+"/midi-setup.png");
+if(qaFrame==9)metroqa::screenshot(dir+"/midi-setup.png");
 if(qaFrame==12){check(!qaFailed,"MIDI UI QA COMPLETE");APP->window->close();}

@@ -10,6 +10,7 @@
 #include "Mx.hpp"
 #ifdef METROPOLIX_QA
 #include <patch.hpp>
+#include "../tests/RackCapture.hpp"
 #endif
 #include <functional>
 
@@ -629,7 +630,7 @@ struct MetropolixWidget : ModuleWidget {
             return c;
         };
         modCell(Metropolix::MOD_LENGTH, 20, 90, 49);
-        modCell(Metropolix::MOD_OFFSET, 80, 90, 49);
+        modCell(Metropolix::MOD_STAGE_OFFSET, 80, 90, 49);
         modCell(Metropolix::MOD_DIVISION, 140, 90, 49);
         modCell(Metropolix::MOD_ORDER, 200, 90, 120)->choices = Metropolix::orderLabels();
         modCell(Metropolix::MOD_MUTE, 334, 90, 49)->choices = {"OFF", "ON"};

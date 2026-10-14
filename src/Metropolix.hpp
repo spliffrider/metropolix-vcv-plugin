@@ -188,7 +188,7 @@ struct Metropolix : Module {
     enum ExtraTrackParams { REVERSED, PULSE_DIV, PULSE_LIMIT, GATE_STRETCH, RATCHET_MODE, ACCUM_AUTO_RESET };
     enum AccumOptions { NEGATIVE_LIMIT, BIPOLAR, ACCUM_ORDER };
     enum StageOptions { PROB_TARGET, ACCUM_TRIGGER };
-    enum ModParams { MOD_LENGTH, MOD_OFFSET, MOD_DIVISION, MOD_ORDER, MOD_REVERSED, MOD_PULSE_LIMIT,
+    enum ModParams { MOD_LENGTH, MOD_STAGE_OFFSET, MOD_DIVISION, MOD_ORDER, MOD_REVERSED, MOD_PULSE_LIMIT,
         MOD_TYPE, MOD_DESTINATION, MOD_ASSIGNMENT, MOD_MUTE, MOD_VALUE = 10, MOD_RAMP = 18 };
     enum AuxParams { AUX_AMOUNT, AUX_DESTINATION, AUX_ASSIGNMENT };
     enum CtrlParams { CTRL_VALUE, CTRL_DESTINATION, CTRL_ASSIGNMENT };
@@ -464,7 +464,7 @@ struct Metropolix : Module {
             modVoltage[lane].store(0.f);
             std::string name = "MOD " + std::to_string(lane + 1) + " ";
             configParam(modParam(lane, MOD_LENGTH), 1, 8, 8, name + "length", " stages")->snapEnabled = true;
-            configParam(modParam(lane, MOD_OFFSET), 0, 7, 0, name + "offset", " stages")->snapEnabled = true;
+            configParam(modParam(lane, MOD_STAGE_OFFSET), 0, 7, 0, name + "offset", " stages")->snapEnabled = true;
             configParam(modParam(lane, MOD_DIVISION), 1, 64, 1, name + "clock division")->snapEnabled = true;
             configSwitch(modParam(lane, MOD_ORDER), 0, 20, 0, name + "play order", orderLabels());
             configSwitch(modParam(lane, MOD_REVERSED), 0, 1, 0, name + "direction", {"Forward", "Reverse"});
@@ -580,7 +580,7 @@ struct Metropolix : Module {
         for (int lane = 0; lane < 8; ++lane) {
             auto& mod = c.modLanes[lane];
             mod.length = integer(modParam(lane, MOD_LENGTH));
-            mod.offset = integer(modParam(lane, MOD_OFFSET));
+            mod.offset = integer(modParam(lane, MOD_STAGE_OFFSET));
             mod.division = integer(modParam(lane, MOD_DIVISION));
             mod.order = static_cast<metro::Order>(integer(modParam(lane, MOD_ORDER)));
             mod.reversed = integer(modParam(lane, MOD_REVERSED)) != 0;

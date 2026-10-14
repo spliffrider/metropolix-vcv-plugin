@@ -7,7 +7,7 @@ auto hold=[&](HardwareControl* c,double seconds) {
 auto imageChain=[&](const char* name) {
     auto* d=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));
     auto c=d->render();std::ofstream pgm(dir+"/"+name+".pgm",std::ios::binary);pgm<<"P5\n128 64\n255\n";pgm.write(reinterpret_cast<const char*>(c.pixels),sizeof(c.pixels));
-    APP->window->screenshot(dir+"/"+name+".png");
+    metroqa::screenshot(dir+"/"+name+".png");
 };
 if(std::getenv("METROPOLIX_CHAIN_REOPEN_QA")) {
     if(qaFrame==10) {

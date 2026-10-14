@@ -118,12 +118,8 @@ paragraphs that still refer to Track 1 LEN/Pulses. The 4096 maximum follows the
 later firmware notes. Physical hardware comparison remains outstanding.
 
 Version 2.8.0 adds [preset chains and repeat counts](PRESET-CHAINS.md), using these
-banks. MIDI program changes, hardware bank interchange, custom Init presets and
-panel pickup modes remain future work.
-
-Since 2.16.0, velocity and per-track slider octave/direction settings are
-stored in format6 presets. Formats1–5 migrate to 100% velocity and the shared
-legacy range. Global cable functions remain unchanged by recall.
+banks. MIDI program changes, custom Init presets, panel pickup and portable
+JSON backups are now available. Hardware SysEx interchange remains open.
 
 Since 2.16.0, velocity and per-track slider octave/direction settings are
 stored in format6 presets. Formats1–5 migrate to 100% velocity and the shared

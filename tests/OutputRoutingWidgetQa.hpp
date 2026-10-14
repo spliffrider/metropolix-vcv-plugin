@@ -19,5 +19,5 @@ if(qaFrame==6){
     m->params[M::OUTPUT_SOURCE_A].setValue(37);m->params[M::OUTPUT_SOURCE_B].setValue(25);m->params[M::outputTrackParam(0,M::VELOCITY_SOURCE)].setValue(3);m->putPreset(0,m->capturePreset());
     screenPage(m,M::A_PAGE);drag(find("Encoder"),22);check(m->outputDraft[0].load()>=0,"pending selection exists during save");APP->patch->save(dir+"/output-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/output-confirmation-display.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/output-confirmation-display.png");
 if(qaFrame==12){check(!qaFailed,"OUTPUT UI QA COMPLETE");APP->window->close();}

@@ -12,5 +12,5 @@ if(qaFrame==6){
     auto* menu=createMenu();appendMxMenu(menu,m);check(seek(menu,[](widget::Widget* w){auto* item=dynamic_cast<ui::MenuItem*>(w);return item && item->text=="MX mode";})!=nullptr,"MX right-click mode choices are available");closeMenus();
     savePresetSlot(m,0,false,false);openMx(m);m->uiField.store(1);APP->patch->save(dir+"/mx-roundtrip.vcv");
 }
-if(qaFrame==9)APP->window->screenshot(dir+"/mx-assignments.png");
+if(qaFrame==9)metroqa::screenshot(dir+"/mx-assignments.png");
 if(qaFrame==12){check(!qaFailed,"MX UI QA COMPLETE");APP->window->close();}

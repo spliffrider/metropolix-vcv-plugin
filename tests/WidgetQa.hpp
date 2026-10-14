@@ -125,7 +125,7 @@ void MetropolixWidget::qaStep() {
                 log<<(good?"PASS ":"FAIL ")<<"AUX WIRING COMPLETE\n";
             }
         }
-        if(qaFrame==180)APP->window->screenshot(dir+"/two-voice.png");
+        if(qaFrame==180)metroqa::screenshot(dir+"/two-voice.png");
         return;
     }
     auto check=[&](bool ok,const std::string& s) {
@@ -274,7 +274,7 @@ void MetropolixWidget::qaStep() {
             int found=0;for(auto* w:children)if(auto* p=dynamic_cast<MetalPort*>(w))if(p->type==engine::Port::INPUT && p->portId==Metropolix::AUX_X_IN+input)++found;
             check(found==1,"each AUX input has one real Rack jack");
         }
-        APP->window->screenshot(dir+"/compact.png");
+        metroqa::screenshot(dir+"/compact.png");
         auto* c=find("BPM"); click(c);
         check(m->uiPage.load()==Metropolix::BPM_PAGE,"BPM click selects display page");
         auto* q=m->getParamQuantity(Metropolix::TEMPO); float old=q->getValue();
@@ -287,11 +287,11 @@ void MetropolixWidget::qaStep() {
         check(c->tip && c->tooltipText().find("BPM")!=std::string::npos && c->tooltipText().find("up/down")!=std::string::npos,"hover text includes current value and drag help");
     }
     if(qaFrame==24) {
-        APP->window->screenshot(dir+"/tooltip.png"); find("BPM")->clearTip();
+        metroqa::screenshot(dir+"/tooltip.png"); find("BPM")->clearTip();
         press(find("BPM"),GLFW_MOUSE_BUTTON_RIGHT);
     }
     if(qaFrame==26) {
-        APP->window->screenshot(dir+"/numeric-menu.png");
+        metroqa::screenshot(dir+"/numeric-menu.png");
         auto* overlay=seek(APP->scene,[](widget::Widget* w){return w->visible && dynamic_cast<ui::MenuOverlay*>(w)!=nullptr;});
         // The hidden module browser is also a MenuOverlay. Only search the
         // visible parameter menu for its populated value field.
@@ -311,7 +311,7 @@ void MetropolixWidget::qaStep() {
         auto* item=dynamic_cast<ui::MenuItem*>(seek(APP->scene,[](widget::Widget* w) { auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Ping Pong"; }));
         check(item!=nullptr,"ORDER context menu lists named play orders");
         if(item) { event::Action e; item->onAction(e); check(m->integer(Metropolix::trackParam(0,Metropolix::ORDER))==1,"menu choice edits track order"); APP->history->undo(); }
-        APP->window->screenshot(dir+"/context-menu.png"); closeMenus();
+        metroqa::screenshot(dir+"/context-menu.png"); closeMenus();
         m->selectedStage.store(4); m->selectedRow.store(Metropolix::RATCHETS); m->uiEdit.store(true); m->uiPage.store(Metropolix::STAGE_PAGE); m->expanded.store(true);
     }
     if(qaFrame==36) {
@@ -355,7 +355,7 @@ void MetropolixWidget::qaStep() {
             float raised=q->getValue(); drag(f,400); check(q->getValue()<raised,"slider downward drag lowers pitch/pulse/gate value");
         }
     }
-    if(qaFrame==45)APP->window->screenshot(dir+"/expanded.png");
+    if(qaFrame==45)metroqa::screenshot(dir+"/expanded.png");
     if(qaFrame==50) { click(find("MOD")); press(find("MOD"),GLFW_MOUSE_BUTTON_RIGHT); }
     if(qaFrame==52) {
         auto* item=dynamic_cast<ui::MenuItem*>(seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Open MOD editor";}));
@@ -381,7 +381,7 @@ void MetropolixWidget::qaStep() {
         check(m->integer(Metropolix::OUTPUT_SOURCE_A)==5,"output assignment survives save/load");
         APP->patch->save(dir+"/roundtrip.vcv");
     }
-    if(qaFrame==60)APP->window->screenshot(dir+"/mod-editor.png");
+    if(qaFrame==60)metroqa::screenshot(dir+"/mod-editor.png");
     if(qaFrame==65) { m->expanded.store(false); click(find("EXIT")); }
     if(qaFrame==70) {
         check(box.size.x==510 && !editor->visible && !modPanel->visible,"optional editors close to hardware width");

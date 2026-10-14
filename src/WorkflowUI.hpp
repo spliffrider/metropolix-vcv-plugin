@@ -13,7 +13,7 @@ std::vector<int> workflowTrackIds(Metropolix* m,int track,bool randomize=false){
     using M=Metropolix;bool mod=m->uiMod.load();int lane=m->selectedLane.load();
     switch(m->uiPage.load()){
         case M::ORDER_PAGE:return mod?std::vector<int>{M::modParam(lane,M::MOD_ORDER),M::modParam(lane,M::MOD_REVERSED)}:std::vector<int>{M::trackParam(track,M::ORDER),M::extraParam(track,M::REVERSED)};
-        case M::LENGTH_PAGE:{std::vector<int> ids=mod?std::vector<int>{M::modParam(lane,M::MOD_LENGTH),M::modParam(lane,M::MOD_OFFSET)}:std::vector<int>{M::trackParam(track,M::LENGTH),M::trackParam(track,M::OFFSET)};if(!randomize)ids.push_back(mod?M::modParam(lane,M::MOD_PULSE_LIMIT):M::extraParam(track,M::PULSE_LIMIT));return ids;}
+        case M::LENGTH_PAGE:{std::vector<int> ids=mod?std::vector<int>{M::modParam(lane,M::MOD_LENGTH),M::modParam(lane,M::MOD_STAGE_OFFSET)}:std::vector<int>{M::trackParam(track,M::LENGTH),M::trackParam(track,M::OFFSET)};if(!randomize)ids.push_back(mod?M::modParam(lane,M::MOD_PULSE_LIMIT):M::extraParam(track,M::PULSE_LIMIT));return ids;}
         case M::DIV_PAGE:return mod?std::vector<int>{M::modParam(lane,M::MOD_DIVISION)}:std::vector<int>{M::trackParam(track,M::DIVISION),M::extraParam(track,M::PULSE_DIV)};
         case M::SWING_PAGE:return mod?std::vector<int>{}:std::vector<int>{M::swingParam(track)};
         case M::SLIDE_PAGE:return mod?std::vector<int>{}:std::vector<int>{M::trackParam(track,M::SLIDE_TIME),M::slideTypeParam(track)};

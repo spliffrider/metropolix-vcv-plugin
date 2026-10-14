@@ -8,7 +8,8 @@ entry. Existing CTRL ownership still locks directly controlled settings.
 
 The menu currently includes Transpose, Slider Octaves/Direction, Pulse Count,
 Gate Type, Gate Stretching, Ratchets, Rest Pitch, Velocity and Init Trk Defaults.
-Global Reset and MIDI settings are separate remaining work. The optional editor
+Global Reset and MIDI choices are available; see [Clock/reset](CLOCK-RESET.md)
+and [MIDI](MIDI.md). The optional editor
 and right-click track menu also expose the settings.
 
 | Setting | Behavior |

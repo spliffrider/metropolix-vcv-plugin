@@ -4,9 +4,13 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.27.0 — public alpha**, for **Windows x64 / Rack Free 2.6.6**. This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.28.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Download the Windows plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/MetropolixLab-2.27.0-win-x64.vcvplugin)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/MX-performance.vcv)** · **[Install and test](docs/TESTING.md)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.27.0)**
+**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-mac-arm64.vcvplugin)**
+
+**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.28.0)**
+
+2.28.0 adds [native platform packages](docs/PLATFORMS.md), production loading tests on all three new architectures, and actual Linux Rack display/control/save/audio checks. Musical parameter IDs and saved formats stay fixed.
 
 2.27.0 refines [panel interaction and display](docs/UI-FIDELITY.md): pending drag readouts, destination-specific MOD units, long EXIT Sync, submenu back and MX attachment while resizing editors.
 
@@ -100,7 +104,7 @@ retain Stage mode and their existing parameter/cable IDs. This earlier release
 focuses on accumulation and skip interactions.
 See [accumulator operation and comparison](docs/HARDWARE-UI.md#accumulator-modes).
 
-2.4.0 made X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). macOS/Linux plugin downloads are not available yet. The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
+2.4.0 made X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
 
 2.4.1 replaces the standalone manufacturer logo with **sensiburner <3 intellijel**,
 using matching bold lowercase lettering and red accents. Rack identifies
@@ -182,9 +186,9 @@ equally on both mixers to keep the bass centered. Raise the second VCF's cutoff
 for a brighter melody, or lower channel 3 for less echo. Save your variations
 under a new name. The older examples remain available for feature testing.
 
-To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the file in **`plugins-win-x64`**, and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
+To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the intact file in the **plugin folder for your OS/CPU** listed in [Platform packages](docs/PLATFORMS.md), and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.24.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.28.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -256,7 +260,7 @@ The original twelve internal destinations are Octave, Pitch Pre, Pitch Post, Pit
 
 ## What remains
 
-MIDI notes/CCs, clock/transport, root and program change are available. MX expansion, hardware SysEx interchange and final display/detail polishing remain in development. See [MIDI behavior and manual ambiguities](docs/MIDI.md).
+MIDI, MX expansion and portable JSON backups are available. Hardware SysEx interchange needs a verified packet specification. Final visual matching and physical hardware timing comparisons remain open. See [Feature status](docs/FEATURE-STATUS.md) and [MIDI behavior and manual ambiguities](docs/MIDI.md).
 
 The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, Analog/Acid rate calibration, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
 
@@ -270,8 +274,6 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-ui.ps1 -Aux
 .\scripts\test-ui.ps1 -Tracks
 .\scripts\test-ui.ps1 -TrackAudio
-.\scripts\test-ui.ps1 -Outputs
-.\scripts\test-ui.ps1 -OutputAudio
 .\scripts\test-ui.ps1 -Outputs
 .\scripts\test-ui.ps1 -OutputAudio
 .\scripts\test-ui.ps1 -StageCv
@@ -297,9 +299,9 @@ The musical check records 24 seconds from the actual stereo mix in Rack at
 DC offset, and finite samples. These are technical checks; listening feedback
 is still needed to judge the composition and timbre.
 
-The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 89 screen states in `tmp/display-qa`.
+The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 167 screen states in `tmp/display-qa`.
 
-Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Other platforms have not been built or tested.
+Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Linux and both Mac architectures use the official 2.6.6 SDK in the native package workflow; [Platform packages](docs/PLATFORMS.md) describes the tested environments.
 
 The engine uses fixed-size state and performs no allocation, file I/O, or UI work in `process()`. UI presentation state and meters are atomic. Musical edits use Rack parameter quantities.
 

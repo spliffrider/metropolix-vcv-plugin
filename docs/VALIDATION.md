@@ -1,4 +1,47 @@
-# Validation and fidelity status — 2.27.0
+# Validation and fidelity status — 2.28.0
+
+## Native platform packages — 2.28.0
+
+The 25 portable suites pass. Ubuntu 22.04 x64, macOS 15 Intel and macOS 15
+Apple Silicon run the complete native engine, persistence, file, MIDI and MX
+host suite. A separate host registers and loads the stripped production binary,
+constructs both public models, verifies 770 main parameters/seven outputs and
+eight MX outputs, generates finite gates over 48,000 samples and restores JSON
+state. Both exit status and an explicit completion marker are required; logging
+pipelines cannot hide a host error. Each package audit checks native architecture,
+the exact included source/document bytes, two public model slugs and absent QA
+environment/recorder strings. SDK downloads use fixed versions and hashes.
+
+Linux also runs actual Rack Free 2.6.6 under Xvfb/Mesa llvmpipe. Fidelity and
+Backup callbacks include save/reopen; Polish checks gestures, readouts, removal,
+graphics context recreation, OLED zoom and light Bloom. Display checks 167 OLED
+cases and captures the real live scene. The ordinary GL front-buffer screenshots
+were empty under Xvfb; QA now renders the live Rack scene to its own framebuffer,
+drawing cache children directly and retaining normal halo behavior. Image checks
+reject blank scenes, require blue OLED pixels and compare Bloom in the pitch area.
+This is renderer/callback coverage; it does not claim native OS mouse/focus testing.
+
+MX percussion and MIDI-CV voices each record 12 seconds at 48 kHz through actual
+Rack cables. MX checks all eight 0/5V stage outputs and mutual exclusion. The
+Linux probe recorded RMS .201064/.202382 V with peaks 1.32221/1.13008 V for MX,
+and RMS .430394/.469804 V with peaks 1.59957/1.29377 V for MIDI. Small start/phase
+differences between host runs are expected; finite samples, useful level and low
+DC are checked independently. These are audio-path measurements, not a hardware
+device-driver or subjective listening comparison.
+
+Windows native integration, Fidelity/save-reopen, Polish/zoom/Bloom and both
+12-second MX/MIDI audio regressions pass after the platform work. The prior
+2.27 full panel/audio coverage remains
+applicable: production behavior changes only by renaming the C++ MOD stage-offset
+identifier to avoid a Linux system macro; its numeric ID stays fixed. Windows
+uses the established SDK 2.3.0; the three new builds use SDK 2.6.6. All run the
+same Rack 2 ABI, 770 parameter IDs, schema29 and format9/518-value musical banks.
+
+Mac GUI/audio playtests, older OS versions, Rack Pro, physical hardware timing
+and exact material matching remain unverified. See [Platform packages](PLATFORMS.md)
+for installation, architecture selection and precise environments. Native logs,
+audits, scene images, wave recordings and save fixtures are retained as workflow
+artifacts; release checksums cover the publicly downloadable packages.
 
 ## Panel and display refinement — 2.27.0
 

@@ -97,4 +97,5 @@ Based on the firmware 1.6 manual, printed pp.51–52, 57, 171–178, 197–198.
 Physical hardware comparison remains outstanding. Combined preset/link mutes,
 Queue-based repeat continuity and live clock-source changes are documented
 software interpretations where the manual does not fully specify interactions.
-MIDI, SysEx interchange and hardware flash compatibility are not implemented.
+MIDI program changes and portable JSON backups are available. Hardware SysEx
+interchange and flash compatibility remain outside the verified implementation.

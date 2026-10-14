@@ -16,5 +16,5 @@ if(qaFrame==6){
     press(encoder,GLFW_MOUSE_BUTTON_RIGHT);check(seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Reset CLK output";})!=nullptr,"disabled offset context menu retains clock controls");closeMenus();
     m->params[M::CLOCK_OUT_DIV].setValue(16);m->params[M::CLOCK_OUT_OFFSET].setValue(7);m->uiField.store(1);m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/clock-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/clock-output-display.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/clock-output-display.png");
 if(qaFrame==12){check(!qaFailed,"CLOCK UI QA COMPLETE");APP->window->close();}

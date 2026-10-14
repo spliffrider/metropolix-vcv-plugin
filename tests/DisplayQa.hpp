@@ -41,7 +41,7 @@ if(qaFrame==5) {
     m->uiMod.store(false);m->uiEdit.store(false);m->uiHome.store(0);m->uiPage.store(Metropolix::HOME);
     m->selectedRow.store(Metropolix::SLIDE);
 }
-if(qaFrame==12)APP->window->screenshot(dir+"/panel.png");
+if(qaFrame==12)metroqa::screenshot(dir+"/panel.png");
 if(qaFrame==13) {
     const float pitch[]={0.f,.28f,.58f,.85f,.85f,.65f,.5f,0.f};
     for(int s=0;s<8;++s){m->params[Metropolix::PITCH+s].setValue(pitch[s]);m->params[Metropolix::PULSES+s].setValue(1);m->params[Metropolix::GATES+s].setValue(1);}
@@ -71,7 +71,7 @@ if(qaFrame==10) {
     m->params[dest].setValue(metro::CtrlNone);
     find("Encoder")->bind();check(find("Encoder")->getParamQuantity()!=nullptr,"unassigned direct field becomes editable again");
 }
-if(qaFrame==17)APP->window->screenshot(dir+"/reference-pose.png");
+if(qaFrame==17)metroqa::screenshot(dir+"/reference-pose.png");
 if(qaFrame==18) {
     const int ratchets[]={1,7,4,1,2,1,3,1},prob[]={100,75,58,100,25,100,50,100},accum[]={0,2,7,-3,0,-5,1,4};
     for(int s=0;s<8;++s){m->params[Metropolix::stageParam(0,s,Metropolix::RATCHETS)].setValue(ratchets[s]);m->params[Metropolix::stageParam(0,s,Metropolix::PROBABILITY)].setValue(prob[s]);m->params[Metropolix::stageParam(0,s,Metropolix::ACCUMULATION)].setValue(accum[s]);}
@@ -362,7 +362,7 @@ if(qaFrame>=20 && index<count) {
 
     }
     if((qaFrame-20)%6==3) {
-        APP->window->screenshot(dir+"/"+test.name+".png");
+        metroqa::screenshot(dir+"/"+test.name+".png");
         auto* screen=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));
         if(std::string(test.name)=="bpm-modulated")m->displayBpm.store(240);
         if(test.page==Metropolix::AUX_PAGE && !test.field)m->auxVoltage[0].store(2.5f);
