@@ -1,4 +1,4 @@
-# Scales and chord changes — 2.37.0
+# Scales and chord changes — 2.40.0
 
 The SCALE screen offers all **49 factory scales/chord shapes** shown in the
 [firmware 1.6 manual, pp.62–68](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf),
@@ -26,11 +26,17 @@ starting slot. Locks survive saving and reopening a Rack patch.
 
 ## Edit a user scale
 
-1. Choose a user slot, such as Scale 1-1.
+1. Choose a user slot, such as Scale 1-1, with **Scale** selected rather than Root.
 2. Hold the encoder for more than one second to enter note editing.
 3. Drag to move the keyboard arrow; click the encoder to toggle that note.
 4. ALT selects the user's Root field. Changing Root transposes the note pattern.
-5. Hold the encoder again to exit. The definition is saved with the Rack patch.
+5. Hold the encoder again to exit from either the notes or Root field. The definition is saved with the Rack patch.
+
+A ROOT-selected hold outside editing does not enter the note editor. The
+explicit right-click **Edit user scale notes** choice opens directly from Root
+and discards a pending Root preview. Selecting a factory scale through Rack
+automation automatically closes an existing note editor. Inactive holds
+use the control's existing short-click action when released.
 
 Menus provide the same note toggles, and can copy a factory note pattern into the
 current user slot. Each definition contains twelve note-enable bits, relative to

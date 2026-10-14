@@ -82,7 +82,7 @@ jobs:
           echo '69acf0c98d47db381291a115d609dcfbb99887bd7bd8641f0489da063fb0fc6e  '"$RUNNER_TEMP/rack.zip" | sha256sum -c -
           unzip -q "$RUNNER_TEMP/rack.zip" -d "$RUNNER_TEMP"
           make native-ui-test-build
-          for mode in CtrlEditor StagePattern ScaleCopy StagePair Timing Group Storage Order Fidelity Backup Polish Display MxAudio MidiAudio; do
+          for mode in Scale CtrlEditor StagePattern ScaleCopy StagePair Timing Group Storage Order Fidelity Backup Polish Display MxAudio MidiAudio; do
             xvfb-run -a -s '-screen 0 1600x1000x24' /usr/bin/python3 scripts/test-ui-linux.py --rack "$RUNNER_TEMP/Rack2Free/Rack" --mode "$mode"
           done
       - name: Save verified package and evidence

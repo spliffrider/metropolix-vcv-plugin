@@ -1,4 +1,28 @@
-# Validation and fidelity status — 2.39.0
+# Validation and fidelity status — 2.40.0
+
+## 2.40 User-scale editor guard
+
+Printed page 67 requires SCALE to be selected before entering the user note
+editor with a long encoder hold. ROOT-selected holds no longer enter it.
+Already-open user editors can exit from notes or Root. A factory scale selected
+by external automation automatically closes editing. The explicit desktop note-editor
+choice still opens from Root and discards a pending Root preview. Inactive
+holds retain the shared control's short-click action on release.
+
+The Linux application harness now also runs the scale editor/lock/shortcut/
+note-undo/save/reopen suite (mode Scale), alongside the existing Windows Scales
+suite. Parameter IDs and formats stay 787/schema33/format11/522.
+
+Windows Rack callbacks pass ROOT-selected entry guards for all 149 choices,
+all 100 user slots' selected-SCALE entry, hold threshold, note/Root exit with
+unchanged parameters/history, and all 49 factory choices' unavailable editor.
+The existing automatic factory-selection exit passes without value/history
+changes. Explicit desktop entry from Root cancels its pending preview. The
+original scale browsing/locking, note undo, final-note guard, root transpose,
+shortcuts, custom-scale pitch gestures and save/reopen checks still pass.
+ScaleCopy, SetupOptions, Workflows and all 181 display states also pass on
+Windows. Native library integration passes; platform CI requires the full
+scale suite on Linux and the native/production checks on all builds.
 
 ## 2.39 CTRL assignment workflow
 
