@@ -68,7 +68,7 @@ struct RackAudioQaWidget : ModuleWidget {
         saved = true;
         // A software-rendered CI window may reach fewer UI frames during the
         // recording than a desktop GPU. Capture when audio is complete too.
-        if (!video) metroqa::screenshot(std::string(directory) + "/two-voice.png");
+        if (!m->video) metroqa::screenshot(std::string(directory) + "/two-voice.png");
         std::ofstream report(std::string(directory) + "/report.txt", std::ios::app);
         std::ofstream wav(std::string(directory) + "/two-track-demo.wav", std::ios::binary);
         auto u16 = [&](uint16_t n) { char bytes[] = {char(n), char(n >> 8)}; wav.write(bytes, 2); };
