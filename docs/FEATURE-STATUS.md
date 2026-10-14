@@ -1,9 +1,10 @@
-# Feature status — 2.52.0 public alpha
+# Feature status — 2.53.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.53.0 corrects [native-style value actions and Undo](UI-SETUP.md), including dormant values, menu binding and locked preferences.
 2.52.0 corrects the [locked MOD type grid menu](MOD-TEST.md), preserving unrelated accumulator settings and keeping its lane settings bound to the clicked lane.
 2.51.0 protects [paired-page drag Undo](UI-SETUP.md), preserving independent changes to adjacent fields while retaining whole-page long resets.
 2.50.0 corrects [MOD effective CV types and OLED TYPE editing](MOD-TEST.md), with destination-controlled ranges, ramps, gates and MIDI while preserving saved preferences.

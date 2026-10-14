@@ -448,7 +448,7 @@ struct HardwareControl : ValueKnob {
         dragging=false;pressMods=0;clearTip();
     }
     void onAction(const event::Action&) override { if(!finishingClick && !ctrlTakeover && moved<3.f && !longFired && action) action(); }
-    void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();app::Knob::onDoubleClick(e);} }
+    void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();ValueKnob::onDoubleClick(e);} }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu);auto* m=metroModule;int id=paramId;if(m && m->waitingPickup(id))menu->addChild(createMenuItem("Take over at current physical position","",[m,id]{takeOverPanel(m,id);})); }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg; float x=box.size.x/2, y=box.size.y/2, r=std::min(x,y)-.7f;
