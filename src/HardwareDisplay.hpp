@@ -56,7 +56,7 @@ struct HardwareDisplay : HardwareControl {
         if(detailed && m)left+=string::f(":%d",m->selectedStage.load()+1);
         std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":
             m && m->uiPage.load()==Metropolix::CTRL_PAGE?string::f("CTRL %d",m->selectedCtrl.load()+1):m && m->uiPage.load()==Metropolix::CV_TYPE_PAGE?"CV TYPE":functionName();
-        if((overridePage(m) || cvPage(m)) && m->uiAlt.load())right="EDIT ALL / ALT";
+        if((overridePage(m) || cvPage(m) || stagePairPage(m) || simpleStagePage(m)) && m->uiAlt.load())right="EDIT ALL / ALT";
         if(m && m->uiMod.load()) {
             int source=m->selectedLane.load()+2;
             bool a=integer(Metropolix::OUTPUT_SOURCE_A)==source,b=integer(Metropolix::OUTPUT_SOURCE_B)==source;
@@ -242,7 +242,7 @@ struct HardwareDisplay : HardwareControl {
                 if(prob || accum){int trigger=integer(Metropolix::stageOption(t,s,prob?Metropolix::PROB_TARGET:Metropolix::ACCUM_TRIGGER));c.text(0,30,trigger==0?"Stage":trigger==1?"Pulse":"Ratch",false);for(int k=0;k<(prob?2:3);++k)c.circle(5+k*7,42,2,k==trigger);}
             }
             for(int i=0;i<8;++i) {
-                int x=44+i*10;bool selected=detail && i==s;int n=integer(id(i));
+                int x=44+i*10;bool selected=detail && (m->uiAlt.load() || i==s);int n=integer(id(i));
                 if(row==Metropolix::RATCHETS){for(int j=0;j<n;++j){c.box(x,46-j*5,8,3);if(selected)c.fill(x,46-j*5,8,3);}}
                 if(prob){int h=static_cast<int>(n*.42f);if(h>0){c.box(x,48-h,8,h);if(selected)c.fill(x,48-h,8,h);}c.fill(x,50,8,2);if(integer(Metropolix::stageOption(t,i,Metropolix::PROB_TARGET)))c.fill(x+3,50,2,2,0);}
                 if(accum){int h=static_cast<int>(std::abs(n)*.7f);int y=n>=0?27-h:27;c.dot(x+4,27);if(h){c.box(x,y,8,h);if(selected)c.fill(x,y,8,h);}}

@@ -1,4 +1,26 @@
-# Validation and fidelity status — 2.37.0
+# Validation and fidelity status — 2.38.0
+
+## 2.38 Slide/Skip patterns and Ratchet gestures
+
+Printed pages 87/88/94 specify ALT pattern rotation, inversion and reset, and
+selected/all Ratchet reset with bulk count editing. Dedicated actual Windows
+Rack callbacks pass every eight-bit Slide/Skip pattern on both tracks, forward/
+backward/multi-wrap/full-wrap rotations, inversion twice, resets, threshold,
+drag reversal, no-op and exact undo/redo. Every Ratchet stage on both tracks
+passes selected/all default reset, relative count clipping/reversal and
+eight-count pending confirmation. Tests also pass actual EDIT/ALT navigation,
+display rotation, native menus, preset storage and save/reopen. Native engine/
+library integration passes. Linux package CI runs the same gesture/render/
+reopen suite; platform native and stripped production checks remain required.
+ScaleCopy, Scales, Workflows, StagePair, Timing, Order, Storage, Group,
+Fidelity, Polish and all 181 display states pass on Windows.
+
+The display marks bulk editing and fills every edited Ratchet/Probability/
+Accumulation bar. IDs and formats stay 787 parameters, schema33 and
+format11/522. Pattern operations apply directly with Enc Confirm enabled,
+matching the gate-pattern editor; Ratchet bulk amounts retain confirmation.
+The rotation direction convention and Ratchet endpoint reversal remain
+documented hardware-comparison details. See [Stage gestures](STAGE-PATTERNS.md).
 
 ## 2.37 SCALE copy/paste
 
