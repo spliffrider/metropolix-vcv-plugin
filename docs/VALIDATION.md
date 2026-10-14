@@ -1,4 +1,34 @@
-# Validation and fidelity status — 2.53.0
+# Validation and fidelity status — 2.54.0
+
+## 2.54 MOD timing lane navigation
+
+The firmware 1.6 manual p145 allows plain stage buttons to select the MOD lane
+on ORDER/LEN/DIV. Actual Rack callbacks on the previous implementation instead
+opened the stage editor in all 256 clicks and 256 held-movement cases. Half the
+clicks also changed a gate value, and every movement changed stage values/history.
+The buttons now act as unbound lane selectors in this context, preserving the
+page/field and canceling an old preview only when selecting a different lane.
+Held shortcut, EDIT/copy, ALT and Loopy priorities retain their existing paths.
+
+Final Pending/reopen passes all 512 navigation cases, 1,024 encoder/OLED edits
+after selection with confirmation Off/On and exact full-parameter Undo/Redo,
+224 old-lane preview cancellations, and 256 right-click lane settings actions
+after selection changes with destination Undo/Redo. Another 32 cases retain a
+same-lane preview and 32 preserve independent recalled-pitch edits. Actual
+preset-pickup GUI load/cross/Undo/takeover/save-reopen checks also pass. Lane lights and
+mouseover text are checked. Prior native value, type, drag, reset, shortcut,
+preview and persistence matrices remain passing. These are actual injected
+Rack callbacks, not physical OS input or hardware measurements.
+
+All 25 neighboring Windows UI/audio groups, 25 local engine suites and native
+Rack integration pass. Display checks retain 181 implemented states. The
+current-source stripped production host passes 22,624,609 frames, 339,369,135
+output checks, 56,664 edits, 145 state restores, 144 fresh instances, 12 initializes
+and 145 reciprocal links across both public models at 44.1/48/96 kHz: 361.083
+simulated seconds in one thread, Windows wall time 13.2244 seconds. The final
+packaged binary must pass separately and its assets must match current source.
+DSP algorithms, parameter IDs and saved formats are unchanged: 787 parameters,
+schema33, musical format11 and 522 fields.
 
 ## 2.53 native-style parameter actions
 

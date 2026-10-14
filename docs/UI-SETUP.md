@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.53.0
+# UI setup, confirmation and external clock input — 2.54.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,13 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## MOD lane navigation
+
+On MOD ORDER/LEN/DIV, plain stage buttons select lanes while keeping the
+current settings screen and field open. They do not edit the lane's stage
+voltages or gates. Lane lights, hover text and right-click settings identify
+the target. See [MOD lane editing](MOD-TEST.md).
 
 ## Numeric entry, Initialize and double-click
 

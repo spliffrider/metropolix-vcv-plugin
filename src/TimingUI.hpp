@@ -1,6 +1,25 @@
 bool timingPage(Metropolix* m) {
     return m && (m->uiPage.load()==Metropolix::LENGTH_PAGE || m->uiPage.load()==Metropolix::DIV_PAGE);
 }
+bool modTimingLanePage(Metropolix* m) {
+    if(!m || !m->uiMod.load() || m->uiAlt.load() || m->uiChooseFunction.load()
+        || m->timingShortcutHeld.load() || m->orderShortcutHeld.load()
+        || m->scaleShortcutHeld.load() || m->loopyMuteHeld.load())return false;
+    int page=m->uiPage.load();
+    return page==Metropolix::ORDER_PAGE || page==Metropolix::LENGTH_PAGE || page==Metropolix::DIV_PAGE;
+}
+void selectModTimingLane(Metropolix* m,int lane) {
+    if(!modTimingLanePage(m) || lane<0 || lane>=8)return;
+    // A different lane cannot inherit the old lane's pending parameter edit.
+    if(m->selectedLane.load()!=lane){m->cancelDraft();m->selectedLane.store(lane);}
+}
+void modTimingLaneMenu(Metropolix* m,int lane) {
+    if(!modTimingLanePage(m) || lane<0 || lane>=8)return;
+    selectModTimingLane(m,lane);
+    auto* menu=createMenu();menu->addChild(createMenuLabel(string::f("MOD lane %d",lane+1)));
+    menu->addChild(createMenuItem("Lane settings","",[m,lane]{modSettingsMenu(m,lane);}));
+    menu->addChild(createMenuItem("Edit stage values","",[m,lane]{m->uiMod.store(true);m->uiAlt.store(false);m->selectedLane.store(lane);screenPage(m,Metropolix::STAGE_PAGE);}));
+}
 int timingParam(Metropolix* m,int page,int field) {
     if(!m)return -1;
     bool mod=m->uiMod.load();int target=mod?m->selectedLane.load():m->selectedTrack.load();
