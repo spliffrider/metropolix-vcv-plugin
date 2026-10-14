@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.56.0
+# UI setup, confirmation and external clock input — 2.57.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -76,8 +76,9 @@ retain the full label and units. Track-copy feedback occupies a separate bottom
 line. Selected-item resets, CTRL locks, native shortcuts and Undo stay intact.
 
 This display update keeps schema34 and all saved parameter/cursor meanings.
-The separate Presets Setup and Backup/maintenance screens retain their current
-layouts; exact glyph/material matching and hardware comparison remain open.
+Presets Setup now uses the same compact list; see [Preset settings](PRESETS.md).
+Backup/maintenance layouts, exact glyph/material matching and hardware comparison
+remain open.
 
 ## MOD lane navigation
 

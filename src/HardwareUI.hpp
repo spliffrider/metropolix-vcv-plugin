@@ -78,7 +78,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::MOD_MENU_PAGE:return f?modMenuParam(m):-1;
         case Metropolix::MOD_ASSIGN_PAGE:return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))))?-1:Metropolix::modParam(l,f?Metropolix::MOD_ASSIGNMENT:Metropolix::MOD_DESTINATION);
         case Metropolix::TUNER_PAGE:return Metropolix::TUNER_OCTAVE;
-        case Metropolix::PRESET_SETUP_PAGE: return f==7?Metropolix::INIT_PRESET:Metropolix::TOTAL_PULSES + metro::clamp(f, 0, 6);
+        case Metropolix::PRESET_SETUP_PAGE: return m->presetSetupEditing.load()?presetSetupParam(m):-1;
         case Metropolix::ACCUM_PAGE: return Metropolix::accumScreenParam(t,f);
         default: return -1;
     }
@@ -92,7 +92,8 @@ void screenPage(Metropolix* m, int page) {
     m->loopyMuteHeld.store(false);
     if(page!=Metropolix::SCALE_PAGE)m->scaleEditing.store(false);
     if(page!=Metropolix::BACKUP_PRESET_PAGE && !(page==Metropolix::BACKUP_PAGE && m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE))m->setupDirectChild.store(false);
-    m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
+    m->presetSetupEditing.store(false);
+    m->uiPage.store(page); m->uiField.store(page==Metropolix::PRESET_SETUP_PAGE?1:0); m->uiChooseFunction.store(false);
     m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
 }
 int parentPage(Metropolix* m){
@@ -108,7 +109,7 @@ int parentPage(Metropolix* m){
 }
 void encoderPress(Metropolix* m) {
     if(!m) return;
-    if(confirmDraft(m)){if(m->uiPage.load()==Metropolix::SETUP_PAGE)m->uiField.store(0);return;}
+    if(confirmDraft(m)){if(m->uiPage.load()==Metropolix::SETUP_PAGE)m->uiField.store(0);if(presetSetupPage(m))m->presetSetupEditing.store(false);return;}
     int p=m->uiPage.load();
     if(trackMenuPage(m)){trackMenuEncoderPress(m);return;}
     if(outputPage(m)){outputEncoderPress(m);return;}
@@ -135,7 +136,7 @@ void encoderPress(Metropolix* m) {
     if(factoryPage(m)){factoryEncoderPress(m);return;}
     if(p==Metropolix::MX_SETUP_PAGE){m->uiField.store(mxAssignment(m)<0?0:1-m->uiField.load());return;}
     if(p==Metropolix::MOD_MENU_PAGE || p==Metropolix::MIDI_SETUP_PAGE){midiEncoderPress(m);return;}
-    if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }
+    if(p==Metropolix::PRESET_SETUP_PAGE) { presetSetupEncoderPress(m); return; }
     if(p==Metropolix::LOAD_PAGE) { setWithHistory(m->getParamQuantity(Metropolix::LOAD_DELAY), (m->integer(Metropolix::LOAD_DELAY)+1)%3); return; }
     if(p==Metropolix::SAVE_PAGE) { m->presetSaveAction.store((m->presetSaveAction.load()+1)%3); return; }
     if(p==Metropolix::ACCUM_PAGE) { m->uiField.store((m->uiField.load()+1)%6); return; }

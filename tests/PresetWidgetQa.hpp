@@ -42,8 +42,8 @@ if(qaFrame==5) {
     auto* settings=seek(APP->scene,[](widget::Widget* w){auto* i=dynamic_cast<ui::MenuItem*>(w);return i && i->text=="Preset settings";});
     check(settings!=nullptr,"LOAD encoder right-click offers preset settings");
     if(settings){event::Action e;settings->onAction(e);}closeMenus();
-    check(screenParam(m)==Metropolix::TOTAL_PULSES,"preset settings starts at Total Pulses");
-    click(find("Encoder"));check(screenParam(m)==Metropolix::QUEUE_PULSES,"next field is Queue Pulses");
+    check(screenParam(m)<0 && m->uiField.load()==1 && !m->presetSetupEditing.load(),"preset settings starts browsing Queue Pulses");
+    click(find("Encoder"));check(screenParam(m)==Metropolix::QUEUE_PULSES,"click enters Queue Pulses editing");
     drag(find("Encoder"),-80);check(m->integer(Metropolix::QUEUE_PULSES)>32,"upward drag increases pulse count");APP->history->undo();
     check(m->integer(Metropolix::QUEUE_PULSES)==32,"pulse count drag supports undo");
     openPresetPage(m,false);

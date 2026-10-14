@@ -1,4 +1,4 @@
-# Internal presets — 2.33.0
+# Internal presets — 2.57.0
 
 Metropolix Lab now holds **64 patterns in eight banks of eight**. Each module
 instance owns its banks. They are saved inside your Rack patch and native Rack
@@ -78,10 +78,28 @@ that length is Off, Queue Pulses is used instead. A value of **0 / “–”** f
 Pulses waits for an explicit RESET button/input or for playback to stop.
 Stopping commits a queued load silently so the new pattern is ready to start.
 
-Right-click **SETUP → Preset settings** to edit the counts and policies. Click
-the encoder to select a field, then drag to change its value. Right-click a
-selected count for numeric entry. Queue Pulses defaults to 32 in this plugin;
-Total Pulses defaults to Off. Both support 1–4096.
+Open **SETUP → Presets Setup**, or right-click SETUP and choose **Preset
+settings**. Drag the encoder or OLED to browse; click a multi-choice setting
+to enter its value, drag up/down, then click to finish. Enc. Confirm On keeps
+the value pending with `?` until that click. Off applies edits immediately.
+Switch Load and Aux Load toggle directly on one click. Hold the encoder for
+a second to restore only the selected setting, with one Undo. Right-click
+while browsing retains the named preset menu; while editing it offers the
+selected parameter's full choices, numeric entry and Initialize.
+
+The four-row list follows the firmware1.6 manual's order: **Queue Pulses,
+Pitch Load, Switch Load, Ctrl Load, Aux Load, Set Init Preset**. The **RACK**
+heading then groups Total Pulses and Load Delay. Queue Pulses defaults to 32
+in this plugin; Total Pulses defaults to Off. Both support 1–4096, with `--`
+at zero. Init choices show Off or a bank/slot from 1-1 through 8-8, including
+the pending choice. Full native labels and units remain available in menus.
+
+EXIT cancels an unconfirmed edit and returns to SETUP. An independent change
+cancels an obsolete preview without replacing that value or adding Undo; the
+field can stay selected for a fresh edit. Reopening any saved setting retains
+that logical parameter and starts browsing. The edit selection is transient;
+all existing field IDs, settings schema34, 787 parameter IDs and format11/522
+musical snapshots stay unchanged.
 
 Total Pulses also restarts both note tracks, all MOD lanes and accumulation at
 that length when no load is pending. Unlike a manual reset, an automatic Total

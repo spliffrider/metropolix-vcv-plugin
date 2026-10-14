@@ -58,7 +58,7 @@ void setupEncoderPress(Metropolix* m){
             case Metropolix::SetupInit:m->requestInitialize();break;
             case Metropolix::SetupChains:openChainPage(m);break;
             case Metropolix::SetupBackup:openBackup(m);break;
-            case Metropolix::SetupPresets:m->uiPage.store(Metropolix::PRESET_SETUP_PAGE);m->uiField.store(0);break;
+            case Metropolix::SetupPresets:openPresetSetup(m);break;
             case Metropolix::SetupUi:m->uiPage.store(Metropolix::UI_SETUP_PAGE);m->uiField.store(0);break;
             case Metropolix::SetupVersion:openFactory(m);break;
             default:break;

@@ -496,6 +496,7 @@ struct MainDisplay : widget::Widget {
 #include "MidiUI.hpp"
 #include "MxUI.hpp"
 void openChainPage(Metropolix* m);
+#include "PresetSetupUI.hpp"
 #include "SetupUI.hpp"
 #include "PickupUI.hpp"
 #include "HardwareUI.hpp"
