@@ -126,3 +126,6 @@ and velocity; transpose now spans −60…+60. See [Track options](TRACK-OPTIONS
 
 SCALE copy/paste now follows the panel ALT gestures and has keyboard Alt and
 right-click equivalents; see [Scale copying](SCALES.md#copy-and-paste-a-scale).
+
+EDIT Slide/Skip now supports ALT rotate/invert/reset; Ratchet supports ALT
+bulk count edits and selected/all long resets. See [Stage patterns](STAGE-PATTERNS.md).
