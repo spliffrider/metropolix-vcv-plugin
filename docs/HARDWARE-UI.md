@@ -1,4 +1,6 @@
-# Hardware panel and desktop interaction — 2.46.0
+# Hardware panel and desktop interaction — 2.47.0
+
+Tiny CV drags preserve [raw Undo and normal click order](STAGE-CV.md); ALT editing uses the effective CV range when MIDI velocity forces Unipolar.
 
 User-scale note editing requires [SCALE to be selected](SCALES.md) before holding the encoder; the desktop note-editor menu still opens directly from ROOT.
 

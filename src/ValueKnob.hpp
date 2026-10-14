@@ -43,7 +43,10 @@ struct ValueKnob : app::Knob {
         app::Knob::onDragStart(e);updateAdjustmentTip();
     }
     void onDragMove(const event::DragMove& e) override {
-        app::Knob::onDragMove(e);updateAdjustmentTip();
+        // A zero-distance event must not send the effective display value back
+        // through a setter which can clamp a dormant raw parameter.
+        if(e.mouseDelta.norm()>0)app::Knob::onDragMove(e);
+        updateAdjustmentTip();
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT || !adjusting)return;

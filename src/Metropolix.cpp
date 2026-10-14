@@ -344,11 +344,17 @@ struct ValueCell : ValueKnob {
             auto* boundModule=module;module=nullptr;dragCancelled=true;ValueKnob::onDragEnd(e);module=boundModule;dragCancelled=false;
             event::Action click;onAction(click);dragStarted=false;cvDrag=false;return;
         }
-        bool cvBatch=cvDrag && dragDistance>=3;
+        bool cvBatch=cvDrag && dragDistance>0;
+        bool cvMicro=cvBatch && dragDistance<3;
         float after=cvBatch?metroModule->params[paramId].getValue():0;
         if(cvBatch)metroModule->params[paramId].setValue(cvBefore);
+        // Preserve the click threshold, but dispatch a tiny drag's click after
+        // its raw CV edit so a Gate toggle sees the latest value.
+        dragCancelled=cvMicro;
         if(dragStarted)ValueKnob::onDragEnd(e);
+        dragCancelled=false;
         if(cvBatch){metroModule->params[paramId].setValue(after);parameterHistory(metroModule,{paramId},{cvBefore},"edit stage CV");}
+        if(cvMicro){event::Action click;onAction(click);}
         dragStarted=false;cvDrag=false;
     }
     void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }

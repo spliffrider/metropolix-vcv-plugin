@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.46.0
+# UI setup, confirmation and external clock input — 2.47.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -36,6 +36,12 @@ its existing drag workflow, including small continuous edits. CTRL ownership
 still cancels a held edit when a controller takes over.
 Held GATE/SLIDE plus a stage button is an intentional shortcut edit. Those
 edits retain their Undo even when the held mouse stays still.
+
+Small CV drags also retain their exact stored-value Undo. A drag below the
+existing three-pixel click threshold can perform an edit and its normal click;
+Undo reverses the click first, then the voltage edit. See [CV editing](STAGE-CV.md).
+A movement callback with zero distance does not write a displayed/clamped value
+back into a stored parameter. Its normal release click still acts once.
 
 ## Long-press resets and Undo
 
