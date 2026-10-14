@@ -337,6 +337,13 @@ struct ValueCell : ValueKnob {
             dragCancelled=true;auto* boundModule=module;module=nullptr;ValueKnob::onDragEnd(e);module=boundModule;
             dragStarted=false;cvDrag=false;dragCancelled=false;return;
         }
+        if(dragStarted && dragDistance==0){
+            // Native drag history would otherwise include external writes even
+            // when the mouse never moved. Dispatch the genuine cell click only
+            // after restoring its quantity, so toggle/menu history stays exact.
+            auto* boundModule=module;module=nullptr;dragCancelled=true;ValueKnob::onDragEnd(e);module=boundModule;dragCancelled=false;
+            event::Action click;onAction(click);dragStarted=false;cvDrag=false;return;
+        }
         bool cvBatch=cvDrag && dragDistance>=3;
         float after=cvBatch?metroModule->params[paramId].getValue():0;
         if(cvBatch)metroModule->params[paramId].setValue(cvBefore);

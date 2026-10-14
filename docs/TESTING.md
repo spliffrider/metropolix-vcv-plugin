@@ -1,10 +1,10 @@
-# Metropolix Lab 2.45.0 — public alpha quick start
+# Metropolix Lab 2.46.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
 
-2.45.0 corrects [long-press reset Undo](UI-SETUP.md). Hold the encoder to reset a page, release, then try Undo/Redo. One Undo restores the values applied immediately before the reset. Release before starting another edit; movement after the hold fires is consumed.
+2.46.0 corrects [stationary-click Undo](UI-SETUP.md). Click to navigate fields, toggle Slide/Skip/gates or open a choice menu. Actual toggles and chosen values retain one Undo; an external value change during a stationary press is not added as drag history. Ordinary pointer movement retains its existing workflow.
 
 2.39.0 corrects [CTRL assignment editing](CTRL-KNOBS.md). Open a black CTRL assignment button, drag destination or target, and check that it previews until you press the encoder. Press again to switch fields. Hold the encoder to clear the assignment, then try Undo/Redo. White performance knobs remain live; right-click choices apply directly.
 

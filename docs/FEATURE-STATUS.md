@@ -1,9 +1,10 @@
-# Feature status — 2.45.0 public alpha
+# Feature status — 2.46.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.46.0 corrects [stationary-click history](UI-SETUP.md), preserving external values and genuine toggle/menu actions while retaining small continuous drags.
 2.45.0 corrects [long-press reset history](UI-SETUP.md), with an immediate single-action receipt, current raw/scope capture and consumed movement/release.
 2.44.0 protects [live CTRL ownership during held edits](CTRL-KNOBS.md), including encoder/OLED/grid cancellation, fresh-drag recovery and preserved partial resets.
 2.43.0 protects [A/B previews against external source edits](OUTPUT-ROUTING.md), preserving valid confirmation, menus and undo.

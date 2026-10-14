@@ -215,7 +215,7 @@ struct HardwareControl : ValueKnob {
     std::function<NVGcolor()> activeColor;
     NVGcolor lightColor=nvgRGB(135,187,227);
     ui::Tooltip* tip=nullptr;
-    bool dragging=false;
+    bool dragging=false,finishingClick=false,shortcutEdited=false;
     int gestureParam=-1,gestureOwner=-1;
     bool ctrlBlocked=false,ctrlTakeover=false;
     int pressMods=0;
@@ -319,7 +319,7 @@ struct HardwareControl : ValueKnob {
     }
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
-        bind(); dragging=true; moved=0; clearTip();heldSince=system::getTime();longFired=false;
+        bind(); dragging=true; moved=0; shortcutEdited=false;clearTip();heldSince=system::getTime();longFired=false;
         gestureParam=(module || controllerOwner>=0)?paramId:-1;gestureOwner=controllerOwner;ctrlBlocked=controllerOwner>=0;ctrlTakeover=false;
         navigating=navigationMode && navigationMode(); navigationDelta=0;
         if(dragAction) dragAction();
@@ -390,6 +390,14 @@ struct HardwareControl : ValueKnob {
             invalidateDraft(metroModule);
             if(releaseAction)releaseAction();dragging=false;pressMods=0;ctrlTakeover=false;clearTip();return;
         }
+        if(moved==0 && !shortcutEdited){
+            // A stationary press does not own parameter writes made elsewhere.
+            // Finish native capture first, then perform the real click with
+            // the quantity rebound so its toggle/menu retains normal history.
+            auto* boundModule=module;module=nullptr;finishingClick=true;ValueKnob::onDragEnd(e);module=boundModule;finishingClick=false;
+            event::Action click;onAction(click);gestureIds.clear();gestureBefore.clear();pickupGestureParam=-1;
+            if(releaseAction)releaseAction();dragging=false;pressMods=0;clearTip();return;
+        }
         if((confirming || (navigating && outputPage(metroModule))) && moved>=3 && !longFired){
             // A preview drag never writes parameters. Finish Rack's cursor and
             // knob state without attributing external writes to this gesture.
@@ -417,7 +425,7 @@ struct HardwareControl : ValueKnob {
         if(releaseAction)releaseAction();
         dragging=false;pressMods=0;clearTip();
     }
-    void onAction(const event::Action&) override { if(!ctrlTakeover && moved<3.f && !longFired && action) action(); }
+    void onAction(const event::Action&) override { if(!finishingClick && !ctrlTakeover && moved<3.f && !longFired && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();app::Knob::onDoubleClick(e);} }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu);auto* m=metroModule;int id=paramId;if(m && m->waitingPickup(id))menu->addChild(createMenuItem("Take over at current physical position","",[m,id]{takeOverPanel(m,id);})); }
     void draw(const DrawArgs& args) override {

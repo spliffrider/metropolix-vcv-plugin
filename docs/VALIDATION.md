@@ -1,4 +1,54 @@
-# Validation and fidelity status — 2.45.0
+# Validation and fidelity status — 2.46.0
+
+## 2.46 Stationary-click history
+
+Actual Rack callbacks reproduced false native drag history after an external
+write during a stationary encoder field-navigation click and an optional gate
+grid click. Rack's native Knob compares its mouse-down and release values
+before dispatching its Action, even when the pointer never moved. Stationary
+HardwareControl/ValueCell releases now finish capture with no bound quantity
+and suppress that intermediate Action; after restoring the quantity, they
+dispatch the genuine click exactly once. Field navigation creates no history;
+toggles and chosen menu values record their own action from the latest value.
+
+Expanded Pending callbacks check the actual encoder/OLED, gate and Slide grid;
+temporary real controls/cells bind all fourteen direct destination quantities
+on both tracks. Checks preserve full raw state/history, cursor/adjustment-tip
+cleanup and quantity availability during the genuine Action. Slide/Skip and
+Gate CV on both tracks plus every MOD gate retain exact one-action toggle
+Undo/Redo after an external write. A choice cell opens its menu without history
+and records the chosen value exactly. Two-pixel continuous control/grid drags
+retain their native edit and Undo/Redo. The probe pauses processing for raw
+receipts and removes its temporary widgets before original confirmation/save/
+reopen. Linux runs the same probes in its existing Pending group (eighteen
+application groups total). IDs/schema/musical formats stay 787/33/11/522.
+
+This is actual callback coverage, not OS mouse/focus or hardware comparison.
+The [official Rack 2.6.6 Knob source](https://raw.githubusercontent.com/VCVRack/Rack/v2.6.6/src/app/Knob.cpp)
+defines the native history/Action order used here. No-movement is exact zero;
+small nonzero movements retain the existing drag and click thresholds.
+
+The broader Overrides suite exposed a legitimate stationary held-button edit:
+GATE plus a stage shortcut. SLIDE has the same workflow. These parents now
+explicitly mark intentional shortcut writes so release retains their normal
+receipt. Expanded Pending checks all eight Gate Length, Gate Scale and Slide
+shortcuts on both tracks (48 held cases) independently of the no-edit clicks.
+
+Windows expanded Pending and original save/reopen pass. Its existing 699
+long-reset receipts also pass alongside the stationary-click probes and
+48 held GATE/SLIDE shortcuts. CtrlEditor, Chains, ScaleCopy, Timing, StagePair,
+StagePattern, StageCv, Scales, Swing, Overrides, Workflows, SetupOptions,
+Outputs, Fidelity, Polish, all 181 Display states, ChainAudio and Order pass.
+These retain owned-value protection, original shortcut/clipboard history,
+all chain edit positions and long EXIT Sync. ChainAudio records twelve real
+seconds at 48 kHz; finite checks do not establish continuous human sessions.
+
+Native integration and the stripped production host pass 22,624,609 frames,
+339,369,135 output checks, 56,664 edits, 145 restores, 144 fresh instances,
+12 initializes and 145 reciprocal links over 361.083 virtual seconds. Local
+production wall time was 13.7158 seconds. Linux requires the expanded Pending
+and its seventeen other application groups; all four packages require native
+integration, stripped production runtime and byte/architecture/model audits.
 
 ## 2.45 Long-press reset history
 
