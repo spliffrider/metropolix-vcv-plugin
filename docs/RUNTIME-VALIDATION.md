@@ -1,4 +1,4 @@
-# Production runtime checks — 2.33.0
+# Production runtime checks — 2.34.0
 
 The runtime host loads the stripped binary included in the download. It uses
 Rack's public module API; the instrument implementation is not compiled into
@@ -12,10 +12,10 @@ edit sequence, not the sequencer's separate random musical choices.
 
 The host checks:
 
-- Both public factories and the 786 parameters (the established 770 plus sixteen ORDER shortcut values), seven main outputs
+- Both public factories and the 787 parameters (the established 770 plus sixteen ORDER shortcut values and independent MOD group mute), seven main outputs
   and eight MX outputs.
 - Default main gates and linked MX actually reaching 5 V.
-- 56,592 parameter writes: repeated minimum, maximum and seeded interior
+- 56,664 parameter writes: repeated minimum, maximum and seeded interior
   values from the parameter metadata. Transport and clock are then configured
   deliberately, and direct CTRL assignments settle before state is captured.
 - Finite voltages on every output after every frame; main gate/clock and MX

@@ -28,6 +28,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             [m,l] { return m->selectedLane.load()==l; },
             [m,l] { m->selectedLane.store(l); m->uiMod.store(true); screenPage(m,Metropolix::STAGE_PAGE); }));
         menu->addChild(new ui::MenuSeparator);
+        menu->addChild(createCheckMenuItem("Mute all MOD lanes","",[m]{return m->integer(Metropolix::MOD_GROUP_MUTE)!=0;},[m]{setWithHistory(m->getParamQuantity(Metropolix::MOD_GROUP_MUTE),1-m->integer(Metropolix::MOD_GROUP_MUTE));}));
         menu->addChild(createMenuItem("Selected lane settings","",[m] { modSettingsMenu(m,m->selectedLane.load()); }));
         menu->addChild(createMenuItem("Open MOD editor","",modEditor));
     };
@@ -265,11 +266,11 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         c->rightAction=[m,t] { if(m) { m->selectedTrack.store(t); m->uiMod.store(false); m->uiChooseFunction.store(false); trackSettingsMenu(m); } };
     }
     auto* mod=control("MOD",207,272,16,HardwareControl::BLUE_BUTTON);
-    mod->help="Select modulation editing. Stage buttons select stages; encoder edits volts. Right-click to choose a lane or open the grid.";
+    mod->help="Select modulation editing. Hold Loopy and click MOD to mute/unmute the whole group without changing individual lane mutes. Right-click for group mute, lane selection or the editor.";
     mod->dragAction=[m]{if(m)m->heldTrackReset.fetch_or(4u);};mod->releaseAction=[m]{if(m)m->heldTrackReset.fetch_and(~4u);};
-    mod->action=[m] { if(m) { if(m->loopyMuteHeld.load()){bool any=false;for(int l=0;l<8;++l)any|=!m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE));for(int l=0;l<8;++l)if(bool(m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE)))!=any)m->muteLoopy(l+2);return;} if(chainPage(m) && (m->chainQuick || m->chainEdit.load())){chainMute(m,2);return;} if(m->uiAlt.load()){m->uiMod.store(true);m->uiAlt.store(false);screenPage(m,Metropolix::MOD_MENU_PAGE);return;}bool assignment=m->uiMod.load() && m->uiPage.load()==Metropolix::STAGE_PAGE;m->uiMod.store(true);m->modEditor.store(true);m->uiChooseFunction.store(false);screenPage(m,assignment?Metropolix::MOD_ASSIGN_PAGE:Metropolix::STAGE_PAGE);m->uiAlt.store(false); } };
-    mod->active=[m] { if(m && m->loopyMuteHeld.load()){bool all=true;for(int l=0;l<8;++l)all &= m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE))!=0;return !all || std::fmod(system::getTime(),.3)<.15;} if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return !(mask&4) || std::fmod(system::getTime(),.3)<.15;}return m && m->uiMod.load(); }; mod->rightAction=laneMenu;
-    mod->activeColor=[m]{if(m && m->loopyMuteHeld.load()){bool all=true;for(int l=0;l<8;++l)all &= m->integer(Metropolix::modParam(l,Metropolix::MOD_MUTE))!=0;return all?nvgRGB(240,55,40):nvgRGB(245,220,60);}if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return mask&4?nvgRGB(240,55,40):nvgRGB(245,220,60);}return nvgRGB(135,187,227);};
+    mod->action=[m] { if(m) { if(m->loopyMuteHeld.load()){m->muteLoopy(10);return;} if(chainPage(m) && (m->chainQuick || m->chainEdit.load())){chainMute(m,2);return;} if(m->uiAlt.load()){m->uiMod.store(true);m->uiAlt.store(false);screenPage(m,Metropolix::MOD_MENU_PAGE);return;}bool assignment=m->uiMod.load() && m->uiPage.load()==Metropolix::STAGE_PAGE;m->uiMod.store(true);m->modEditor.store(true);m->uiChooseFunction.store(false);screenPage(m,assignment?Metropolix::MOD_ASSIGN_PAGE:Metropolix::STAGE_PAGE);m->uiAlt.store(false); } };
+    mod->active=[m] { if(m && m->loopyMuteHeld.load())return !m->integer(Metropolix::MOD_GROUP_MUTE) || std::fmod(system::getTime(),.3)<.15; if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return !(mask&4) || std::fmod(system::getTime(),.3)<.15;}return m && m->uiMod.load(); }; mod->rightAction=laneMenu;
+    mod->activeColor=[m]{if(m && m->loopyMuteHeld.load())return m->integer(Metropolix::MOD_GROUP_MUTE)?nvgRGB(240,55,40):nvgRGB(245,220,60);if(chainPage(m) && (m->chainQuick || m->chainEdit.load())) {unsigned mask=m->chainQuick?m->chainQuickMutes:m->getChainState().working.links[selectedChainLink(m)].mutes;return mask&4?nvgRGB(240,55,40):nvgRGB(245,220,60);}return nvgRGB(135,187,227);};
     auto* run=createParam<TransportButton>(Vec(13,298),m,Metropolix::RUN); addParam(run);
     auto* reset=createParam<TransportButton>(Vec(75.4f,298),m,Metropolix::RESET);
     reset->reset=true; reset->momentary=true; addParam(reset);

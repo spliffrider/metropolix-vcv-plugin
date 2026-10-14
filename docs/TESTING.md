@@ -1,10 +1,12 @@
-# Metropolix Lab 2.33.0 — public alpha quick start
+# Metropolix Lab 2.34.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
 
-2.33.0 corrects [preset storage](PRESET-STORAGE.md). Save a locked scale and Loopy settings, change them, then recall the preset and try Undo/Redo. New musical banks require 2.33 or later; old banks still import.
+2.34.0 adds [independent MOD group mute](MOD-GROUP-MUTE.md). Hold Loopy + MOD, or use the right-click menu; your individual lane mutes survive group mute/unmute. New musical and settings backups require 2.34; older files still import.
+
+2.33.0 corrected [preset storage](PRESET-STORAGE.md). Save a locked scale and Loopy settings, change them, then recall the preset and try Undo/Redo. New musical banks require 2.33 or later; old banks still import.
 
 2.32.0 adds [ORDER shortcuts](ORDER-SHORTCUTS.md): hold ORDER + a stage button to recall, or hold the stage button longer to save its order/direction pair. Right-click offers the same actions.
 
@@ -28,15 +30,15 @@ welcome. See Known limitations for remaining fidelity checks.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/MetropolixLab-2.33.0-win-x64.vcvplugin)
-- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/MetropolixLab-2.33.0-lin-x64.vcvplugin)
-- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/MetropolixLab-2.33.0-mac-x64.vcvplugin)
-- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/MetropolixLab-2.33.0-mac-arm64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/MX-performance.vcv)
-- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
-- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.33.0/Backup-example.json)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/MetropolixLab-2.34.0-win-x64.vcvplugin)
+- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/MetropolixLab-2.34.0-lin-x64.vcvplugin)
+- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/MetropolixLab-2.34.0-mac-x64.vcvplugin)
+- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/MetropolixLab-2.34.0-mac-arm64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/MX-performance.vcv)
+- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
+- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.34.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.33.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.34.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.

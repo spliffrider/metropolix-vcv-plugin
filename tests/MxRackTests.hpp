@@ -24,6 +24,6 @@ void mxRackTests(){
     child.leftExpander.module=nullptr;
     main.params[M::MX_MODE].setValue(6);main.params[M::MX_LANE].setValue(7);json_t* data=main.dataToJson(),*parameters=main.paramsToJson();auto restoredInstance=std::unique_ptr<Metropolix>(new Metropolix);auto& restored=*restoredInstance;restored.paramsFromJson(parameters);restored.dataFromJson(data);json_decref(data);json_decref(parameters);require(restored.integer(M::MX_MODE)==6 && restored.integer(M::MX_LANE)==7,"MX settings persist in Rack patch");
     json_t* old=json_pack("{s:i}","schemaVersion",27);restored.dataFromJson(old);json_decref(old);require(restored.integer(M::MX_MODE)==0 && restored.integer(M::MX_LANE)==0,"old Rack patch defaults MX safely");
-    static_assert(M::FORMAT24_NUM_PARAMS==767 && M::FORMAT31_NUM_PARAMS==770 && M::NUM_PARAMS==786 && M::FORMAT9_PARAMS==518 && M::SNAPSHOT_PARAMS==521,"global additions preserve MX identities and musical bank format");
+    static_assert(M::FORMAT24_NUM_PARAMS==767 && M::FORMAT31_NUM_PARAMS==770 && M::FORMAT32_NUM_PARAMS==786 && M::NUM_PARAMS==787 && M::FORMAT9_PARAMS==518 && M::FORMAT10_PARAMS==521 && M::SNAPSHOT_PARAMS==522,"global additions preserve MX identities and musical bank format");
     std::cout<<"PASS: Rack MX double buffer, signals, mutes, Stage Player, persistence and detach\n";
 }

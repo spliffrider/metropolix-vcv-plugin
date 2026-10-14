@@ -179,6 +179,7 @@ void appendLoopyMenu(ui::Menu* menu,Metropolix* m,int start=-1) {
     }));
     menu->addChild(createMenuItem("Latch current loop","",[m]{if(m->integer(Metropolix::RUN))m->latchLoopy();}));
     menu->addChild(createMenuItem("Release loop / audition","",[m]{m->clearLoopy();}));
+    menu->addChild(createCheckMenuItem("Mute all MOD lanes","",[m]{return m->integer(Metropolix::MOD_GROUP_MUTE)!=0;},[m]{setWithHistory(m->getParamQuantity(Metropolix::MOD_GROUP_MUTE),1-m->integer(Metropolix::MOD_GROUP_MUTE));}));
     menu->addChild(createCheckMenuItem("Mute tracks / MOD lanes","",[m]{return m->loopyMuteHeld.load();},[m]{m->loopyMuteHeld.store(!m->loopyMuteHeld.load());m->loopyMuteUsed.store(true);}));
 }
 

@@ -1,8 +1,11 @@
-# Loopy and Stage Player — 2.33.0
+# Loopy and Stage Player — 2.34.0
 
 Reference: Metropolix 1.6 manual, pp.39–46 and 169. The panel keeps the hardware's
 ∞ button and eight stage buttons; desktop menus make two-boundary loops practical
 with one mouse. No physical-module comparison has been performed.
+
+See [MOD group mute](MOD-GROUP-MUTE.md): muting the group preserves each
+lane's individual mute choice; the independent group bit is stored in presets.
 
 ## Temporary loops
 
@@ -57,14 +60,15 @@ while stopped, this version auditions the lowest numbered stage.
 ## Mutes
 
 Hold ∞ and click TRK 1/2, MOD, or a stage button. Stage buttons mute individual
-MOD lanes. MOD mutes all lanes if any are unmuted, or unmutes them if all are muted.
+MOD lanes. MOD toggles a separate group mute, preserving each lane's individual
+mute choice. The MOD button shows the group state; Stage buttons show individual states.
 With a single mouse, right-click ∞ and enable **Mute tracks / MOD lanes** instead;
 click the desired buttons and disable that menu mode afterward, or open another
 settings page. Unmuted controls show yellow; muted controls blink red.
 
 These performance mute changes wait for the next base-clock pulse while running
 and apply immediately while stopped. They update the existing track/lane mute
-parameters and are stored in presets. Pitch slides already underway finish their
+parameters or the independent group parameter and are stored in presets. Pitch slides already underway finish their
 target while gates/CV are muted. The performance mute gesture itself does not
 create Rack undo entries; the existing parameter context menus remain available.
 
@@ -75,8 +79,8 @@ matching the preset column on manual p.169. They load with Instant/Queue/Total,
 custom Init, chains and MIDI program changes, and participate in recall undo.
 They also persist as live Rack patch settings. Held stages, latches and mouse
 mute mode clear on patch reopen/module Initialize; a patch cannot retain a
-held Stage Player gate. All parameter/cable IDs stay fixed. Old banks gain
-Auto / Current Track; new format10 banks require 2.33. See [Preset storage](PRESET-STORAGE.md).
+held Stage Player gate. All earlier parameter/cable IDs stay fixed. Old banks gain
+Auto / Current Track; format10 banks require 2.33; current format11 banks require 2.34. See [Preset storage](PRESET-STORAGE.md).
 
 Open [Loopy-performance.vcv](../examples/Loopy-performance.vcv), select an AUDIO
 device and press RUN. It starts stopped with Track 2 selected and the chain

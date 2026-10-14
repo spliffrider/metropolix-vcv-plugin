@@ -20,7 +20,7 @@ DISTRIBUTABLES += docs/MIDI.md docs/MX.md docs/BACKUPS.md docs/UI-FIDELITY.md do
 DISTRIBUTABLES += docs/MAINTENANCE.md
 DISTRIBUTABLES += docs/RUNTIME-VALIDATION.md
 DISTRIBUTABLES += docs/ORDER-SHORTCUTS.md
-DISTRIBUTABLES += docs/PRESET-STORAGE.md
+DISTRIBUTABLES += docs/PRESET-STORAGE.md docs/MOD-GROUP-MUTE.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 include $(RACK_DIR)/arch.mk
 ifdef ARCH_WIN

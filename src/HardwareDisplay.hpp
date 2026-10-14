@@ -94,7 +94,7 @@ struct HardwareDisplay : HardwareControl {
                 int length=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_LENGTH):Metropolix::trackParam(row,Metropolix::LENGTH),8);
                 int offset=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_STAGE_OFFSET):Metropolix::trackParam(row,Metropolix::OFFSET));
                 int position=m?(mod?m->modStage[lane].load():m->playStage[row].load()):-1;
-                bool mute=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_MUTE):Metropolix::trackParam(row,Metropolix::MUTE));
+                bool mute=mod?(m && m->modLaneMuted(lane)):integer(Metropolix::trackParam(row,Metropolix::MUTE));
                 for(int s=0;s<8;++s) {
                     int x=2+16*s,y=7+16*row;
                     if(metro::modulo(s-offset,8)>=length){c.dot(x+5,y+5);continue;}

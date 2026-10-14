@@ -1,4 +1,4 @@
-# Platform packages — 2.33.0
+# Platform packages — 2.34.0
 
 Choose the `.vcvplugin` matching the computer and the Rack application you run:
 
@@ -17,7 +17,7 @@ There is no separate installer or GitHub account requirement.
 The new Linux/Mac packages use the official Rack 2.6.6 SDK; the established
 Windows build retains its Rack 2.3.0 SDK and runs in Rack Free 2.6.6. All use
 Rack 2's plugin ABI. They share the same
-786 parameter IDs, settings schema32, format10 musical banks, backup formats and
+787 parameter IDs, settings schema33, format11 musical banks, backup formats and
 examples. Patches and portable backups can move between these builds; physical
 audio/MIDI device choices remain local and may need reselection.
 
@@ -27,7 +27,7 @@ Windows has the existing local Rack widget, renderer, persistence, CV/MIDI and
 audio-path coverage. Linux x64, Mac x64 and Mac ARM64 jobs run the full native
 engine/persistence/file/MIDI/MX tests against their SDK libraries. A separate
 host loads the actual stripped production binary and exercises both public
-models for six virtual minutes, with 56,592 edits, exact state restores, fresh
+models for six virtual minutes, with 56,664 edits, exact state restores, fresh
 instances, three sample rates and MX reconnects. Windows runs this same host
 locally against the installed Rack library. See [runtime checks](RUNTIME-VALIDATION.md). Package audits compare
 included files with the source, check binary architecture and exclude QA code.

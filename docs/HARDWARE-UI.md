@@ -72,9 +72,9 @@ sources; see [the documented interpretations](VALIDATION.md).
 ## Compatibility and remaining controls
 
 The established 770 parameter IDs and all ports retain their identities;
-sixteen ORDER shortcut values are appended, for 786 parameters. Settings schema32
-includes global ORDER shortcuts. Musical format10 adds Scale Lock and Loopy
-settings after the frozen format9/518-value prefix. Existing patch
+sixteen ORDER shortcut values and independent MOD group mute are appended, for 787 parameters. Settings schema33
+includes global ORDER shortcuts and group mute. Musical format11/522 adds group
+mute after format10’s 521-value prefix (including Scale Lock and Loopy settings). Existing patch
 and bank migrations remain in place. Temporary ALT state clears on load;
 the tuner does not activate on reopen. See [Feature status](FEATURE-STATUS.md)
 and the current guides for compatibility details.
