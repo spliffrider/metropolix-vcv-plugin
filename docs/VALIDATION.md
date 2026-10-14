@@ -1,4 +1,14 @@
-# Validation and fidelity status — 2.30.0
+# Validation and fidelity status — 2.31.0
+
+## Production runtime — 2.31.0
+
+The actual stripped download now runs the same six-virtual-minute stress host
+on Windows, Linux x64, Intel Mac and Apple Silicon. It checks all fifteen
+outputs after every frame, repeated bounds/interior parameter edits, state
+restores and fresh instances, Initialize, three sample rates and reciprocal/
+stale/detached MX links. This complements actual Rack UI/audio-path tests; it
+does not establish hardware behavior or multithreaded safety. The [runtime
+guide](RUNTIME-VALIDATION.md) records counts, assumptions and reproduction.
 
 ## Maintenance — 2.30.0
 

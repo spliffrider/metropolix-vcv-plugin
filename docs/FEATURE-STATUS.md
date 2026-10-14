@@ -1,9 +1,10 @@
-# Feature status — 2.30.0 public alpha
+# Feature status — 2.31.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.31.0 adds [actual production runtime stress coverage](RUNTIME-VALIDATION.md) on all four platforms.
 2.30.0 adds [confirmed maintenance reset/clear](MAINTENANCE.md), bank preservation, native undo and disarmed reopen.
 2.29.0 adds [selective Filled and bank backups](BACKUPS.md), preserving unrelated slots/chains with native undo.
 2.28.0 adds [Linux and both Mac packages with native host tests](PLATFORMS.md), plus actual Linux Rack rendering/control/audio checks.
@@ -62,8 +63,10 @@ differ in edge cases or where the manual leaves details unspecified. See
 
 This is a useful **early alpha for Windows, Linux and Mac testers**. Windows
 and Linux have actual Rack callback, 177-state display and stereo/CV-path checks.
-All four packages pass native engine/persistence checks; the three new native
-platform jobs also load and exercise the actual stripped production binary.
+All four packages pass native engine/persistence checks and a six-virtual-minute
+soak of the actual stripped production binary, including repeated state restores
+and fresh instances. This is single-threaded simulation; long human sessions
+and cross-plugin interactions still need feedback.
 Mac GUI/audio interaction still needs human feedback. See [Platform packages](PLATFORMS.md). The musical baseline also received
 an initial user playtest. Broad testing on other computers, long sessions,
 different zoom/DPI settings, and interactions with other plugins is still needed.
