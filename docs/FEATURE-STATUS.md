@@ -1,9 +1,10 @@
-# Feature status — 2.28.0 public alpha
+# Feature status — 2.29.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.29.0 adds [selective Filled and bank backups](BACKUPS.md), preserving unrelated slots/chains with native undo.
 2.28.0 adds [Linux and both Mac packages with native host tests](PLATFORMS.md), plus actual Linux Rack rendering/control/audio checks.
 2.27.0 refines [panel interaction, MOD display units and EXIT/MX workflows](UI-FIDELITY.md).
 2.26.0 adds [portable backups](BACKUPS.md), scoped restore and native undo.
@@ -44,7 +45,7 @@ configuration, preset workflows, and external interfaces.
 | Traversal and timing | All 21 play orders, reverse, length, offset, clock/pulse division, fixed pulse lengths, Swing, reset, internal/external clock with input division, global CLK division/offset and Always/Running output, explicit clock source, Reset/Run/Run-C | Hardware clock/timing comparisons |
 | Gate/stage variation | Four gate types; three ratchet modes; stretching; Stage/Pulse probability; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate CV with Step/sRamp/pRamp; gate scaling and length Hold | Hardware comparison of live edits and mixed timing |
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
-| Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; legacy preset selector/global difference |
+| Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; custom scale definition/lock preset boundaries |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
 | A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
@@ -59,7 +60,7 @@ differ in edge cases or where the manual leaves details unspecified. See
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows, Linux and Mac testers**. Windows
-and Linux have actual Rack callback, 167-state display and stereo/CV-path checks.
+and Linux have actual Rack callback, 172-state display and stereo/CV-path checks.
 All four packages pass native engine/persistence checks; the three new native
 platform jobs also load and exercise the actual stripped production binary.
 Mac GUI/audio interaction still needs human feedback. See [Platform packages](PLATFORMS.md). The musical baseline also received

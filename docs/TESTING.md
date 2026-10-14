@@ -1,8 +1,10 @@
-# Metropolix Lab 2.28.0 — public alpha quick start
+# Metropolix Lab 2.29.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
+
+2.29.0 adds [Filled and single-bank backups](BACKUPS.md). Filled merges occupied slots; Bank replaces only its eight slots, including empties. Both preserve unrelated presets and chains, and support Undo. Use a spare patch for imports.
 
 2.28.0 adds [Linux and Mac packages](PLATFORMS.md), native loading tests and actual Linux Rack display/audio coverage.
 
@@ -18,14 +20,15 @@ welcome. See Known limitations for remaining fidelity checks.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-win-x64.vcvplugin)
-- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-lin-x64.vcvplugin)
-- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-mac-x64.vcvplugin)
-- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-mac-arm64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MX-performance.vcv)
-- [Example backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/Backup-example.json)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-win-x64.vcvplugin)
+- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-lin-x64.vcvplugin)
+- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-mac-x64.vcvplugin)
+- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-mac-arm64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MX-performance.vcv)
+- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
+- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.28.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.29.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -295,6 +298,13 @@ and a preset, import your file, then try Rack Undo and Redo. Settings and the
 bank should return with RUN stopped; local MIDI devices and cables should stay
 in place. Try Settings and Presets exports separately, and cancel a chooser.
 The [backup guide](BACKUPS.md) describes scopes and the example JSON file.
+
+For **2.29.0 selective backups**, export a sparse Filled collection and one bank.
+Before importing, put different presets in another bank and create a chain.
+Filled should update only the source's occupied addresses. Bank should replace
+all eight addresses in that bank, clearing its empty slots. Unrelated banks,
+chains and tempo should remain. Try Undo/Redo and save/reopen the selected
+submenu. Use All Presets when sharing with 2.26–2.28 builds.
 
 ## Panel and display — new in 2.27.0
 

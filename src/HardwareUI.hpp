@@ -96,6 +96,7 @@ void screenPage(Metropolix* m, int page) {
 int parentPage(Metropolix* m){
     switch(m->uiPage.load()){
         case Metropolix::BACKUP_PAGE:return Metropolix::MIDI_SETUP_PAGE;
+        case Metropolix::BACKUP_PRESET_PAGE:return Metropolix::BACKUP_PAGE;
         case Metropolix::TUNER_PAGE:return Metropolix::GLOBAL_SETUP_PAGE;
         case Metropolix::GLOBAL_SETUP_PAGE:case Metropolix::UI_SETUP_PAGE:case Metropolix::MIDI_SETUP_PAGE:case Metropolix::PRESET_SETUP_PAGE:return Metropolix::SETUP_PAGE;
         default:return Metropolix::HOME;
@@ -126,6 +127,7 @@ void encoderPress(Metropolix* m) {
     if(p==Metropolix::SETUP_PAGE || p==Metropolix::GLOBAL_SETUP_PAGE || p==Metropolix::UI_SETUP_PAGE || p==Metropolix::TUNER_PAGE){setupEncoderPress(m);return;}
     if(p==Metropolix::HOME) { m->uiHome.store((m->uiHome.load()+1)%4); return; }
     if(p==Metropolix::BACKUP_PAGE){backupChoose(m,m->backupCursor.load());return;}
+    if(p==Metropolix::BACKUP_PRESET_PAGE){backupPresetChoose(m,m->backupPresetCursor.load());return;}
     if(p==Metropolix::MX_SETUP_PAGE){m->uiField.store(mxAssignment(m)<0?0:1-m->uiField.load());return;}
     if(p==Metropolix::MOD_MENU_PAGE || p==Metropolix::MIDI_SETUP_PAGE){midiEncoderPress(m);return;}
     if(p==Metropolix::PRESET_SETUP_PAGE) { m->uiField.store((m->uiField.load()+1)%8); return; }

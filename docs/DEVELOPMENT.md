@@ -58,7 +58,7 @@ GitHub Actions runs the twenty-five portable C++ suites plus native Linux x64,
 Intel Mac and Apple Silicon package jobs on pushes and pull requests. Native jobs
 run engine/persistence/file/MIDI/MX tests against the SDK, load the stripped
 production plugin, and audit package contents/architecture. Linux additionally
-runs Rack Free 2.6.6 under Xvfb for real widget callbacks, 167 OLED captures,
+runs Rack Free 2.6.6 under Xvfb for real widget callbacks, 172 OLED captures,
 save/reopen and MX/MIDI audio paths. Workflow artifacts retain logs and captures.
 
 Windows production builds and applicable Rack UI/audio tests still run locally

@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.27.0
+# Hardware panel and desktop interaction — 2.29.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -71,8 +71,8 @@ sources; see [the documented interpretations](VALIDATION.md).
 
 ## Compatibility and remaining controls
 
-All 770 parameter IDs and all ports retain their identities. Settings schema29
-and format9/518-value musical presets are unchanged in 2.27.0. Existing patch
+All 770 parameter IDs and all ports retain their identities. Settings schema30
+adds the selective backup submenu; format9/518-value musical presets stay fixed. Existing patch
 and bank migrations remain in place. Temporary ALT state clears on load;
 the tuner does not activate on reopen. See [Feature status](FEATURE-STATUS.md)
 and the current guides for compatibility details.
@@ -85,7 +85,7 @@ Slide offers Tempo, Analog and Acid; see the [slide guide](SLIDES.md). Note-trac
 
 ## Verification
 
-The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 167 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 172 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
 
 ## Loopy performance
 
@@ -107,8 +107,10 @@ actual stereo chord playback pass. Audio measured RMS .360/.363 V, peaks
 1.730/1.733 V, DC approximately .00084 V at 48 kHz over twelve seconds.
 Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
-Internal presets retain the earlier plugin selector/root recall behavior, unlike
-the hardware global classification; custom definitions and locks stay global.
+Internal presets recall Scale/Root settings, as the manual describes on p.112;
+the earlier claim that their recall differs from hardware was incorrect. Custom
+definitions and locks stay global in this plugin; their exact hardware preset
+boundary remains unverified.
 
 ## Track menu — 2.17.0
 

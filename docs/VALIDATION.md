@@ -1,4 +1,30 @@
-# Validation and fidelity status — 2.28.0
+# Validation and fidelity status — 2.29.0
+
+## Selective backups — 2.29.0
+
+Native host tests cover each of the eight banks, sparse Filled and empty Filled,
+explicit bank empty-slot clearing, absolute slot addressing, preservation of
+every unrelated slot, chains, live settings, local devices, pickup and editor
+state. Actual module receipts restore the exact before/after JSON on undo/redo.
+Imports remain stopped under an already high external Run gate. Invalid slot
+IDs (including oversized integers), duplicate IDs, foreign bank slots, wrong
+versions/scopes/sizes and every out-of-range snapshot field reject before any
+module mutation. UTF-8 filenames and signed/dormant float32 values roundtrip.
+Old schema29 full/settings backups remain accepted and default the new cursor.
+
+Actual Rack widget callbacks browse/clamp All/Filled/Bank1–8, expose context menus
+and hover help, return to the parent with EXIT, export/import selective files,
+create one history action and undo/redo exact state. A saved patch reopens with
+the selected submenu and restored/untouched presets. Five additional OLED cases
+bring coverage to 172 states. Existing Fidelity, Polish/Bloom and preset tests
+remain regression checks. This coverage does not claim native OS file-dialog
+automation or physical hardware SysEx compatibility.
+
+The only new saved state is a submenu page/cursor in schema30. All 770 parameter
+IDs and the format9/518-value musical snapshots stay fixed. Format1 full backups
+retain replace-all behavior; format2 merges Filled or replaces one complete bank.
+The manual specifies export selection but not SysEx receive merge behavior;
+these explicit selective import semantics belong to the desktop plugin.
 
 ## Native platform packages — 2.28.0
 
@@ -630,8 +656,10 @@ actual stereo chord playback pass. Audio measured RMS .360/.363 V, peaks
 1.730/1.733 V, DC approximately .00084 V at 48 kHz over twelve seconds.
 Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
-Internal presets retain the earlier plugin selector/root recall behavior, unlike
-the hardware global classification; custom definitions and locks stay global.
+Internal presets recall Scale/Root settings, as the manual describes on p.112;
+the earlier claim that their recall differs from hardware was incorrect. Custom
+definitions and locks stay global in this plugin; their exact hardware preset
+boundary remains unverified.
 
 ## Slide models — 2.13.0
 

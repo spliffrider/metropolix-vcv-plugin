@@ -157,7 +157,7 @@ try {
     $system = Split-Path -Parent $RackPath
     $arguments = @('-u', ('"' + $profile + '"'), '-s', ('"' + $system + '"'), ('"' + $patch + '"'))
     $process = Start-Process -FilePath $RackPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
-    $timeout = if ($Variations) { 180 } elseif ($Musical) { 60 } else { 45 }
+    $timeout = if ($Variations) { 180 } elseif ($Display) { 120 } elseif ($Musical) { 60 } else { 45 }
     $elapsed = [System.Diagnostics.Stopwatch]::StartNew()
     while (!$process.WaitForExit(1000)) {
         if ($elapsed.Elapsed.TotalSeconds -gt $timeout) {

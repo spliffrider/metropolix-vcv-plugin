@@ -81,10 +81,12 @@ The expanded module has 685 parameters; repeated user masks, roots and shortcuts
 account for most of the increase. Loading an older patch resets the new definitions,
 shortcuts and lock to their defaults.
 
-For compatibility with earlier plugin releases, internal presets still recall
-the original Scale and factory Root selector parameters. The hardware manual
-lists these as globals. Custom definitions, custom roots, shortcuts and the lock
-remain global to the module and are preserved by internal preset recall.
+Internal presets recall the Scale and factory Root selector parameters. The
+manual explicitly includes SCALE settings in presets (p.112); the previous
+wording describing their recall as a hardware mismatch was incorrect. Custom
+definitions, custom roots, shortcuts and the lock remain global to this plugin
+instance and are preserved by internal preset recall. The precise hardware
+boundary for custom definitions and lock state still needs confirmation.
 
 Scale changes requantize slider pitches and chromatic override anchors.
 Accumulation continues in the selected scale's degrees, preserving its stored
