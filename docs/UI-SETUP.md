@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.48.0
+# UI setup, confirmation and external clock input — 2.49.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -51,6 +51,25 @@ until a stage reaches its limit. See [MOD editing](MOD-TEST.md) and
 [CLK output](CLOCK-OUTPUT.md). A small edit is recorded before its genuine
 transition/Gate click or field navigation. Pure confirmation previews add no
 edit action until applied.
+
+## Type and range changes during an edit
+
+Changing a Track CV type or Velocity source, a MOD type or destination, or the
+CLK output division can change the meaning or range of its displayed value.
+An unconfirmed preview created under the previous setting is now discarded.
+Its obsolete confirmation or held release is consumed without a Gate toggle,
+transition change or parameter Undo action. The externally applied setting
+stays in place, including when the UI already cancelled the held preview.
+
+Continuing intentional movement starts a new preview from the latest settings;
+that preview can be confirmed normally. Movement at a value's bound that makes
+no meaningful preview retains the normal short-click action.
+
+For immediate voltage edits, changing a type during the drag no longer creates
+an extra native Undo action. The voltage edit restores its exact raw origin,
+while the externally changed type remains in place. This covers the encoder,
+OLED and grid, including ALT groups and the existing tiny edit-before-click
+workflow. Paired non-voltage page edits are a separate scope to audit.
 
 ## Long-press resets and Undo
 

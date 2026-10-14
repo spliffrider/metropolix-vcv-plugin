@@ -1,10 +1,10 @@
-# Metropolix Lab 2.48.0 — public alpha quick start
+# Metropolix Lab 2.49.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
 
-2.48.0 corrects [MOD and clock-offset drag Undo](UI-SETUP.md), preserving hidden stored values through small edits and normal clicks. ALT MOD edits shift effective voltages without hidden-negative jumps. Confirmation, clock timing and saved formats stay unchanged.
+2.49.0 protects [edits during type, destination and range changes](UI-SETUP.md). Raw voltage Undo stays exact; obsolete confirmation previews are discarded without an accidental secondary click. Sequencing and saved formats stay unchanged.
 
 2.39.0 corrects [CTRL assignment editing](CTRL-KNOBS.md). Open a black CTRL assignment button, drag destination or target, and check that it previews until you press the encoder. Press again to switch fields. Hold the encoder to clear the assignment, then try Undo/Redo. White performance knobs remain live; right-click choices apply directly.
 
