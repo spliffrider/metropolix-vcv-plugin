@@ -322,6 +322,7 @@ struct Metropolix : Module {
         LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE, BACKUP_PAGE, BACKUP_PRESET_PAGE, FACTORY_PAGE, FACTORY_CONFIRM_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
+    std::atomic<float> outputDraftBase[2]{{0.f},{0.f}}; // Applied raw source when each preview began.
     std::vector<float> workflowBaseline, workflowClipboard;
     int workflowClipKind=0, workflowClipTag=-1, workflowStageSource=-1;
     bool workflowCopyUsed=false, workflowLaneCopy=false, workflowEditUsed=false;

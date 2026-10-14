@@ -1,4 +1,48 @@
-# Validation and fidelity status — 2.42.0
+# Validation and fidelity status — 2.43.0
+
+## 2.43 A/B output preview conflicts
+
+Actual Rack callbacks reproduced three stale-output-preview failures: encoder
+confirmation overwrote a newer applied source, standalone control refresh kept
+the obsolete choice, and another drag movement continued from that choice.
+Named output menu actions already cleared pending choices and required no fix.
+The separate A/B preview now captures its applied raw source and checks it
+before turning, confirming and refreshing controls/the module widget. An
+obsolete confirmation is consumed; a later turn begins from the newest source.
+Editing the other output retains a valid pending choice. IDs/schema/formats
+remain 787/33/11/522; no output routing or signal algorithm changes are made.
+
+The Output suite exercises all sixteen functions and all 38 source/target
+choices on both A/B with Encoder Confirm off/on; mandatory confirmation,
+encoder/display interaction, exact raw-state single-action undo/redo, external
+edits during a drag and before confirmation/refresh, continued turns, unrelated
+output edits, all named menu choices, EXIT, long/menu resets, hold thresholds,
+clipped no-ops, sub-integer raw conflicts and original native save/reopen.
+Linux adds mode Output to its seventeen existing application groups. The
+firmware 1.6 routing workflow is referenced from printed pages115–119. These
+callback checks do not establish hardware or OS mouse/focus equivalence.
+
+The expanded Windows suite also exposed an external edit being attributed to
+the preview's grouped drag-end history. A/B preview drags now finish Rack's
+cursor/knob state without recording parameter changes, just like confirming
+parameter previews; actual confirmation and long reset retain their own undo.
+The original small unrelated-output probe was adapted to Rack's bounded
+history deque after exhaustive edits filled it. Production behavior was not
+changed for that fixture correction. Receipt checks in the expanded suite
+require the previous action immediately before the new one, then verify the
+entire raw parameter state through Undo/Redo.
+
+Windows Output and its original save/reopen pass. OutputAudio and
+OutputArrangement each pass real twelve-second 48 kHz signal-path tests:
+Velocity spans 0–5 V and MOD8 clock pulses reach their cables. Pending,
+CtrlEditor, SetupOptions, Workflows, Chains, Fidelity, Polish and all 181
+Display states pass. Native integration and the stripped production host pass
+22,624,609 frames, 339,369,135 output checks, 56,664 edits, 145 restores, 144 fresh
+instances, 12 initializes and 145 reciprocal links over 361.083 virtual seconds;
+the local host took 13.1857 seconds. Linux CI requires Output plus the seventeen
+existing application groups; all four packages require native and production
+checks. Finite recordings and virtual runtime do not establish long realtime
+sessions, human listening quality or physical hardware parity.
 
 ## 2.42 Chain editing history
 
