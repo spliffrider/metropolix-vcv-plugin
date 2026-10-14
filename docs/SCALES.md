@@ -84,8 +84,9 @@ recall is Off, and participate in preset undo, Init, chains and MIDI PC.
 Format10 appends Scale Lock and both Loopy settings after the frozen 518-value
 prefix. Old banks still import with their old fields intact and neutral new
 values (Unlocked/Auto/Current Track); recalling a migrated old preset can
-therefore unlock the previously sounding scale. New banks require 2.33. The
-786 Rack parameter IDs and settings schema32 stay fixed. See [Preset storage](PRESET-STORAGE.md).
+therefore unlock the previously sounding scale. Format10 banks require 2.33.
+Current2.34 appends independent MOD group mute as ID786 (787 parameters/schema33);
+the lock/Loopy snapshot positions remain fixed in format11. See [Preset storage](PRESET-STORAGE.md).
 
 Scale changes requantize slider pitches and chromatic override anchors.
 Accumulation continues in the selected scale's degrees, preserving its stored

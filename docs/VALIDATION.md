@@ -1,4 +1,18 @@
-# Validation and fidelity status — 2.33.0
+# Validation and fidelity status — 2.34.0
+
+## Independent MOD group mute — 2.34
+
+Group mute now preserves all eight individual lane choices. ID786 appends after
+the frozen 786-parameter prefix; settings33 and musical format11/522 include it.
+Legacy settings29–32 and banks1–10 default the missing group Off and preserve
+their stored individual masks; selective9–10 upgrade only listed slots.
+Native Rack checks cover all256 masks in three CV types, actual A/B voltages,
+internal routes, continuing phase, synchronized commands, independent edits,
+preset history/Init and strict legacy migration. Actual Rack callbacks cover
+held gestures, desktop menus/history, preset Save/Load, old selective import
+and native reopen. See [MOD group mute](MOD-GROUP-MUTE.md) for the documented
+separate-state/indicator interpretation and remaining hardware comparison.
+
 
 ## Musical preset storage — 2.33.0
 

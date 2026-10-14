@@ -1,4 +1,4 @@
-# Portable backups — 2.33.0
+# Portable backups — 2.34.0
 
 Open **SETUP → MIDI → Backup files…**, or use the module's right-click menu.
 Drag the encoder or display up/down to select an action. Click the encoder to
@@ -8,7 +8,7 @@ submenu; EXIT returns to Backup files. Right-click offers the same choices.
 | Action | Saved contents |
 | --- | --- |
 | Export All | Current settings/state, all 64 preset slots, the working chain and eight saved chains |
-| Export Settings | All 786 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
+| Export Settings | All 787 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
 | Export Presets → All Presets | All 64 slots, including empty slots, the working chain and eight saved chains |
 | Export Presets → Filled Presets | Only occupied slots, keeping their original bank/slot addresses; no chains or live settings |
 | Export Presets → Bank 1–8 | Exactly eight slots in the selected bank, including explicit empty slots; no chains or live settings |
@@ -62,23 +62,26 @@ using a fully written temporary file in the same directory.
 Format 2 contains exactly `type`, `format`, `scope`, `selection` and `bank`.
 `scope` is `presets`. `selection` is either `{"kind":"filled"}` or
 `{"kind":"bank","bank":8}` (public bank numbers 1–8). `bank` contains
-`presetFormat: 10` and a `slots` array. Each entry has an absolute `slot` index
-0–63 and `values`, the 521-value musical snapshot. Legacy format9/518 files
-are accepted and gain Unlocked/Auto/Current Track for the three new fields. A Bank entry may
+`presetFormat: 11` and a `slots` array. Each entry has an absolute `slot` index
+0–63 and `values`, the 522-value musical snapshot. Legacy format9/518 files
+gain Unlocked/Auto/Current Track for the three lock/Loopy fields; formats9–10
+gain group mute Off. Individual lane masks remain unchanged. A Bank entry may
 use `null` for an empty slot; Filled entries must contain a snapshot.
 Duplicate IDs, foreign bank IDs, missing bank slots, wrong snapshot sizes and
 out-of-range values are rejected before import. The files contain no chains.
 
-Use **2.33.0 or later** for new format10 musical banks, including All, All
-Presets, Filled and Bank exports. Older format9 selective files still import.
-Settings-only exports remain compatible with 2.32. See [Preset storage](PRESET-STORAGE.md). Existing 2.26–2.29 All/Settings/All Presets backups
+Use **2.34.0 or later** for new format11 musical banks and schema33 settings,
+including All, Settings, All Presets, Filled and Bank exports. Older format9–10
+selective files still import. See [Preset storage](PRESET-STORAGE.md) and
+[MOD group mute](MOD-GROUP-MUTE.md). Existing 2.26–2.29 All/Settings/All Presets backups
 continue to import, including settings schemas29–31 with 770 parameters.
-Current settings use schema32 with 786 parameters to include the eight global
-ORDER/direction shortcut pairs; these settings backups require 2.32 or later.
-Older settings initialize the sixteen new shortcut values to plugin defaults.
-The first 518 musical snapshot positions and all parameter IDs remain fixed.
-Format10 appends Scale Lock and both Loopy settings; formats1–9 full banks and
-format9 selective files still import. The
+Schema32 settings retain their released 786-parameter count; current schema33
+adds the independent group mute, for 787. Schemas29–31 initialize missing ORDER
+shortcuts to defaults, and schemas29–32 initialize missing group mute Off while
+preserving individual lane masks. The first 521 musical snapshot positions and
+all earlier parameter IDs remain fixed. Format10 added Scale Lock and both
+Loopy settings; format11 appends group mute. Formats1–10 full banks and
+formats9–10 selective files still import. The
 [example Bank 8 backup](../examples/Backup-bank-8.json) intentionally replaces
 Bank 8 with three occupied slots and five empty slots; try it in a spare patch.
 

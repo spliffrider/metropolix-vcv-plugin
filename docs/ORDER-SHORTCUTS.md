@@ -41,11 +41,11 @@ hardware factory shortcut pairs, so these are not a hardware-default claim.
 
 Rack files and All/Settings backups save all sixteen shortcut values. Older
 settings schemas29–31 with 770 parameters still import and initialize the new
-shortcuts to plugin defaults. Current settings use schema32 and 786 parameters;
-their backups require 2.32 or later. Existing parameter IDs are unchanged.
-As of 2.33, musical presets use format10 with 521 values; the global ORDER
+shortcuts to plugin defaults. Schema32 retained 786 parameters; current schema33 adds MOD group mute at ID786.
+Current settings backups require 2.34 or later. Existing parameter IDs are unchanged.
+As of 2.34, musical presets use format11 with 522 values; the global ORDER
 shortcuts remain excluded. Older banks still import; new musical banks require
-2.33. See [Preset storage](PRESET-STORAGE.md) and [Backups](BACKUPS.md).
+2.34. See [Preset storage](PRESET-STORAGE.md) and [Backups](BACKUPS.md).
 
 Native tests cover all 3,360 target/slot/order/direction combinations, CTRL
 ownership, preset exclusion and old/new backup validation. Actual Rack callback

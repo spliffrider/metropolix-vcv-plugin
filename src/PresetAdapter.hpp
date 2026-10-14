@@ -1,7 +1,7 @@
 // Members of Metropolix. Banks are accessed by UI/serialization only. The audio
 // thread receives a fixed-size copy and owns the pending load and pulse clocks.
-// Format10 appends Scale Lock and both Loopy settings after the frozen
-// format9 prefix. Preset preferences, RUN_MODE and CLK settings remain global.
+// Format11 appends independent All MOD mute after the frozen format10 prefix.
+// Preset preferences, RUN_MODE and CLK settings remain global.
 static constexpr int FORMAT3_PARAMS = TOTAL_PULSES + 1 + LOOPY_PULSES - SWING_1;
 static constexpr int FORMAT4_PARAMS = FORMAT3_PARAMS + 2;
 static constexpr int FORMAT5_PARAMS = FORMAT4_PARAMS + CV_RAMPS + 16 - CV_TYPE_1;
@@ -11,14 +11,15 @@ static constexpr int FORMAT8_PARAMS = FORMAT7_PARAMS + 2;
 static constexpr int FORMAT9_PARAMS = FORMAT8_PARAMS + MIDI_CLOCK_OUT-MIDI_TRACK;
 // The manual's p.169 preset column includes Scale Lock and both Loopy settings.
 // Append them after every frozen format9 index; custom definitions stay global.
-static constexpr int PRESET_FORMAT = 10;
-static constexpr int SNAPSHOT_PARAMS = FORMAT9_PARAMS + 3;
+static constexpr int FORMAT10_PARAMS = FORMAT9_PARAMS + 3;
+static constexpr int PRESET_FORMAT = 11;
+static constexpr int SNAPSHOT_PARAMS = FORMAT10_PARAMS + 1;
 static int presetSize(int format) {
-    const int counts[]={0,TOTAL_PULSES+1,TOTAL_PULSES+3,FORMAT3_PARAMS,FORMAT4_PARAMS,FORMAT5_PARAMS,FORMAT6_PARAMS,FORMAT7_PARAMS,FORMAT8_PARAMS,FORMAT9_PARAMS,SNAPSHOT_PARAMS};
+    const int counts[]={0,TOTAL_PULSES+1,TOTAL_PULSES+3,FORMAT3_PARAMS,FORMAT4_PARAMS,FORMAT5_PARAMS,FORMAT6_PARAMS,FORMAT7_PARAMS,FORMAT8_PARAMS,FORMAT9_PARAMS,FORMAT10_PARAMS,SNAPSHOT_PARAMS};
     return format>=1 && format<=PRESET_FORMAT?counts[format]:0;
 }
-static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index<FORMAT3_PARAMS?SWING_1 + index - TOTAL_PULSES - 1:index<FORMAT5_PARAMS?SLIDE_TYPE_1+index-FORMAT3_PARAMS:index<FORMAT6_PARAMS?OUTPUT_TRACK_OPTIONS+index-FORMAT5_PARAMS:index<FORMAT7_PARAMS?TRACK_BEHAVIOR+index-FORMAT6_PARAMS:index<FORMAT8_PARAMS?TRACK_GLOBAL_RESET_1+index-FORMAT7_PARAMS:index<FORMAT9_PARAMS?MIDI_TRACK+index-FORMAT8_PARAMS:index==FORMAT9_PARAMS?SCALE_LOCK:index==FORMAT9_PARAMS+1?LOOPY_PULSES:LOOPY_TARGET; }
-static int presetIndex(int id) { if(id==SCALE_LOCK)return FORMAT9_PARAMS;if(id==LOOPY_PULSES)return FORMAT9_PARAMS+1;if(id==LOOPY_TARGET)return FORMAT9_PARAMS+2;return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : id>=SLIDE_TYPE_1 && id<CV_RAMPS+16?FORMAT3_PARAMS+id-SLIDE_TYPE_1:id>=OUTPUT_TRACK_OPTIONS && id<OUTPUT_TRACK_OPTIONS+6?FORMAT5_PARAMS+id-OUTPUT_TRACK_OPTIONS:id>=TRACK_BEHAVIOR && id<TRACK_BEHAVIOR+6?FORMAT6_PARAMS+id-TRACK_BEHAVIOR:id>=TRACK_GLOBAL_RESET_1 && id<=TRACK_GLOBAL_RESET_2?FORMAT7_PARAMS+id-TRACK_GLOBAL_RESET_1:id>=MIDI_TRACK && id<MIDI_CLOCK_OUT?FORMAT8_PARAMS+id-MIDI_TRACK:-1; }
+static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index<FORMAT3_PARAMS?SWING_1 + index - TOTAL_PULSES - 1:index<FORMAT5_PARAMS?SLIDE_TYPE_1+index-FORMAT3_PARAMS:index<FORMAT6_PARAMS?OUTPUT_TRACK_OPTIONS+index-FORMAT5_PARAMS:index<FORMAT7_PARAMS?TRACK_BEHAVIOR+index-FORMAT6_PARAMS:index<FORMAT8_PARAMS?TRACK_GLOBAL_RESET_1+index-FORMAT7_PARAMS:index<FORMAT9_PARAMS?MIDI_TRACK+index-FORMAT8_PARAMS:index==FORMAT9_PARAMS?SCALE_LOCK:index==FORMAT9_PARAMS+1?LOOPY_PULSES:index==FORMAT9_PARAMS+2?LOOPY_TARGET:MOD_GROUP_MUTE; }
+static int presetIndex(int id) { if(id==MOD_GROUP_MUTE)return FORMAT10_PARAMS;if(id==SCALE_LOCK)return FORMAT9_PARAMS;if(id==LOOPY_PULSES)return FORMAT9_PARAMS+1;if(id==LOOPY_TARGET)return FORMAT9_PARAMS+2;return id <= TOTAL_PULSES ? id : id >= SWING_1 && id < LOOPY_PULSES ? TOTAL_PULSES + 1 + id - SWING_1 : id>=SLIDE_TYPE_1 && id<CV_RAMPS+16?FORMAT3_PARAMS+id-SLIDE_TYPE_1:id>=OUTPUT_TRACK_OPTIONS && id<OUTPUT_TRACK_OPTIONS+6?FORMAT5_PARAMS+id-OUTPUT_TRACK_OPTIONS:id>=TRACK_BEHAVIOR && id<TRACK_BEHAVIOR+6?FORMAT6_PARAMS+id-TRACK_BEHAVIOR:id>=TRACK_GLOBAL_RESET_1 && id<=TRACK_GLOBAL_RESET_2?FORMAT7_PARAMS+id-TRACK_GLOBAL_RESET_1:id>=MIDI_TRACK && id<MIDI_CLOCK_OUT?FORMAT8_PARAMS+id-MIDI_TRACK:-1; }
 using Snapshot = metro::PresetSnapshot<SNAPSHOT_PARAMS>;
 #include "PickupAdapter.hpp"
 struct PresetCommand {
