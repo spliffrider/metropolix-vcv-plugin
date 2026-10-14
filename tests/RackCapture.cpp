@@ -11,8 +11,24 @@ void screenshot(const std::string& path) {
     using namespace rack;
     // Reference the live scene without transferring ownership or stepping it.
     struct SceneView : widget::Widget {
-        void draw(const DrawArgs& args) override { APP->scene->draw(args); }
+        void draw(const DrawArgs& args) override {
+            auto live=args;
+            // Preserve the normal scene's light/halo behavior. Rack suppresses
+            // halos for module-browser framebuffers when args.fb is non-null.
+            live.fb=nullptr;
+            APP->scene->draw(live);
+        }
     };
+    std::vector<std::pair<widget::FramebufferWidget*,bool>> caches;
+    std::function<void(widget::Widget*)> bypass=[&](widget::Widget* w) {
+        if(auto* fb=dynamic_cast<widget::FramebufferWidget*>(w)) {
+            caches.emplace_back(fb,fb->bypassed);fb->bypassed=true;
+        }
+        for(auto* child:w->children)bypass(child);
+    };
+    // Avoid nested cache renders rebinding the default framebuffer. Drawing
+    // their real children directly also keeps this proof independent of caches.
+    bypass(APP->scene);
     GLint oldFramebuffer,oldReadBuffer,viewport[4];
     glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldFramebuffer);
     glGetIntegerv(GL_READ_BUFFER,&oldReadBuffer);
@@ -36,6 +52,7 @@ void screenshot(const std::string& path) {
     glBindFramebuffer(GL_FRAMEBUFFER,oldFramebuffer);
     glReadBuffer(oldReadBuffer);
     glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
+    for(auto& cache:caches)cache.first->bypassed=cache.second;
 }
 }
 #endif
