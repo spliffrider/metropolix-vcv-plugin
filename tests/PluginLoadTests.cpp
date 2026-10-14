@@ -2,6 +2,7 @@
 // This executable supplies the host that Rack normally constructs. Production
 // plugin code continues to use the public API only.
 #include <engine/Engine.hpp>
+#include <plugin.hpp>
 #undef PRIVATE
 #include <rack.hpp>
 #include <cmath>
@@ -17,6 +18,7 @@ int main(int argc,char** argv){
     // Keep binary loaded until process exit: registered factory vtables belong
     // to it. All modules are destroyed before the host/plugin is released.
     rack::plugin::Plugin plugin;plugin.slug="MetropolixLab";init(&plugin);
+    rack::plugin::plugins.push_back(&plugin);
     require(plugin.models.size()==2,"production registers exactly two public models");
     bool mainFound=false,mxFound=false;
     for(auto* model:plugin.models){
@@ -32,6 +34,6 @@ int main(int argc,char** argv){
         json_t* saved=module->toJson();require(saved && json_is_array(json_object_get(saved,"params")),"production module serializes");module->fromJson(saved);json_decref(saved);delete module;
     }
     require(mainFound && mxFound,"both production models tested");
-    plugin.models.clear();delete context.engine;context.engine=nullptr;rack::contextSet(nullptr);
+    rack::plugin::plugins.clear();plugin.models.clear();delete context.engine;context.engine=nullptr;rack::contextSet(nullptr);
     std::cout<<"PASS: stripped production binary loads, registers both models, generates finite gates and roundtrips state\n";
 }

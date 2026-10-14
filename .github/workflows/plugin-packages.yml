@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   package:
     name: ${{ matrix.platform }} production
@@ -63,6 +67,8 @@ jobs:
           extension=so
           if [ "$RUNNER_OS" = macOS ]; then extension=dylib; fi
           ./build/tests/plugin-load "$PWD/dist/MetropolixLab/plugin.$extension" | tee dist/production-load.txt
+          grep -q 'PASS: Rack library integration' dist/native-tests.txt
+          grep -q 'PASS: stripped production binary' dist/production-load.txt
           version=$(jq -r .version plugin.json)
           python3 scripts/audit-package.py --platform "$PLATFORM" --package "dist/MetropolixLab-$version-$PLATFORM.vcvplugin" --report "dist/package-audit-$PLATFORM.json"
       - name: Actual Linux Rack rendering, gestures and audio

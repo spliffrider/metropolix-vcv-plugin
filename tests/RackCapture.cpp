@@ -5,6 +5,7 @@
 #include <stb_image_write.h>
 #include <vector>
 #include <algorithm>
+#include <functional>
 
 namespace metroqa {
 void screenshot(const std::string& path) {
