@@ -60,7 +60,7 @@ run engine/persistence/file/MIDI/MX tests against the SDK, load the stripped
 production plugin through the [runtime stress host](RUNTIME-VALIDATION.md), and
 audit package contents/architecture. Windows runs the same production host via
 `scripts/test-production.ps1` after packaging. Linux additionally
-runs Rack Free 2.6.6 under Xvfb for real widget callbacks, 177 OLED captures,
+runs Rack Free 2.6.6 under Xvfb for real widget callbacks, 181 OLED captures,
 save/reopen and MX/MIDI audio paths. Workflow artifacts retain logs and captures.
 
 Windows production builds and applicable Rack UI/audio tests still run locally

@@ -71,8 +71,9 @@ sources; see [the documented interpretations](VALIDATION.md).
 
 ## Compatibility and remaining controls
 
-All 770 parameter IDs and all ports retain their identities. Settings schema31
-adds the maintenance menu; format9/518-value musical presets stay fixed. Existing patch
+The established 770 parameter IDs and all ports retain their identities;
+sixteen ORDER shortcut values are appended, for 786 parameters. Settings schema32
+adds global ORDER shortcuts; format9/518-value musical presets stay fixed. Existing patch
 and bank migrations remain in place. Temporary ALT state clears on load;
 the tuner does not activate on reopen. See [Feature status](FEATURE-STATUS.md)
 and the current guides for compatibility details.
@@ -85,7 +86,7 @@ Slide offers Tempo, Analog and Acid; see the [slide guide](SLIDES.md). Note-trac
 
 ## Verification
 
-The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 177 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 181 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
 
 ## Loopy performance
 

@@ -1,9 +1,10 @@
-# Feature status — 2.31.0 public alpha
+# Feature status — 2.32.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.32.0 adds [global ORDER shortcuts](ORDER-SHORTCUTS.md), paired reset, held gestures and desktop undo.
 2.31.0 adds [actual production runtime stress coverage](RUNTIME-VALIDATION.md) on all four platforms.
 2.30.0 adds [confirmed maintenance reset/clear](MAINTENANCE.md), bank preservation, native undo and disarmed reopen.
 2.29.0 adds [selective Filled and bank backups](BACKUPS.md), preserving unrelated slots/chains with native undo.
@@ -44,17 +45,17 @@ configuration, preset workflows, and external interfaces.
 | Area | Available now | Principal remaining work |
 | --- | --- | --- |
 | Eight-stage, two-track sequencing | Shared pitch/pulse/gate controls; independent pulse/gate sources, Rest Pitch, full transpose, track menu/init and per-track Global Reset; pitch/gate outputs and stage overrides | Hardware timing and MIDI comparisons |
-| Traversal and timing | All 21 play orders, reverse, length, offset, clock/pulse division, fixed pulse lengths, Swing, reset, internal/external clock with input division, global CLK division/offset and Always/Running output, explicit clock source, Reset/Run/Run-C | Hardware clock/timing comparisons |
+| Traversal and timing | All 21 play orders, reverse, eight global order/direction shortcuts, paired reset, length, offset, clock/pulse division, fixed pulse lengths, Swing, reset, internal/external clock with input division, global CLK division/offset and Always/Running output, explicit clock source, Reset/Run/Run-C | Hardware clock/timing comparisons |
 | Gate/stage variation | Four gate types; three ratchet modes; stretching; Stage/Pulse probability; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate CV with Step/sRamp/pRamp; gate scaling and length Hold | Hardware comparison of live edits and mixed timing |
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
-| Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; custom scale definition/lock preset boundaries |
+| Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes; Scale Lock preset recall (manual p.169); custom scale definitions remain global |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing and mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
 | A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes, scoped JSON backups | Hardware SysEx interchange |
 
-The current 770 parameters include repeated stage/lane controls; that number is
+The current 786 parameters include repeated stage/lane controls; that number is
 not a count of distinct hardware features. Implemented behavior can still
 differ in edge cases or where the manual leaves details unspecified. See
 [validation and known interpretations](VALIDATION.md).
@@ -62,7 +63,7 @@ differ in edge cases or where the manual leaves details unspecified. See
 ## Readiness for feedback
 
 This is a useful **early alpha for Windows, Linux and Mac testers**. Windows
-and Linux have actual Rack callback, 177-state display and stereo/CV-path checks.
+and Linux have actual Rack callback, 181-state display and stereo/CV-path checks.
 All four packages pass native engine/persistence checks and a six-virtual-minute
 soak of the actual stripped production binary, including repeated state restores
 and fresh instances. This is single-threaded simulation; long human sessions

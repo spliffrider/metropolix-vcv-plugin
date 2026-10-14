@@ -12,7 +12,7 @@ A saved patch reopens at the maintenance menu with confirmation disarmed.
 
 | Action | Changes | Preserves |
 | --- | --- | --- |
-| Factory Reset | All 770 settings return to plugin defaults, including stage/track/MOD parameters, routing, custom scale definitions, shortcuts, pickup and global preferences | All 64 saved musical presets, working chain links and eight saved chains |
+| Factory Reset | All 786 settings return to plugin defaults, including stage/track/MOD parameters, routing, custom scale definitions, shortcuts, pickup and global preferences | All 64 saved musical presets, working chain links and eight saved chains |
 | Clear All Presets | Empties all 64 stored slots | Current live parameter settings, custom scales, shortcuts, pickup, working chain links and eight saved chains |
 
 Both actions stop RUN, reset playback position, cancel pending preset loads

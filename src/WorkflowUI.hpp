@@ -76,7 +76,7 @@ void workflowTrackPress(Metropolix* m,int track){
     if(kind && (prior & (1u<<(1-track)))){copyWorkflow(m,kind,1-track);pasteWorkflow(m,kind,track);m->workflowCopyUsed=true;}
 }
 bool workflowStagePress(Metropolix* m,int stage,bool editHeld){
-    if(m->uiPage.load()==Metropolix::LOOPY_PAGE || m->loopyMuteHeld.load() || m->scaleShortcutHeld.load())return false;
+    if(m->uiPage.load()==Metropolix::LOOPY_PAGE || m->loopyMuteHeld.load() || m->scaleShortcutHeld.load() || m->orderShortcutHeld.load())return false;
     if(!m->workflowStageHeld){m->workflowStageSource=stage;m->workflowLaneCopy=m->uiMod.load() && editHeld;m->workflowUntil=0;
         if(m->workflowLaneCopy){m->selectedLane.store(stage);m->workflowCopyUsed=m->workflowEditUsed=true;m->workflowStageHeld=1u<<stage;return true;}}
     if(m->workflowStageHeld && !(m->workflowStageHeld & (1u<<stage))){int kind=m->workflowLaneCopy?4:1;
