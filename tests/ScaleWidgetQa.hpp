@@ -11,6 +11,37 @@ auto end=[&](HardwareControl* c){widget::EventContext context;event::DragEnd e;e
 if(qaFrame==6) {
     using M=Metropolix;for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);
     m->params[M::RUN].setValue(0);m->params[M::SCALE].setValue(1);m->params[M::SCALE_LOCK].setValue(-1);
+    // Printed p67: note-editor entry is available only with SCALE selected.
+    auto raw=[&]{std::vector<float> values;for(auto& p:m->params)values.push_back(p.getValue());return values;};
+    auto hold=[&](double seconds){auto* c=find("Encoder");begin(c);c->heldSince=system::getTime()-seconds;c->step();bool fired=c->longFired;end(c);return fired;};
+    bool roots=true,entry=true,exit=true,threshold=true,factory=true;
+    for(int id=0;id<149;++id) {
+        m->params[M::SCALE].setValue(id);screenPage(m,M::SCALE_PAGE);m->uiField.store(0);m->scaleEditing.store(false);auto before=raw();int history=APP->history->actionIndex;
+        roots &= !hold(1.1) && !m->scaleEditing.load() && raw()==before && APP->history->actionIndex==history;
+        screenPage(m,M::SCALE_PAGE);m->uiField.store(1);before=raw();bool user=id>=49;
+        if(user) {
+            threshold &= !hold(.9) && !m->scaleEditing.load();if(raw()!=before)APP->history->undo();
+            history=APP->history->actionIndex;entry &= hold(1.1) && m->scaleEditing.load() && screenParam(m)==M::SCALE_NOTE && raw()==before && APP->history->actionIndex==history;
+            for(int field=0;field<2;++field) {
+                m->scaleEditing.store(true);m->uiField.store(field);before=raw();history=APP->history->actionIndex;
+                exit &= hold(1.1) && !m->scaleEditing.load() && raw()==before && APP->history->actionIndex==history;
+            }
+        } else {
+            factory &= !hold(1.1) && !m->scaleEditing.load();if(raw()!=before)APP->history->undo();
+        }
+    }
+    check(roots,"Root-selected long encoder cannot enter notes for any factory/user scale and preserves values/history");
+    check(entry && threshold && exit,"all 100 user scales enter only from SCALE after threshold and exit from notes/root without value/history changes");
+    check(factory,"all 49 factory choices keep the note editor unavailable");
+    m->params[M::SCALE].setValue(49);screenPage(m,M::SCALE_PAGE);m->uiField.store(1);hold(1.1);m->params[M::SCALE].setValue(1);auto beforeFactory=raw();int factoryHistory=APP->history->actionIndex;
+    find("Encoder")->step();check(!m->scaleEditing.load() && raw()==beforeFactory && APP->history->actionIndex==factoryHistory,"factory selection automatically closes existing note editor without changing values/history");
+    m->params[M::SCALE].setValue(49);screenPage(m,M::SCALE_PAGE);m->uiField.store(0);m->params[M::ENC_CONFIRM].setValue(1);m->params[M::userScaleParam(0,true)].setValue(0);drag(find("Encoder"),-22);auto beforeMenu=raw();int menuHistory=APP->history->actionIndex;
+    check(pendingConfirmation(m),"prepare pending user root before explicit note-editor menu entry");
+    press(find("Encoder"),GLFW_MOUSE_BUTTON_RIGHT);ui::MenuItem* edit=nullptr;
+    for(auto it=APP->scene->children.rbegin();it!=APP->scene->children.rend();++it)if((*it)->visible && dynamic_cast<ui::MenuOverlay*>(*it)){edit=dynamic_cast<ui::MenuItem*>(seek(*it,[](widget::Widget* w){auto* item=dynamic_cast<ui::MenuItem*>(w);return item && item->text=="Edit user scale notes";}));break;}
+    check(edit && !edit->disabled,"desktop note-editor choice is available from ROOT");if(edit){event::Action action;edit->onAction(action);}closeMenus();
+    check(m->scaleEditing.load() && m->uiDraftParam<0 && raw()==beforeMenu && APP->history->actionIndex==menuHistory,"explicit desktop entry from ROOT discards obsolete root preview without a parameter change");
+    hold(1.1);m->params[M::ENC_CONFIRM].setValue(0);m->params[M::SCALE].setValue(1);m->params[M::SCALE_LOCK].setValue(-1);screenPage(m,M::SCALE_PAGE);m->uiField.store(1);
     click(find("SCALE"));check(m->uiPage.load()==M::SCALE_PAGE && screenParam(m)==M::SCALE,"SCALE selects factory scale field");
     drag(find("Encoder"),-23);check(m->integer(M::SCALE)==3,"encoder browses hardware bank order: Major to Dorian");APP->history->undo();check(m->integer(M::SCALE)==1,"factory scale drag uses one Rack undo");
     click(find("Encoder"));check(m->integer(M::SCALE_LOCK)==1,"encoder click locks current scale");drag(find("Encoder"),-23);check(m->integer(M::SCALE)==3 && m->integer(M::SCALE_LOCK)==1,"browsing locked scales preserves sounding scale");

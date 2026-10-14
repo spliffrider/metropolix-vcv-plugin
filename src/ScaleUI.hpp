@@ -29,9 +29,13 @@ void scaleLockPress(Metropolix* m) {
     int shown=m->integer(Metropolix::SCALE),locked=m->integer(Metropolix::SCALE_LOCK);
     setWithHistory(m->getParamQuantity(Metropolix::SCALE_LOCK),locked==shown?-1:shown);
 }
+bool scaleEncoderLongEnabled(Metropolix* m) {
+    return m && m->uiPage.load()==Metropolix::SCALE_PAGE &&
+        (m->scaleEditing.load() || (m->uiField.load()==1 && metro::userScale(m->integer(Metropolix::SCALE))));
+}
 void scaleEditPress(Metropolix* m) {
     if(!m || !metro::userScale(m->integer(Metropolix::SCALE)))return;
-    m->scaleEditing.store(!m->scaleEditing.load());m->uiField.store(1);
+    m->cancelDraft();m->scaleEditing.store(!m->scaleEditing.load());m->uiField.store(1);
 }
 void scaleToggleNote(Metropolix* m,int note=-1) {
     if(!m || !metro::userScale(m->integer(Metropolix::SCALE)))return;

@@ -1,4 +1,6 @@
-# Hardware panel and desktop interaction — 2.39.0
+# Hardware panel and desktop interaction — 2.40.0
+
+User-scale note editing requires [SCALE to be selected](SCALES.md) before holding the encoder; the desktop note-editor menu still opens directly from ROOT.
 
 CTRL routing now uses [mandatory confirmation and long-encoder clear](CTRL-KNOBS.md), while performance knobs stay live.
 
