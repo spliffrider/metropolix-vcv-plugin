@@ -2,7 +2,7 @@
 std::string labVersion(){return pluginInstance?pluginInstance->version:"Dev";}
 bool factoryPage(Metropolix* m){return m && (m->uiPage.load()==Metropolix::FACTORY_PAGE || m->uiPage.load()==Metropolix::FACTORY_CONFIRM_PAGE);}
 const char* factoryName(int action){return action==0?"Factory Reset":"Clear All Presets";}
-void openFactory(Metropolix* m){if(!m)return;m->cancelDraft();m->tunerActive.store(false);m->uiPage.store(Metropolix::FACTORY_PAGE);m->uiField.store(0);m->uiAlt.store(false);m->uiChooseFunction.store(false);m->setupCursor.store(7);m->factoryConfirmCursor=0;}
+void openFactory(Metropolix* m){if(!m)return;m->cancelDraft();m->tunerActive.store(false);m->uiPage.store(Metropolix::FACTORY_PAGE);m->uiField.store(0);m->uiAlt.store(false);m->uiChooseFunction.store(false);m->setupCursor.store(Metropolix::SetupVersion);m->factoryConfirmCursor=0;}
 void confirmFactory(Metropolix* m,int action){openFactory(m);if(!m)return;m->factoryCursor.store(metro::clamp(action,0,1));m->uiPage.store(Metropolix::FACTORY_CONFIRM_PAGE);}
 std::string factoryHelp(Metropolix* m){if(!factoryPage(m))return {};
     if(m->uiPage.load()==Metropolix::FACTORY_CONFIRM_PAGE)return std::string(factoryName(m->factoryCursor.load()))+(m->factoryConfirmCursor?"\nClick to apply one undoable change.":"\nCancel selected; click or EXIT to return.");

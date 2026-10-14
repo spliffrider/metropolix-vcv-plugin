@@ -26,7 +26,7 @@ if(qaFrame==6){
     event::Leave leave;leave.context=&ctx;encoder->onLeave(leave);encoder->step();check(encoder->adjustmentTip && APP->history->actionIndex==h,"pending drag keeps one live readout after leaving control");
     encoder->onDragEnd(end);check(!encoder->adjustmentTip && APP->history->actionIndex==h,"unconfirmed release adds no history");click(encoder);check(m->integer(M::trackParam(0,M::LENGTH))==6 && APP->history->actionIndex==h+1,"pending drag applies with one encoder confirmation");APP->history->undo();
     for(int page:{M::GLOBAL_SETUP_PAGE,M::UI_SETUP_PAGE,M::MIDI_SETUP_PAGE,M::PRESET_SETUP_PAGE}){screenPage(m,page);click(find("EXIT"));check(m->uiPage.load()==M::SETUP_PAGE,"EXIT returns setup subpage to its parent");}
-    openBackup(m);click(find("EXIT"));check(m->uiPage.load()==M::MIDI_SETUP_PAGE,"EXIT returns backup submenu to MIDI Setup");click(find("EXIT"));click(find("EXIT"));check(m->uiPage.load()==M::HOME,"successive EXIT presses reach Home");
+    screenPage(m,M::MIDI_SETUP_PAGE);openBackup(m);click(find("EXIT"));check(m->uiPage.load()==M::MIDI_SETUP_PAGE,"EXIT returns desktop MIDI backup submenu to MIDI Setup");click(find("EXIT"));click(find("EXIT"));check(m->uiPage.load()==M::HOME,"successive EXIT presses reach Home");
     screenPage(m,M::TUNER_PAGE);m->tunerActive.store(true);click(find("EXIT"));check(m->uiPage.load()==M::GLOBAL_SETUP_PAGE && !m->tunerActive.load(),"EXIT stops tuner and returns to Global Setup");
     m->params[M::LOAD_PITCH].setValue(M::PitchThru);m->params[M::LOAD_CTRL].setValue(M::CtrlThru);
     for(int i=0;i<10;++i)m->params[M::panelParam(i)].setValue(i<8?.1f:-.5f);

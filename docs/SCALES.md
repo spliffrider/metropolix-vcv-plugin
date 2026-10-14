@@ -117,7 +117,7 @@ Format10 appends Scale Lock and both Loopy settings after the frozen 518-value
 prefix. Old banks still import with their old fields intact and neutral new
 values (Unlocked/Auto/Current Track); recalling a migrated old preset can
 therefore unlock the previously sounding scale. Format10 banks require 2.33.
-Current2.34 appends independent MOD group mute as ID786 (787 parameters/schema33);
+Version2.34 appended independent MOD group mute as ID786 (787 parameters/schema33);
 the lock/Loopy snapshot positions remain fixed in format11. See [Preset storage](PRESET-STORAGE.md).
 
 Scale changes requantize slider pitches and chromatic override anchors.

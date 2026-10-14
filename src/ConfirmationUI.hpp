@@ -1,8 +1,10 @@
 int screenParam(Metropolix* m);
+int setupMenuParam(Metropolix* m,int item);
 bool requiresConfirmation(Metropolix* m,int id){
     if(!m || id<0 || m->ctrlOwner(id)>=0)return false;
     if(auto* type=dynamic_cast<ModTypeQuantity*>(m->getParamQuantity(id)))if(type->forced())return false;
     if(binaryStagePage(m) && m->uiAlt.load())return false;
+    if(m->uiPage.load()==Metropolix::SETUP_PAGE && m->uiField.load() && id==setupMenuParam(m,-1))return true;
     if(id>=Metropolix::MX_MODE && id<=Metropolix::MX_LANE)return true;
     for(int input=0;input<3;++input)if(id==Metropolix::auxParam(input,Metropolix::AUX_DESTINATION) || id==Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT))return true;
     for(int knob=0;knob<2;++knob)if(id==Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION) || id==Metropolix::ctrlParam(knob,Metropolix::CTRL_ASSIGNMENT))return true;

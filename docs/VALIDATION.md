@@ -1,4 +1,38 @@
-# Validation and fidelity status — 2.54.0
+# Validation and fidelity status — 2.55.0
+
+## 2.55 primary SETUP list and saved navigation
+
+The first four entries follow the firmware1.6 manual p48 screenshot; p49–58
+define the remaining settings and behavior. Actual 128×64 renders were
+inspected against that reference: four compact mixed-case rows, right-aligned
+values, inverted whole-row browsing and inverted value-only editing. This is
+primary SETUP fidelity; advanced/track/MOD subpages still have named layout gaps.
+
+Actual Windows Rack callbacks pass 34 encoder/OLED navigation cases, 28
+multi-choice confirmations with Enc. Confirm Off/On and exact full-parameter
+Undo/Redo, 28 independent-edit conflicts, 6 binary setting cases, and 20
+selected long resets before/during editing. Tuner/chains/backup/preset/UI/factory
+entry and correct EXIT parents pass, including nested Backup selection and the
+desktop Slider Octaves/Global/MIDI shortcuts. Rendering checks verify the
+selection bar and value-only highlight; all four 1–4 octave menu choices pass
+with exact raw Undo/Redo and no-change history. Linux Pending runs the same callback
+matrix as part of its package checks; platform receipts must pass separately.
+
+Native engine integration passes 76 restores of released schemas29–33 and 34
+current entry/edit states, plus nested-parent/tuner persistence and atomic
+invalid-file rejection. Schema34 adds one boolean navigation field and expands
+the saved cursor to 0–16; old main edits reopen browsing with explicit mapping.
+All 787 parameter IDs and format11/522 musical positions are unchanged.
+Settings/All backups now require 2.55; musical-only compatibility is unchanged.
+
+All 30 neighboring Windows UI/audio groups and 25 local engine suites pass,
+including Pending/reopen, Config, Backup/maintenance and Storage. Display
+retains 181 states. The current-source stripped production host passes
+22,624,609 frames, 339,369,135 output checks, 56,664 parameter edits, 145 state
+restores, 144 fresh instances, 12 initializes and 145 reciprocal links at
+44.1/48/96kHz across both models: 361.083 simulated seconds, single-thread
+Windows wall time 12.9617 seconds. The final packaged DLL is tested separately.
+No physical module comparison, OS input simulation or Mac GUI playtest is claimed.
 
 ## 2.54 MOD timing lane navigation
 

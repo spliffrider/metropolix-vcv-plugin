@@ -70,13 +70,16 @@ use `null` for an empty slot; Filled entries must contain a snapshot.
 Duplicate IDs, foreign bank IDs, missing bank slots, wrong snapshot sizes and
 out-of-range values are rejected before import. The files contain no chains.
 
-Use **2.34.0 or later** for new format11 musical banks and schema33 settings,
-including All, Settings, All Presets, Filled and Bank exports. Older format9–10
+Use **2.55.0 or later** for new **All** or **Settings** backups: schema34
+stores the expanded SETUP cursor and its direct child parent. **Presets-only**,
+**Filled** and **Bank** files still need **2.34.0 or later** for format11 musical
+banks. Older format9–10
 selective files still import. See [Preset storage](PRESET-STORAGE.md) and
 [MOD group mute](MOD-GROUP-MUTE.md). Existing 2.26–2.29 All/Settings/All Presets backups
 continue to import, including settings schemas29–31 with 770 parameters.
-Schema32 settings retain their released 786-parameter count; current schema33
-adds the independent group mute, for 787. Schemas29–31 initialize missing ORDER
+Schema32 settings retain their released 786-parameter count; schema33
+added the independent group mute, for 787. Schema34 retains these IDs and migrates old SETUP positions without
+changing musical values. Schemas29–31 initialize missing ORDER
 shortcuts to defaults, and schemas29–32 initialize missing group mute Off while
 preserving individual lane masks. The first 521 musical snapshot positions and
 all earlier parameter IDs remain fixed. Format10 added Scale Lock and both

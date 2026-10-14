@@ -11,7 +11,7 @@ std::string backupHelp(Metropolix* m){
     if(m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE)return backupPresetName(m->backupPresetCursor.load())+"\nClick encoder to export this selection.";
     return std::string(backupName(m->backupCursor.load()))+(m->backupCursor.load()==2?"\nClick encoder for All, Filled or one bank.":"\nClick encoder to choose a file.");
 }
-void openBackup(Metropolix* m){if(!m)return;m->cancelDraft();m->tunerActive.store(false);m->uiPage.store(Metropolix::BACKUP_PAGE);m->uiField.store(0);m->uiAlt.store(false);m->uiChooseFunction.store(false);}
+void openBackup(Metropolix* m){if(!m)return;m->setupDirectChild.store(m->uiPage.load()==Metropolix::SETUP_PAGE);m->cancelDraft();m->tunerActive.store(false);m->uiPage.store(Metropolix::BACKUP_PAGE);m->uiField.store(0);m->uiAlt.store(false);m->uiChooseFunction.store(false);}
 void openBackupPresets(Metropolix* m){openBackup(m);if(m){m->backupCursor.store(2);m->uiPage.store(Metropolix::BACKUP_PRESET_PAGE);}}
 bool exportBackup(Metropolix* m,const std::string& path,metrobackup::Scope scope,std::string& error){
     metrobackup::Json module(APP->engine->moduleToJson(m));metrobackup::Json document(metrobackup::capture(module.get(),scope));

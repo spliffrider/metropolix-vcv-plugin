@@ -1,0 +1,29 @@
+#include <plugin.hpp>
+#include "../src/BackupRestore.hpp"
+void setupNavigationRackTests(){
+    using M=Metropolix;using namespace metrobackup;
+    rack::plugin::Plugin plugin;plugin.slug="MetropolixLab";modelMetropolix->plugin=&plugin;modelMetropolix->slug="Metropolix";plugin.models.push_back(modelMetropolix);rack::plugin::plugins.push_back(&plugin);
+    auto source=std::unique_ptr<M>(new M),copy=std::unique_ptr<M>(new M);source->model=copy->model=modelMetropolix;source->id=842;copy->id=843;
+    source->params[M::TEMPO].setValue(147.25f);source->params[M::stageParam(1,4,M::CV)].setValue(-2.75f);source->params[M::PITCH].setValue(.625f);source->params[M::RUN].setValue(0);
+    auto raw=[](M* m){std::vector<float> v;for(auto& p:m->params)v.push_back(p.getValue());return v;};auto expected=raw(source.get());
+    Json original(APP->engine->moduleToJson(source.get()));std::string error;Scope scope=Settings;int legacyCases=0,currentCases=0;
+    // Released meanings of the old eight entries, independently enumerated.
+    const int legacy[]={0,14,8,0,7,15,9,16};
+    for(int schema=29;schema<=33;++schema)for(int cursor=0;cursor<=(schema<31?6:7);++cursor)for(int field=0;field<2;++field){
+        Json module(json_deep_copy(original.get()));auto* data=json_object_get(module.get(),"data");json_object_set_new(data,"schemaVersion",json_integer(schema));json_object_set_new(data,"setupCursor",json_integer(cursor));json_object_set_new(data,"uiPage",json_integer(M::SETUP_PAGE));json_object_set_new(data,"uiField",json_integer(field));json_object_del(data,"setupDirectChild");
+        if(schema<30)json_object_del(data,"backupPresetCursor");if(schema<31)json_object_del(data,"factoryCursor");
+        auto* parameters=json_object_get(module.get(),"params");int count=schema<32?M::FORMAT31_NUM_PARAMS:schema==32?M::FORMAT32_NUM_PARAMS:M::NUM_PARAMS;while(json_array_size(parameters)>size_t(count))json_array_remove(parameters,json_array_size(parameters)-1);
+        Json backup(capture(module.get(),Settings)),before,after;require(validate(copy.get(),backup.get(),scope,error),"every released SETUP cursor/settings schema validates");require(restore(copy.get(),backup.get(),before,after,error),"legacy SETUP settings restore through actual engine");require(copy->setupCursor.load()==legacy[cursor] && copy->uiPage.load()==M::SETUP_PAGE && copy->uiField.load()==0 && !copy->setupDirectChild.load(),"legacy entry maps deliberately and reopens browsing without retargeting an edit");require(raw(copy.get())==expected,"legacy SETUP migration preserves all 787 current raw parameter values/defaults");++legacyCases;
+    }
+    for(int cursor=0;cursor<17;++cursor)for(int field=0;field<2;++field){source->setupCursor.store(cursor);source->uiPage.store(M::SETUP_PAGE);source->uiField.store(field);source->setupDirectChild.store(false);Json module(APP->engine->moduleToJson(source.get())),backup(capture(module.get(),Settings)),before,after;require(validate(copy.get(),backup.get(),scope,error) && restore(copy.get(),backup.get(),before,after,error),"schema34 settings validate and restore");require(copy->setupCursor.load()==cursor && copy->uiField.load()==field && copy->uiPage.load()==M::SETUP_PAGE && raw(copy.get())==expected,"all 17 current SETUP entries and edit states persist without parameter changes");++currentCases;}
+    source->setupCursor.store(13);source->setupDirectChild.store(true);source->uiPage.store(M::BACKUP_PRESET_PAGE);Json nested(APP->engine->moduleToJson(source.get()));APP->engine->moduleFromJson(copy.get(),nested.get());require(copy->setupDirectChild.load() && copy->uiPage.load()==M::BACKUP_PRESET_PAGE && copy->setupCursor.load()==13,"nested Backup preserves its primary SETUP parent across native save/reopen");
+    for(int direct=0;direct<2;++direct){source->setupDirectChild.store(direct);source->uiPage.store(M::TUNER_PAGE);source->uiField.store(1);source->tunerActive.store(true);Json tuner(APP->engine->moduleToJson(source.get()));APP->engine->moduleFromJson(copy.get(),tuner.get());require(!copy->tunerActive.load() && !copy->uiField.load() && copy->uiPage.load()==(direct?M::SETUP_PAGE:M::GLOBAL_SETUP_PAGE) && (direct?copy->setupCursor.load()==5:copy->globalCursor.load()==5),"tuner restores inactive at its correct parent without stale edit selection");}
+    source->uiPage.store(M::SETUP_PAGE);source->setupCursor.store(0);source->setupDirectChild.store(false);Json validModule(source->toJson()),valid(capture(validModule.get(),Settings));
+    auto rejected=[&](json_t* backup){Json before(APP->engine->moduleToJson(copy.get())),old,next;require(!restore(copy.get(),backup,old,next,error),"invalid SETUP navigation backup rejects");Json after(APP->engine->moduleToJson(copy.get()));require(json_equal(before.get(),after.get()),"rejected navigation backup leaves the entire module unchanged");};
+    {Json bad(json_deep_copy(valid.get()));json_object_set_new(json_object_get(bad.get(),"state"),"setupCursor",json_integer(17));rejected(bad.get());}
+    {Json bad(json_deep_copy(valid.get()));json_object_set_new(json_object_get(bad.get(),"state"),"setupDirectChild",json_integer(1));rejected(bad.get());}
+    {Json bad(json_deep_copy(valid.get()));json_object_del(json_object_get(bad.get(),"state"),"setupDirectChild");rejected(bad.get());}
+    {Json bad(json_deep_copy(valid.get()));auto* data=json_object_get(bad.get(),"state");json_object_set_new(data,"schemaVersion",json_integer(33));json_object_del(data,"setupDirectChild");json_object_set_new(data,"setupCursor",json_integer(8));rejected(bad.get());}
+    rack::plugin::plugins.pop_back();plugin.models.clear();modelMetropolix->plugin=nullptr;
+    std::cout<<"PASS: primary SETUP migration "<<legacyCases<<" legacy restores, "<<currentCases<<" current restores, nested parents/tuner and atomic rejection\n";
+}

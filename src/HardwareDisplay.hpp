@@ -497,7 +497,22 @@ struct HardwareDisplay : HardwareControl {
             c.text(1,27,"MX ASSIGN");int assign=m?mxAssignment(m):-1;
             c.fit(10,38,116,assign<0?(mode==metro::MxModClocks?"All MOD > MX":"Global/All > MX"):previewDisplayString(m,assign)+" > MX",1);if(f && assign>=0)c.turn(0,38);
             c.text(1,56,m && m->mxConnected.load()?"MX CONNECTED":"PLACE MX AT RIGHT");return c;
-        } else if(page==Metropolix::SETUP_PAGE || page==Metropolix::GLOBAL_SETUP_PAGE || page==Metropolix::UI_SETUP_PAGE || page==Metropolix::MIDI_SETUP_PAGE) {
+        } else if(page==Metropolix::SETUP_PAGE){
+            int cursor=m?m->setupCursor.load():0,selected=setupDisplayRow(cursor);
+            int start=metro::clamp(selected-1,0,setupDisplayRow(SetupMenuCount-1)-3);
+            // Keep the first four reference options together at the top.
+            if(cursor<4)start=0;
+            c.text(1,1,"SETUP");
+            for(int row=0;row<4;++row){int listRow=start+row,item=setupDisplayItem(listRow),y=12+row*12;
+                if(item<0){c.text(1,y+2,setupCategoryName(listRow));continue;}
+                int id=m?setupMenuParam(m,item):-1;std::string label=setupMenuName(item);if(id>=0)label+=":";
+                std::string value=setupMenuValue(m,id);int valueX=127-c.width(value,false);
+                bool selectedRow=item==cursor;uint8_t labelInk=255,valueInk=255;
+                if(selectedRow){if(f && id>=0){c.fill(valueX-2,y-1,130-valueX,11);valueInk=0;}else {c.fill(0,y-1,128,11);labelInk=valueInk=0;}}
+                c.text(1,y,label,false,1,labelInk);c.text(valueX,y,value,false,1,valueInk);
+            }
+            return c;
+        } else if(page==Metropolix::GLOBAL_SETUP_PAGE || page==Metropolix::UI_SETUP_PAGE || page==Metropolix::MIDI_SETUP_PAGE) {
             bool global=page==Metropolix::GLOBAL_SETUP_PAGE,ui=page==Metropolix::UI_SETUP_PAGE,midi=page==Metropolix::MIDI_SETUP_PAGE;int cursor=m?(midi?m->midiSetupCursor.load():ui?m->uiSetupCursor.load():global?m->globalCursor.load():m->setupCursor.load()):0,count=midi?MidiSetupCount:ui?UiSetupCount:global?GlobalMenuCount:SetupMenuCount;
             int start=std::min(std::max(cursor-1,0),count-3);
             for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+2,midi?midiSetupName(item):ui?uiSetupName(item):global?globalMenuName(item):setupMenuName(item));

@@ -35,7 +35,7 @@ void backupRackTests(){
     }
     auto rejects=[&](json_t* bad,const char* message){Json before(APP->engine->moduleToJson(destination.get())),old,next;require(!restore(destination.get(),bad,old,next,error) && !error.empty(),message);Json after(APP->engine->moduleToJson(destination.get()));require(json_equal(before.get(),after.get()),"rejected backup leaves entire module unchanged");};
     {Json bad(json_deep_copy(good.get()));json_object_set_new(bad.get(),"format",json_integer(3));rejects(bad.get(),"future backup versions reject");}
-    {Json bad(json_deep_copy(good.get()));json_object_set_new(json_object_get(bad.get(),"state"),"schemaVersion",json_integer(34));rejects(bad.get(),"future settings schemas reject");}
+    {Json bad(json_deep_copy(good.get()));json_object_set_new(json_object_get(bad.get(),"state"),"schemaVersion",json_integer(35));rejects(bad.get(),"future settings schemas reject");}
     {Json bad(json_deep_copy(good.get()));json_object_set_new(json_object_get(bad.get(),"bank"),"presetFormat",json_integer(12));rejects(bad.get(),"future preset formats reject");}
     {Json bad(json_deep_copy(good.get()));json_object_set_new(json_object_get(bad.get(),"bank"),"chainFormat",json_integer(2));rejects(bad.get(),"future chain formats reject");}
     {Json bad(json_deep_copy(good.get()));json_object_set_new(json_object_get(bad.get(),"state"),"midiOutput",json_integer(0));rejects(bad.get(),"foreign device fields reject");}

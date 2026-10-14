@@ -274,7 +274,7 @@ if(qaFrame>=20 && index<count) {
         m->uiAlt.store(false);m->clearWorkflows();m->cancelDraft();m->params[Metropolix::SHOW_POSITION].setValue(1);m->params[Metropolix::SCREEN_LEVEL].setValue(4);m->clearPickup();
         m->orderShortcutHeld.store(false);m->orderShortcutUsed.store(false);
         m->params[Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE)].setValue(0);
-        if(std::string(test.name)=="setup-init")m->setupCursor.store(4);
+        if(std::string(test.name)=="setup-init")m->setupCursor.store(Metropolix::SetupInit);
         if(std::string(test.name)=="preset-init")m->params[Metropolix::INIT_PRESET].setValue(64);
         if(std::string(test.name)=="workflow-stage-copy" || std::string(test.name)=="workflow-lane-copy"){m->workflowStageHeld=1;m->workflowStageSource=0;m->workflowLaneCopy=test.mod;}
         if(std::string(test.name)=="workflow-restore"){m->workflowMessage="ALT STATE RESTORED";m->workflowUntil=system::getTime()+2;}
@@ -339,7 +339,7 @@ if(qaFrame>=20 && index<count) {
         if(std::string(test.name)=="mod-accum-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModAccumReset);
         if(std::string(test.name)=="mod-extended-gate")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModSlide);
         if(std::string(test.name)=="mod-global-home")m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(metro::ModLoopy);
-        if(std::string(test.name)=="setup-global")m->setupCursor.store(3);
+        if(std::string(test.name)=="setup-global")m->setupCursor.store(Metropolix::SetupClock);
         if(std::string(test.name)=="global-clock-src"){m->globalCursor.store(0);m->params[Metropolix::CLOCK_SOURCE].setValue(1);}
         if(std::string(test.name)=="global-reset-run"){m->globalCursor.store(2);m->params[Metropolix::RESET_INPUT_MODE].setValue(2);}
         if(std::string(test.name)=="global-bottom-pitch"){m->globalCursor.store(3);m->params[Metropolix::BOTTOM_PITCH].setValue(7);}
@@ -363,7 +363,7 @@ if(qaFrame>=20 && index<count) {
         if(test.page==Metropolix::MX_SETUP_PAGE){int mode=setupName.find("mx-mode-")==0?std::stoi(setupName.substr(8)):setupName=="mx-track"?5:6;m->params[Metropolix::MX_MODE].setValue(mode);m->params[Metropolix::MX_TRACK].setValue(1);m->params[Metropolix::MX_LANE].setValue(7);if(setupName=="mx-draft" || setupName=="mx-lane-draft"){int id=setupName=="mx-draft"?Metropolix::MX_MODE:Metropolix::MX_LANE;m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftValue=setupName=="mx-draft"?0:3;}}
         if(test.page==Metropolix::BACKUP_PAGE){m->backupCursor.store(setupName=="backup-notice"?3:std::stoi(setupName.substr(7)));m->backupNotice="IMPORTED / STOPPED";m->backupNoticeUntil=setupName=="backup-notice"?system::getTime()+5:0;}
         if(test.page==Metropolix::BACKUP_PRESET_PAGE){m->backupPresetCursor.store(setupName=="backup-presets-all"?0:setupName=="backup-presets-filled"?1:setupName=="backup-presets-bank-1"?2:9);m->backupNotice="PRESETS SAVED";m->backupNoticeUntil=setupName=="backup-presets-notice"?system::getTime()+5:0;}
-        if(setupName=="setup-factory")m->setupCursor.store(7);
+        if(setupName=="setup-factory")m->setupCursor.store(Metropolix::SetupVersion);
         if(factoryPage(m)){m->factoryCursor.store(setupName.find("factory-clear")==0?1:0);m->factoryConfirmCursor=setupName=="factory-clear-apply"?1:0;m->backupNoticeUntil=0;}
         if(test.page==Metropolix::MIDI_SETUP_PAGE)m->midiSetupCursor.store(std::stoi(setupName.substr(11)));
         if(setupName=="mod-midi-channel")m->modMenuCursor.store(0);
