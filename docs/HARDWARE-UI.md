@@ -123,3 +123,6 @@ column on p.169; see [Preset storage](PRESET-STORAGE.md).
 ALT → TRK opens browsing/editing with toggles, long reset and Init Trk Defaults.
 Independent pulse/gate sources and Rest Pitch complement slider range/direction
 and velocity; transpose now spans −60…+60. See [Track options](TRACK-OPTIONS.md).
+
+SCALE copy/paste now follows the panel ALT gestures and has keyboard Alt and
+right-click equivalents; see [Scale copying](SCALES.md#copy-and-paste-a-scale).

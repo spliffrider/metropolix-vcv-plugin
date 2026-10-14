@@ -1,4 +1,4 @@
-# Scales and chord changes — 2.33.0
+# Scales and chord changes — 2.37.0
 
 The SCALE screen offers all **49 factory scales/chord shapes** shown in the
 [firmware 1.6 manual, pp.62–68](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf),
@@ -40,6 +40,32 @@ use the shared factory Root setting. New user slots start as C major.
 At least one note must remain enabled. The editor ignores attempts to remove the
 last note. A malformed empty definition falls back to the root note in the engine.
 Note toggles, root drags and factory-pattern copies support Rack undo/redo.
+
+## Copy and paste a scale
+
+Following printed page 165, ALT + a short SCALE press copies the displayed
+scale. Browse to a user slot, then hold ALT + SCALE for more than one second
+to paste. The clipboard takes a snapshot of its notes and root; later source
+edits and repeated pastes do not change it. A locked sounding scale does not
+replace the displayed scale as the copy source.
+
+On the computer, hold the keyboard Alt key while clicking/holding SCALE, or
+right-click SCALE, the encoder or the display for **Copy displayed scale** and
+**Paste scale into displayed user slot**. The panel's latched ALT from another
+screen and a held panel ALT also work. Clicking panel ALT on the SCALE screen
+continues to switch between Scale and Root.
+
+Paste replaces only the selected user slot's notes and root, with one Rack
+undo action. It keeps Scale selection, Scale Lock, shortcuts and other user
+slots intact. Identical pastes add no undo action. Factory destinations and
+an empty clipboard reject the paste; menus disable that action. Explicit
+copy/paste cancels pending encoder previews and uses the applied definition.
+
+The scale clipboard is separate from stage/lane copy. It is transient and
+clears on Initialize or patch reopening; pasted definitions remain saved with
+the patch. This clipboard also copies the root. The manual calls this a scale
+copy without enumerating the copied fields, so root inclusion still needs a
+physical-module comparison.
 
 ## Sequence chord changes
 

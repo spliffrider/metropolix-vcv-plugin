@@ -215,6 +215,7 @@ struct HardwareControl : ValueKnob {
     NVGcolor lightColor=nvgRGB(135,187,227);
     ui::Tooltip* tip=nullptr;
     bool dragging=false;
+    int pressMods=0;
     bool navigating=false;
     float navigationDelta=0;
     float moved=0;
@@ -279,6 +280,7 @@ struct HardwareControl : ValueKnob {
     }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onButton(const event::Button& e) override {
+        if(e.button==GLFW_MOUSE_BUTTON_LEFT && e.action==GLFW_PRESS)pressMods=e.mods;
         bind();
         if(e.button==GLFW_MOUSE_BUTTON_RIGHT && e.action==GLFW_PRESS) {
             clearTip();
@@ -363,7 +365,7 @@ struct HardwareControl : ValueKnob {
         gestureIds.clear();gestureBefore.clear();
         if(navigating && navigationEnd)navigationEnd();
         if(releaseAction)releaseAction();
-        dragging=false;clearTip();
+        dragging=false;pressMods=0;clearTip();
     }
     void onAction(const event::Action&) override { if(moved<3.f && !longFired && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();app::Knob::onDoubleClick(e);} }

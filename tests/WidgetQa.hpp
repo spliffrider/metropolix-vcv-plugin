@@ -160,6 +160,10 @@ void MetropolixWidget::qaStep() {
     auto closeMenus=[] {
         for(auto* w:APP->scene->children)if(w->visible && dynamic_cast<ui::MenuOverlay*>(w))w->requestDelete();
     };
+    if(std::getenv("METROPOLIX_SCALECOPY_UI_QA")) {
+#include "ScaleCopyWidgetQa.hpp"
+        return;
+    }
     if(std::getenv("METROPOLIX_STAGEPAIR_UI_QA")) {
 #include "StagePairWidgetQa.hpp"
         return;

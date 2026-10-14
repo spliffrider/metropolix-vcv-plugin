@@ -1,4 +1,29 @@
 #pragma once
+void workflowNotice(Metropolix* m,const std::string& message);
+bool canPasteScale(Metropolix* m) {
+    return m && m->scaleClipboardMask && metro::userScale(m->integer(Metropolix::SCALE));
+}
+void copyScale(Metropolix* m) {
+    if(!m)return;
+    m->cancelDraft();int shown=m->integer(Metropolix::SCALE);
+    m->scaleClipboardMask=metro::scaleMask(m->uiScale(shown));
+    m->scaleClipboardRoot=m->integer(m->scaleRootParam(shown));
+    workflowNotice(m,"SCALE COPIED");
+}
+void pasteScale(Metropolix* m,bool record=true) {
+    if(!m)return;
+    m->cancelDraft();
+    if(!m->scaleClipboardMask){workflowNotice(m,"COPY SCALE FIRST");return;}
+    if(!metro::userScale(m->integer(Metropolix::SCALE))){workflowNotice(m,"CHOOSE USER SCALE");return;}
+    int slot=m->integer(Metropolix::SCALE)-metro::FactoryScaleCount;
+    std::vector<int> ids{Metropolix::userScaleParam(slot),Metropolix::userScaleParam(slot,true)};
+    std::vector<float> before;
+    for(int id:ids)before.push_back(m->params[id].getValue());
+    m->getParamQuantity(ids[0])->setValue(float(m->scaleClipboardMask));
+    m->getParamQuantity(ids[1])->setValue(float(m->scaleClipboardRoot));
+    if(record)parameterHistory(m,ids,before,"paste user scale");
+    workflowNotice(m,"SCALE PASTED");
+}
 void scaleLockPress(Metropolix* m) {
     if(!m)return;
     int shown=m->integer(Metropolix::SCALE),locked=m->integer(Metropolix::SCALE_LOCK);
@@ -36,6 +61,8 @@ void appendScaleMenu(ui::Menu* menu,Metropolix* m) {
     if(!m)return;
     menu->addChild(new ui::MenuSeparator);
     menu->addChild(createMenuLabel("Scales and chords"));
+    menu->addChild(createMenuItem("Copy displayed scale","ALT + SCALE",[m]{copyScale(m);}));
+    menu->addChild(createMenuItem("Paste scale into displayed user slot","Hold ALT + SCALE",[m]{pasteScale(m);},!canPasteScale(m)));
     const char* banks[]={"Major scales","Melodic minor","Harmonic minor","Miscellaneous","World scales","Major chords","Minor chords"};
     for(auto bank:banks)menu->addChild(createSubmenuItem(bank,"",[m,bank](ui::Menu* child){
         for(int p=0;p<49;++p){int id=metro::scaleBrowseId(p);if(std::string(metro::factoryScale(id).bank)!=bank)continue;
