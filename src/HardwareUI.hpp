@@ -70,7 +70,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::A_PAGE: case Metropolix::B_PAGE: return -1; // Unconfirmed choices use navigation, not the audio parameter.
         case Metropolix::AUX_PAGE: return f && metro::modGlobalDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::auxParam(m->selectedAux.load(),Metropolix::AUX_DESTINATION))))?-1:Metropolix::auxParam(m->selectedAux.load(),f?Metropolix::AUX_ASSIGNMENT:Metropolix::AUX_DESTINATION);
         case Metropolix::CTRL_PAGE: return Metropolix::ctrlParam(m->selectedCtrl.load(),f?Metropolix::CTRL_ASSIGNMENT:Metropolix::CTRL_DESTINATION);
-        case Metropolix::SETUP_PAGE: return f && m->setupCursor.load()==0?Metropolix::RANGE:-1;
+        case Metropolix::SETUP_PAGE: return f?setupMenuParam(m):-1;
         case Metropolix::GLOBAL_SETUP_PAGE:return f?globalMenuParam(m):-1;
         case Metropolix::UI_SETUP_PAGE:return f?uiSetupParam(m):-1;
         case Metropolix::MIDI_SETUP_PAGE:return f?midiSetupParam(m):-1;
@@ -91,23 +91,24 @@ void screenPage(Metropolix* m, int page) {
     m->cancelDraft();
     m->loopyMuteHeld.store(false);
     if(page!=Metropolix::SCALE_PAGE)m->scaleEditing.store(false);
+    if(page!=Metropolix::BACKUP_PRESET_PAGE && !(page==Metropolix::BACKUP_PAGE && m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE))m->setupDirectChild.store(false);
     m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
     m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
 }
 int parentPage(Metropolix* m){
     switch(m->uiPage.load()){
-        case Metropolix::BACKUP_PAGE:return Metropolix::MIDI_SETUP_PAGE;
+        case Metropolix::BACKUP_PAGE:return m->setupDirectChild.load()?Metropolix::SETUP_PAGE:Metropolix::MIDI_SETUP_PAGE;
         case Metropolix::BACKUP_PRESET_PAGE:return Metropolix::BACKUP_PAGE;
         case Metropolix::FACTORY_PAGE:return Metropolix::SETUP_PAGE;
         case Metropolix::FACTORY_CONFIRM_PAGE:return Metropolix::FACTORY_PAGE;
-        case Metropolix::TUNER_PAGE:return Metropolix::GLOBAL_SETUP_PAGE;
+        case Metropolix::TUNER_PAGE:return m->setupDirectChild.load()?Metropolix::SETUP_PAGE:Metropolix::GLOBAL_SETUP_PAGE;
         case Metropolix::GLOBAL_SETUP_PAGE:case Metropolix::UI_SETUP_PAGE:case Metropolix::MIDI_SETUP_PAGE:case Metropolix::PRESET_SETUP_PAGE:return Metropolix::SETUP_PAGE;
         default:return Metropolix::HOME;
     }
 }
 void encoderPress(Metropolix* m) {
     if(!m) return;
-    if(confirmDraft(m))return;
+    if(confirmDraft(m)){if(m->uiPage.load()==Metropolix::SETUP_PAGE)m->uiField.store(0);return;}
     int p=m->uiPage.load();
     if(trackMenuPage(m)){trackMenuEncoderPress(m);return;}
     if(outputPage(m)){outputEncoderPress(m);return;}

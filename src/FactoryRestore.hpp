@@ -20,7 +20,7 @@ inline bool restore(Metropolix* m,Action action,metrobackup::Json& before,metrob
     }
     // Musical banks/chain links stay local; maintenance cannot resume a chain.
     auto* data=json_object_get(merged.get(),"data");json_object_set_new(json_object_get(data,"chains"),"enabled",json_false());
-    json_object_set_new(data,"setupCursor",json_integer(7));json_object_set_new(data,"uiPage",json_integer(Metropolix::FACTORY_PAGE));json_object_set_new(data,"uiField",json_integer(0));json_object_set_new(data,"factoryCursor",json_integer(action));
+    json_object_set_new(data,"setupCursor",json_integer(Metropolix::SetupVersion));json_object_set_new(data,"uiPage",json_integer(Metropolix::FACTORY_PAGE));json_object_set_new(data,"uiField",json_integer(0));json_object_set_new(data,"factoryCursor",json_integer(action));
     preserveTransport(merged.get());APP->engine->moduleFromJson(m,merged.get());
     after.reset(APP->engine->moduleToJson(m));preserveTransport(after.get());error.clear();return true;
 }

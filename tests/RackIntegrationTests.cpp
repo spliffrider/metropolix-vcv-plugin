@@ -30,6 +30,7 @@ void require(bool value, const char* message) {
 #include "ClockConfigRackTests.hpp"
 #include "WorkflowRackTests.hpp"
 #include "SetupRackTests.hpp"
+#include "SetupNavigationRackTests.hpp"
 #include "PickupRackTests.hpp"
 #include "MidiRackTests.hpp"
 #include "MxRackTests.hpp"
@@ -319,6 +320,7 @@ int main() {
     clockConfigRackTests();
     workflowRackTests();
     setupRackTests();
+    setupNavigationRackTests();
     pickupRackTests();
     midiRackTests();
     mxRackTests();

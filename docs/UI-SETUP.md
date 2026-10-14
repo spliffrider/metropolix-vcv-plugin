@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.54.0
+# UI setup, confirmation and external clock input — 2.55.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,41 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Primary SETUP list
+
+SETUP opens a four-row scrolling list, with mixed-case labels, values on the
+right and a white selection bar. Its first four entries follow the manual's
+p48 screenshot: **Clock**, **Clock Mode**, **Run Btn**, **Reset Input**.
+Clock Mode is the analog **Clk/Rset Out** option described by the p49 table.
+Bottom Pitch and Tuner follow; PRESET, MIDI and ADVANCED headings separate
+Total Pulses/Init/Chains, MIDI settings/Backup Files and the advanced submenus.
+Auto clock selection and Legacy output scope retain the existing Rack choices.
+
+Drag the encoder or display to browse. A binary setting toggles on one click.
+For another setting, click to select its value, drag vertically, then click to
+apply and return to browsing. These main-list choices always require explicit
+confirmation, including when Enc. Confirm is Off. Native numeric/context-menu
+choices still apply directly. An independent edit cancels an obsolete preview
+without overwriting that edit or recording a false Undo; the value field may
+stay selected so you can start a fresh edit.
+
+Hold the encoder for a second to reset only the selected parameter, before or
+during editing. One Undo restores its exact prior raw value. EXIT leaves a
+submenu; Tuner and Backup opened here return to this list, including nested
+Backup selection. The desktop Global/MIDI shortcuts retain their own parents.
+Right-click SETUP for Slider Octaves, Global Setup, MIDI Setup and other native
+shortcuts. Dragging the SETUP button only opens navigation.
+
+Settings schema34 stores positions 0–16 and the direct child parent. Older
+schemas29–33 map the previous eight shortcuts to their new destinations and
+reopen main SETUP browsing, avoiding an edit of a different setting. Reopening
+a tuner patch returns inactive to its correct parent. Parameters remain 787,
+and musical snapshots remain format11/522 values. New **Settings** and **All**
+backups require 2.55; musical-only exports retain their existing format11
+compatibility. Preserve an old patch copy before resaving for older versions.
+Backup Files uses the documented plugin JSON format; it is not hardware SysEx.
+Version / Factory identifies the plugin version and its maintenance actions.
 
 ## MOD lane navigation
 
@@ -158,7 +193,8 @@ releasing a preview drag adds no undo entry. A confirmed bulk edit remains one
 action, and undo restores the exact stored values.
 
 These pending states are UI-only and are not serialized. There are no changes
-to parameter IDs, settings schema33, musical format11 or the 522-value snapshot.
+to parameter IDs, musical format11 or the 522-value snapshot. Schema34 changes
+only SETUP navigation; the pending edit itself remains transient.
 
 With an external clock selected, BPM shows the measured divided tempo and input
 division. Drag its button/encoder to choose `/1`–`/256`. Hold BPM and click stages

@@ -1,4 +1,4 @@
-# Platform packages — 2.54.0
+# Platform packages — 2.55.0
 
 Choose the `.vcvplugin` matching the computer and the Rack application you run:
 
@@ -17,7 +17,7 @@ There is no separate installer or GitHub account requirement.
 The new Linux/Mac packages use the official Rack 2.6.6 SDK; the established
 Windows build retains its Rack 2.3.0 SDK and runs in Rack Free 2.6.6. All use
 Rack 2's plugin ABI. They share the same
-787 parameter IDs, settings schema33, format11 musical banks, backup formats and
+787 parameter IDs, settings schema34, format11 musical banks, backup formats and
 examples. Patches and portable backups can move between these builds; physical
 audio/MIDI device choices remain local and may need reselection.
 

@@ -84,7 +84,7 @@ sources; see [the documented interpretations](VALIDATION.md).
 ## Compatibility and remaining controls
 
 The established 770 parameter IDs and all ports retain their identities;
-sixteen ORDER shortcut values and independent MOD group mute are appended, for 787 parameters. Settings schema33
+sixteen ORDER shortcut values and independent MOD group mute are appended, for 787 parameters. Settings schema34
 includes global ORDER shortcuts and group mute. Musical format11/522 adds group
 mute after format10’s 521-value prefix (including Scale Lock and Loopy settings). Existing patch
 and bank migrations remain in place. Temporary ALT state clears on load;

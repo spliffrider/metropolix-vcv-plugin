@@ -47,7 +47,7 @@ restores both layers. Rack patches and portable backups also remember it.
 Held gestures and pending performance commands clear on reopen.
 
 The first 786 Rack parameter IDs remain fixed; **All MOD lanes mute** appends
-at ID786, for 787 parameters. Settings schema33 includes the new parameter.
+at ID786, for 787 parameters. Settings schema33 introduced the new parameter; schema34 retains it and changes SETUP navigation only.
 Musical format11 appends group mute (0/1) at snapshot index521, after the
 unchanged 521-value format10 prefix, for 522 values.
 

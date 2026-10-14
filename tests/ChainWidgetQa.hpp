@@ -28,7 +28,7 @@ if(qaFrame==5) {
     for(int k=0;k<2;++k)m->params[Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION)].setValue(metro::CtrlNone);
     json_t* json=APP->engine->moduleToJson(m);auto preset=m->presetFromParamsJson(json_object_get(json,"params"));json_decref(json);
     preset.values[Metropolix::TOTAL_PULSES]=2;m->putPreset(0,preset);preset.values[Metropolix::PITCH]=.6f;m->putPreset(9,preset);
-    click(find("SETUP"));drag(find("Encoder"),-44);click(find("Encoder"));
+    click(find("SETUP"));m->setupCursor.store(0);drag(find("Encoder"),-22*Metropolix::SetupChains);click(find("Encoder"));
     check(chainPage(m),"Setup encoder navigation opens Preset Chains");imageChain("empty");
     auto* editHistory=lastChainAction();click(find("Encoder"));
     check(oneNewChainAction(editHistory),"new chain insertion records exactly one history action");

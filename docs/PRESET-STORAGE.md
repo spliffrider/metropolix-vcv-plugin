@@ -44,6 +44,12 @@ slots retain their lock/Loopy values; explicit Bank empties clear only the
 corresponding slots. All-Presets continues replacing the complete bank/chains.
 Malformed formats, snapshot sizes and values are rejected before import.
 
+Version2.55 uses settings schema34 for its expanded SETUP navigation. It keeps
+all 787 parameter IDs and format11/522 musical values. New All/Settings backups
+require 2.55; Presets-only, Filled and Bank files still require 2.34. An older
+Rack plugin does not preserve the new menu positions. Keep old patch copies if
+you need to return to an older build.
+
 | New file from 2.34 | Minimum receiving plugin |
 | --- | --- |
 | Rack patch with a saved musical bank, All or Presets backup, Filled/Bank export | 2.34, to read format11 |

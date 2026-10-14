@@ -1,10 +1,10 @@
-# Metropolix Lab 2.54.0 — public alpha quick start
+# Metropolix Lab 2.55.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
 
-2.54.0 corrects [MOD lane selection on ORDER, LEN and DIV](MOD-TEST.md). Plain stage buttons keep the settings screen open and select its lane, with lane lights, mouseover help and bound right-click settings. Navigation no longer edits stage voltages or gates. Saved formats are unchanged.
+2.55.0 gives [SETUP its compact hardware-style list](UI-SETUP.md), with four mixed-case rows, inverted selection, direct settings, confirmed choices and selected-item long resets. Settings schema34 migrates old menu positions; parameter IDs and musical banks stay unchanged. New Settings/All backups require 2.55.
 
 2.39.0 corrects [CTRL assignment editing](CTRL-KNOBS.md). Open a black CTRL assignment button, drag destination or target, and check that it previews until you press the encoder. Press again to switch fields. Hold the encoder to clear the assignment, then try Undo/Redo. White performance knobs remain live; right-click choices apply directly.
 
