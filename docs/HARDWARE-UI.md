@@ -1,5 +1,7 @@
 # Hardware panel and desktop interaction — 2.30.0
 
+PROB and ACCUM support [paired resets and whole-pattern ALT gestures](STAGE-PAIRS.md), including confirmation and exact undo.
+
 LEN and DIV now support [held stage shortcuts and whole-screen encoder resets](TIMING-SHORTCUTS.md), preserving the active field and Rack undo.
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
