@@ -348,7 +348,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         // Target can change while ORDER is held. One gesture receipt covers
         // both note tracks, all MOD lanes and the eight shared shortcut pairs.
         std::vector<int> ids;for(bool mod:{false,true})for(int target=0;target<(mod?8:2);++target){auto pair=Metropolix::orderParams(mod,target);if(m && m->ctrlOwner(pair[0])<0 && m->ctrlOwner(pair[1])<0)ids.insert(ids.end(),pair.begin(),pair.end());}
-        for(int id=Metropolix::ORDER_SHORTCUTS;id<Metropolix::NUM_PARAMS;++id)ids.push_back(id);
+        for(int id=Metropolix::ORDER_SHORTCUTS;id<Metropolix::FORMAT32_NUM_PARAMS;++id)ids.push_back(id);
         return ids;
     };
     auto* len=valueButton("LEN",52.2f,340,Metropolix::LENGTH_PAGE,[trackOrMod] { return trackOrMod(Metropolix::LENGTH,Metropolix::MOD_LENGTH); });
