@@ -1,4 +1,47 @@
-# Validation and fidelity status — 2.48.0
+# Validation and fidelity status — 2.49.0
+
+## 2.49 Dependent value history and confirmation
+
+Actual Rack callbacks reproduced nine failures: four Track CV/MOD grid and
+encoder edits gained phantom native history when their type changed during
+the drag; four existing voltage/clock previews survived a change to their
+type, Velocity source, destination or divider; and a held tiny preview could
+fall through to a Gate click after UI invalidation. All nine original probes
+pass after the fixes. Raw batches now finish native drag capture without a
+bound quantity, then record their own raw receipt; they no longer briefly
+rewind live parameters for native cleanup. Preview context captures its
+type/range dependencies, and held controls remember the preview generation.
+
+Expanded Pending verifies 5,760 type-changing Track CV/MOD edits across every
+track/lane and stage, all six type transitions, encoder/OLED/grid, ALT and
+two/22-pixel movement. Full raw-state assertions check each genuine edit and
+click's Undo/Redo in order, leaving the external type unchanged. Another
+2,816 previews cover type, Velocity source, MOD destination and CLK divider
+changes across stages/targets, both controllers, ALT, immediate obsolete
+confirmation and small/large held releases, including prior UI invalidation.
+Fresh intentional motion recaptures a valid preview; a bound no-op still
+performs its normal click. Fixtures explicitly initialize their selected
+target's type/destination and check that the starting preview exists.
+
+These are actual Rack callbacks with isolated history and paused processing,
+not OS mouse/focus, human listening or physical hardware comparison. Existing
+Pending, save/reopen, raw-value, reset and shortcut checks remain in the same
+suite. There are no DSP, parameter-ID or saved-format changes: 787 parameters,
+settings schema33, musical format11 and 522 stored musical values.
+
+Windows expanded Pending and original save/reopen pass, alongside previous
+raw-value edit/click matrices, 699 long-reset receipts, stationary clicks and
+48 held GATE/SLIDE shortcuts. CtrlEditor, Chains, ScaleCopy, Timing, StagePair,
+StagePattern, StageCv, Scales, Swing, Overrides, Workflows, SetupOptions,
+Outputs, Fidelity, Polish, all 181 Display states, ChainAudio and Order pass.
+ChainAudio records twelve real seconds at 48 kHz. These are finite checks.
+
+Native integration and the stripped production host pass 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 state restores,
+144 fresh instances, 12 initializes and 145 reciprocal links across both
+public models at 44.1/48/96 kHz. This simulates 361.083 seconds in a single
+thread, with Windows wall time 13.1095 seconds. Released binaries exclude QA
+code; public platform packages are separately audited against current assets.
 
 ## 2.48 Raw MOD voltage and masked clock-offset history
 

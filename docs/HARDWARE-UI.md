@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.48.0
+# Hardware panel and desktop interaction — 2.49.0
 
 Tiny CV drags preserve [raw Undo and normal click order](STAGE-CV.md); ALT editing uses the effective CV range when MIDI velocity forces Unipolar.
 

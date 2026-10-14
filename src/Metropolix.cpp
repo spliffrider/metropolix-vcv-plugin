@@ -346,14 +346,13 @@ struct ValueCell : ValueKnob {
         }
         bool rawBatch=rawDrag && dragDistance>0;
         bool rawMicro=rawBatch && dragDistance<3;
-        float after=rawBatch?metroModule->params[paramId].getValue():0;
-        if(rawBatch)metroModule->params[paramId].setValue(rawBefore);
+        auto* boundModule=module;if(rawBatch)module=nullptr;
         // Preserve the click threshold, but dispatch a tiny drag's click after
         // its raw edit so a Gate toggle sees the latest value.
         dragCancelled=rawMicro;
         if(dragStarted)ValueKnob::onDragEnd(e);
-        dragCancelled=false;
-        if(rawBatch){metroModule->params[paramId].setValue(after);parameterHistory(metroModule,{paramId},{rawBefore},"edit value");}
+        module=boundModule;dragCancelled=false;
+        if(rawBatch)parameterHistory(metroModule,{paramId},{rawBefore},"edit value");
         if(rawMicro){event::Action click;onAction(click);}
         dragStarted=false;rawDrag=false;
     }

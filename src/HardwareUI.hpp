@@ -216,6 +216,7 @@ struct HardwareControl : ValueKnob {
     NVGcolor lightColor=nvgRGB(135,187,227);
     ui::Tooltip* tip=nullptr;
     bool dragging=false,finishingClick=false,shortcutEdited=false;
+    bool previewCaptured=false;std::uint64_t previewSerial=0;
     int gestureParam=-1,gestureOwner=-1;
     bool ctrlBlocked=false,ctrlTakeover=false;
     int pressMods=0;
@@ -239,6 +240,10 @@ struct HardwareControl : ValueKnob {
         return ValueKnob::adjustmentText();
     }
     ~HardwareControl() { clearTip(); }
+    void capturePreview(){
+        previewCaptured=confirming && metroModule && metroModule->uiDraftParam==paramId && pendingConfirmation(metroModule);
+        previewSerial=metroModule?metroModule->uiDraftSerial.load():0;
+    }
     bool blockCtrlGesture() {
         if(!dragging || gestureParam<0)return false;
         int owner=metroModule?metroModule->ctrlOwner(gestureParam):-1;
@@ -325,6 +330,7 @@ struct HardwareControl : ValueKnob {
         if(dragAction) dragAction();
         if(navigating && navigationStart)navigationStart();
         ValueKnob::onDragStart(e);
+        capturePreview();
         gestureIds=groupedParams?groupedParams():std::vector<int>{};gestureBefore.clear();
         for(int id:gestureIds)gestureBefore.push_back(metroModule->params[id].getValue());
         pickupGestureParam=metroModule && metroModule->waitingPickup(paramId)?paramId:-1;
@@ -337,7 +343,10 @@ struct HardwareControl : ValueKnob {
         moved+=e.mouseDelta.norm();
         if(blockCtrlGesture())return;
         if(e.mouseDelta.norm()==0){updateAdjustmentTip();return;}
-        if(confirming && getParamQuantity())turnDraft(metroModule,paramId,e.mouseDelta.y,navigationDelta,APP->window->getMods() & GLFW_MOD_CONTROL);
+        if(confirming && getParamQuantity()){
+            turnDraft(metroModule,paramId,e.mouseDelta.y,navigationDelta,APP->window->getMods() & GLFW_MOD_CONTROL);
+            capturePreview();
+        }
         else if(navigating && navigationTurn) {
             navigationDelta-=e.mouseDelta.y;
             int turns=static_cast<int>(navigationDelta/22.f);
@@ -396,6 +405,13 @@ struct HardwareControl : ValueKnob {
             invalidateDraft(metroModule);
             if(releaseAction)releaseAction();dragging=false;pressMods=0;ctrlTakeover=false;clearTip();return;
         }
+        if(previewCaptured && (previewSerial!=metroModule->uiDraftSerial.load() || !validDraft(metroModule))){
+            // A preview invalidated while held cannot become a fresh click on
+            // release, even if a UI step has already removed its draft.
+            auto* boundModule=module;module=nullptr;finishingClick=true;ValueKnob::onDragEnd(e);module=boundModule;finishingClick=false;
+            invalidateDraft(metroModule);gestureIds.clear();gestureBefore.clear();pickupGestureParam=-1;previewCaptured=false;
+            if(releaseAction)releaseAction();dragging=false;pressMods=0;clearTip();return;
+        }
         if(moved==0 && !shortcutEdited){
             // A stationary press does not own parameter writes made elsewhere.
             // Finish native capture first, then perform the real click with
@@ -416,20 +432,14 @@ struct HardwareControl : ValueKnob {
         bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity() || cvPage(metroModule) || rawQuantity) && (moved>=3 || longFired || rawMicro);
         float pickupPhysicalAfter=pickupGestureParam>=0?metroModule->params[pickupGestureParam].getValue():0;
         if(pickupGestureParam>=0)metroModule->params[pickupGestureParam].setValue(pickupPhysicalBefore);
-        std::vector<float> after;
-        if(batch) {
-            for(int id:gestureIds)after.push_back(metroModule->params[id].getValue());
-            // Finish Rack's cursor/drag state with no native parameter change;
-            // then record all affected values as one normal Rack undo action.
-            // Restore dependent limits/types too, so effective quantity getters
-            // equal the native drag origin before it checks for an undo action.
-            for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(gestureBefore[i]);
-        }
+        // The batch owns its raw receipt. Native cleanup needs no quantity and
+        // must not compare a getter whose range/type changed during the drag.
+        auto* boundModule=module;if(batch)module=nullptr;
         // Tiny movement still qualifies for the existing click action.
         // Record its raw edit first, then let that click act on the new value.
-        finishingClick=rawMicro;ValueKnob::onDragEnd(e);finishingClick=false;
+        finishingClick=rawMicro;ValueKnob::onDragEnd(e);module=boundModule;finishingClick=false;
         if(pickupGestureParam>=0){metroModule->params[pickupGestureParam].setValue(pickupPhysicalAfter);panelControlHistory(metroModule,pickupGestureParam,pickupPhysicalBefore,pickupPhysicalAfter,pickupBefore,pickupAfter,"move recalled control");pickupGestureParam=-1;}
-        if(batch){for(size_t i=0;i<gestureIds.size();++i)metroModule->params[gestureIds[i]].setValue(after[i]);parameterHistory(metroModule,gestureIds,gestureBefore,"edit track settings");}
+        if(batch)parameterHistory(metroModule,gestureIds,gestureBefore,"edit track settings");
         if(rawMicro){event::Action click;onAction(click);}
         gestureIds.clear();gestureBefore.clear();
         if(navigating && navigationEnd)navigationEnd();
