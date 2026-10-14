@@ -1,4 +1,4 @@
-# A/B output routing — 2.16.0
+# A/B output routing — 2.43.0
 
 ALT → A or B opens the two-field routing screen (manual pp.115–119).
 Drag the encoder or display up/down to choose a function or track/lane.
@@ -7,6 +7,16 @@ signal until you press the encoder. Pressing also moves to the other field.
 EXIT discards a pending choice. Right-click for named choices that apply directly.
 Hold the encoder to reset the selected output: A = CV / Track 1;
 B = First Pulse / Track 1. Confirmations and resets support Rack undo.
+
+If the applied source changes elsewhere while a choice is pending, the obsolete
+preview is discarded. This includes the expanded MOD editor, automation and
+Undo/Redo. Confirmation checks the applied raw source before writing, even if
+the display has not refreshed yet. Further dragging starts from the newest
+applied function. Editing the other output does not cancel a valid preview.
+Named menu choices already apply directly and clear their own pending choice.
+Both output screens always require encoder confirmation, regardless of the
+general Encoder Confirm setting. Their right-click choices and resets remain
+direct desktop actions. The transient preview and its origin are never saved.
 
 | Function | Signal | Assignment |
 | --- | --- | --- |

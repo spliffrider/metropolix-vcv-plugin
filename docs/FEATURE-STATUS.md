@@ -1,9 +1,10 @@
-# Feature status — 2.42.0 public alpha
+# Feature status — 2.43.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.43.0 protects [A/B previews against external source edits](OUTPUT-ROUTING.md), preserving valid confirmation, menus and undo.
 2.42.0 corrects [chain insertion/clear/deletion history](PRESET-CHAINS.md), preserving single-action bank and repeat drags.
 2.41.0 corrects [pending-edit conflicts and preview-drag history](UI-SETUP.md), including bulk stage edits and native menus.
 2.40.0 refines [user-scale editor entry/exit](SCALES.md), including Root guards, explicit desktop entry and cancellation.
