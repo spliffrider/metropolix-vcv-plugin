@@ -230,6 +230,7 @@ struct HardwareControl : ValueKnob {
     double heldSince=0, longSeconds=1;
     int controllerOwner=-1;
     std::function<std::vector<int>()> groupedParams;
+    std::function<std::vector<int>()> dragParams;
     std::vector<int> gestureIds;
     std::vector<float> gestureBefore;
     int pickupGestureParam=-1;float pickupPhysicalBefore=0;metro::Pickup pickupBefore,pickupAfter;
@@ -331,7 +332,7 @@ struct HardwareControl : ValueKnob {
         if(navigating && navigationStart)navigationStart();
         ValueKnob::onDragStart(e);
         capturePreview();
-        gestureIds=groupedParams?groupedParams():std::vector<int>{};gestureBefore.clear();
+        gestureIds=dragParams?dragParams():groupedParams?groupedParams():std::vector<int>{};gestureBefore.clear();
         for(int id:gestureIds)gestureBefore.push_back(metroModule->params[id].getValue());
         pickupGestureParam=metroModule && metroModule->waitingPickup(paramId)?paramId:-1;
         if(pickupGestureParam>=0){pickupPhysicalBefore=metroModule->params[paramId].getValue();pickupBefore=pickupAfter=uiPickup(metroModule,paramId);}

@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.50.0
+# UI setup, confirmation and external clock input — 2.51.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,20 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Paired-page dragging and Undo
+
+On CLK, GATE, SLIDE, LEN, DIV and ORDER, an encoder or OLED drag edits its
+selected field. Its Undo action leaves independent changes to the page's
+other fields intact. PROB/ACCUM encoder, OLED and stage-button drags capture
+amounts only; an ALT drag captures all eight amounts, keeping separate
+target/trigger changes outside its Undo action.
+
+Long encoder holds still reset the whole paired page or stage pair. ALT
+PROB/ACCUM resets still cover all eight amounts and targets/triggers. These
+reset scopes are separate from the fields captured by a turn. Held panel
+shortcuts, confirmation and CTRL ownership retain their existing behavior.
+This is a Rack editing addition; saved parameters and formats are unchanged.
 
 ## Stationary clicks and Undo
 

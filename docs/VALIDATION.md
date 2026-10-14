@@ -1,4 +1,40 @@
-# Validation and fidelity status — 2.50.0
+# Validation and fidelity status — 2.51.0
+
+## 2.51 paired-page drag ownership
+
+Actual Rack callbacks reproduced a drag claiming an independent write to
+its paired reset partner. The control now has a separate drag capture scope;
+whole-page long-reset scopes remain unchanged. CLK/GATE/SLIDE/LEN/DIV/ORDER
+encoder and OLED turns capture their selected field. PROB/ACCUM turns capture
+selected or ALT amounts, excluding secondary targets/triggers.
+
+The final 712-case callback matrix covers both note tracks, all eight MOD
+lanes where applicable, every PROB/ACCUM stage, both encoder/OLED surfaces,
+selected stage buttons and ALT external target/trigger changes at every
+stage. Half the partner writes have an independent parameter Undo action;
+the rest simulate raw external writes. Exact full-parameter Undo/Redo and
+cursor/tip release pass. The fixture uses percent units for GATE/SLIDE.
+
+The entire Pending suite and save/reopen pass, retaining the 699 long-reset
+cases, 48 held shortcuts, earlier raw-value history and confirmation conflict
+matrices, and the MOD destination-controlled type checks. All 25 local engine
+suites and native Rack integration pass. These are injected Rack callbacks,
+not OS mouse/focus tests or a physical hardware comparison. Parameter IDs,
+sequencing, routing and formats remain 787/33/11/522.
+
+Windows Pending/save-reopen and 25 neighboring application groups pass:
+CtrlEditor, Chains, ScaleCopy, Timing, StagePair, StagePattern, StageCv, Scales,
+Swing, Overrides, Workflows, SetupOptions, Outputs, Fidelity, Polish, Display
+(181 states), ChainAudio, Order, Modulation, ExtendedRouting, Midi, Mx, Group,
+RoutingAudio and MidiAudio. Finite audio checks do not establish long human
+sessions or a hardware comparison. No display drawing changed in this fix.
+
+The current-source stripped production host passes 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 state restores,
+144 fresh instances, 12 initializes and 145 reciprocal links across both
+public models at 44.1/48/96 kHz. This is 361.083 simulated seconds in one
+thread, with Windows wall time 12.6437 seconds. The final packaged binary
+must pass this host separately and its assets must match current source.
 
 ## 2.50 MOD effective type and OLED TYPE workflow
 
