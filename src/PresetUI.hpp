@@ -89,7 +89,7 @@ void appendPresetMenu(ui::Menu* menu, Metropolix* m) {
     menu->addChild(createMenuLabel("Internal presets: 8 banks x 8 slots"));
     menu->addChild(createMenuItem("Load preset bank", "ALT + LOAD", [m] { openPresetPage(m, false); }));
     menu->addChild(createMenuItem("Save preset bank", "ALT + SAVE", [m] { openPresetPage(m, true); }));
-    menu->addChild(createMenuItem("Preset settings", "", [m] { screenPage(m, Metropolix::PRESET_SETUP_PAGE); }));
+    menu->addChild(createMenuItem("Preset settings", "", [m] { openPresetSetup(m); }));
     menu->addChild(createMenuItem("Cancel queued load", "", [m] { m->cancelPreset(); }, m->pendingSlot.load() < 0 && m->presetUiCommands.empty()));
     auto choice = [menu, m](const char* label, int id, std::vector<std::string> values) {
         auto* q = m->getParamQuantity(id);

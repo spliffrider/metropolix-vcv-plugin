@@ -1,8 +1,10 @@
-# Metropolix Lab 2.56.0 — public alpha quick start
+# Metropolix Lab 2.57.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
+
+2.57.0 gives [Presets Setup](PRESETS.md) a compact scrolling list in the manual's order, browse/edit gestures and selected-setting resets. Pending Init choices and all question marks now display correctly. Existing saved setting IDs, schema34 and musical banks stay unchanged.
 
 2.56.0 brings the [track, MOD, Global, UI and MIDI menus](UI-SETUP.md) to four compact mixed-case rows with whole-row browsing and value-only selection. Slider Octaves now shows its pending 1–4 choice when leaving Shared. Parameter IDs, settings schema34 and musical banks stay unchanged.
 
@@ -44,15 +46,15 @@ welcome. See Known limitations for remaining fidelity checks.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/MetropolixLab-2.56.0-win-x64.vcvplugin)
-- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/MetropolixLab-2.56.0-lin-x64.vcvplugin)
-- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/MetropolixLab-2.56.0-mac-x64.vcvplugin)
-- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/MetropolixLab-2.56.0-mac-arm64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/MX-performance.vcv)
-- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
-- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/Backup-example.json)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/MetropolixLab-2.57.0-win-x64.vcvplugin)
+- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/MetropolixLab-2.57.0-lin-x64.vcvplugin)
+- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/MetropolixLab-2.57.0-mac-x64.vcvplugin)
+- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/MetropolixLab-2.57.0-mac-arm64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/MX-performance.vcv)
+- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
+- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.56.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.57.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -151,16 +153,26 @@ downstream patch routing rather than a stopped sequencer.
 
 ## Try the preset banks
 
-Download [Preset-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.7.1/Preset-performance.vcv).
+Download [Preset-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/Preset-performance.vcv).
 The red bank has four related patterns. Select a filled slot on LOAD and let the
 current eight-bar phrase finish, or use Queue Pulses = 16/32 for quicker changes.
 Check that melody, MOD and gate changes start together. Try cancellation,
 save/overwrite, undo, and saving/reopening your Rack patch. Compare Pitch/Switch
 Off with **Recall complete pattern**. Full instructions: [Preset guide](PRESETS.md).
 
+## Try Presets Setup — 2.57.0
+
+Open SETUP → Presets Setup. Browse the six hardware settings, then the two
+RACK settings; browsing should leave their values unchanged. Click Queue
+Pulses to edit, drag up/down, and try Undo/Redo. Enable Enc. Confirm in UI
+Setup, then preview an Init slot: the pending bank/slot and `?` should be
+visible. EXIT should cancel the pending value. Try a selected encoder hold
+to reset only that preference. Save and reopen a patch on this screen: the
+same setting should be selected in browse mode. See [Presets](PRESETS.md).
+
 ## Try the performance knobs
 
-Download [CTRL-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/CTRL-performance.vcv).
+Download [CTRL-performance.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/CTRL-performance.vcv).
 CTRL 1 changes Track 2 pulse counts; CTRL 2 adds ratchet fills. Both start at
 noon, preserving the original evolving arrangement. Right-click either for
 assignments and exact centre. See the [CTRL guide](CTRL-KNOBS.md) for ranges,
@@ -168,7 +180,7 @@ direct parameter ownership, and all 29 destinations.
 
 ## Compare accumulator modes
 
-Download [Accumulator-modes.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.56.0/Accumulator-modes.vcv).
+Download [Accumulator-modes.vcv](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.57.0/Accumulator-modes.vcv).
 It presents Stage mode on Track 1 and Track mode on Track 2, with the same
 four-note phrase and a +1 increment on stage 1. Right-click TRK 1/2 to change
 Accumulator mode, or use ALT → LIM. See the

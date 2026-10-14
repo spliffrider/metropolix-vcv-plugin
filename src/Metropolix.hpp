@@ -365,6 +365,7 @@ struct Metropolix : Module {
     }
     std::atomic<int> trackMenuCursor{0}, setupCursor{0}, globalCursor{0};
     std::atomic<bool> setupDirectChild{false};
+    std::atomic<bool> presetSetupEditing{false}; // Transient; saved uiField IDs retain their meaning.
     std::atomic<bool> tunerActive{false}, transportRunning{false};
     bool transportRestoreHold=false; // Audio thread; restore writes under engine exclusion.
     std::atomic<unsigned> heldTrackReset{0};
@@ -804,7 +805,7 @@ struct Metropolix : Module {
     void onReset(const ResetEvent& e) override {
         resetMidiRuntime();
         factoryCursor.store(0);factoryConfirmCursor=0;factoryNoticeUntil=0;if(uiPage.load()==FACTORY_CONFIRM_PAGE)uiPage.store(FACTORY_PAGE);
-        Module::onReset(e);clearPickup();tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);setupDirectChild.store(false);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
+        Module::onReset(e);presetSetupEditing.store(false);clearPickup();tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);setupDirectChild.store(false);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         orderShortcutHeld.store(false);orderShortcutUsed.store(false);
@@ -870,7 +871,7 @@ struct Metropolix : Module {
         orderShortcutHeld.store(false);orderShortcutUsed.store(false);
         timingShortcutHeld.store(0);timingShortcutUsed.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
-        tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
+        presetSetupEditing.store(false);tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
         uiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"uiSetupCursor"))),0,7));
         int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
         midiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"midiSetupCursor"))),0,5));

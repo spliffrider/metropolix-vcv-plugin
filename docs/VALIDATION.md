@@ -1,4 +1,43 @@
-# Validation and fidelity status — 2.56.0
+# Validation and fidelity status — 2.57.0
+
+## 2.57 Presets Setup list and pending readouts
+
+Presets Setup now uses the shared four-row mixed-case list style. The manual's
+pp53–56 define Queue Pulses, Pitch Load, Switch Load, Ctrl Load, Aux Load and
+Set Init Preset in that order; the two Rack extensions follow a RACK heading.
+Browsing highlights the whole row; editing highlights its value. Both encoder
+and display support browse/edit, immediate or confirmed values, direct binary
+toggles, native menus and selected-setting long resets. Fifteen direct 128×64
+captures were inspected for first/last views, long labels, 4096-pulse values
+and pending Init bank/slot. Exact glyph/firmware matching and physical-module
+comparison remain open; Backup/maintenance layouts are the next display gap.
+
+The actual-callback baseline reproduced missing question marks in all 16
+pending field/control cases and incorrect Init values in two of them. The
+other 14 value previews already used their pending value. Windows callbacks
+now pass 30 navigation cases, 99 applied and 178 pending pixel states, 32
+immediate/confirmed/binary edits with exact full-parameter Undo/Redo, 12
+independent-edit conflicts and 16 selected-setting resets. All 65 Init choices
+and representative 0–4096 pulse boundaries are covered. An obsolete held
+confirmation preserves the independent edit and consumes the click without
+a secondary action; a fresh click can leave editing. EXIT cancels the draft.
+Linux Pending runs this matrix in its package job and is verified separately.
+
+Native Rack integration passes 80 restores across schemas29–33 and 16 current
+schema34 restores: every legacy logical field ID keeps the same parameter,
+reopens browsing and preserves unrelated preset banks. Transient edit selection
+is excluded from JSON and is cleared by native patch reopen and initialization.
+Invalid settings reject without changing serialized or transient state. No
+DSP behavior, 787 parameter IDs, schema34 or format11/522 musical values change.
+Settings/All backups retain their 2.55 minimum; musical compatibility is unchanged.
+
+All 32 neighboring Windows UI/audio groups, the 25 portable suites and native
+integration pass. Display retains 181 separate states. The stripped production
+host passes 22,624,609 frames, 339,369,135 output checks, 56,664 parameter edits,
+145 restores, 144 fresh instances, 12 initializes and 145 reciprocal links at
+44.1/48/96kHz across both models: 361.083 simulated seconds, single-thread
+Windows wall time 13.1642 seconds. The final packaged DLL is checked separately.
+This is signal-path testing, without an OS input or human listening claim.
 
 ## 2.56 track and secondary setup lists
 

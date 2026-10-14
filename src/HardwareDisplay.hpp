@@ -446,22 +446,9 @@ struct HardwareDisplay : HardwareControl {
             } else c.text(1,57,save?"SELECT SLOT TO SAVE":"SELECT SLOT TO LOAD");
             return c;
         } else if(page==Metropolix::PRESET_SETUP_PAGE) {
-            const char* labels[]={"Total Pulses","Queue Pulses","Load Delay","Pitch Load","Switch Load","Ctrl Load","Aux Load","Set Init Preset"};
-            int first=f/3*3;
-            for(int i=first;i<std::min(first+3,8);++i) {
-                int n=integer(i==7?Metropolix::INIT_PRESET:Metropolix::TOTAL_PULSES+i);
-                std::string v;
-                if(i==7)v=m?m->getParamQuantity(Metropolix::INIT_PRESET)->getDisplayValueString():"Off";
-                else if(i<2)v=n?std::to_string(n):"-";
-                else if(i==2){const char* names[]={"Instant","Queue","Total"};v=names[n];}
-                else if(i==5){const char* names[]={"Off","Assigns","Thru","Jump"};v=names[metro::clamp(n,0,3)];}
-                else if(i==3){const char* names[]={"Off","Thru","Jump"};v=names[metro::clamp(n,0,2)];}
-                else v=n?(i==6?"Assigns":"Jump"):"Off";
-                int y=(i-first)*17;
-                c.text(13,y+5,labels[i]);c.right(126,y+5,v);
-                if(i==f){c.corners(0,y,128,16);c.turn(1,y+5);}
-            }
-            c.text(1,56,"PRESET SETTINGS");return c;
+            int selected=presetSetupDisplayRow(f),start=metro::clamp(selected-1,0,5);if(selected<4)start=0;c.text(1,1,"PRESETS SETUP");
+            for(int row=0;row<4;++row){int item=presetSetupDisplayItem(start+row);if(item<0){c.text(1,14+row*12,"RACK");continue;}listRow(c,row,std::string(presetSetupName(item))+":",presetSetupValue(m,item),item==f,m && m->presetSetupEditing.load());}
+            return c;
         } else if(page==Metropolix::CHAIN_PAGE && m) {
             const char* colors[]={"Red","Orange","Yellow","Green","Cyan","Blue","Magenta","Pink"};
             auto state=m->getChainState();int n=state.working.size;

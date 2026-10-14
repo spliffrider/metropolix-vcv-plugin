@@ -31,6 +31,7 @@ void require(bool value, const char* message) {
 #include "WorkflowRackTests.hpp"
 #include "SetupRackTests.hpp"
 #include "SetupNavigationRackTests.hpp"
+#include "PresetSetupNavigationRackTests.hpp"
 #include "PickupRackTests.hpp"
 #include "MidiRackTests.hpp"
 #include "MxRackTests.hpp"
@@ -321,6 +322,7 @@ int main() {
     workflowRackTests();
     setupRackTests();
     setupNavigationRackTests();
+    presetSetupNavigationRackTests();
     pickupRackTests();
     midiRackTests();
     mxRackTests();
