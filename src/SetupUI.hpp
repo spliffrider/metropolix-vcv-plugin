@@ -8,6 +8,8 @@ std::string setupMenuValue(Metropolix* m,int id){
     else if(id==Metropolix::CLOCK_RUNNING_ONLY){const char* names[]={"Always","Running","Legacy"};text=names[metro::clamp(value,0,2)];}
     else if(id==Metropolix::RUN_MODE)text=value?"Run/Pause":"Run/Stop";
     else if(id==Metropolix::RESET_INPUT_MODE){const char* names[]={"Reset","Run","Run-C"};text=names[metro::clamp(value,0,2)];}
+    else if(id==Metropolix::RUN_ON_BOOT){const char* names[]={"Off","On","Patch"};text=names[metro::clamp(value,0,2)];}
+    else if(id==Metropolix::CV_OUT_DELAY)text=std::to_string(value)+" ms";
     else if(id==Metropolix::TOTAL_PULSES || id==Metropolix::MIDI_ROOT_CHANNEL || id==Metropolix::MIDI_PC_CHANNEL)text=value?std::to_string(value):"--";
     else text=previewDisplayString(m,id);
     if(m->uiDraftParam==id && text.find('?')==std::string::npos)text+=" ?";
