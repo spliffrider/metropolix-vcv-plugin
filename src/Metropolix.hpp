@@ -332,7 +332,8 @@ struct Metropolix : Module {
     metro::RandomSource workflowRandomSource;
     void clearWorkflows(){workflowBaseline.clear();workflowClipboard.clear();workflowClipKind=0;workflowClipTag=-1;workflowStageHeld=0;workflowCopyUsed=workflowLaneCopy=workflowEditUsed=false;workflowMessage.clear();workflowUntil=0;scaleClipboardMask=0;scaleClipboardRoot=0;scaleCopyGesture=false;}
     int uiDraftParam=-1;float uiDraftValue=0,uiDraftBase=0,uiDraftOrigin=0;
-    std::vector<int> uiDraftIds;std::vector<float> uiDraftBefore;
+    std::vector<int> uiDraftIds;std::vector<float> uiDraftBefore,uiDraftRawBefore;
+    bool uiDraftAlt=false;
     std::atomic<int> uiSetupCursor{0},modMenuCursor{0},midiSetupCursor{0};
     std::atomic<int> backupCursor{0};
     std::atomic<int> backupPresetCursor{0};
@@ -342,7 +343,7 @@ struct Metropolix : Module {
     std::string backupNotice;double backupNoticeUntil=0; // UI thread only.
     metro::MxLogic mx;std::uint64_t mxResetSerial=0;std::atomic<bool> mxConnected{false};
     metro::ExternalDivider externalDivider;metro::OutputDelay<NUM_OUTPUTS> outputDelay;
-    void cancelDraft(){uiDraftParam=-1;uiDraftIds.clear();uiDraftBefore.clear();}
+    void cancelDraft(){uiDraftParam=-1;uiDraftIds.clear();uiDraftBefore.clear();uiDraftRawBefore.clear();}
     float uiValue(int id){
         if(id==uiDraftParam)return uiDraftValue;
         for(size_t i=0;i<uiDraftIds.size();++i)if(uiDraftIds[i]==id){

@@ -1,4 +1,40 @@
-# Validation and fidelity status — 2.40.0
+# Validation and fidelity status — 2.41.0
+
+## 2.41 Pending-edit conflicts
+
+The dedicated actual-Rack callback suite first reproduced obsolete single and
+bulk confirmation, false undo at confirming-drag release, and stale control
+readouts. Drafts now capture raw values separately from effective CV values.
+Validation checks every captured parameter, CTRL ownership, screen binding
+and ALT scope before confirmation, continued drag and UI refresh. Confirming
+drag release finishes native cursor/knob state without attributing external
+writes to that preview. Matching native context menus cancel previews before
+Initialize, choices or numeric entry, including no-op Initialize.
+
+Parameter IDs and saved formats remain 787/schema33/format11/522. A/B source
+browsing uses its existing separate navigation preview and is outside this
+new parameter-draft test. These are callback tests, not OS mouse/focus tests
+or a physical hardware comparison.
+
+Windows passes all original reproductions plus external changes to every stage
+of CV/Ratchet/PROB/ACCUM on both tracks, preview release without history/cursor
+capture, continued drag from the latest value, changed ALT scope and new CTRL
+ownership. Fresh bulk confirmation retains one exact undo/redo, including
+dormant negative CV values. Rack's native no-op Initialize, Root choices and
+numeric tempo field callbacks pass. Save/reopen keeps applied values and drops
+the draft. Raw comparisons bypass audio processing only for their test frame;
+normal processing is restored before rendering and saving.
+
+Thirteen neighboring Windows suites pass: SetupOptions, Workflows, Fidelity,
+CtrlEditor, StagePair, StagePattern, StageCv, Overrides, Modulation, Scales,
+Timing, Polish and all 181 Display states. The Windows harness also corrects
+three missing environment-provider prefixes that retained flags between
+successive suites. Native integration and the stripped production host pass:
+22,624,609 frames, 339,369,135 output checks, 56,664 parameter edits, 145 restores,
+144 fresh instances, 12 initializes and 145 reciprocal links over 361.083
+virtual seconds. The local host took 12.7637 seconds; virtual duration is not
+continuous realtime audio or a human listening test. Linux CI now requires
+the same Pending callbacks alongside the fifteen existing application suites.
 
 ## 2.40 User-scale editor guard
 
