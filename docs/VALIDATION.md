@@ -1,4 +1,51 @@
-# Validation and fidelity status — 2.46.0
+# Validation and fidelity status — 2.47.0
+
+## 2.47 Small CV edits and effective ALT range
+
+Actual Rack callbacks reproduced three failures: a two-pixel Unipolar grid
+edit undid a dormant negative voltage to zero; a zero-delta movement silently
+clamped that raw voltage; and a two-pixel encoder edit used the wrong raw Undo
+origin before its genuine transition click. Existing Gate clicks already had
+correct raw history and remain covered as passing controls.
+
+Every nonzero CV edit now receives its raw-value receipt, including movement
+below the existing three-pixel click threshold. Native cleanup suppresses the
+intermediate Action for those tiny edits; after restoring and recording their
+new values, the genuine click runs against the latest value. This preserves
+edit-before-click ordering, exact raw Undo/Redo, menus, cursor release and
+adjustment-tooltip cleanup. Zero-delta movement skips the native setter and
+group postprocessing after the ownership check, preventing a displayed/clamped
+value from overwriting dormant raw state.
+
+Expanded Pending checks cover 256 actual grid drags and 1,024 actual encoder/
+OLED drags: both tracks, all eight stages, both directions, 0.2/2/6-pixel
+movement, all CV types and saved Bipolar forced to Unipolar by Velocity CV.
+Additional zero-delta, ALT scope, preview/confirmation and upper-bound checks
+verify exact full raw state and each individual history action. The independent
+ALT expectation reproduced a further failure: group editing used the saved
+Bipolar type instead of its effective Unipolar range. The group delta and each
+stage now use the effective type; no sequencing or output-timing code changes.
+
+The fixture pauses processing for deterministic raw receipts and isolates
+Rack's bounded history before restoring the prior QA history. It runs through
+the existing Pending group on Windows and Linux. These are real application
+callbacks, not OS mouse/focus tests or comparison with physical hardware.
+Parameter IDs/settings/musical formats remain 787/33/11/522.
+
+Windows expanded Pending and original save/reopen pass, alongside the existing
+699 long-reset receipts, stationary-click probes and 48 held GATE/SLIDE
+shortcuts. CtrlEditor, Chains, ScaleCopy, Timing, StagePair, StagePattern,
+StageCv, Scales, Swing, Overrides, Workflows, SetupOptions, Outputs, Fidelity,
+Polish, all 181 Display states, ChainAudio and Order pass. ChainAudio records
+twelve real seconds at 48 kHz; these finite checks do not establish continuous
+human sessions or physical sound equivalence.
+
+Native integration and the stripped production host pass 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 state restores,
+144 fresh instances, 12 initializes and 145 reciprocal links across both
+public models at 44.1/48/96 kHz. This simulates 361.083 seconds in a single
+thread, with Windows wall time 13.6984 seconds. Released binaries exclude QA
+code; public platform packages are separately audited against current assets.
 
 ## 2.46 Stationary-click history
 

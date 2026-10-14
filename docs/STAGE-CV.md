@@ -1,4 +1,4 @@
-# Per-stage CV — 2.14.0
+# Per-stage CV — 2.47.0
 
 Each note track has an additional eight-stage CV pattern. It follows that
 track's stages and pulse counts, including its play order, skips, division,
@@ -13,6 +13,25 @@ choices. Type changes apply immediately.
 Assign A or B to that track's CV: ALT → A/B, or use the output source menu.
 The pattern must be connected to another module to hear its effect. The two
 PITCH/GATE outputs remain the note sequence.
+
+## Small edits and Undo
+
+Encoder, display and optional grid voltage drags preserve the exact stored
+voltage on Undo, including a negative value hidden by Unipolar or Gate mode.
+A zero-distance movement does not clamp that stored value. Release still
+performs its ordinary click: a Gate toggle or an encoder transition change.
+
+The existing click threshold is three pixels. A smaller genuine drag can edit
+the voltage and perform that click. They are recorded in that order, so Undo
+reverses the click first and then the voltage edit. A movement at the voltage
+limit adds no edit action. With Enc. Confirm enabled, a tiny voltage preview
+confirms once without also changing its transition.
+
+Selecting Track CV as the MIDI velocity source forces saved Bipolar CV to
+sound in the Unipolar 0–5 V range. ALT relative editing now uses that same
+effective range for every stage. The saved Bipolar choice returns when another
+velocity source is selected. Single-stage, Gate pattern and confirmation
+workflows retain their existing scope.
 
 ## Voltage patterns
 
