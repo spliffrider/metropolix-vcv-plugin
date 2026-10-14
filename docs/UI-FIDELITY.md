@@ -1,9 +1,16 @@
-# Panel and display refinement — 2.27.0
+# Panel and display refinement — 2.56.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
 The default panel remains the hardware arrangement with the independent
 **sensiburner <3 intellijel** credit.
+
+Primary SETUP and the Track/MOD/Global/UI/MIDI lists now use four compact
+mixed-case rows, right-aligned values and inverted selection, following the
+manual's pp33/48 screenshots. Value editing highlights only the value. The
+Shared octave extension correctly displays a pending 1–4 choice and `?`.
+See [UI setup](UI-SETUP.md) for gestures, compact labels and compatibility.
+Presets Setup and Backup/maintenance layouts remain separate follow-up work.
 
 ## Values and confirmation
 
@@ -50,8 +57,9 @@ is shown on the OLED before confirmation.
 
 ## EXIT and panel sync
 
-A short EXIT goes back through Setup submenus. Backup files returns to MIDI
-Setup; the tuner stops and returns to Global Setup. Other editing screens
+A short EXIT goes back through Setup submenus. Backup files and tuner opened
+from primary SETUP return there; desktop shortcuts retain MIDI/Global parents.
+Leaving the tuner stops its audition. Other editing screens
 return Home.
 
 Hold EXIT for more than one second to **Sync to Panel**, or use its right-click

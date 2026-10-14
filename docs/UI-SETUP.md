@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.55.0
+# UI setup, confirmation and external clock input — 2.56.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -13,7 +13,7 @@ the 64 musical presets.
 | Enc. Confirm | Off applies ordinary screen edits immediately. On previews them with `?` until the encoder is pressed. Default Off. |
 | Show Pos. | Show or hide playback position in stage editing diagrams. HOME and panel lights still show transport. |
 | Button / Slider LED / Screen Level | Four brightness levels; pitch lights continue using Rack's Bloom setting. Default 4. |
-| CV Out Delay | 0–21 ms applied equally to all seven pitch, gate, clock and A/B outputs. Default 0. |
+| CV Out Delay | 0–21 ms applied to the seven main outputs and MX outputs; MIDI stays immediate. Default 0. |
 
 AUX destination/assignment, CTRL destination/assignment, MOD destination/assignment and A/B source choices
 always require confirmation when browsed with the encoder/display. A confirmed
@@ -57,6 +57,27 @@ backups require 2.55; musical-only exports retain their existing format11
 compatibility. Preserve an old patch copy before resaving for older versions.
 Backup Files uses the documented plugin JSON format; it is not hardware SysEx.
 Version / Factory identifies the plugin version and its maintenance actions.
+
+## Track and secondary lists
+
+ALT → TRK 1/2 opens **TRACK 1/2 SETUP**; ALT → MOD opens **MOD n SETUP**.
+These and the Global/UI/MIDI shortcuts use the same four-row spacing and
+mixed-case labels as primary SETUP, following the manual's p33 track screenshot.
+Browse with the encoder or display. A selected row is inverted; entering a
+multi-choice value highlights only that value. Binary options toggle on one click.
+Enc. Confirm retains its existing Off/On behavior on these secondary lists.
+
+Slider Octaves shows **Shared** or **1–4**. A pending choice from Shared shows
+its actual octave number and `?`; the previous readout incorrectly kept Shared.
+Transpose shows a signed semitone count, or `--` at zero. Gate source names
+use the manual's compact Single/Sngl+Rst/Multi/Multi+Rst/Hold/Hold+Rst choices.
+Long labels shorten only where a value needs the space; hover and native menus
+retain the full label and units. Track-copy feedback occupies a separate bottom
+line. Selected-item resets, CTRL locks, native shortcuts and Undo stay intact.
+
+This display update keeps schema34 and all saved parameter/cursor meanings.
+The separate Presets Setup and Backup/maintenance screens retain their current
+layouts; exact glyph/material matching and hardware comparison remain open.
 
 ## MOD lane navigation
 

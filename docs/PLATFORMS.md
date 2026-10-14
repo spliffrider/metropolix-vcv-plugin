@@ -1,4 +1,4 @@
-# Platform packages — 2.55.0
+# Platform packages — 2.56.0
 
 Choose the `.vcvplugin` matching the computer and the Rack application you run:
 

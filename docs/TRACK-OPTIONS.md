@@ -46,3 +46,10 @@ and patches migrate to Switch sources and Rest Pitch Hold, preserving their soun
 All earlier parameter/cable IDs stay fixed. The transpose range extension retains
 old values. Source changes take effect at the existing engine boundaries; exact
 live-edit precedence and hardware comparison remain open to tester feedback.
+
+## Compact display — 2.56.0
+
+The track menu now follows the four-row p33 reference, with mixed-case text,
+inverted browsing and a separate value highlight. Slider Octaves retains the
+Rack Shared extension, and correctly shows a pending 1–4 octave choice with `?`.
+See [UI lists](UI-SETUP.md) for compact labels and confirmation behavior.

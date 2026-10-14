@@ -73,6 +73,34 @@ struct HardwareDisplay : HardwareControl {
     void pages(OledCanvas& c,int selected) const {
         for(int i=0;i<4;++i)for(int x=i*32;x<i*32+28;++x)if(i==selected || x%3==0)c.dot(x,0);
     }
+    // Four rows retain the nine-pixel lowercase descenders and a separate
+    // browsing/value highlight. Short aliases leave room for VCV extensions.
+    static int listStart(int cursor,int count) { return cursor<4?0:metro::clamp(cursor-1,0,count-4); }
+    static std::string listLabel(const OledCanvas& c,std::string label,const std::string& value) {
+        if(c.width(label,false)+c.width(value,false)+4<=126)return label;
+        if(label=="Slider Octaves:")label="Slider Oct:";
+        else if(label=="Slide Toggle CC:")label="Slide Tog CC:";
+        else if(label=="Slide Amount CC:")label="Slide Amt CC:";
+        else if(label=="Clk/Rset Out:")label="Clock Mode:";
+        if(c.width(label,false)+c.width(value,false)+4>126 && !label.empty() && label.back()==':')label.pop_back();
+        return label;
+    }
+    static void listRow(OledCanvas& c,int row,const std::string& name,const std::string& value,bool selected,bool editing) {
+        int y=12+row*12,valueX=127-c.width(value,false);std::string label=listLabel(c,name,value);
+        uint8_t labelInk=255,valueInk=255;
+        if(selected){if(editing){c.fill(valueX-2,y-1,130-valueX,11);valueInk=0;}else {c.fill(0,y-1,128,11);labelInk=valueInk=0;}}
+        c.text(1,y,label,false,1,labelInk);c.text(valueX,y,value,false,1,valueInk);
+    }
+    std::string trackListValue(int item) const {
+        auto* m=metroModule;if(!m)return {};int id=trackMenuParam(m,item);if(id<0)return {};
+        int v=integer(id);std::string shown;
+        if(item==0)shown=v?string::f("%+d",v):"--";
+        else if(item==1)shown=v?std::to_string(v):"Shared";
+        else if(item==4){const char* names[]={"Switch","Single","Sngl+Rst","Multi","Multi+Rst","Hold","Hold+Rst"};shown=names[metro::clamp(v,0,6)];}
+        else shown=previewDisplayString(m,id);
+        if(m->uiDraftParam==id && shown.find('?')==std::string::npos)shown+=" ?";
+        return shown;
+    }
     void field(OledCanvas& c,int y,const std::string& name,const std::string& v,bool selected,int w=128,int size=2) const {
         c.text(2,y+2,name);
         std::string shown=v;if(selected && pendingConfirmation(metroModule))shown+=" ?";
@@ -339,18 +367,11 @@ struct HardwareDisplay : HardwareControl {
                 field(c,29,"GATE SCALE",string::f("%.0f%%",value(Metropolix::gateScaleParam(t),100)),f==1);
             }
         } else if(page==Metropolix::TRACK_MENU_PAGE) {
-            int cursor=m?m->trackMenuCursor.load():0,start=std::min(std::max(cursor-1,0),TrackMenuCount-3);
-            for(int row=0;row<3;++row){int item=start+row,y=2+row*17;
-                if(item==cursor){c.corners(0,y-1,128,15);c.turn(1,y+3);}
-                c.text(12,y+1,trackMenuName(item));
-                if(m){int id=trackMenuParam(m,item);
-                    if(id>=0){std::string value=previewDisplayString(m,id);if(item==1 && m->integer(id)==0)value="Shared";c.right(126,y+8,value);}
-                }
-                if(item==cursor && f)c.line(68,y+14,126,y+14);
-            }
-            if(m && m->workflowUntil>system::getTime())c.text(1,57,m->workflowMessage);
-            else if(m && m->heldTrackReset.load())c.text(1,57,string::f("COPY TRK %d MENU",m->heldTrackReset.load()&1?1:2));
-            else c.text(1,57,string::f("TRK %d MENU",t+1));
+            int cursor=m?m->trackMenuCursor.load():0,start=listStart(cursor,TrackMenuCount);
+            c.text(1,1,string::f("TRACK %d SETUP",t+1));
+            for(int row=0;row<4;++row){int item=start+row,id=m?trackMenuParam(m,item):-1;std::string label=trackMenuName(item);if(id>=0)label+=":";listRow(c,row,label,trackListValue(item),item==cursor,f && id>=0);}
+            if(m && m->workflowUntil>system::getTime())c.text(1,59,m->workflowMessage);
+            else if(m && m->heldTrackReset.load())c.text(1,59,string::f("COPY TRK %d MENU",m->heldTrackReset.load()&1?1:2));
             return c;
         } else if(page==Metropolix::A_PAGE || page==Metropolix::B_PAGE) {
             int source=m?shownOutputSource(m):0;auto selection=metro::outputSelection(source);
@@ -503,26 +524,22 @@ struct HardwareDisplay : HardwareControl {
             // Keep the first four reference options together at the top.
             if(cursor<4)start=0;
             c.text(1,1,"SETUP");
-            for(int row=0;row<4;++row){int listRow=start+row,item=setupDisplayItem(listRow),y=12+row*12;
-                if(item<0){c.text(1,y+2,setupCategoryName(listRow));continue;}
+            for(int row=0;row<4;++row){int displayRow=start+row,item=setupDisplayItem(displayRow),y=12+row*12;
+                if(item<0){c.text(1,y+2,setupCategoryName(displayRow));continue;}
                 int id=m?setupMenuParam(m,item):-1;std::string label=setupMenuName(item);if(id>=0)label+=":";
-                std::string value=setupMenuValue(m,id);int valueX=127-c.width(value,false);
-                bool selectedRow=item==cursor;uint8_t labelInk=255,valueInk=255;
-                if(selectedRow){if(f && id>=0){c.fill(valueX-2,y-1,130-valueX,11);valueInk=0;}else {c.fill(0,y-1,128,11);labelInk=valueInk=0;}}
-                c.text(1,y,label,false,1,labelInk);c.text(valueX,y,value,false,1,valueInk);
+                listRow(c,row,label,setupMenuValue(m,id),item==cursor,f && id>=0);
             }
             return c;
         } else if(page==Metropolix::GLOBAL_SETUP_PAGE || page==Metropolix::UI_SETUP_PAGE || page==Metropolix::MIDI_SETUP_PAGE) {
-            bool global=page==Metropolix::GLOBAL_SETUP_PAGE,ui=page==Metropolix::UI_SETUP_PAGE,midi=page==Metropolix::MIDI_SETUP_PAGE;int cursor=m?(midi?m->midiSetupCursor.load():ui?m->uiSetupCursor.load():global?m->globalCursor.load():m->setupCursor.load()):0,count=midi?MidiSetupCount:ui?UiSetupCount:global?GlobalMenuCount:SetupMenuCount;
-            int start=std::min(std::max(cursor-1,0),count-3);
-            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+2,midi?midiSetupName(item):ui?uiSetupName(item):global?globalMenuName(item):setupMenuName(item));
-                int id=midi?midiSetupParam(m,item):ui?uiSetupParam(m,item):global?globalMenuParam(m,item):item==0?Metropolix::RANGE:-1;
-                if(m && id>=0){std::string value=previewDisplayString(m,id);if(id==Metropolix::CLOCK_SOURCE && integer(id)==0)value="Auto";if(id==Metropolix::CLOCK_RUNNING_ONLY && integer(id)==2)value="Legacy";if(id==Metropolix::RESET_INPUT_MODE){const char* names[]={"Reset","Run","Run-C"};value=names[integer(id)];}if(id==Metropolix::RUN_MODE)value=integer(id)?"Pause":"Stop";if(id==Metropolix::RUN_ON_BOOT && integer(id)==2)value="Patch";if(id==Metropolix::CV_OUT_DELAY)value+=" ms";if(m->uiDraftParam==id && value.find("?")==std::string::npos)value+=" ?";c.right(126,y+10,value);}
-                if(item==cursor){c.corners(0,y-1,128,16);if(f)c.turn(1,y+4);else c.arrow(3,y+5,true);}
-            }c.text(1,56,midi?"MIDI SETUP":ui?"UI SETUP":global?"GLOBAL SETUP":"SETUP MENU");return c;
+            bool global=page==Metropolix::GLOBAL_SETUP_PAGE,ui=page==Metropolix::UI_SETUP_PAGE;
+            int cursor=m?(global?m->globalCursor.load():ui?m->uiSetupCursor.load():m->midiSetupCursor.load()):0,count=global?GlobalMenuCount:ui?UiSetupCount:MidiSetupCount,start=listStart(cursor,count);
+            c.text(1,1,global?"GLOBAL SETUP":ui?"UI SETUP":"MIDI SETUP");
+            for(int row=0;row<4;++row){int item=start+row,id=m?(global?globalMenuParam(m,item):ui?uiSetupParam(m,item):midiSetupParam(m,item)):-1;std::string label=global?globalMenuName(item):ui?uiSetupName(item):midiSetupName(item);if(id>=0)label+=":";else if(label=="Backup files…")label="Backup Files...";listRow(c,row,label,setupMenuValue(m,id),item==cursor,f && id>=0);}
+            return c;
         } else if(page==Metropolix::MOD_MENU_PAGE){
-            int cursor=m?m->modMenuCursor.load():0,start=std::min(std::max(cursor-1,0),ModMenuCount-3);
-            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+2,modMenuName(item));int id=m?modMenuParam(m,item):-1;if(id>=0)c.right(126,y+10,previewDisplayString(m,id));if(item==cursor){c.corners(0,y-1,128,16);if(f)c.turn(1,y+4);else c.arrow(3,y+5,true);}}c.text(1,56,string::f("MOD %d MENU",l+1));return c;
+            int cursor=m?m->modMenuCursor.load():0;c.text(1,1,string::f("MOD %d SETUP",l+1));
+            for(int item=0;item<4;++item){int id=m?modMenuParam(m,item):-1;std::string label=modMenuName(item);if(id>=0)label+=":";listRow(c,item,label,id>=0?previewDisplayString(m,id):"",item==cursor,f && id>=0);}
+            return c;
         } else if(page==Metropolix::TUNER_PAGE){
             c.text(1,2,"TUNER");c.text(13,22,"Pitch");c.right(126,18,string::f("C%+d",integer(Metropolix::TUNER_OCTAVE)),2);c.turn(1,23);
             c.text(13,44,"Gate");c.right(126,44,integer(Metropolix::TUNER_GATE)?"Clock":"High");c.text(1,56,"EXIT TO RESUME");return c;

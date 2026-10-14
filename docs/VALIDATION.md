@@ -1,4 +1,38 @@
-# Validation and fidelity status — 2.55.0
+# Validation and fidelity status — 2.56.0
+
+## 2.56 track and secondary setup lists
+
+The firmware1.6 manual pp33–37 and p48 show four compact rows with mixed-case
+labels and inverted browsing/value selection. Track/MOD/Global/UI/MIDI lists
+now share that geometry with primary SETUP. Actual 128×64 captures of the p33
+first-four state, pending choices, extreme values and copy feedback were
+inspected against the supplied reference. Presets Setup and Backup/maintenance
+layouts, remaining glyph details and material matching remain open.
+
+A baseline actual-callback/pixel test found 16 incorrect Shared→1–4 octave
+previews across both tracks and encoder/OLED input. Its other 26 clock/scope/
+reset/boot preview cases passed. Slider Octaves now reads the pending value;
+numeric octave, signed transpose and compact gate-source names fit the list.
+Software Auto/Legacy/Patch/Shared extensions retain their meaning. No DSP,
+parameter IDs, settings schema34 or format11/522 musical positions change.
+
+Windows Rack callbacks pass 168 navigation cases, 2,528 applied value renders,
+4,896 actual pending renders, 256 immediate/confirmed/binary edits with exact
+full-parameter Undo/Redo, and 128 selected-setting long resets. Checks cover
+both tracks and all eight MOD lanes, every choice, selection/descender pixels,
+nonoverlapping labels and the separate copy-feedback line. There are 151
+additional direct OLED captures. Pending/reopen and the existing primary
+SETUP migration/confirmation matrix also pass. Linux Pending runs this same
+matrix in its package job; platform receipts are checked separately.
+
+All 31 neighboring Windows UI/audio groups, the 25 portable engine suites and
+native Rack integration pass. Display retains 181 dedicated states. The
+current-source stripped production host passes 22,624,609 frames, 339,369,135
+output checks, 56,664 parameter edits, 145 state restores, 144 fresh instances,
+12 initializes and 145 reciprocal links at 44.1/48/96kHz across both models:
+361.083 simulated seconds, single-thread Windows wall time 15.125 seconds.
+The final packaged DLL is tested separately. No physical-module comparison,
+OS input simulation, human listening assessment or Mac GUI playtest is claimed.
 
 ## 2.55 primary SETUP list and saved navigation
 
