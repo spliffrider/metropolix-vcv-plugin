@@ -1,3 +1,7 @@
+// The QA executable is allowed to use Rack's internal screenshot method.
+// This file is never linked into the production plugin.
+#include <window/Window.hpp>
+#undef PRIVATE
 #include <rack.hpp>
 #include "RackCapture.hpp"
 #if defined ARCH_LIN
@@ -55,5 +59,9 @@ void screenshot(const std::string& path) {
     glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
     for(auto& cache:caches)cache.first->bypassed=cache.second;
 }
+}
+#else
+namespace metroqa {
+void screenshot(const std::string& path) { APP->window->screenshot(path); }
 }
 #endif

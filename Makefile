@@ -88,9 +88,9 @@ rack-test-build:
 .PHONY: ui-test-build
 ui-test-build: build/ui-test/plugin.dll
 
-build/ui-test/plugin.dll: $(SOURCES) $(wildcard src/*.hpp tests/*.hpp) Makefile $(RACK_DIR)/include/rack.hpp
+build/ui-test/plugin.dll: $(SOURCES) tests/RackCapture.cpp $(wildcard src/*.hpp tests/*.hpp) Makefile $(RACK_DIR)/include/rack.hpp
 	@mkdir -p build/ui-test
-	$(CXX) -std=c++11 -O1 -g -DMETROPOLIX_QA -DARCH_WIN -D_USE_MATH_DEFINES -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include src/plugin.cpp src/Metropolix.cpp -shared -L$(RACK_DIR) -lRack -static-libstdc++ -static-libgcc -o build/ui-test/plugin.dll
+	$(CXX) -std=c++11 -O1 -g -DMETROPOLIX_QA -DARCH_WIN -D_USE_MATH_DEFINES -I$(RACK_DIR)/include -I$(RACK_DIR)/dep/include src/plugin.cpp src/Metropolix.cpp tests/RackCapture.cpp -shared -L$(RACK_DIR) -lRack -static-libstdc++ -static-libgcc -o build/ui-test/plugin.dll
 
 # Native platform CI uses the same host/persistence tests and loads the actual
 # stripped production binary. It does not require a display or audio device.

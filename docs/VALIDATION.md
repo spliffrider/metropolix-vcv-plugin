@@ -29,8 +29,9 @@ differences between host runs are expected; finite samples, useful level and low
 DC are checked independently. These are audio-path measurements, not a hardware
 device-driver or subjective listening comparison.
 
-Windows native integration, Fidelity/save-reopen and Polish/zoom/Bloom regressions
-pass after the platform work. The prior 2.27 full panel/audio coverage remains
+Windows native integration, Fidelity/save-reopen, Polish/zoom/Bloom and both
+12-second MX/MIDI audio regressions pass after the platform work. The prior
+2.27 full panel/audio coverage remains
 applicable: production behavior changes only by renaming the C++ MOD stage-offset
 identifier to avoid a Linux system macro; its numeric ID stays fixed. Windows
 uses the established SDK 2.3.0; the three new builds use SDK 2.6.6. All run the
