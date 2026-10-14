@@ -1,4 +1,24 @@
-# Validation and fidelity status — 2.35.0
+# Validation and fidelity status — 2.36.0
+
+## 2.36 paired PROB/ACCUM gestures
+
+Printed pages 99/101 specify paired long-encoder resets, ALT editing of all
+eight amounts, and uniform ALT targets/triggers. Actual Windows Rack callback
+checks pass on every stage of both tracks: selected/all reset thresholds,
+every secondary choice, relative amount editing with saturation and reversal,
+exact one-action undo/redo, context menus, eight-amount pending confirmation,
+and patch/preset save/reopen. Reopening retains the selected screen and values
+and clears transient ALT. Timing, Group, Order, Workflows, Scales, Slides,
+Stage CV, Fidelity, Polish and all 181 display states pass. Native engine/library
+integration passes. Linux package CI runs the same paired gesture/render/reopen
+suite; all platform native and stripped production checks remain required.
+
+No saved fields changed: 787 parameters, schema33 and format11/522 stay fixed.
+ALT short press advances the selected target/trigger before applying it to all
+stages, matching the existing CV gesture. The manual does not settle that order
+or endpoint reversal details; both remain hardware-comparison items. These
+checks use real Rack callbacks and rendering, rather than OS mouse/focus events.
+See [PROB/ACCUM gestures](STAGE-PAIRS.md).
 
 ## 2.35 timing panel workflows
 

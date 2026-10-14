@@ -110,6 +110,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->confirmationCapable=true;display->action=[m] { encoderPress(m); };
     display->extraMenu=[m](ui::Menu* menu) {
         if(m && m->uiPage.load()==Metropolix::ORDER_PAGE)appendOrderMenu(menu,m);
+        if(stagePairPage(m))appendStagePairMenu(menu,m);
         if(timingPage(m))appendTimingMenu(menu,m,m->uiPage.load());
         if(factoryPage(m))appendFactoryMenu(menu,m);
         if(backupPage(m)){if(m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE)appendBackupPresetMenu(menu,m);else appendBackupMenu(menu,m);}
@@ -193,6 +194,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             if(outputPage(m))return std::vector<int>{Metropolix::OUTPUT_SOURCE_A+outputIndex(m)};
             if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE)return std::vector<int>{Metropolix::CLOCK_OUT_DIV,Metropolix::CLOCK_OUT_OFFSET};
             if(m && m->uiPage.load()==Metropolix::ORDER_PAGE && !orderControlled(m))return orderIds(m);
+            if(stagePairPage(m))return stagePairIds(m);
             if(timingPage(m))return timingIds(m,m->uiPage.load());
             std::vector<int> ids;
             if(m && !m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE)
@@ -233,6 +235,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         else if(outputPage(m))resetOutput(m,false);
         else if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE)resetClockOutput(m,false);
         else if(m && m->uiPage.load()==Metropolix::ORDER_PAGE)resetOrder(m,false);
+        else if(stagePairPage(m))resetStagePairs(m,false,false);
         else if(timingPage(m))resetTiming(m,false);
         else if(m && m->uiPage.load()==Metropolix::SCALE_PAGE)scaleEditPress(m);
         else if(cvPage(m))resetCv(m,false,false);
@@ -246,7 +249,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         }
         else if(m && m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load())m->getParamQuantity(Metropolix::swingParam(m->selectedTrack.load()))->setValue(50.f);
     };
-    encoder->longEnabled=[m]{return m && (m->uiPage.load()==Metropolix::MX_SETUP_PAGE || (m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE && midiSetupParam(m)>=0) || (m->uiPage.load()==Metropolix::MOD_MENU_PAGE && modMenuParam(m)>=0) || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || (m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE && globalMenuParam(m)>=0) || m->uiPage.load()==Metropolix::AUX_PAGE || m->uiPage.load()==Metropolix::MOD_ASSIGN_PAGE || modStagePage(m) || (trackMenuPage(m) && (trackMenuParam(m)<0 || m->ctrlOwner(trackMenuParam(m))<0)) || outputPage(m) || m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || (m->uiPage.load()==Metropolix::ORDER_PAGE && !orderControlled(m)) || (timingPage(m) && !timingIds(m,m->uiPage.load()).empty()) || cvPage(m) || m->uiPage.load()==Metropolix::CV_TYPE_PAGE || (m->uiPage.load()==Metropolix::SCALE_PAGE && metro::userScale(m->integer(Metropolix::SCALE))) || (m->uiPage.load()==Metropolix::SLIDE_PAGE && !m->uiMod.load()) || overridePage(m) || (!m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) || (m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
+    encoder->longEnabled=[m]{return m && (m->uiPage.load()==Metropolix::MX_SETUP_PAGE || (m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE && midiSetupParam(m)>=0) || (m->uiPage.load()==Metropolix::MOD_MENU_PAGE && modMenuParam(m)>=0) || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || (m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE && globalMenuParam(m)>=0) || m->uiPage.load()==Metropolix::AUX_PAGE || m->uiPage.load()==Metropolix::MOD_ASSIGN_PAGE || modStagePage(m) || (trackMenuPage(m) && (trackMenuParam(m)<0 || m->ctrlOwner(trackMenuParam(m))<0)) || outputPage(m) || m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || (m->uiPage.load()==Metropolix::ORDER_PAGE && !orderControlled(m)) || stagePairPage(m) || (timingPage(m) && !timingIds(m,m->uiPage.load()).empty()) || cvPage(m) || m->uiPage.load()==Metropolix::CV_TYPE_PAGE || (m->uiPage.load()==Metropolix::SCALE_PAGE && metro::userScale(m->integer(Metropolix::SCALE))) || (m->uiPage.load()==Metropolix::SLIDE_PAGE && !m->uiMod.load()) || overridePage(m) || (!m->uiMod.load() && m->uiPage.load()==Metropolix::GATE_PAGE) || (m->uiPage.load()==Metropolix::SWING_PAGE && !m->uiMod.load() && m->ctrlOwner(Metropolix::swingParam(m->selectedTrack.load()))<0) || (chainPage(m) && !m->chainEnabled.load() && m->chainCursor.load()%2 && m->chainCursor.load()<2*m->getChainState().working.size));};
     auto* exit=control("EXIT",214,229,15,HardwareControl::DARK_BUTTON);
     exit->help="Step back from a submenu or return HOME. Hold for more than one second to sync recalled pitch/CTRL pickup values to their visible panel positions. Right-click for optional editors.";
     exit->action=[m] { if(m) { if(m->chainQuick){m->chainQuickCancel=true;return;}if(chainPage(m) && m->chainEdit.load()){m->chainEdit.store(0);m->chainCreating=false;return;} screenPage(m,parentPage(m)); m->uiEdit.store(false); m->uiAlt.store(false); m->uiChooseFunction.store(false); } };
@@ -414,7 +417,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             return m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s):Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load());
         };
         c->help="EDIT then a function, then select a stage. Hold + drag edits this stage. Slide/Skip clicks toggle. Right-click for values.";
-        c->groupedParams=[m]{return m && m->timingShortcutHeld.load()?std::vector<int>{}:cvPage(m)?cvParams(m):overrideParams(m);};
+        c->groupedParams=[m]{return m && m->timingShortcutHeld.load()?std::vector<int>{}:stagePairPage(m)?stagePairIds(m):cvPage(m)?cvParams(m):overrideParams(m);};
         c->detailHelp=[m,s] {
             if(m && m->timingShortcutHeld.load())return "Hold the panel button and click for "+timingShortcutLabel(m,m->timingShortcutHeld.load(),s)+".";
             if(m && (m->orderShortcutHeld.load() || m->uiPage.load()==Metropolix::ORDER_PAGE))return "Order shortcut "+orderShortcutLabel(m,s)+". Hold ORDER + click to recall; long stage press saves. Right-click offers both.";
@@ -536,8 +539,10 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             const int map[]={4,5,6,0,1,7,2,3};return colors[map[m->selectedRow.load()]];
         };
         c->dimActive=[m] { return (presetPage(m) || chainPage(m)) && !m->uiChooseFunction.load(); };
+        c->extraMenu=[m](ui::Menu* menu){appendStagePairMenu(menu,m);};
         c->rightAction=[c,m,s] {
             if(!m)return;
+            if(stagePairPage(m)){m->selectedStage.store(s);c->bind();if(c->getParamQuantity())c->createContextMenu();else appendStagePairMenu(createMenu(),m);return;}
             if(timingPage(m)){auto* menu=createMenu();int page=m->uiPage.load(),id=timingParam(m,page,m->uiField.load());menu->addChild(createMenuItem("Set "+timingShortcutLabel(m,page,s),"",[m,page,s]{timingShortcut(m,page,s);},m->ctrlOwner(id)>=0));appendTimingMenu(menu,m,page);return;}
             if(outputPage(m)){appendOutputMenu(createMenu(),m);return;}
             if(m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE || (m->uiAlt.load() && s==4)){appendClockMenu(createMenu(),m);return;}

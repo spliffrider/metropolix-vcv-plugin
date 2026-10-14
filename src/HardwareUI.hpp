@@ -143,6 +143,7 @@ void encoderPress(Metropolix* m) {
         auto* q=m->getParamQuantity(id);setWithHistory(q,1-q->getValue());return;
     }
     if(p==Metropolix::STAGE_PAGE) {
+        if(stagePairPage(m)){stagePairPress(m);return;}
         if(cvPage(m)){cvEncoderPress(m);return;}
         if(overridePage(m) && m->selectedRow.load()==Metropolix::PITCH_OVERRIDE){syncPitchOverrides(m);return;}
         int id=-1, count=2, t=m->selectedTrack.load(),s=m->selectedStage.load();
@@ -310,6 +311,7 @@ struct HardwareControl : ValueKnob {
             if(turns){navigationTurn(turns);navigationDelta-=22.f*turns;}
         } else {
             ValueKnob::onDragMove(e);
+            stagePairDrag(metroModule,paramId,gestureIds,gestureBefore);
             if(gestureIds.size()>1 && ((cvPage(metroModule) && !cvGate(metroModule)) || (modStagePage(metroModule) && !modStageGates(metroModule)))) {
                 auto it=std::find(gestureIds.begin(),gestureIds.end(),paramId);
                 if(it!=gestureIds.end()) {

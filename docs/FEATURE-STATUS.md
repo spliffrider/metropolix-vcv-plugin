@@ -1,9 +1,10 @@
-# Feature status — 2.35.0 public alpha
+# Feature status — 2.36.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.36.0 adds [PROB/ACCUM paired and ALT gestures](STAGE-PAIRS.md), reset, confirmation and exact undo.
 2.35.0 adds [LEN/DIV shortcuts](TIMING-SHORTCUTS.md), field-preserving holds and whole-screen encoder resets.
 2.34.0 adds [independent MOD group mute](MOD-GROUP-MUTE.md), preserving individual lane choices and stored group state.
 2.33.0 corrects [Scale Lock and Loopy preset storage](PRESET-STORAGE.md), with legacy full/selective bank migration.
@@ -54,7 +55,7 @@ configuration, preset workflows, and external interfaces.
 | Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing, individual mute and a separate group mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
 | A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
-| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
+| Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT PROB/ACCUM edits and paired resets, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Some secondary screens, long-press gestures, glyphs/animations, exact material/detail matching |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets with Scale Lock and Loopy settings, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes, scoped JSON backups | Hardware SysEx interchange |
 

@@ -453,6 +453,7 @@ struct MainDisplay : widget::Widget {
 #include "TrackMenuUI.hpp"
 #include "WorkflowUI.hpp"
 #include "OrderUI.hpp"
+#include "StagePairUI.hpp"
 #include "ConfirmationUI.hpp"
 #include "ModWorkflowUI.hpp"
 #include "BackupUI.hpp"
