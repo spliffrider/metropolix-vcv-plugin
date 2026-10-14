@@ -224,7 +224,7 @@ void clearCtrlAssignment(Metropolix* m,int knob,bool record=true) {
 }
 
 void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
-    if(!m)return;
+    if(!m || knob<0 || knob>=2)return;
     menu->addChild(new ui::MenuSeparator);
     menu->addChild(createMenuLabel(string::f("CTRL %d",knob+1)));
     auto choice=[menu,m,knob](const std::string& label,int property,std::vector<std::string> values) {
@@ -382,7 +382,17 @@ struct ValueCell : ValueKnob {
     }
     void onButton(const event::Button& e) override {
         if(locked() && e.button==GLFW_MOUSE_BUTTON_RIGHT && e.action==GLFW_PRESS) {
-            appendCtrlMenu(createMenu(),metroModule,metroModule->ctrlOwner(paramId));e.consume(this);return;
+            int owner=metroModule->ctrlOwner(paramId);
+            if(owner>=0)appendCtrlMenu(createMenu(),metroModule,owner);
+            else if(auto* type=dynamic_cast<ModTypeQuantity*>(getParamQuantity())) {
+                auto* menu=createMenu();menu->addChild(createMenuLabel(type->getString()));
+                auto destinations=Metropolix::modDestinations();int dest=metro::clamp(metroModule->integer(type->destinationParam),0,int(destinations.size())-1);
+                menu->addChild(createMenuLabel("Type follows internal destination: "+destinations[dest]));
+                menu->addChild(createMenuLabel("Clear the destination to edit the saved type."));
+                int lane=(paramId-Metropolix::MOD_LANE)/Metropolix::MOD_STRIDE;auto* m=metroModule;
+                menu->addChild(createMenuItem("MOD lane settings","",[m,lane]{modSettingsMenu(m,lane);}));
+            }
+            e.consume(this);return;
         }
         app::ParamWidget::onButton(e);
     }
