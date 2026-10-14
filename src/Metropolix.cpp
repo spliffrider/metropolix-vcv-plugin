@@ -357,7 +357,7 @@ struct ValueCell : ValueKnob {
         if(rawMicro){event::Action click;onAction(click);}
         dragStarted=false;rawDrag=false;
     }
-    void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
+    void onDoubleClick(const event::DoubleClick& e) override { if(!locked())ValueKnob::onDoubleClick(e); }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onAction(const event::Action&) override {
         if(dragCancelled || locked())return;
@@ -394,7 +394,7 @@ struct ValueCell : ValueKnob {
             }
             e.consume(this);return;
         }
-        app::ParamWidget::onButton(e);
+        ValueKnob::onButton(e);
     }
 };
 

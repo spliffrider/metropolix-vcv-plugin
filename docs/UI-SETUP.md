@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.52.0
+# UI setup, confirmation and external clock input — 2.53.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,24 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Numeric entry, Initialize and double-click
+
+Right-click a value to enter a number or choose a named switch value. Numeric
+entry uses the parameter's normal units and Rack's expression parser. Initialize
+and double-click reset the clicked parameter. Each actual change adds one Undo;
+a no-change entry adds none. Fine dragging and Unmap remain available.
+
+The menu stays attached to the parameter you clicked if you select another
+track, stage or page before applying it. It rechecks editability when an action
+runs, so assigning a CTRL knob cannot leave an older menu able to overwrite its
+now-owned value. Internal MOD destinations fix their lane type; global MOD
+routing fixes assignment scope. These read-only states preserve the saved type
+or track preference when Initialize or double-click is attempted.
+
+Undo restores the actual stored value, including a negative voltage hidden by
+Unipolar/Gate CV or a clock offset hidden by a smaller division. The entry itself
+still follows the current effective range, display conversion and clamps.
 
 ## Assigned MOD type grid menu
 

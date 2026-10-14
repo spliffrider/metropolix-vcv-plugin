@@ -1,4 +1,34 @@
-# Validation and fidelity status — 2.52.0
+# Validation and fidelity status — 2.53.0
+
+## 2.53 native-style parameter actions
+
+Actual Rack context-menu, numeric-field Enter and double-click callbacks on the
+previous implementation reproduced fourteen failures: lost dormant raw values
+in Undo, missing history when the displayed value was unchanged, reset of locked
+MOD type/assignment preferences, numeric entry redirected to a newly selected
+stage/track, and an older menu overwriting a newly CTRL-owned field. The shared
+value control now resolves the parameter captured when its menu opened, checks
+current editability at action time, uses the existing quantity parser/setter or
+reset, and records the applied raw before/after values in one ParamChange.
+
+The final Pending suite passes all focused reproductions plus 5,040 numeric,
+Initialize and double-click cases across both tracks, all eight MOD lanes, eight
+stages, three saved types and dormant/effective ranges. Another 528 cases retain
+assigned type and global assignment preferences without false Undo. Exact
+787-parameter arrays, Undo and Redo are checked. Existing Unmap and no-change
+entry checks pass, as do older drag, preview, menu, shortcut and save/reopen
+matrices. These are injected real Rack widget callbacks, not an OS mouse/focus
+or physical-module comparison.
+
+All 25 local engine suites, native Rack integration and 25 neighboring Windows
+UI/audio groups pass. Display coverage remains 181 implemented states; drawing
+is unchanged. The current-source stripped production host passes 22,624,609
+frames, 339,369,135 output checks, 56,664 edits, 145 state restores, 144 fresh
+instances, 12 initializes and 145 reciprocal links across both public models at
+44.1/48/96 kHz: 361.083 simulated seconds in one thread, with Windows wall time
+13.0342 seconds. The final packaged binary must pass separately; package audits
+must match current source. No sequencer behavior or public formats changed:
+787 parameters / schema33 / musical format11 / 522 fields remain intact.
 
 ## 2.52 locked MOD type grid context menu
 
