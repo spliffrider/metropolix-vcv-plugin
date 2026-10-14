@@ -1,8 +1,10 @@
-# Metropolix Lab 2.29.0 — public alpha quick start
+# Metropolix Lab 2.30.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
+
+2.30.0 adds [maintenance controls](MAINTENANCE.md), with Cancel-first confirmation, exact undo and safe reopening.
 
 2.29.0 adds [Filled and single-bank backups](BACKUPS.md). Filled merges occupied slots; Bank replaces only its eight slots, including empties. Both preserve unrelated presets and chains, and support Undo. Use a spare patch for imports.
 
@@ -20,15 +22,15 @@ welcome. See Known limitations for remaining fidelity checks.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-win-x64.vcvplugin)
-- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-lin-x64.vcvplugin)
-- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-mac-x64.vcvplugin)
-- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MetropolixLab-2.29.0-mac-arm64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/MX-performance.vcv)
-- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
-- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.29.0/Backup-example.json)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-win-x64.vcvplugin)
+- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-lin-x64.vcvplugin)
+- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-mac-x64.vcvplugin)
+- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-mac-arm64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MX-performance.vcv)
+- [Example Bank 8 backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/Backup-bank-8.json) — replaces Bank 8, including five empty slots
+- [Example full backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.29.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.30.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -314,3 +316,13 @@ numeric MOD entry in semitones/BPM/percent and one-step undo. ALT should mark al
 MOD vertices. With pitch/CTRL Thru recall, long EXIT should sync visible positions
 and undo should restore every pickup target. Open and close an optional editor
 with MX beside it and check the link/cables. See [Panel refinement](UI-FIDELITY.md).
+
+## Maintenance — new in 2.30.0
+
+In a spare patch, open SETUP → Version / Factory. Test both actions first with
+Cancel and EXIT: no preset or sound setting should change. Apply Factory Reset
+and check that live defaults return but saved presets remain. Apply Clear All
+Presets and check that all slots empty while live settings stay. Both stop RUN
+and disable chains; Undo/Redo should recover the entire previous bank/settings.
+Save with Apply selected in confirmation and reopen: the menu should return
+with confirmation disarmed and the presets untouched. See [Maintenance](MAINTENANCE.md).

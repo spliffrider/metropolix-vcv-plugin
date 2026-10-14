@@ -17,6 +17,7 @@ DISTRIBUTABLES += docs/EDITING-WORKFLOWS.md
 DISTRIBUTABLES += docs/UI-SETUP.md
 DISTRIBUTABLES += docs/PRESET-PICKUP.md
 DISTRIBUTABLES += docs/MIDI.md docs/MX.md docs/BACKUPS.md docs/UI-FIDELITY.md docs/PLATFORMS.md
+DISTRIBUTABLES += docs/MAINTENANCE.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 include $(RACK_DIR)/arch.mk
 ifdef ARCH_WIN

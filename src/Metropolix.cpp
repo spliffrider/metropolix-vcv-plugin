@@ -455,6 +455,7 @@ struct MainDisplay : widget::Widget {
 #include "ConfirmationUI.hpp"
 #include "ModWorkflowUI.hpp"
 #include "BackupUI.hpp"
+#include "FactoryUI.hpp"
 #include "MidiUI.hpp"
 #include "MxUI.hpp"
 void openChainPage(Metropolix* m);

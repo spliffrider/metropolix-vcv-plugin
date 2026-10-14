@@ -304,7 +304,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE, BACKUP_PAGE, BACKUP_PRESET_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE, BACKUP_PAGE, BACKUP_PRESET_PAGE, FACTORY_PAGE, FACTORY_CONFIRM_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
     std::vector<float> workflowBaseline, workflowClipboard;
@@ -319,6 +319,9 @@ struct Metropolix : Module {
     std::atomic<int> uiSetupCursor{0},modMenuCursor{0},midiSetupCursor{0};
     std::atomic<int> backupCursor{0};
     std::atomic<int> backupPresetCursor{0};
+    std::atomic<int> factoryCursor{0};
+    int factoryConfirmCursor=0; // UI only, never saved or restored armed.
+    std::string factoryNotice;double factoryNoticeUntil=0; // UI only.
     std::string backupNotice;double backupNoticeUntil=0; // UI thread only.
     metro::MxLogic mx;std::uint64_t mxResetSerial=0;std::atomic<bool> mxConnected{false};
     metro::ExternalDivider externalDivider;metro::OutputDelay<NUM_OUTPUTS> outputDelay;
@@ -759,6 +762,7 @@ struct Metropolix : Module {
     void onSampleRateChange(const SampleRateChangeEvent& e) override {outputDelay.prepare(e.sampleRate);}
     void onReset(const ResetEvent& e) override {
         resetMidiRuntime();
+        factoryCursor.store(0);factoryConfirmCursor=0;factoryNoticeUntil=0;if(uiPage.load()==FACTORY_CONFIRM_PAGE)uiPage.store(FACTORY_PAGE);
         Module::onReset(e);clearPickup();tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
@@ -787,9 +791,10 @@ struct Metropolix : Module {
         json_t* root = json_object();
         json_object_set_new(root,"midiInput",midiInput.toJson());json_object_set_new(root,"midiOutput",midiOutput.toJson());json_object_set_new(root,"midiSetupCursor",json_integer(midiSetupCursor.load()));
         json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
-        json_object_set_new(root, "schemaVersion", json_integer(30));
+        json_object_set_new(root, "schemaVersion", json_integer(31));
         json_object_set_new(root,"backupCursor",json_integer(backupCursor.load()));
         json_object_set_new(root,"backupPresetCursor",json_integer(backupPresetCursor.load()));
+        json_object_set_new(root,"factoryCursor",json_integer(factoryCursor.load()));
         json_object_set_new(root,"pickup",pickupToJson());
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
@@ -802,7 +807,7 @@ struct Metropolix : Module {
         json_object_set_new(root, "selectedAux", json_integer(selectedAux.load()));
         json_object_set_new(root, "uiHome", json_integer(uiHome.load()));
         json_object_set_new(root, "uiStageDetail", json_boolean(uiStageDetail.load()));
-        json_object_set_new(root, "uiPage", json_integer(uiPage.load()));
+        json_object_set_new(root, "uiPage", json_integer(uiPage.load()==FACTORY_CONFIRM_PAGE?FACTORY_PAGE:uiPage.load()));
         json_object_set_new(root, "uiField", json_integer(uiField.load()));
         json_object_set_new(root, "uiMod", json_boolean(uiMod.load()));
         json_object_set_new(root, "uiEdit", json_boolean(uiEdit.load()));
@@ -826,10 +831,11 @@ struct Metropolix : Module {
         midiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"midiSetupCursor"))),0,5));
         backupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"backupCursor"))),0,3));
         backupPresetCursor.store(schema<30?0:metro::clamp(int(json_integer_value(json_object_get(root,"backupPresetCursor"))),0,9));
+        factoryCursor.store(schema<31?0:metro::clamp(int(json_integer_value(json_object_get(root,"factoryCursor"))),0,1));factoryConfirmCursor=0;factoryNoticeUntil=0;
         modMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"modMenuCursor")))+(schema<27?2:0),0,3));
         int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
         if(schema<27 && cursor>=10)cursor+=5;
-        trackMenuCursor.store(metro::clamp(cursor,0,15));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,6));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
+        trackMenuCursor.store(metro::clamp(cursor,0,15));setupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"setupCursor"))),0,schema<31?6:7));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
         if(schema<25)for(int id=ENC_CONFIRM;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(!json_is_true(json_object_get(root,"preserveTransportState")) && integer(RUN_ON_BOOT)<2)params[RUN].setValue(float(integer(RUN_ON_BOOT)));
         transportRestoreHold=json_is_true(json_object_get(root,"preserveTransportState")) && integer(RUN)==0;
@@ -892,7 +898,8 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(BACKUP_PRESET_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(FACTORY_CONFIRM_PAGE)));
+        if(uiPage.load()==FACTORY_CONFIRM_PAGE)uiPage.store(FACTORY_PAGE);
         if(uiPage.load()==TUNER_PAGE){uiPage.store(GLOBAL_SETUP_PAGE);globalCursor.store(5);}
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?7:uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));

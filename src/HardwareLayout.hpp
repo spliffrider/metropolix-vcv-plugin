@@ -108,6 +108,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     display->help="HOME: drag or click to browse four overviews. Editing: drag the active value; click performs the encoder action. Right-click for direct access.";
     display->confirmationCapable=true;display->action=[m] { encoderPress(m); };
     display->extraMenu=[m](ui::Menu* menu) {
+        if(factoryPage(m))appendFactoryMenu(menu,m);
         if(backupPage(m)){if(m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE)appendBackupPresetMenu(menu,m);else appendBackupMenu(menu,m);}
         appendWorkflowMenu(menu,m);appendModWorkflowMenu(menu,m);
         if(outputPage(m))appendOutputMenu(menu,m);
@@ -122,12 +123,14 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         if(m && m->uiPage.load()==Metropolix::CTRL_PAGE)appendCtrlMenu(menu,m,m->selectedCtrl.load());
         if(m && (presetPage(m) || chainPage(m) || m->uiPage.load()==Metropolix::PRESET_SETUP_PAGE))appendPresetMenu(menu,m);
     };
-    display->navigationMode=[m] { return m && (backupPage(m) || (trackMenuPage(m) && !m->uiField.load()) || outputPage(m) || (m->uiPage.load()==Metropolix::MOD_MENU_PAGE && !m->uiField.load()) || (((cvPage(m) && cvGate(m)) || (modStagePage(m) && modStageGates(m))) && m->uiAlt.load()) || (m->uiPage.load()==Metropolix::SCALE_PAGE && m->uiField.load() && !m->scaleEditing.load()) || m->uiPage.load()==Metropolix::HOME || presetPage(m) || chainPage(m) || ((m->uiPage.load()==Metropolix::SETUP_PAGE || m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE) && !m->uiField.load())) && !m->uiChooseFunction.load(); };
+    display->navigationMode=[m] { return m && (backupPage(m) || factoryPage(m) || (trackMenuPage(m) && !m->uiField.load()) || outputPage(m) || (m->uiPage.load()==Metropolix::MOD_MENU_PAGE && !m->uiField.load()) || (((cvPage(m) && cvGate(m)) || (modStagePage(m) && modStageGates(m))) && m->uiAlt.load()) || (m->uiPage.load()==Metropolix::SCALE_PAGE && m->uiField.load() && !m->scaleEditing.load()) || m->uiPage.load()==Metropolix::HOME || presetPage(m) || chainPage(m) || ((m->uiPage.load()==Metropolix::SETUP_PAGE || m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE) && !m->uiField.load())) && !m->uiChooseFunction.load(); };
     display->navigationTurn=[m](int d) {
         if(!m)return;
         if(trackMenuPage(m))m->trackMenuCursor.store(metro::clamp(m->trackMenuCursor.load()+d,0,TrackMenuCount-1));
         else if(outputPage(m))outputTurn(m,d);
         else if(m->uiPage.load()==Metropolix::MOD_MENU_PAGE)m->modMenuCursor.store(metro::clamp(m->modMenuCursor.load()+d,0,ModMenuCount-1));
+        else if(m->uiPage.load()==Metropolix::FACTORY_CONFIRM_PAGE)m->factoryConfirmCursor=metro::clamp(m->factoryConfirmCursor+d,0,1);
+        else if(m->uiPage.load()==Metropolix::FACTORY_PAGE)m->factoryCursor.store(metro::clamp(m->factoryCursor.load()+d,0,1));
         else if(m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE)m->backupPresetCursor.store(metro::clamp(m->backupPresetCursor.load()+d,0,BackupPresetCount-1));
         else if(m->uiPage.load()==Metropolix::BACKUP_PAGE)m->backupCursor.store(metro::clamp(m->backupCursor.load()+d,0,BackupCount-1));
         else if(m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE)m->midiSetupCursor.store(metro::clamp(m->midiSetupCursor.load()+d,0,MidiSetupCount-1));
@@ -142,6 +145,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         else m->uiHome.store(metro::modulo(m->uiHome.load()+d,4));
     };
     display->rightAction=[display,stageEditor,laneMenu,m] {
+        if(factoryPage(m)){appendFactoryMenu(createMenu(),m);return;}
         if(backupPage(m)){auto* menu=createMenu();if(m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE)appendBackupPresetMenu(menu,m);else appendBackupMenu(menu,m);return;}
         if(m && (m->uiPage.load()==Metropolix::SETUP_PAGE || m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE) && !m->uiField.load()){appendGlobalMenu(createMenu(),m);return;}
         if(trackMenuPage(m) && !m->uiField.load()){trackSettingsMenu(m);return;}
@@ -158,6 +162,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     encoder->action=[m] { encoderPress(m); };
     encoder->extraMenu=display->extraMenu;
     encoder->rightAction=[encoder,m] {
+        if(factoryPage(m)){appendFactoryMenu(createMenu(),m);return;}
         if(backupPage(m)){auto* menu=createMenu();if(m->uiPage.load()==Metropolix::BACKUP_PRESET_PAGE)appendBackupPresetMenu(menu,m);else appendBackupMenu(menu,m);return;}
         if(m && (m->uiPage.load()==Metropolix::SETUP_PAGE || m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE) && !m->uiField.load()){appendGlobalMenu(createMenu(),m);return;}
         if(trackMenuPage(m) && !m->uiField.load()){trackSettingsMenu(m);return;}
@@ -169,7 +174,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     };
     encoder->confirmationCapable=true;encoder->navigationMode=display->navigationMode;encoder->navigationTurn=display->navigationTurn;
     for(auto* c:{static_cast<HardwareControl*>(display),encoder}) {
-        c->detailHelp=[m]{return backupHelp(m);};
+        c->detailHelp=[m]{return factoryPage(m)?factoryHelp(m):backupHelp(m);};
         c->groupedParams=[m] {
             if(m && m->uiPage.load()==Metropolix::MX_SETUP_PAGE)return std::vector<int>{Metropolix::MX_MODE,Metropolix::MX_TRACK,Metropolix::MX_LANE};
             if(m && m->uiPage.load()==Metropolix::UI_SETUP_PAGE)return std::vector<int>{uiSetupParam(m)};
@@ -204,6 +209,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
             }
             if(presetPage(m))return string::f("Preset bank %d",m->presetBankIndex.load()+1);
             if(m && m->uiPage.load()==Metropolix::SCALE_PAGE)return metro::scaleName(m->integer(Metropolix::SCALE));
+            if(factoryPage(m))return factoryHelp(m);
             if(backupPage(m))return backupHelp(m);
             if(m && m->uiPage.load()==Metropolix::SETUP_PAGE)return std::string("Setup menu: click encoder to open the selected item.");
             return string::f("Home overview %d / 4",m?m->uiHome.load()+1:1);

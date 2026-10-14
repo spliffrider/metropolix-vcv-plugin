@@ -1,4 +1,4 @@
-# Portable backups — 2.29.0
+# Portable backups — 2.30.0
 
 Open **SETUP → MIDI → Backup files…**, or use the module's right-click menu.
 Drag the encoder or display up/down to select an action. Click the encoder to
@@ -69,9 +69,10 @@ Duplicate IDs, foreign bank IDs, missing bank slots, wrong snapshot sizes and
 out-of-range values are rejected before import. The files contain no chains.
 
 Use **2.29.0 or later** to import selective files. For earlier builds, export
-All Presets or All instead. Existing 2.26–2.28 All/Settings/All Presets backups
-continue to import, including settings schema 29; current settings use schema
-30 solely to remember the new submenu. The 770 parameter IDs and format
+All Presets or All instead. Existing 2.26–2.29 All/Settings/All Presets backups
+continue to import, including settings schemas29 and30; current settings use
+schema31 to remember the maintenance menu. Settings backups from 2.30 require
+2.30 or later. Selective files remain compatible with 2.29. The 770 parameter IDs and format
 9/518-value musical snapshots stay fixed. The
 [example Bank 8 backup](../examples/Backup-bank-8.json) intentionally replaces
 Bank 8 with three occupied slots and five empty slots; try it in a spare patch.

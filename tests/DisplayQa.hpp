@@ -221,6 +221,11 @@ const DisplayCase cases[]={
     {"backup-presets-bank-1",Metropolix::BACKUP_PRESET_PAGE,0,0,0,false},
     {"backup-presets-bank-8",Metropolix::BACKUP_PRESET_PAGE,0,0,0,false},
     {"backup-presets-notice",Metropolix::BACKUP_PRESET_PAGE,0,0,0,false},
+    {"setup-factory",Metropolix::SETUP_PAGE,0,0,0,false},
+    {"factory-reset",Metropolix::FACTORY_PAGE,0,0,0,false},
+    {"factory-clear",Metropolix::FACTORY_PAGE,0,0,0,false},
+    {"factory-reset-cancel",Metropolix::FACTORY_CONFIRM_PAGE,0,0,0,false},
+    {"factory-clear-apply",Metropolix::FACTORY_CONFIRM_PAGE,0,0,0,false},
     {"midi-setup-5",Metropolix::MIDI_SETUP_PAGE,0,0,0,false},
     {"mx-mode-0",Metropolix::MX_SETUP_PAGE,0,0,0,false},
 {"mx-mode-1",Metropolix::MX_SETUP_PAGE,0,0,0,false},
@@ -349,6 +354,8 @@ if(qaFrame>=20 && index<count) {
         if(test.page==Metropolix::MX_SETUP_PAGE){int mode=setupName.find("mx-mode-")==0?std::stoi(setupName.substr(8)):setupName=="mx-track"?5:6;m->params[Metropolix::MX_MODE].setValue(mode);m->params[Metropolix::MX_TRACK].setValue(1);m->params[Metropolix::MX_LANE].setValue(7);if(setupName=="mx-draft" || setupName=="mx-lane-draft"){int id=setupName=="mx-draft"?Metropolix::MX_MODE:Metropolix::MX_LANE;m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftValue=setupName=="mx-draft"?0:3;}}
         if(test.page==Metropolix::BACKUP_PAGE){m->backupCursor.store(setupName=="backup-notice"?3:std::stoi(setupName.substr(7)));m->backupNotice="IMPORTED / STOPPED";m->backupNoticeUntil=setupName=="backup-notice"?system::getTime()+5:0;}
         if(test.page==Metropolix::BACKUP_PRESET_PAGE){m->backupPresetCursor.store(setupName=="backup-presets-all"?0:setupName=="backup-presets-filled"?1:setupName=="backup-presets-bank-1"?2:9);m->backupNotice="PRESETS SAVED";m->backupNoticeUntil=setupName=="backup-presets-notice"?system::getTime()+5:0;}
+        if(setupName=="setup-factory")m->setupCursor.store(7);
+        if(factoryPage(m)){m->factoryCursor.store(setupName.find("factory-clear")==0?1:0);m->factoryConfirmCursor=setupName=="factory-clear-apply"?1:0;m->backupNoticeUntil=0;}
         if(test.page==Metropolix::MIDI_SETUP_PAGE)m->midiSetupCursor.store(std::stoi(setupName.substr(11)));
         if(setupName=="mod-midi-channel")m->modMenuCursor.store(0);
         if(setupName=="mod-midi-cc"){m->modMenuCursor.store(1);m->params[Metropolix::midiModParam(1,Metropolix::MIDI_MOD_CC)].setValue(128);}

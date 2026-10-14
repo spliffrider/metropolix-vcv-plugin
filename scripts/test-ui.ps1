@@ -211,6 +211,18 @@ try {
         }
         Write-Output $reopenCompletion
     }
+    if ($Backup) {
+        $env:METROPOLIX_FACTORY_REOPEN_QA = '1'
+        $arguments[-1] = '"' + (Join-Path $output 'maintenance-disarmed.vcv') + '"'
+        $maintenance = Start-Process -FilePath $RackPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
+        $elapsed.Restart()
+        while (!$maintenance.WaitForExit(1000)) {
+            if ($elapsed.Elapsed.TotalSeconds -gt 45) { Stop-Process -Id $maintenance.Id; throw 'Maintenance reopen test timed out.' }
+        }
+        $report = Get-Content -LiteralPath (Join-Path $output 'report.txt') -Raw
+        if ($maintenance.ExitCode -ne 0 -or $report.Contains('FAIL') -or !$report.Contains('PASS FACTORY REOPEN QA COMPLETE')) { throw 'Saved maintenance confirmation did not reopen safely.' }
+        Write-Output 'PASS FACTORY REOPEN QA COMPLETE'
+    }
     if ($LoopyAudio -and !$report.Contains('PASS LOOPY PERFORMANCE COMPLETE')) { throw 'Loopy audio demonstration did not complete.' }
     if ($Aux -and !$report.Contains('PASS AUX WIRING COMPLETE')) { throw 'AUX wiring verification did not finish.' }
     if ($PresetAudio -and !$report.Contains('PASS PRESET PERFORMANCE COMPLETE')) { throw 'Preset transitions did not finish.' }
@@ -253,6 +265,7 @@ try {
     Remove-Item Env:METROPOLIX_QA_DIR -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_AUDIO_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_MUSICAL_QA -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_FACTORY_REOPEN_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_VARIATIONS_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_MOD_QA -ErrorAction SilentlyContinue
     Remove-Item Env:METROPOLIX_DISPLAY_QA -ErrorAction SilentlyContinue
