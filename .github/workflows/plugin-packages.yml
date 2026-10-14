@@ -70,7 +70,7 @@ jobs:
           ./build/tests/rack-native | tee dist/native-tests.txt
           extension=so
           if [ "$RUNNER_OS" = macOS ]; then extension=dylib; fi
-          ./build/tests/plugin-load "$PWD/dist/MetropolixLab/plugin.$extension" | tee dist/production-load.txt
+          ./build/tests/plugin-load "$PWD/dist/MetropolixLab/plugin.$extension" "$PWD/examples/Backup-example.json" | tee dist/production-load.txt
           grep -q 'PASS: Rack library integration' dist/native-tests.txt
           grep -q 'PASS: stripped production binary' dist/production-load.txt
           version=$(jq -r .version plugin.json)
@@ -95,6 +95,7 @@ jobs:
             dist/package-audit-*.json
             dist/native-tests.txt
             dist/production-load.txt
+            build/tests/production-restore-*.json
             tmp/linux-*-qa/report.txt
             tmp/linux-*-qa/*.txt
             tmp/linux-*-qa/*.vcv

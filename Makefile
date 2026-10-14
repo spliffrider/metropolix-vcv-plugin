@@ -18,6 +18,7 @@ DISTRIBUTABLES += docs/UI-SETUP.md
 DISTRIBUTABLES += docs/PRESET-PICKUP.md
 DISTRIBUTABLES += docs/MIDI.md docs/MX.md docs/BACKUPS.md docs/UI-FIDELITY.md docs/PLATFORMS.md
 DISTRIBUTABLES += docs/MAINTENANCE.md
+DISTRIBUTABLES += docs/RUNTIME-VALIDATION.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 include $(RACK_DIR)/arch.mk
 ifdef ARCH_WIN
@@ -95,11 +96,14 @@ build/ui-test/plugin.dll: $(SOURCES) tests/RackCapture.cpp $(wildcard src/*.hpp 
 
 # Native platform CI uses the same host/persistence tests and loads the actual
 # stripped production binary. It does not require a display or audio device.
-.PHONY: native-test-build
-native-test-build:
+.PHONY: native-test-build production-test-build
+native-test-build: production-test-build
 	@mkdir -p build/tests
 	$(CXX) $(CXXFLAGS) -O2 tests/RackIntegrationTests.cpp -L$(RACK_DIR) -lRack -o build/tests/rack-native
-	$(CXX) $(CXXFLAGS) -O2 tests/PluginLoadTests.cpp -L$(RACK_DIR) -lRack $(if $(ARCH_LIN),-ldl,) -o build/tests/plugin-load
+
+production-test-build:
+	@mkdir -p build/tests
+	$(CXX) $(filter-out -municode,$(CXXFLAGS)) -O2 tests/PluginLoadTests.cpp -L$(RACK_DIR) -lRack $(if $(ARCH_LIN),-ldl,) $(if $(ARCH_WIN),-static-libstdc++ -static-libgcc,) -o build/tests/plugin-load$(if $(ARCH_WIN),.exe,)
 
 .PHONY: native-ui-test-build
 native-ui-test-build:

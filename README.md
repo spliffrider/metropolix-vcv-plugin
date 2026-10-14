@@ -4,11 +4,13 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.30.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.31.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MetropolixLab-2.30.0-mac-arm64.vcvplugin)**
+**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.31.0/MetropolixLab-2.31.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.31.0/MetropolixLab-2.31.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.31.0/MetropolixLab-2.31.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.31.0/MetropolixLab-2.31.0-mac-arm64.vcvplugin)**
 
-**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.30.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.30.0)**
+**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.31.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.31.0)**
+
+2.31.0 adds [production runtime stress checks](docs/RUNTIME-VALIDATION.md) on all four platforms: sample-rate changes, repeated restores, fresh instances and MX reconnects. Patch IDs and musical formats remain unchanged.
 
 2.30.0 adds [Factory Reset and Clear All Presets](docs/MAINTENANCE.md), with confirmation, one-step undo and safe patch reopening. All four platform packages remain available. The 770 parameter IDs and musical snapshot format stay fixed; older backups still import.
 
@@ -188,7 +190,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the intact file in the **plugin folder for your OS/CPU** listed in [Platform packages](docs/PLATFORMS.md), and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.30.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.31.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1
@@ -270,6 +272,7 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\setup-windows.ps1
 .\scripts\build.ps1 -Test -Package
 .\scripts\test-rack.ps1
+.\scripts\test-production.ps1
 .\scripts\test-ui.ps1
 .\scripts\test-ui.ps1 -Aux
 .\scripts\test-ui.ps1 -Tracks

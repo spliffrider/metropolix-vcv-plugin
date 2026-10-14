@@ -1,5 +1,5 @@
 #include "FactoryRestore.hpp"
-std::string labVersion(){return pluginInstance?pluginInstance->version:"2.30.0";}
+std::string labVersion(){return pluginInstance?pluginInstance->version:"Dev";}
 bool factoryPage(Metropolix* m){return m && (m->uiPage.load()==Metropolix::FACTORY_PAGE || m->uiPage.load()==Metropolix::FACTORY_CONFIRM_PAGE);}
 const char* factoryName(int action){return action==0?"Factory Reset":"Clear All Presets";}
 void openFactory(Metropolix* m){if(!m)return;m->cancelDraft();m->tunerActive.store(false);m->uiPage.store(Metropolix::FACTORY_PAGE);m->uiField.store(0);m->uiAlt.store(false);m->uiChooseFunction.store(false);m->setupCursor.store(7);m->factoryConfirmCursor=0;}

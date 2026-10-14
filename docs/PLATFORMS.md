@@ -1,4 +1,4 @@
-# Platform packages — 2.30.0
+# Platform packages — 2.31.0
 
 Choose the `.vcvplugin` matching the computer and the Rack application you run:
 
@@ -26,8 +26,10 @@ audio/MIDI device choices remain local and may need reselection.
 Windows has the existing local Rack widget, renderer, persistence, CV/MIDI and
 audio-path coverage. Linux x64, Mac x64 and Mac ARM64 jobs run the full native
 engine/persistence/file/MIDI/MX tests against their SDK libraries. A separate
-host loads the actual stripped production binary, checks both public models,
-runs finite gate output and roundtrips saved state. Package audits compare
+host loads the actual stripped production binary and exercises both public
+models for six virtual minutes, with 55,440 edits, exact state restores, fresh
+instances, three sample rates and MX reconnects. Windows runs this same host
+locally against the installed Rack library. See [runtime checks](RUNTIME-VALIDATION.md). Package audits compare
 included files with the source, check binary architecture and exclude QA code.
 SDK downloads have fixed versions and verified SHA-256 hashes.
 
