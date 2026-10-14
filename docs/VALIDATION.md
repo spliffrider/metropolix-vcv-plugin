@@ -1,4 +1,54 @@
-# Validation and fidelity status — 2.44.0
+# Validation and fidelity status — 2.45.0
+
+## 2.45 Long-press reset history
+
+Actual Rack callbacks reproduced two failures. A GATE Scale write during the
+encoder hold was undone to the earlier mouse-down value. An A source changed
+from its initial/default zero to another source during the hold, then reset
+to zero, created no reset history because the old drag snapshot equalled the
+reset result. The long action now captures its current scope and raw values
+immediately before firing and records its grouped action then. Its release
+finishes the native knob with no bound quantity, preventing a second action
+based on Rack's earlier drag origin. Remaining movement is consumed because
+the action may have opened a different page.
+
+The existing Pending application suite includes reset-history callbacks for
+track and MOD timing/order, paired PROB/ACCUM, Ratchets, ALT Slide/Skip, CV and
+overrides, Gate/Slide/Swing/TYPE, AUX/CTRL/MOD routing, A/B, CLK/MX, UI/global/
+MIDI setup and track menus. It checks current raw origins, immediate one-action
+Undo/Redo, unrelated parameters, no-ops, 0.9/1.1-second boundaries, repeated
+refresh, subsequent external writes, late movement/release and cursor cleanup.
+Separate probes cover dormant negative Unipolar CV, changed track/stage/ALT
+scope, an initially CTRL-owned gate with an unowned scale reset, and SETUP hold
+opening the chain page. Linux runs these in its existing Pending group; the
+number of Linux application groups remains eighteen.
+
+The probe frame pauses processing for exact raw/history receipts and restores
+the isolated QA history before the original confirmation/save/reopen fixture.
+This tests application callbacks rather than OS mouse/focus events. Saved
+IDs/schema/musical formats remain 787/33/11/522. Physical comparisons remain
+unverified; this Undo behavior is a Rack desktop addition to the manual's
+page-specific holds, not a claim about hardware Undo or external automation.
+
+Windows Pending passes all 699 reset-family holds plus the focused conflict,
+scope, dormant-CV, partial CTRL and page-opening probes; original confirmation
+editing and save/reopen also pass. CtrlEditor, Chains, ScaleCopy, Timing,
+StagePair, StagePattern, StageCv, Scales, Swing, Overrides, Workflows,
+SetupOptions, Outputs, Fidelity (including one-action long EXIT Sync), Polish,
+all 181 Display states and Order shortcuts pass. ChainAudio passes its real
+twelve-second 48 kHz stereo/CV recording. ScaleCopy retains all 14,900 factory/
+user clipboard combinations; Chains retains all insertion/delete positions
+through 32 links and saved-chain preservation. These are callback checks and
+finite recordings, not a physical comparison or continuous human playtest.
+
+Native integration and the stripped production host pass 22,624,609 frames,
+339,369,135 output checks, 56,664 edits, 145 restores, 144 fresh instances,
+12 initializes and 145 reciprocal links over 361.083 virtual seconds. Local
+production wall time was 13.4058 seconds. Linux requires the expanded Pending
+and its seventeen other application groups; every platform requires native
+integration and the production host. The expanded fixture initially expected
+B to reset to Track 2 CV; that assertion was corrected to the manual's First
+Pulse / Track 1 (packed source 14). Production B routing was already correct.
 
 ## 2.44 Live CTRL ownership
 

@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.44.0
+# Hardware panel and desktop interaction — 2.45.0
 
 User-scale note editing requires [SCALE to be selected](SCALES.md) before holding the encoder; the desktop note-editor menu still opens directly from ROOT.
 

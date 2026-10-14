@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.41.0
+# UI setup, confirmation and external clock input — 2.45.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,26 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Long-press resets and Undo
+
+Hold the encoder for more than one second to reset the current page or item
+where that page offers a reset. A whole-page reset still skips CTRL-owned
+fields. Reset behavior follows each page: for example GATE resets Length and
+Scale together, PROB/ACCUM resets amount and target/trigger, and A/B restores
+that output's default source. SCALE's hold opens its user editor instead.
+
+The reset records one Rack Undo action **when it fires**, using the latest
+applied raw values and current track/stage/ALT scope. Changes made by another
+control or automation during the hold are therefore the values restored by
+Undo. A reset that changes nothing adds no history. Dormant signed CV values
+also restore exactly, even when a Unipolar display shows zero.
+
+After a hold fires, its remaining movement and release are consumed. Release
+before editing again, especially if the hold opened a different page. Later
+external writes are not added to the reset's history. Long actions that already
+record their own storage/chain/pickup history keep that history. Ordinary drags,
+short presses and confirmation previews retain their existing workflows.
 
 ## Pending edits and desktop value actions
 

@@ -288,7 +288,15 @@ struct HardwareControl : ValueKnob {
         if(metroModule && metroModule->scaleEditing.load() && !metro::userScale(metroModule->integer(Metropolix::SCALE)))metroModule->scaleEditing.store(false);
         bind(); ValueKnob::step();
         if(tip) { tip->text=tooltipText(); tip->box.pos=getAbsoluteOffset(box.size); }
-        if(dragging && !ctrlTakeover && moved<3 && !longFired && longAction && (!longEnabled || longEnabled()) && system::getTime()-heldSince>=longSeconds) {longFired=true;longAction();}
+        if(dragging && !ctrlTakeover && moved<3 && !longFired && longAction && (!longEnabled || longEnabled()) && system::getTime()-heldSince>=longSeconds) {
+            // A hold acts now, so its undo origin is the latest applied state,
+            // including edits made by another control while the timer ran.
+            auto ids=groupedParams?groupedParams():std::vector<int>{};
+            if(ids.empty() && getParamQuantity())ids.push_back(paramId);
+            std::vector<float> before;for(int id:ids)before.push_back(metroModule->params[id].getValue());
+            longFired=true;longAction();
+            if(!ids.empty())parameterHistory(metroModule,ids,before,"long press "+name);
+        }
         if(dragging && navigating && moved>0 && navigationValue && settings::tooltips) {
             if(!tip){auto* t=new HardwareTooltip;t->owner=this;tip=t;APP->scene->addChild(t);}
             tip->text=navigationValue();
@@ -323,6 +331,9 @@ struct HardwareControl : ValueKnob {
         if(pickupGestureParam>=0){pickupPhysicalBefore=metroModule->params[paramId].getValue();pickupBefore=pickupAfter=uiPickup(metroModule,paramId);}
     }
     void onDragMove(const event::DragMove& e) override {
+        // Once the hold fires, consume the rest of this press. The action can
+        // open another page, whose values need a fresh binding and gesture.
+        if(longFired)return;
         moved+=e.mouseDelta.norm();
         if(blockCtrlGesture())return;
         if(confirming && getParamQuantity())turnDraft(metroModule,paramId,e.mouseDelta.y,navigationDelta,APP->window->getMods() & GLFW_MOD_CONTROL);
@@ -367,6 +378,13 @@ struct HardwareControl : ValueKnob {
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        if(longFired){
+            // The hold already recorded its own action at firing time. Finish
+            // Rack's cursor/knob state without attributing later writes to it.
+            auto* boundModule=module;module=nullptr;ValueKnob::onDragEnd(e);module=boundModule;
+            gestureIds.clear();gestureBefore.clear();pickupGestureParam=-1;
+            if(releaseAction)releaseAction();dragging=false;pressMods=0;ctrlTakeover=false;clearTip();return;
+        }
         if(blockCtrlGesture() && (!longFired || ctrlTakeover)){
             ValueKnob::onDragEnd(e);gestureIds.clear();gestureBefore.clear();pickupGestureParam=-1;
             invalidateDraft(metroModule);
