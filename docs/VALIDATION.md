@@ -1,4 +1,26 @@
-# Validation and fidelity status — 2.36.0
+# Validation and fidelity status — 2.37.0
+
+## 2.37 SCALE copy/paste
+
+Printed page 165 defines short ALT + SCALE copy and long ALT + SCALE paste to
+a user slot. Dedicated actual Windows Rack callbacks pass all 149 displayed
+source definitions against all 100 user destinations: 14,900 paired pastes,
+with an immutable mask/root snapshot, exact one-action undo/redo and unrelated
+parameters intact. Tests also cover threshold/no-op, empty/factory rejection,
+latched/held panel ALT, keyboard-modified Button events, direct menus and
+disabled states, pending-preview cancellation, Initialize, and save/reopen.
+The scale clipboard clears on Initialize/reopen and remains separate from
+stage/lane copy. Native engine/library integration passes. Linux package CI
+runs the same copy/render/reopen suite alongside the existing platform checks.
+Scales, Workflows, Timing, StagePair, Order, Storage, Group, Fidelity, Polish
+and all 181 display states pass on Windows.
+
+Saved IDs and formats stay 787 parameters, schema33 and format11/522. The
+clipboard copies notes and root; page 67 stores both in user scales, while
+page 165 does not explicitly enumerate the fields copied. Root inclusion is
+documented for hardware comparison. Keyboard checks inject Rack's real Button
+modifier events; OS keyboard/focus/menu behavior remains a human playtest.
+See [Scale copying](SCALES.md#copy-and-paste-a-scale).
 
 ## 2.36 paired PROB/ACCUM gestures
 
@@ -725,7 +747,10 @@ Reproduce with `scripts/test-ui.ps1 -Accumulator` after closing Rack.
 
 ## Next feature work
 
-The routing, ALT workflows, Loopy and MIDI listed in the latest sections now have implementation and host tests. Remaining work includes MX, documented software backup/interchange, secondary UI details and physical hardware/DAW comparisons. Hardware SysEx compatibility requires a verified payload specification.
+Routing, ALT workflows, Loopy, MIDI, MX and portable JSON backups now have
+implementation and host tests. Remaining work includes auditing secondary
+menu/display gestures against the manual and physical hardware/DAW comparisons.
+Hardware SysEx compatibility requires a verified payload specification.
 
 ## Reproduce
 

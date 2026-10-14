@@ -1,9 +1,10 @@
-# Feature status — 2.36.0 public alpha
+# Feature status — 2.37.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.37.0 adds [SCALE copy/paste](SCALES.md), including user roots, panel/keyboard Alt and paired undo.
 2.36.0 adds [PROB/ACCUM paired and ALT gestures](STAGE-PAIRS.md), reset, confirmation and exact undo.
 2.35.0 adds [LEN/DIV shortcuts](TIMING-SHORTCUTS.md), field-preserving holds and whole-screen encoder resets.
 2.34.0 adds [independent MOD group mute](MOD-GROUP-MUTE.md), preserving individual lane choices and stored group state.

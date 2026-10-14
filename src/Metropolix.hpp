@@ -327,8 +327,10 @@ struct Metropolix : Module {
     bool workflowCopyUsed=false, workflowLaneCopy=false, workflowEditUsed=false;
     unsigned workflowStageHeld=0;
     std::string workflowMessage;double workflowUntil=0;
+    unsigned scaleClipboardMask=0;int scaleClipboardRoot=0;
+    bool scaleCopyGesture=false;
     metro::RandomSource workflowRandomSource;
-    void clearWorkflows(){workflowBaseline.clear();workflowClipboard.clear();workflowClipKind=0;workflowClipTag=-1;workflowStageHeld=0;workflowCopyUsed=workflowLaneCopy=workflowEditUsed=false;workflowMessage.clear();workflowUntil=0;}
+    void clearWorkflows(){workflowBaseline.clear();workflowClipboard.clear();workflowClipKind=0;workflowClipTag=-1;workflowStageHeld=0;workflowCopyUsed=workflowLaneCopy=workflowEditUsed=false;workflowMessage.clear();workflowUntil=0;scaleClipboardMask=0;scaleClipboardRoot=0;scaleCopyGesture=false;}
     int uiDraftParam=-1;float uiDraftValue=0,uiDraftBase=0,uiDraftOrigin=0;
     std::vector<int> uiDraftIds;std::vector<float> uiDraftBefore;
     std::atomic<int> uiSetupCursor{0},modMenuCursor{0},midiSetupCursor{0};
