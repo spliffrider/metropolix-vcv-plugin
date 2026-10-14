@@ -1,4 +1,27 @@
-# Validation and fidelity status — 2.29.0
+# Validation and fidelity status — 2.30.0
+
+## Maintenance — 2.30.0
+
+Native host tests check every setting against its plugin default on Factory
+Reset, all 64 empty slots on Clear, preservation of presets/working and saved
+chain links/local devices/geometry, cancellation of pending loads, stopped
+transport, held Run inhibition and exact before/after undo receipts. Invalid
+actions leave the entire module unchanged. Old schema29 and30 full/settings
+backups validate and default newly added cursors. Confirmation choices never
+serialize; even an imported confirmation page reopens at the menu.
+
+Actual Rack callbacks exercise Version / Factory navigation, hover, drag/clamp,
+Cancel and EXIT with no history change, confirmed reset/clear, one-action undo/
+redo and cable/identity preservation. A third actual Rack launch opens a patch
+saved with Apply selected and verifies that it is disarmed, presets remain and
+a default click cancels. Five new OLED cases extend coverage to 177 states.
+The existing Backup/Fidelity/Polish/preset/Setup regressions remain applicable;
+Linux runs the same maintenance and safe-reopen cases within the Backup group.
+
+No parameter IDs or musical snapshot format changes. Schema31 adds a menu
+cursor/page and retains schema29/30 backup compatibility. These are plugin
+defaults; no claim is made about hardware output calibration, physical slider
+positions or undocumented chain maintenance behavior. See [Maintenance](MAINTENANCE.md).
 
 ## Selective backups — 2.29.0
 

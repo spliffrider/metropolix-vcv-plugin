@@ -53,6 +53,8 @@ marker={'Fidelity':'FIDELITY UI','Backup':'BACKUP UI','Polish':'UI POLISH','Disp
 assert 'PASS '+marker+' QA COMPLETE' in report,report
 if args.mode in ['Fidelity','Backup']:
     env[f'METROPOLIX_{args.mode.upper()}_REOPEN_QA']='1';report=run(output/f'{args.mode.lower()}-roundtrip.vcv','reopen');assert f'PASS {args.mode.upper()} REOPEN QA COMPLETE' in report,report
+if args.mode=='Backup':
+    env['METROPOLIX_FACTORY_REOPEN_QA']='1';report=run(output/'maintenance-disarmed.vcv','maintenance-reopen');assert 'PASS FACTORY REOPEN QA COMPLETE' in report,report
 if args.mode=='MxAudio':assert 'PASS MX AUDIO SIGNALS' in report,report
 captures=list(output.glob('*.png'));assert captures,'No rendered scene captures'
 for capture in captures:

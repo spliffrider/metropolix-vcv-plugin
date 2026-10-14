@@ -13,12 +13,13 @@ inline bool integer(json_t* j,json_int_t lo,json_int_t hi){return json_is_intege
 struct StateField {const char* name;int low,high;bool boolean;};
 inline const std::vector<StateField>& stateFields(){
     static const std::vector<StateField> fields={
-        {"schemaVersion",29,30,false},{"midiSetupCursor",0,5,false},{"backupCursor",0,3,false},
+        {"schemaVersion",29,31,false},{"midiSetupCursor",0,5,false},{"backupCursor",0,3,false},
         {"backupPresetCursor",0,9,false},
+        {"factoryCursor",0,1,false},
         {"uiSetupCursor",0,7,false},{"modMenuCursor",0,3,false},{"presetBank",0,7,false},
-        {"selectedCtrl",0,1,false},{"trackMenuCursor",0,15,false},{"setupCursor",0,6,false},
+        {"selectedCtrl",0,1,false},{"trackMenuCursor",0,15,false},{"setupCursor",0,7,false},
         {"globalCursor",0,5,false},{"selectedAux",0,2,false},{"uiHome",0,3,false},
-        {"uiStageDetail",0,1,true},{"uiPage",0,33,false},{"uiField",0,7,false},
+        {"uiStageDetail",0,1,true},{"uiPage",0,35,false},{"uiField",0,7,false},
         {"uiMod",0,1,true},{"uiEdit",0,1,true},{"uiChooseFunction",0,1,true},
         {"selectedLane",0,7,false},{"selectedTrack",0,1,false},{"selectedStage",0,7,false},{"selectedRow",0,7,false}
     };return fields;
@@ -59,14 +60,14 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
         auto* parameters=json_object_get(document,"params");if(!json_is_array(parameters) || json_array_size(parameters)!=Metropolix::NUM_PARAMS)return fail("Incomplete parameter settings.");
         std::array<bool,Metropolix::NUM_PARAMS> seen{};
         for(size_t i=0;i<json_array_size(parameters);++i){auto* p=json_array_get(parameters,i);auto* id=json_object_get(p,"id");if(!integer(id,0,Metropolix::NUM_PARAMS-1))return fail("Invalid parameter ID.");int n=int(json_integer_value(id));if(seen[n] || !value(m,n,json_object_get(p,"value")))return fail("Duplicate or invalid parameter value.");seen[n]=true;}
-        auto* state=json_object_get(document,"state");if(!json_is_object(state) || !integer(json_object_get(state,"schemaVersion"),29,30))return fail("Unsupported settings version.");
-        bool legacy=json_integer_value(json_object_get(state,"schemaVersion"))==29;
-        if(json_object_size(state)!=stateFields().size()+1-(legacy?1:0))return fail("Unexpected or missing settings fields.");
+        auto* state=json_object_get(document,"state");if(!json_is_object(state) || !integer(json_object_get(state,"schemaVersion"),29,31))return fail("Unsupported settings version.");
+        int schema=int(json_integer_value(json_object_get(state,"schemaVersion")));
+        if(json_object_size(state)!=stateFields().size()+1-(schema<30?1:0)-(schema<31?1:0))return fail("Unexpected or missing settings fields.");
         for(const auto& field:stateFields()){
-            if(legacy && std::strcmp(field.name,"backupPresetCursor")==0)continue;
+            if((schema<30 && std::strcmp(field.name,"backupPresetCursor")==0) || (schema<31 && std::strcmp(field.name,"factoryCursor")==0))continue;
             auto* v=json_object_get(state,field.name);if(field.boolean?!json_is_boolean(v):!integer(v,field.low,field.high))return fail("Invalid settings state.");
         }
-        if(legacy && json_integer_value(json_object_get(state,"uiPage"))>32)return fail("Invalid legacy settings page.");
+        if((schema<31 && json_integer_value(json_object_get(state,"setupCursor"))>6) || json_integer_value(json_object_get(state,"uiPage"))>(schema<30?32:schema<31?33:35))return fail("Invalid legacy settings page.");
         {
             auto* v=json_object_get(state,"pickup");
                 if(!json_is_array(v) || json_array_size(v)!=10)return fail("Invalid pickup state.");
