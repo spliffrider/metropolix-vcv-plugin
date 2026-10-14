@@ -21,5 +21,5 @@ if(qaFrame==6){
 if(qaFrame==9){check(m->integer(Metropolix::trackParam(0,Metropolix::TRANSPOSE))==12,"Setup Init recalls the configured custom preset through the real engine queue");APP->history->undo();}
 if(qaFrame==12){check(m->integer(Metropolix::trackParam(0,Metropolix::TRANSPOSE))==33,"Init native undo restores prior pattern");APP->history->redo();}
 if(qaFrame==15){check(m->integer(Metropolix::trackParam(0,Metropolix::TRANSPOSE))==12,"Init native redo recalls selected pattern");screenPage(m,Metropolix::LENGTH_PAGE);m->workflowUntil=0;APP->patch->save(dir+"/workflow-roundtrip.vcv");}
-if(qaFrame==17)APP->window->screenshot(dir+"/editing-workflows.png");
+if(qaFrame==17)metroqa::screenshot(dir+"/editing-workflows.png");
 if(qaFrame==20){check(!qaFailed,"WORKFLOW UI QA COMPLETE");APP->window->close();}

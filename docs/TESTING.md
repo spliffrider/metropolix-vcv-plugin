@@ -1,8 +1,10 @@
-# Metropolix Lab 2.27.0 — Windows alpha quick start
+# Metropolix Lab 2.28.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
+
+2.28.0 adds [Linux and Mac packages](PLATFORMS.md), native loading tests and actual Linux Rack display/audio coverage.
 
 2.27.0 refines [panel interaction and display](UI-FIDELITY.md): pending readouts, MOD units, long EXIT Sync and attached MX resizing.
 
@@ -16,26 +18,32 @@ welcome. See Known limitations for remaining fidelity checks.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/MetropolixLab-2.27.0-win-x64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/MX-performance.vcv)
-- [Example backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/Backup-example.json)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-win-x64.vcvplugin)
+- [Linux x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-lin-x64.vcvplugin)
+- [Intel Mac plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-mac-x64.vcvplugin)
+- [Apple Silicon plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MetropolixLab-2.28.0-mac-arm64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/MX-performance.vcv)
+- [Example backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.28.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.27.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.28.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
 
-Only **Windows x64** has a downloadable plugin in this release. Tested with
-**VCV Rack Free 2.6.6** and **VCV Free 2.6.4**. Other Rack 2 versions and Rack Pro
-are unverified; macOS/Linux plugin binaries are not provided. The cloud C++
-engine tests on Linux do not establish Linux plugin compatibility.
+Choose the package matching your OS **and Rack's CPU architecture**. On Apple
+Silicon, Intel Rack under Rosetta uses `mac-x64`; native Rack uses `mac-arm64`.
+Windows and Linux have actual Rack Free 2.6.6 rendering/audio-path checks.
+Both Mac packages pass native engine, persistence and production loading tests;
+a human Mac GUI/audio playtest, other Rack versions and Rack Pro remain open.
+See [Platform packages](PLATFORMS.md) for precise coverage.
 
 ## Install
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.27.0-win-x64.vcvplugin` into the user folder's
-   **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
+3. Copy the matching `.vcvplugin` into **`plugins-win-x64`**, **`plugins-lin-x64`**,
+   **`plugins-mac-x64`** or **`plugins-mac-arm64`** inside that user folder.
+   Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
 This follows the [official third-party plugin installation procedure](https://vcvrack.com/manual/Installing#installing-plugins-not-available-on-the-vcv-library).

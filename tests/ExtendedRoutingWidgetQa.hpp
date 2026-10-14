@@ -10,5 +10,5 @@ if(qaFrame==6){
     for(int lane=0;lane<8;++lane)m->params[M::modParam(lane,M::MOD_DESTINATION)].setValue(31+lane);
     m->params[M::auxParam(0,M::AUX_DESTINATION)].setValue(38);m->putPreset(0,m->capturePreset());m->uiMod.store(false);m->selectedAux.store(0);m->uiPage.store(M::AUX_PAGE);m->uiField.store(0);APP->patch->save(dir+"/extended-routing-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/extended-routing-controls.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/extended-routing-controls.png");
 if(qaFrame==12){check(!qaFailed,"EXTENDED ROUTING UI QA COMPLETE");APP->window->close();}

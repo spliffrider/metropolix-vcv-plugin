@@ -35,7 +35,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y jq zstd libglu1-mesa libxrandr2 libxinerama1 libxcursor1 libasound2 libgtk2.0-0 libgtk-3-0 libjack-jackd2-0 libpulse0 xvfb
+          sudo apt-get install -y jq zstd libglu1-mesa libxrandr2 libxinerama1 libxcursor1 libasound2 libgtk2.0-0 libgtk-3-0 libjack-jackd2-0 libpulse0 xvfb python3-pil
       - name: Mac dependencies
         if: runner.os == 'macOS'
         run: brew install jq zstd
@@ -73,7 +73,7 @@ jobs:
           unzip -q "$RUNNER_TEMP/rack.zip" -d "$RUNNER_TEMP"
           make native-ui-test-build
           for mode in Fidelity Backup Polish Display MxAudio MidiAudio; do
-            xvfb-run -a -s '-screen 0 1600x1000x24' python3 scripts/test-ui-linux.py --rack "$RUNNER_TEMP/Rack2Free/Rack" --mode "$mode"
+            xvfb-run -a -s '-screen 0 1600x1000x24' /usr/bin/python3 scripts/test-ui-linux.py --rack "$RUNNER_TEMP/Rack2Free/Rack" --mode "$mode"
           done
       - name: Save verified package and evidence
         if: always()
@@ -86,6 +86,9 @@ jobs:
             dist/native-tests.txt
             dist/production-load.txt
             tmp/linux-*-qa/report.txt
+            tmp/linux-*-qa/*.txt
+            tmp/linux-*-qa/*.vcv
+            tmp/linux-*-qa/*.csv
             tmp/linux-*-qa/*.pgm
             tmp/linux-*-qa/*.png
             tmp/linux-*-qa/*.wav

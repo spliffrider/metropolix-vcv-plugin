@@ -14,7 +14,7 @@ void MetropolixWidget::videoStep() {
     // screenshot() reads the front buffer: it contains the previous UI step.
     if (previousSample - lastCaptured >= 2400 || shot == 0) {
         std::string file = string::f("frame-%05d.png", shot++);
-        APP->window->screenshot(std::string(directory) + "/" + file);
+        metroqa::screenshot(std::string(directory) + "/" + file);
         timeline << file << ',' << previousSample / 48000.0 << ',' << previousWide << '\n';
         timeline.flush();
         lastCaptured = previousSample;

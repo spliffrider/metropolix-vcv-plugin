@@ -54,11 +54,24 @@ The repository retains the panel reference image, UI assets, source attribution,
 demo patches, and generated example audio. GitHub stores the source history;
 keep local backups of personal patches separately.
 
-GitHub Actions runs the twenty-five portable C++ engine suites on pushes and pull
-requests. It does not run Rack, validate the Windows DLL, or exercise the UI.
-Run the Windows build, Rack integration, and applicable UI/audio checks from
-README for changes to plugin behavior or rendering. Test DLLs must never be
-installed or published as production plugins.
+GitHub Actions runs the twenty-five portable C++ suites plus native Linux x64,
+Intel Mac and Apple Silicon package jobs on pushes and pull requests. Native jobs
+run engine/persistence/file/MIDI/MX tests against the SDK, load the stripped
+production plugin, and audit package contents/architecture. Linux additionally
+runs Rack Free 2.6.6 under Xvfb for real widget callbacks, 167 OLED captures,
+save/reopen and MX/MIDI audio paths. Workflow artifacts retain logs and captures.
+
+Windows production builds and applicable Rack UI/audio tests still run locally
+using the commands in README. Keep QA libraries confined to the isolated test
+profiles; never install or publish them as production plugins. Platform coverage
+and the remaining Mac playtest are documented in [Platform packages](PLATFORMS.md).
+
+For a native Unix build, unpack the matching official SDK and run
+`make RACK_DIR=/absolute/path/to/Rack-SDK dist native-test-build`.
+The workflow records pinned SDK hashes and the library environment needed by the
+test hosts. For Linux app tests, also build `native-ui-test-build` and use
+`scripts/test-ui-linux.py --rack /absolute/path/to/Rack2Free/Rack --mode Fidelity`
+under Xvfb. All fixtures/profiles stay inside this checkout's ignored `tmp/`.
 
 For slider/readout/light/OLED changes, run `scripts/test-ui.ps1 -Polish` and
 `python scripts/inspect-ui-polish.py` (Pillow required), then inspect

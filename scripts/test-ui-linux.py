@@ -1,6 +1,7 @@
 """Run actual Rack widget/renderer/audio callbacks in an isolated Linux profile."""
 import argparse,json,os,shutil,subprocess
 from pathlib import Path
+from PIL import Image,ImageChops
 
 p=argparse.ArgumentParser();p.add_argument('--rack',required=True,type=Path)
 p.add_argument('--mode',required=True,choices=['Fidelity','Backup','Polish','Display','MxAudio','MidiAudio'])
@@ -39,11 +40,13 @@ def run(path,name):
     previous=profile/'log.txt'
     if previous.exists():shutil.move(str(previous),str(output/f'previous-{name}.log'))
     with (output/f'console-{name}.log').open('w') as log:
-        result=subprocess.run([str(rack),'-u',str(profile),'-s',str(rack.parent),str(path)],env=env,cwd=rack.parent,stdout=log,stderr=subprocess.STDOUT,timeout=120)
+        try:
+            result=subprocess.run([str(rack),'-u',str(profile),'-s',str(rack.parent),str(path)],env=env,cwd=rack.parent,stdout=log,stderr=subprocess.STDOUT,timeout=120)
+        finally:
+            if previous.exists():shutil.copy2(previous,output/f'rack-{name}.log')
     if result.returncode:
         print((output/f'console-{name}.log').read_text()[-6000:]);raise RuntimeError(f'Rack exited {result.returncode}')
     report=(output/'report.txt').read_text();assert 'FAIL' not in report,report
-    shutil.copy2(profile/'log.txt',output/f'rack-{name}.log')
     return report
 report=run(fixture,'initial')
 marker={'Fidelity':'FIDELITY UI','Backup':'BACKUP UI','Polish':'UI POLISH','Display':'DISPLAY','MxAudio':'AUDIO','MidiAudio':'AUDIO'}[args.mode]
@@ -51,4 +54,15 @@ assert 'PASS '+marker+' QA COMPLETE' in report,report
 if args.mode in ['Fidelity','Backup']:
     env[f'METROPOLIX_{args.mode.upper()}_REOPEN_QA']='1';report=run(output/f'{args.mode.lower()}-roundtrip.vcv','reopen');assert f'PASS {args.mode.upper()} REOPEN QA COMPLETE' in report,report
 if args.mode=='MxAudio':assert 'PASS MX AUDIO SIGNALS' in report,report
+captures=list(output.glob('*.png'));assert captures,'No rendered scene captures'
+for capture in captures:
+    frame=Image.open(capture).convert('RGB')
+    assert max(high for low,high in frame.getextrema())>20,f'Blank rendering: {capture}'
+    red,green,blue=frame.split()
+    assert sum(ImageChops.subtract(blue,red).histogram()[21:])>20,f'No blue OLED pixels: {capture}'
+if args.mode=='Polish':
+    off=Image.open(output/'bloom-off.png').convert('RGB').crop((465,100,795,275))
+    on=Image.open(output/'bloom-on.png').convert('RGB').crop((465,100,795,275))
+    assert ImageChops.difference(off,on).getbbox(),'Pitch light Bloom had no rendered effect'
+print('PASS populated real scene/OLED captures:',len(captures))
 print('PASS actual Linux Rack callbacks/render/save/audio:',args.mode)

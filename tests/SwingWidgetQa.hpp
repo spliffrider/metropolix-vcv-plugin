@@ -27,7 +27,7 @@ if(qaFrame==6) {
     click(find("MOD"));click(find("SWING"));check(screenParam(m)<0,"MOD lane cannot acquire its own swing");
     click(find("TRK 1"));click(find("SWING"));
 }
-if(qaFrame==10)APP->window->screenshot(dir+"/swing-panel.png");
+if(qaFrame==10)metroqa::screenshot(dir+"/swing-panel.png");
 if(qaFrame==12) {
     auto* encoder=find("Encoder");press(encoder,GLFW_MOUSE_BUTTON_LEFT);
     widget::EventContext ctx;event::DragStart start;start.context=&ctx;start.button=GLFW_MOUSE_BUTTON_LEFT;encoder->onDragStart(start);
@@ -51,7 +51,7 @@ if(qaFrame==16) {
     m->putPreset(0,m->capturePreset());
     APP->patch->save(dir+"/swing-roundtrip.vcv");
 }
-if(qaFrame==20)APP->window->screenshot(dir+"/swing-ctrl-owned.png");
+if(qaFrame==20)metroqa::screenshot(dir+"/swing-ctrl-owned.png");
 if(qaFrame==24) {
     check(m->getPreset(0).values[Metropolix::presetIndex(Metropolix::swingParam(0))]==64,"UI save captures swing in internal preset");
     check(true,"SWING UI QA COMPLETE");APP->window->close();

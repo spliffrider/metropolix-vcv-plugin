@@ -22,5 +22,5 @@ if(qaFrame==6){
     json_object_set_new(exported.get(),"format",json_integer(999));check(metrobackup::write(dir+"/invalid.json",exported.get(),error),"invalid-version fixture saved");history=APP->history->actionIndex;metrobackup::Json beforeBad(APP->engine->moduleToJson(m));check(!importBackup(m,dir+"/invalid.json",error) && APP->history->actionIndex==history,"invalid import adds no history action");metrobackup::Json afterBad(APP->engine->moduleToJson(m));check(json_equal(beforeBad.get(),afterBad.get()),"invalid import leaves the complete module unchanged");
     openBackup(m);m->backupCursor.store(3);APP->patch->save(dir+"/backup-roundtrip.vcv");
 }
-if(qaFrame==9)APP->window->screenshot(dir+"/backup-files.png");
+if(qaFrame==9)metroqa::screenshot(dir+"/backup-files.png");
 if(qaFrame==12){check(!qaFailed,"BACKUP UI QA COMPLETE");APP->window->close();}

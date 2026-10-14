@@ -16,5 +16,5 @@ if(qaFrame==6){
     m->uiMod.store(false);m->selectedRow.store(M::PROBABILITY);m->selectedTrack.store(0);m->params[M::SHOW_POSITION].setValue(1);m->playStage[0].store(5);auto* display=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));auto on=display->render();m->params[M::SHOW_POSITION].setValue(0);m->playStage[0].store(5);auto off=display->render();check(on.pixels[53][94]>0 && off.pixels[53][94]==0,"Show Pos removes only the live stage cursor from editing diagram");
     m->params[M::CV_OUT_DELAY].setValue(8);m->params[M::EXT_CLOCK_DIV].setValue(6);m->params[M::SCREEN_LEVEL].setValue(2);m->params[M::SHOW_POSITION].setValue(0);m->params[M::RUN_ON_BOOT].setValue(2);m->uiAlt.store(false);m->uiMod.store(false);click(find("AUX X assignment"));drag(find("Encoder"),-66);APP->patch->save(dir+"/setup-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/setup-confirmation-controls.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/setup-confirmation-controls.png");
 if(qaFrame==12){check(!qaFailed,"SETUP UI QA COMPLETE");APP->window->close();}

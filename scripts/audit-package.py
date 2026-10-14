@@ -1,5 +1,5 @@
 """Inspect a Rack package without executing/extracting its contents."""
-import argparse,hashlib,io,json,struct,subprocess,tarfile
+import argparse,hashlib,io,json,re,struct,subprocess,tarfile
 from pathlib import Path
 
 parser=argparse.ArgumentParser()
@@ -22,10 +22,11 @@ with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
             assert archive.extractfile(member).read()==(root/path.relative_to('MetropolixLab')).read_bytes(),member.name
     assert json.load(archive.extractfile('MetropolixLab/plugin.json'))==manifest
     assert [m['slug'] for m in manifest['modules']]==['Metropolix','MX']
-    for required in ['docs/UI-FIDELITY.md','docs/BACKUPS.md','examples/MX-performance.vcv','examples/Backup-example.json']:
+    for required in ['docs/UI-FIDELITY.md','docs/BACKUPS.md','docs/PLATFORMS.md','examples/MX-performance.vcv','examples/Backup-example.json']:
         assert 'MetropolixLab/'+required in names,required
     binary=archive.extractfile(f'MetropolixLab/plugin.{extension}').read()
-    assert b'METROPOLIX_QA_DIR' not in binary and b'METROPOLIX_FIDELITY_UI_QA' not in binary and b'Internal audio test' not in binary
+    assert not re.search(rb'METROPOLIX_[A-Z0-9_]*QA',binary),'QA environment marker in production binary'
+    assert b'Internal audio test' not in binary and b'QA COMPLETE' not in binary,'QA recorder/report in production binary'
     if args.platform=='lin-x64':
         assert binary[:5]==b'\x7fELF\x02' and struct.unpack_from('<H',binary,18)[0]==62,'ELF architecture'
     elif args.platform.startswith('mac-'):

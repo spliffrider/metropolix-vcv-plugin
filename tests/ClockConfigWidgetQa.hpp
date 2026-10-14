@@ -11,5 +11,5 @@ if(qaFrame==6){
     auto* track=find("TRK 1");widget::EventContext ctx;event::DragStart begin;begin.context=&ctx;begin.button=GLFW_MOUSE_BUTTON_LEFT;track->onDragStart(begin);check(m->heldTrackReset.load()==1,"held TRK records forced-reset target");event::DragEnd end;end.context=&ctx;end.button=GLFW_MOUSE_BUTTON_LEFT;track->onDragEnd(end);check(m->heldTrackReset.load()==0,"TRK release clears forced reset target");
     openGlobalSetup(m);m->globalCursor.store(2);m->params[M::TRACK_GLOBAL_RESET_1].setValue(0);m->params[M::RESET_INPUT_MODE].setValue(2);m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/config-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/global-config-controls.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/global-config-controls.png");
 if(qaFrame==12){check(!qaFailed,"CONFIG UI QA COMPLETE");APP->window->close();}

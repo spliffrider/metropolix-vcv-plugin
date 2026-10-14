@@ -13,5 +13,5 @@ if(qaFrame==6){
     check(m->integer(M::trackParam(0,M::TRANSPOSE))==0 && m->integer(M::trackBehaviorParam(0,M::PULSE_SOURCE))==0 && !m->integer(M::stageParam(0,2,M::SKIP)) && m->integer(M::trackParam(1,M::TRANSPOSE))==12 && m->integer(M::PULSES)==7 && APP->history->actionIndex==before+1,"Initialize track resets selected settings/stages, preserves other track/shared switches, one undo");APP->history->undo();check(m->integer(M::trackBehaviorParam(0,M::PULSE_SOURCE))==5 && m->integer(M::stageParam(0,2,M::SKIP))==1,"track initialization restores entire before-state on undo");
     m->trackMenuCursor.store(3);m->params[M::trackBehaviorParam(0,M::PULSE_SOURCE)].setValue(4);m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/track-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/track-menu.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/track-menu.png");
 if(qaFrame==12){check(!qaFailed,"TRACK UI QA COMPLETE");APP->window->close();}

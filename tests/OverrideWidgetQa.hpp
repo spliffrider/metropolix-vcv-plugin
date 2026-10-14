@@ -71,5 +71,5 @@ if(qaFrame==6) {
     check(m->integer(M::stageParam(1,3,M::GATE_OVERRIDE))==-1,"context removal follows inherited length");APP->history->undo();check(m->integer(M::stageParam(1,3,M::GATE_OVERRIDE))==0,"menu removal is undoable");
     m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/override-roundtrip.vcv");
 }
-if(qaFrame==10)APP->window->screenshot(dir+"/override-gate-panel.png");
+if(qaFrame==10)metroqa::screenshot(dir+"/override-gate-panel.png");
 if(qaFrame==14){check(!qaFailed,"OVERRIDE UI QA COMPLETE");APP->window->close();}

@@ -18,5 +18,5 @@ if(qaFrame==6){
     click(find("MOD"));click(find("SLIDE"));click(find("Encoder"));check(m->integer(M::slideTypeParam(0))==1 && m->integer(M::slideTypeParam(1))==2 && screenParam(m)<0,"MOD cannot edit note track slide types");click(find("TRK 2"));click(find("SLIDE"));
     m->putPreset(0,m->capturePreset());APP->patch->save(dir+"/slide-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/slide-acid-display.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/slide-acid-display.png");
 if(qaFrame==12){check(!qaFailed,"SLIDE UI QA COMPLETE");APP->window->close();}

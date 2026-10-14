@@ -12,5 +12,5 @@ if(qaFrame==24){press(slider(),GLFW_MOUSE_BUTTON_RIGHT);auto* item=seek(APP->sce
 if(qaFrame==27){check(!m->waitingPickup(Metropolix::PITCH) && m->panelValue(Metropolix::PITCH)<.75f,"explicit takeover applies current physical pitch");APP->history->undo();}
 if(qaFrame==30){check(m->waitingPickup(Metropolix::PITCH) && m->panelValue(Metropolix::PITCH)==.75f,"takeover undo restores the saved pitch without moving fader");drag(find("CTRL 1"),-1000);}
 if(qaFrame==33){using M=Metropolix;check(!m->waitingPickup(M::ctrlParam(0,M::CTRL_VALUE)) && m->sequencer.settings.controls[0].value>.6f,"CTRL UI gesture releases its memorized position");savePresetSlot(m,1,false,false);check(m->getPreset(1).occupied && m->getPreset(1).values[M::PITCH]==.75f,"actual native bank-save action captures sounding pitch");screenPage(m,M::HOME);m->uiHome.store(2);APP->patch->save(dir+"/pickup-roundtrip.vcv");}
-if(qaFrame==35)APP->window->screenshot(dir+"/pickup-controls.png");
+if(qaFrame==35)metroqa::screenshot(dir+"/pickup-controls.png");
 if(qaFrame==38){check(!qaFailed,"PICKUP UI QA COMPLETE");APP->window->close();}

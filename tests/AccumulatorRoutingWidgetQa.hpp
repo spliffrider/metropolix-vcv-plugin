@@ -12,5 +12,5 @@ if(qaFrame==6){
     for(int d=metro::ModAccumulate;d<=metro::ModAccumReset;++d){int lane=d-metro::ModAccumulate;m->params[M::modParam(lane,M::MOD_DESTINATION)].setValue(d);m->selectedLane.store(lane);m->uiMod.store(true);m->uiPage.store(M::STAGE_PAGE);m->uiStageDetail.store(true);m->selectedStage.store(0);click(find("Stage 1 / SLIDE"));check(m->params[M::modParam(lane,M::MOD_VALUE)].getValue()==5,"accumulator MOD stage click toggles a gate rather than dragging a bipolar value");APP->history->undo();check(m->params[M::modParam(lane,M::MOD_VALUE)].getValue()==0,"MOD gate toggle undoes");}
     m->putPreset(0,m->capturePreset());m->uiMod.store(false);m->uiPage.store(M::CTRL_PAGE);m->selectedCtrl.store(0);APP->patch->save(dir+"/accum-routing-roundtrip.vcv");
 }
-if(qaFrame==8)APP->window->screenshot(dir+"/accum-routing-controls.png");
+if(qaFrame==8)metroqa::screenshot(dir+"/accum-routing-controls.png");
 if(qaFrame==12){check(!qaFailed,"ACCUM ROUTING UI QA COMPLETE");APP->window->close();}

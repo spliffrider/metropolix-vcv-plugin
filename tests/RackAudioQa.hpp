@@ -6,6 +6,7 @@
 #include <vector>
 #include <cmath>
 #include "VideoCaptureState.hpp"
+#include "RackCapture.hpp"
 
 struct RackAudioQa : Module {
     const bool video = std::getenv("METROPOLIX_VIDEO_QA") != nullptr;

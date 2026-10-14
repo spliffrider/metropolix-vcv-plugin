@@ -66,8 +66,8 @@ if(qaFrame==22){
     if(field){field->onDragStart(start);move.mouseDelta=Vec(0,-10);field->onDragMove(move);check(field->adjustmentTip && field->adjustmentTip->text.find("st")!=std::string::npos,"optional MOD drag readout uses destination units");field->onDragEnd(end);APP->history->undo();}
 
 }
-if(qaFrame==24){APP->window->screenshot(dir+"/mx-expanded-units.png");m->params[M::modParam(0,M::MOD_DESTINATION)].setValue(metro::ModTempo);m->params[M::modParam(0,M::MOD_VALUE)].setValue(5);}
-if(qaFrame==26){auto* display=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));OledCanvas c;auto label=display->modValueLabel(c,0,5);check(label.find("BPM")!=std::string::npos && c.width(label)<=40,"maximum BPM OLED label fits without dropping its unit");APP->window->screenshot(dir+"/mx-expanded-tempo.png");m->params[M::modParam(0,M::MOD_DESTINATION)].setValue(metro::ModPitchPre);m->params[M::modParam(0,M::MOD_VALUE)].setValue(1);m->expanded.store(false);}
+if(qaFrame==24){metroqa::screenshot(dir+"/mx-expanded-units.png");m->params[M::modParam(0,M::MOD_DESTINATION)].setValue(metro::ModTempo);m->params[M::modParam(0,M::MOD_VALUE)].setValue(5);}
+if(qaFrame==26){auto* display=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));OledCanvas c;auto label=display->modValueLabel(c,0,5);check(label.find("BPM")!=std::string::npos && c.width(label)<=40,"maximum BPM OLED label fits without dropping its unit");metroqa::screenshot(dir+"/mx-expanded-tempo.png");m->params[M::modParam(0,M::MOD_DESTINATION)].setValue(metro::ModPitchPre);m->params[M::modParam(0,M::MOD_VALUE)].setValue(1);m->expanded.store(false);}
 if(qaFrame==27){
     adjacency("closing optional editor keeps MX attached and main panel anchored");
     m->uiMod.store(false);m->params[M::outputTrackParam(0,M::VELOCITY_SOURCE)].setValue(3);m->params[M::cvTypeParam(0)].setValue(0);screenPage(m,M::CV_TYPE_PAGE);
@@ -76,7 +76,7 @@ if(qaFrame==27){
     auto* display=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));auto pixels=display->render();std::ofstream pgm(dir+"/cv-type-draft.pgm",std::ios::binary);pgm<<"P5\n128 64\n255\n";pgm.write(reinterpret_cast<char*>(pixels.pixels),128*64);
 }
 if(qaFrame==30){
-    APP->window->screenshot(dir+"/cv-type-pending.png");click(find("EXIT"));check(m->integer(M::cvTypeParam(0))==0 && m->uiDraftParam<0,"EXIT cancels CV type preview while retaining effective velocity override");
+    metroqa::screenshot(dir+"/cv-type-pending.png");click(find("EXIT"));check(m->integer(M::cvTypeParam(0))==0 && m->uiDraftParam<0,"EXIT cancels CV type preview while retaining effective velocity override");
     APP->patch->save(dir+"/fidelity-roundtrip.vcv");
 }
 if(qaFrame==33){check(!qaFailed,"FIDELITY UI QA COMPLETE");APP->window->close();}

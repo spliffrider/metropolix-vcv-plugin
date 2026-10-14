@@ -16,7 +16,7 @@ DISTRIBUTABLES += docs/CLOCK-RESET.md
 DISTRIBUTABLES += docs/EDITING-WORKFLOWS.md
 DISTRIBUTABLES += docs/UI-SETUP.md
 DISTRIBUTABLES += docs/PRESET-PICKUP.md
-DISTRIBUTABLES += docs/MIDI.md docs/MX.md docs/BACKUPS.md docs/UI-FIDELITY.md
+DISTRIBUTABLES += docs/MIDI.md docs/MX.md docs/BACKUPS.md docs/UI-FIDELITY.md docs/PLATFORMS.md
 DISTRIBUTABLES += reference/metropolix-panel-user-reference.png
 include $(RACK_DIR)/arch.mk
 ifdef ARCH_WIN
@@ -103,4 +103,4 @@ native-test-build:
 .PHONY: native-ui-test-build
 native-ui-test-build:
 	@mkdir -p build/native-ui-test
-	$(CXX) $(CXXFLAGS) -O1 -g -DMETROPOLIX_QA src/plugin.cpp src/Metropolix.cpp $(LDFLAGS) -o build/native-ui-test/$(TARGET)
+	$(CXX) $(CXXFLAGS) -O1 -g -DMETROPOLIX_QA src/plugin.cpp src/Metropolix.cpp tests/RackCapture.cpp $(LDFLAGS) -o build/native-ui-test/$(TARGET)

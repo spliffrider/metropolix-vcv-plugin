@@ -36,8 +36,8 @@ if(qaFrame==8) {
     drag(find("Encoder"),-220);bool shifted=true;for(int s=0;s<8;++s)shifted &= m->integer(M::stageParam(0,s,M::PITCH_OVERRIDE))==11;
     check(shifted,"ALT pitch drag treats negative custom-scale degree separately from disabled override");APP->history->undo();bool restored=true;for(int s=0;s<8;++s)restored &= m->integer(M::stageParam(0,s,M::PITCH_OVERRIDE))==0;check(restored,"custom-scale ALT pitch gesture undoes all eight anchors");
     m->params[M::userScaleParam(0)].setValue(0x91);m->uiPage.store(M::SCALE_PAGE);m->uiField.store(1);m->uiAlt.store(false);
-    APP->window->screenshot(dir+"/scale-user-locked.png");
+    metroqa::screenshot(dir+"/scale-user-locked.png");
     m->scaleEditing.store(true);m->params[M::SCALE_NOTE].setValue(4);
 }
-if(qaFrame==10) {APP->window->screenshot(dir+"/scale-note-editor.png");APP->patch->save(dir+"/scale-roundtrip.vcv");}
+if(qaFrame==10) {metroqa::screenshot(dir+"/scale-note-editor.png");APP->patch->save(dir+"/scale-roundtrip.vcv");}
 if(qaFrame==14) {check(!qaFailed,"SCALE UI QA COMPLETE");APP->window->close();}

@@ -10,6 +10,7 @@
 #include "Mx.hpp"
 #ifdef METROPOLIX_QA
 #include <patch.hpp>
+#include "../tests/RackCapture.hpp"
 #endif
 #include <functional>
 
