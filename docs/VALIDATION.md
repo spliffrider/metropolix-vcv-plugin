@@ -656,8 +656,10 @@ actual stereo chord playback pass. Audio measured RMS .360/.363 V, peaks
 1.730/1.733 V, DC approximately .00084 V at 48 kHz over twelve seconds.
 Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
-Internal presets retain the earlier plugin selector/root recall behavior, unlike
-the hardware global classification; custom definitions and locks stay global.
+Internal presets recall Scale/Root settings, as the manual describes on p.112;
+the earlier claim that their recall differs from hardware was incorrect. Custom
+definitions and locks stay global in this plugin; their exact hardware preset
+boundary remains unverified.
 
 ## Slide models — 2.13.0
 

@@ -37,7 +37,7 @@ if(qaFrame==6){
     auto* filledData=json_object_get(afterFilled.get(),"data");history=APP->history->actionIndex;check(importBackup(m,bankFile,error) && APP->history->actionIndex==history+1,"Bank import creates one undo action");metrobackup::Json afterBank(APP->engine->moduleToJson(m));
     check(!m->getPreset(57).occupied && m->getPreset(63).occupied && m->getPreset(12).occupied && m->getPreset(7).occupied && json_equal(json_object_get(filledData,"chains"),json_object_get(json_object_get(afterBank.get(),"data"),"chains")),"Bank 8 clears its empty slots while preserving other banks and chains");
     check(m->id==id && cables==APP->scene->rack->getCableContainer()->children.size(),"selective imports preserve module identity and cable count");
-    openBackupPresets(m);m->backupCursor.store(2);m->backupPresetCursor.store(9);m->backupNotice="PRESETS SAVED";m->backupNoticeUntil=system::getTime()+5;APP->patch->save(dir+"/backup-roundtrip.vcv");
+    m->backupCursor.store(3);openBackupPresets(m);check(m->backupCursor.load()==2,"direct selective export focuses its parent Export Presets entry");m->backupPresetCursor.store(9);m->backupNotice="PRESETS SAVED";m->backupNoticeUntil=system::getTime()+5;APP->patch->save(dir+"/backup-roundtrip.vcv");
 }
 if(qaFrame==9)metroqa::screenshot(dir+"/backup-files.png");
 if(qaFrame==12){check(!qaFailed,"BACKUP UI QA COMPLETE");APP->window->close();}
