@@ -76,6 +76,7 @@ jobs:
             xvfb-run -a -s '-screen 0 1600x1000x24' python3 scripts/test-ui-linux.py --rack "$RUNNER_TEMP/Rack2Free/Rack" --mode "$mode"
           done
       - name: Save verified package and evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: plugin-${{ matrix.platform }}
@@ -89,5 +90,6 @@ jobs:
             tmp/linux-*-qa/*.png
             tmp/linux-*-qa/*.wav
             tmp/linux-*-qa/rack-*.log
+            tmp/linux-*-qa/console-*.log
           if-no-files-found: error
           retention-days: 30

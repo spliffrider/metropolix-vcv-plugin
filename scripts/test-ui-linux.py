@@ -36,7 +36,9 @@ def run(path,name):
     previous=profile/'log.txt'
     if previous.exists():shutil.move(str(previous),str(output/f'previous-{name}.log'))
     with (output/f'console-{name}.log').open('w') as log:
-        subprocess.run([str(rack),'-u',str(profile),'-s',str(rack.parent),str(path)],env=env,cwd=root,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
+        result=subprocess.run([str(rack),'-u',str(profile),'-s',str(rack.parent),str(path)],env=env,cwd=root,stdout=log,stderr=subprocess.STDOUT,timeout=120)
+    if result.returncode:
+        print((output/f'console-{name}.log').read_text()[-6000:]);raise RuntimeError(f'Rack exited {result.returncode}')
     report=(output/'report.txt').read_text();assert 'FAIL' not in report,report
     shutil.copy2(profile/'log.txt',output/f'rack-{name}.log')
     return report
