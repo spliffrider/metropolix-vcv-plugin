@@ -6,6 +6,9 @@ if(std::getenv("METROPOLIX_PENDING_REOPEN_QA")) {
         check(!qaFailed,"PENDING REOPEN QA COMPLETE");APP->window->close();
     }return;
 }
+if(qaFrame==3){
+#include "ResetHistoryWidgetQa.hpp"
+}
 auto raw=[&]{std::vector<float> values;for(auto& p:m->params)values.push_back(p.getValue());return values;};
 auto root=[&]{m->cancelDraft();m->params[M::SCALE].setValue(1);m->params[M::ROOT].setValue(0);screenPage(m,M::SCALE_PAGE);m->uiField.store(0);};
 widget::EventContext pendingContext;event::DragStart pendingStart;pendingStart.context=&pendingContext;pendingStart.button=GLFW_MOUSE_BUTTON_LEFT;
