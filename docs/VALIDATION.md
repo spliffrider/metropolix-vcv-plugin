@@ -1,4 +1,33 @@
-# Validation and fidelity status — 2.38.0
+# Validation and fidelity status — 2.39.0
+
+## 2.39 CTRL assignment workflow
+
+Printed page 148 requires encoder confirmation for destination and target,
+and long-encoder clear to No assignment. The CTRL editor now follows those
+steps even when optional Enc Confirm is Off. The black assignment buttons
+also preview; the physical white performance knobs remain live. Explicit
+desktop choices apply directly and discard an obsolete pending route draft.
+
+The long clear preserves target selection and physical knob position, matching
+the existing desktop Clear assignment scope. Only the destination becomes
+None; the manual does not specify the target/position values after clear.
+Native parameter IDs, settings schema and musical format stay 787/33/11/522.
+Physical hardware comparison remains open. See [CTRL controls](CTRL-KNOBS.md).
+
+Dedicated Windows Rack callbacks pass both knobs, every destination and target,
+both Enc Confirm states, encoder/display previews, assignment-button drag,
+confirmation versus field switching, EXIT cancellation, threshold/no-op long
+clear from either field, stale draft cancellation from named desktop choices,
+ownership transfer/release, live knob dragging and exact undo/redo. Confirmed
+routes and musical preset storage survive save/reopen; drafts remain transient.
+The suite bypasses module processing during raw undo comparisons to isolate
+them from asynchronous direct CTRL writes, then restores processing for the
+rendered scenes and patch save. Native integration separately passes routing
+signals and persistence. The native console host also builds on Windows through
+the shared Makefile, with console entry-point and runtime flags corrected.
+Neighboring Controls audio (12 seconds at 48 kHz), SetupOptions, Pickup,
+Workflows, Fidelity, Polish and all 181 display states pass on Windows.
+The older display assertion now requires preview followed by confirmation.
 
 ## 2.38 Slide/Skip patterns and Ratchet gestures
 

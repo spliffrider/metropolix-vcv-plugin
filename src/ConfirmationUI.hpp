@@ -4,6 +4,7 @@ bool requiresConfirmation(Metropolix* m,int id){
     if(binaryStagePage(m) && m->uiAlt.load())return false;
     if(id>=Metropolix::MX_MODE && id<=Metropolix::MX_LANE)return true;
     for(int input=0;input<3;++input)if(id==Metropolix::auxParam(input,Metropolix::AUX_DESTINATION) || id==Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT))return true;
+    for(int knob=0;knob<2;++knob)if(id==Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION) || id==Metropolix::ctrlParam(knob,Metropolix::CTRL_ASSIGNMENT))return true;
     for(int lane=0;lane<8;++lane)if(id==Metropolix::modParam(lane,Metropolix::MOD_DESTINATION) || id==Metropolix::modParam(lane,Metropolix::MOD_ASSIGNMENT))return true;
     if(m->uiAlt.load() && m->uiPage.load()==Metropolix::STAGE_PAGE){bool gate=m->uiMod.load()?(m->integer(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_DESTINATION))))):m->selectedRow.load()==Metropolix::CV && m->integer(Metropolix::cvTypeParam(m->selectedTrack.load()))==metro::GateCv;if(gate)return false;}
     return m->integer(Metropolix::ENC_CONFIRM)!=0;

@@ -218,6 +218,11 @@ void appendAuxMenu(ui::Menu* menu, Metropolix* m, int input) {
     }));
 }
 
+void clearCtrlAssignment(Metropolix* m,int knob,bool record=true) {
+    if(!m)return;m->cancelDraft();auto* q=m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION));
+    if(record)setWithHistory(q,metro::CtrlNone);else q->setValue(metro::CtrlNone);
+}
+
 void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
     if(!m)return;
     menu->addChild(new ui::MenuSeparator);
@@ -226,7 +231,7 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
         auto* q=m->getParamQuantity(Metropolix::ctrlParam(knob,property));
         menu->addChild(createIndexSubmenuItem(label,values,
             [q]{return static_cast<size_t>(q->getValue());},
-            [q](size_t value){setWithHistory(q,static_cast<float>(value));}));
+            [m,q](size_t value){m->cancelDraft();setWithHistory(q,static_cast<float>(value));}));
     };
     choice("Destination",Metropolix::CTRL_DESTINATION,Metropolix::ctrlDestinations());
     choice("Target tracks",Metropolix::CTRL_ASSIGNMENT,{"Track 1","Track 2","Both tracks"});
@@ -234,7 +239,7 @@ void appendCtrlMenu(ui::Menu* menu, Metropolix* m, int knob) {
         setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_VALUE)),0.f);
     }));
     menu->addChild(createMenuItem("Clear assignment","",[m,knob] {
-        setWithHistory(m->getParamQuantity(Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION)),0.f);
+        clearCtrlAssignment(m,knob);
     }));
 }
 

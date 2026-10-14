@@ -101,7 +101,7 @@ build/ui-test/plugin.dll: $(SOURCES) tests/RackCapture.cpp $(wildcard src/*.hpp 
 .PHONY: native-test-build production-test-build
 native-test-build: production-test-build
 	@mkdir -p build/tests
-	$(CXX) $(CXXFLAGS) -O2 tests/RackIntegrationTests.cpp -L$(RACK_DIR) -lRack -o build/tests/rack-native
+	$(CXX) $(filter-out -municode,$(CXXFLAGS)) -O2 tests/RackIntegrationTests.cpp -L$(RACK_DIR) -lRack $(if $(ARCH_WIN),-static-libstdc++ -static-libgcc,) -o build/tests/rack-native$(if $(ARCH_WIN),.exe,)
 
 production-test-build:
 	@mkdir -p build/tests

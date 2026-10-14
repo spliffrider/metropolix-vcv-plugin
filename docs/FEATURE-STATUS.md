@@ -1,9 +1,10 @@
-# Feature status — 2.38.0 public alpha
+# Feature status — 2.39.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.39.0 corrects [CTRL assignment confirmation and long clear](CTRL-KNOBS.md), preserving live performance knobs and exact undo.
 2.38.0 adds [Slide/Skip pattern and Ratchet gestures](STAGE-PATTERNS.md), including bulk editing/reset, display feedback and exact undo.
 2.37.0 adds [SCALE copy/paste](SCALES.md), including user roots, panel/keyboard Alt and paired undo.
 2.36.0 adds [PROB/ACCUM paired and ALT gestures](STAGE-PAIRS.md), reset, confirmation and exact undo.
