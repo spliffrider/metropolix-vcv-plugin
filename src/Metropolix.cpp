@@ -463,6 +463,7 @@ void openChainPage(Metropolix* m);
 #include "SetupUI.hpp"
 #include "PickupUI.hpp"
 #include "HardwareUI.hpp"
+#include "TimingUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"
 

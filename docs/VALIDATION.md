@@ -1,4 +1,23 @@
-# Validation and fidelity status — 2.34.0
+# Validation and fidelity status — 2.35.0
+
+## 2.35 timing panel workflows
+
+The requested firmware 1.6 manual, printed pages 76/78, specifies LEN stage/pulse
+shortcuts, DIV clock/pulse-count shortcuts and whole-screen long encoder reset.
+The new callbacks preserve the selected field. Dedicated actual Windows Rack
+checks cover every stage/field on both note tracks and eight MOD lanes, threshold
+and all-field resets, native numeric entry, direct menus, pending cancellation,
+multi-target one-action undo/redo, CTRL exclusion, unrelated group mute and
+save/reopen. Neighboring Group, Order, Workflows, Scales, Slides, Stage CV,
+Fidelity, Polish and 181-state Display checks pass. Native engine/library
+integration also passes. Platform CI retains
+its own evidence; these are callback checks rather than OS mouse/focus playtests.
+
+No saved fields changed: 787 parameters, schema33 and format11/522 remain fixed.
+The selected shortcut indicator is a desktop interpretation; the manual does
+not specify its combined LED priority. Physical timing/GUI comparisons remain
+outstanding. See [timing controls](TIMING-SHORTCUTS.md).
+
 
 ## Independent MOD group mute — 2.34
 

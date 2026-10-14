@@ -1,9 +1,10 @@
-# Feature status — 2.34.0 public alpha
+# Feature status — 2.35.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.35.0 adds [LEN/DIV shortcuts](TIMING-SHORTCUTS.md), field-preserving holds and whole-screen encoder resets.
 2.34.0 adds [independent MOD group mute](MOD-GROUP-MUTE.md), preserving individual lane choices and stored group state.
 2.33.0 corrects [Scale Lock and Loopy preset storage](PRESET-STORAGE.md), with legacy full/selective bank migration.
 2.32.0 adds [global ORDER shortcuts](ORDER-SHORTCUTS.md), paired reset, held gestures and desktop undo.
@@ -47,7 +48,7 @@ configuration, preset workflows, and external interfaces.
 | Area | Available now | Principal remaining work |
 | --- | --- | --- |
 | Eight-stage, two-track sequencing | Shared pitch/pulse/gate controls; independent pulse/gate sources, Rest Pitch, full transpose, track menu/init and per-track Global Reset; pitch/gate outputs and stage overrides | Hardware timing and MIDI comparisons |
-| Traversal and timing | All 21 play orders, reverse, eight global order/direction shortcuts, paired reset, length, offset, clock/pulse division, fixed pulse lengths, Swing, reset, internal/external clock with input division, global CLK division/offset and Always/Running output, explicit clock source, Reset/Run/Run-C | Hardware clock/timing comparisons |
+| Traversal and timing | All 21 play orders, reverse, eight global order/direction shortcuts, paired reset, LEN/DIV held shortcuts and whole-screen resets, length, offset, clock/pulse division, fixed pulse lengths, Swing, reset, internal/external clock with input division, global CLK division/offset and Always/Running output, explicit clock source, Reset/Run/Run-C | Hardware clock/timing comparisons |
 | Gate/stage variation | Four gate types; three ratchet modes; stretching; Stage/Pulse probability; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate CV with Step/sRamp/pRamp; gate scaling and length Hold | Hardware comparison of live edits and mixed timing |
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
 | Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes |

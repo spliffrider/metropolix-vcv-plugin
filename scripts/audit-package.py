@@ -22,7 +22,7 @@ with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
             assert archive.extractfile(member).read()==(root/path.relative_to('MetropolixLab')).read_bytes(),member.name
     assert json.load(archive.extractfile('MetropolixLab/plugin.json'))==manifest
     assert [m['slug'] for m in manifest['modules']]==['Metropolix','MX']
-    for required in ['docs/UI-FIDELITY.md','docs/BACKUPS.md','docs/MAINTENANCE.md','docs/RUNTIME-VALIDATION.md','docs/ORDER-SHORTCUTS.md','docs/PRESET-STORAGE.md','docs/MOD-GROUP-MUTE.md','docs/PLATFORMS.md','examples/MX-performance.vcv','examples/Backup-example.json','examples/Backup-bank-8.json']:
+    for required in ['docs/UI-FIDELITY.md','docs/BACKUPS.md','docs/MAINTENANCE.md','docs/RUNTIME-VALIDATION.md','docs/ORDER-SHORTCUTS.md','docs/PRESET-STORAGE.md','docs/MOD-GROUP-MUTE.md','docs/TIMING-SHORTCUTS.md','docs/PLATFORMS.md','examples/MX-performance.vcv','examples/Backup-example.json','examples/Backup-bank-8.json']:
         assert 'MetropolixLab/'+required in names,required
     binary=archive.extractfile(f'MetropolixLab/plugin.{extension}').read()
     assert not re.search(rb'METROPOLIX_[A-Z0-9_]*QA',binary),'QA environment marker in production binary'
