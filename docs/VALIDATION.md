@@ -1,4 +1,49 @@
-# Validation and fidelity status — 2.49.0
+# Validation and fidelity status — 2.50.0
+
+## 2.50 MOD effective type and OLED TYPE workflow
+
+The complete manual sections on MOD stage editing and the 1.6 type update
+(printed pp.137–142/192) specify Bipolar or Gate from an internal destination.
+A standalone 819-case probe reproduced 168 continuous-value failures with
+saved Unipolar/Gate choices. Actual Rack callbacks reproduced continuous
+range loss, accidental Gate toggling, MOD ALT+TYPE opening a desktop menu,
+obsolete type confirmation and forced-type editing. A shared effective-type
+rule now serves sequencing, ranges, ramps, graph/gate editing, A/B and MIDI.
+The native type quantity preserves its saved preference under assignment.
+
+All 25 local engine suites pass, including 819 explicit value cases, 117
+ramp cases and raw-data preservation. Native integration passes 52,416
+range/value cases across every lane, destination, saved type and stage;
+type locking, preference recovery and exact preset/Rack roundtrip also pass.
+Another 144 native cases drive both real A/B ports and capture running MIDI
+and stopped CC learning across all lanes, three assignment modes and saved
+types. Group mute covers all 256 eight-bit masks in all three saved modes with
+unassigned, continuous and gate destinations, retaining phase/MIDI/MX tests.
+
+Actual Rack Pending passes 936 OLED TYPE entries, 3,648 forced-type encoder/
+OLED/grid drags and holds, and 936 stage selections/toggles with exact raw
+Undo/Redo. Four original focused callbacks and obsolete type confirmation
+pass; previous raw/history/conflict matrices and save/reopen still pass.
+Fixtures explicitly initialize each selected target's destination, avoiding
+demo settings leaking into an unassigned-type test. The forced Bipolar/Gate,
+restored Unipolar and negative continuous stage OLED captures were inspected.
+These are callback/pixel/native signal checks, not OS mouse/focus, human
+listening or a physical hardware comparison. Stored values and formats remain
+787 parameters, settings schema33, musical format11 and 522 musical values.
+
+The stripped current-source production host passes 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 state restores,
+144 fresh instances, 12 initializes and 145 reciprocal links across both
+public models at 44.1/48/96 kHz. This simulates 361.083 seconds in a single
+thread; Windows wall time was 12.2241 seconds. Packaging must retain the exact
+tested binary and separately audit its assets against current source.
+
+Windows Pending/save-reopen and 25 neighboring application groups pass:
+CtrlEditor, Chains, ScaleCopy, Timing, StagePair, StagePattern, StageCv, Scales,
+Swing, Overrides, Workflows, SetupOptions, Outputs, Fidelity, Polish, Display
+(181 states), ChainAudio, Order, Modulation, ExtendedRouting, Midi, Mx, Group,
+RoutingAudio and MidiAudio. Audio checks use finite captured signals; human
+listening and long cross-plugin sessions remain unverified.
 
 ## 2.49 Dependent value history and confirmation
 

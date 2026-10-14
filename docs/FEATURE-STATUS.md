@@ -1,9 +1,10 @@
-# Feature status — 2.49.0 public alpha
+# Feature status — 2.50.0 public alpha
 
 Assessment date: 2026-10-14. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.50.0 corrects [MOD effective CV types and OLED TYPE editing](MOD-TEST.md), with destination-controlled ranges, ramps, gates and MIDI while preserving saved preferences.
 2.49.0 protects [dependent value edits and confirmation](UI-SETUP.md), preserving raw Undo across type changes and consuming obsolete held previews.
 2.48.0 extends [raw drag Undo](UI-SETUP.md) to MOD voltage and masked clock offsets, and corrects effective ALT MOD offsets.
 2.47.0 corrects [tiny CV drag history and the effective ALT range](STAGE-CV.md), preserving dormant raw values, normal clicks and confirmation.

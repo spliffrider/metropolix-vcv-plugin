@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.49.0
+# UI setup, confirmation and external clock input — 2.50.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a

@@ -13,13 +13,14 @@ void modGroupRackTests() {
     // Real process() drives MOD CV, routes, A/B and the existing MX message.
     m->params[M::RUN].setValue(1);m->params[M::CLOCK_SOURCE].setValue(2);m->inputs[M::CLOCK_IN].channels=1;m->inputs[M::CLOCK_IN].setVoltage(0);frames(*m,64);m->inputs[M::CLOCK_IN].setVoltage(5);frames(*m);m->inputs[M::CLOCK_IN].setVoltage(0);
     m->params[M::OUTPUT_SOURCE_A].setValue(metro::outputSource(metro::OutModCv,0));m->params[M::OUTPUT_SOURCE_B].setValue(metro::outputSource(metro::OutModCv,7));
-    for(int type=0;type<3;++type)for(unsigned bits=0;bits<256;++bits){
-        for(int lane=0;lane<8;++lane){m->params[M::modParam(lane,M::MOD_MUTE)].setValue((bits>>lane)&1);m->params[M::modParam(lane,M::MOD_TYPE)].setValue(type);m->params[M::modParam(lane,M::MOD_DESTINATION)].setValue(metro::ModVelocity);m->params[M::modParam(lane,M::MOD_ASSIGNMENT)].setValue(2);for(int s=0;s<8;++s)m->params[M::modParam(lane,M::MOD_VALUE+s)].setValue(3);}
+    for(int type=0;type<3;++type)for(int destination:{metro::ModVelocity,metro::ModMute,metro::ModNone})for(unsigned bits=0;bits<256;++bits){
+        float sounding=destination==metro::ModMute || (destination==metro::ModNone && type==metro::ModGate)?5.f:3.f;
+        for(int lane=0;lane<8;++lane){m->params[M::modParam(lane,M::MOD_MUTE)].setValue((bits>>lane)&1);m->params[M::modParam(lane,M::MOD_TYPE)].setValue(type);m->params[M::modParam(lane,M::MOD_DESTINATION)].setValue(destination);m->params[M::modParam(lane,M::MOD_ASSIGNMENT)].setValue(2);for(int s=0;s<8;++s)m->params[M::modParam(lane,M::MOD_VALUE+s)].setValue(3);}
         for(int group:{0,1,0}){
             m->params[M::MOD_GROUP_MUTE].setValue(group);m->readSettings();frames(*m,64);require(mask(*m)==bits,"all group transitions preserve every individual lane mask");
-            for(int lane=0;lane<8;++lane){bool quiet=group || bool(bits&(1u<<lane));require(m->sequencer.settings.modLanes[lane].mute==quiet,"effective MOD mute combines independent group and lane bits");require(m->sequencer.modulation.outputs[lane]==(quiet?0.f:type==metro::ModGate?5.f:3.f),"group and lane mutes reach actual MOD voltages for all three CV types");}
-            require(m->outputs[M::A_OUT].getVoltage()==((group || (bits&1))?0.f:type==metro::ModGate?5.f:3.f) && m->outputs[M::B_OUT].getVoltage()==((group || (bits&128))?0.f:type==metro::ModGate?5.f:3.f),"actual A/B jacks honor group mute without destroying their lane assignments");
-            if(group)require(m->sequencer.modulation.routes[0][metro::ModVelocity]==0 && m->sequencer.modulation.routes[1][metro::ModVelocity]==0,"group mute suppresses every internal MOD contribution");
+            for(int lane=0;lane<8;++lane){bool quiet=group || bool(bits&(1u<<lane));require(m->sequencer.settings.modLanes[lane].mute==quiet,"effective MOD mute combines independent group and lane bits");require(m->sequencer.modulation.outputs[lane]==(quiet?0.f:sounding),"group and lane mutes reach actual MOD voltages for all three CV types");}
+            require(m->outputs[M::A_OUT].getVoltage()==((group || (bits&1))?0.f:sounding) && m->outputs[M::B_OUT].getVoltage()==((group || (bits&128))?0.f:sounding),"actual A/B jacks honor group mute without destroying their lane assignments");
+            if(group && destination!=metro::ModNone)require(m->sequencer.modulation.routes[0][destination]==0 && m->sequencer.modulation.routes[1][destination]==0,"group mute suppresses every internal MOD contribution");
         }
     }
     // Held commands are pulse-synchronized, including independent lane toggles

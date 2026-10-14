@@ -1,12 +1,13 @@
 int screenParam(Metropolix* m);
 bool requiresConfirmation(Metropolix* m,int id){
     if(!m || id<0 || m->ctrlOwner(id)>=0)return false;
+    if(auto* type=dynamic_cast<ModTypeQuantity*>(m->getParamQuantity(id)))if(type->forced())return false;
     if(binaryStagePage(m) && m->uiAlt.load())return false;
     if(id>=Metropolix::MX_MODE && id<=Metropolix::MX_LANE)return true;
     for(int input=0;input<3;++input)if(id==Metropolix::auxParam(input,Metropolix::AUX_DESTINATION) || id==Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT))return true;
     for(int knob=0;knob<2;++knob)if(id==Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION) || id==Metropolix::ctrlParam(knob,Metropolix::CTRL_ASSIGNMENT))return true;
     for(int lane=0;lane<8;++lane)if(id==Metropolix::modParam(lane,Metropolix::MOD_DESTINATION) || id==Metropolix::modParam(lane,Metropolix::MOD_ASSIGNMENT))return true;
-    if(m->uiAlt.load() && m->uiPage.load()==Metropolix::STAGE_PAGE){bool gate=m->uiMod.load()?(m->integer(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_DESTINATION))))):m->selectedRow.load()==Metropolix::CV && m->integer(Metropolix::cvTypeParam(m->selectedTrack.load()))==metro::GateCv;if(gate)return false;}
+    if(m->uiAlt.load() && m->uiPage.load()==Metropolix::STAGE_PAGE){bool gate=m->uiMod.load()?m->effectiveModType(m->selectedLane.load())==metro::ModGate:m->selectedRow.load()==Metropolix::CV && m->integer(Metropolix::cvTypeParam(m->selectedTrack.load()))==metro::GateCv;if(gate)return false;}
     return m->integer(Metropolix::ENC_CONFIRM)!=0;
 }
 bool pendingConfirmation(Metropolix* m){return m && m->uiDraftParam>=0 && m->uiDraftParam==screenParam(m);}
@@ -16,6 +17,7 @@ std::vector<int> draftContextParams(Metropolix* m,int id){
     if(auto* cv=dynamic_cast<TrackCvQuantity*>(q)){add(cv->typeParam);add(cv->velocityParam);}
     if(auto* mod=dynamic_cast<ModVoltageQuantity*>(q)){add(mod->typeParam);add(mod->destinationParam);}
     if(auto* clock=dynamic_cast<ClockOffsetQuantity*>(q))add(clock->divisionParam);
+    if(auto* type=dynamic_cast<ModTypeQuantity*>(q))add(type->destinationParam);
     return ids;
 }
 bool validDraft(Metropolix* m){

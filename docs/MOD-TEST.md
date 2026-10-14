@@ -1,12 +1,32 @@
-# Modulation playtest — 2.48.0
+# Modulation playtest — 2.50.0
 
 Open `examples/Hardware-panel-demo.vcv` in Rack. It is already running and patched. Right-click **MOD**, then choose **Open MOD editor** to expose the grid used in these checks. The older `Modulation-demo.vcv` uses the same musical settings. Use **File > Save As** to keep your own test copy. Choose your output device in the AUDIO module to hear the two voices. The patch's two VCAs are set to 32%.
 
 Metropolix Lab produces control voltages, not audio. Its pitch and gate outputs drive the oscillators, envelopes, and VCAs below it. The first Scope monitors OUT A and OUT B; the second monitors PITCH 1 and GATE 1. Signals should appear even without an audio device selected.
 
+## Destination-controlled CV type
+
+The firmware 1.6 manual (printed pp.138–140 and 192) says an internal MOD
+destination determines the lane's type. A continuous destination uses
+Bipolar ± values and Step/Ramp transitions; a gate destination uses Gate
+toggles. This now applies consistently to editing, playback, graphs, A/B
+outputs and MIDI CC scaling. A saved Unipolar or Gate choice no longer clips
+or quantizes an internal continuous modulation pattern.
+
+Press MOD, select the lane, then ALT + TYPE to open its OLED CV TYPE page.
+For an internal assignment it shows **TYPE FROM DEST** and its destination.
+The encoder, OLED, grid and type menus preserve the saved choice while this
+type is fixed. Clear the internal destination to edit the lane's type again;
+its saved choice returns. A/B-only and unassigned lanes retain all three modes.
+
+Raw stage voltages and transitions stay stored. Switching destinations or
+types does not overwrite them or alter preset/patch formats. If assignment
+changes during an unconfirmed type preview, its obsolete confirmation is
+discarded. Confirmed voltage edits and existing raw Undo remain supported.
+
 ## Stored voltages, ALT and Undo
 
-A Unipolar or Gate setting can hide a negative voltage previously entered in
+For an unassigned or output-only lane, a Unipolar or Gate setting can hide a negative voltage previously entered in
 Bipolar mode. Editing that stage now records the exact stored origin, so Undo
 restores it even when its displayed value was zero. This applies to the main
 encoder, OLED and optional MOD grid, including very small drags.

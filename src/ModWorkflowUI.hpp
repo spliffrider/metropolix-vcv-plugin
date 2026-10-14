@@ -1,5 +1,5 @@
 bool modStagePage(Metropolix* m){return m && m->uiMod.load() && m->uiPage.load()==Metropolix::STAGE_PAGE;}
-bool modStageGates(Metropolix* m){return m && (m->integer(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(m->integer(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_DESTINATION)))));}
+bool modStageGates(Metropolix* m){return m && m->effectiveModType(m->selectedLane.load())==metro::ModGate;}
 std::vector<int> modStageIds(Metropolix* m,bool all=false){std::vector<int> ids;for(int s=0;s<8;++s)if(all || m->uiAlt.load() || s==m->selectedStage.load())ids.push_back(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s));return ids;}
 void resetModStages(Metropolix* m,bool record=true){auto ids=modStageIds(m);std::vector<float> before;for(int id:ids){before.push_back(m->params[id].getValue());m->params[id].setValue(0);}if(record)parameterHistory(m,ids,before,"reset MOD stages");}
 void rotateModStages(Metropolix* m,int turns,bool record=false){auto ids=modStageIds(m,true);std::vector<float> before;for(int id:ids)before.push_back(m->params[id].getValue());for(int s=0;s<8;++s)m->params[ids[s]].setValue(before[metro::modulo(s-turns,8)]);if(record)parameterHistory(m,ids,before,"rotate MOD gates");}

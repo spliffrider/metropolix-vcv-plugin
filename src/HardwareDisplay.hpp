@@ -153,7 +153,7 @@ struct HardwareDisplay : HardwareControl {
                 int l=j-2;
                 c.text(x+2,4,std::to_string(j<2?j+1:l+1));
                 float v=m?(j<2?m->playCv[j].load():m->modVoltage[l].load()):0;
-                bool gate=j>=2 && (integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION)))));
+                bool gate=j>=2 && m && m->effectiveModType(l)==metro::ModGate;
                 if(gate){c.box(x,35,7,7);if(v>=1.5f)c.fill(x+1,36,5,5);}
                 else { c.box(x,12,7,30);for(int k=1;k<6;k+=2)c.dot(x+k,26);int y=26-static_cast<int>(metro::clamp(v,-5.f,5.f)*2.7f);c.fill(x+2,std::min(y,26),3,std::max(1,std::abs(y-26))); }
                 if(j>=2 && integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))) {
@@ -186,7 +186,7 @@ struct HardwareDisplay : HardwareControl {
         int t=m->selectedTrack.load(),s=m->selectedStage.load(),l=m->selectedLane.load(),row=m->selectedRow.load();
         bool mod=m->uiMod.load(),detail=m->uiStageDetail.load();
         auto id=[&](int stage){return mod?Metropolix::modParam(l,Metropolix::MOD_VALUE+stage):Metropolix::stageParam(t,stage,row);};
-        bool gates=(mod && (integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION)))))) || (!mod && row==Metropolix::CV && cvGate(m));
+        bool gates=(mod && m->effectiveModType(l)==metro::ModGate) || (!mod && row==Metropolix::CV && cvGate(m));
         if(!mod && row>=Metropolix::PITCH_OVERRIDE) {
             bool pitch=row==Metropolix::PITCH_OVERRIDE;
             int selected=integer(id(s),-1);
@@ -215,7 +215,7 @@ struct HardwareDisplay : HardwareControl {
             auto cv=[&](int stage){return metro::trackCvVoltage(value(id(stage)),m->effectiveCvType(t));};
             int previous=mod?27:27-static_cast<int>(cv(7)*4.4f);
             for(int i=0;i<8;++i) {
-                float v=mod?value(id(i)):cv(i);if(mod && integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModUnipolar)v=std::max(0.f,v);
+                float v=mod?m->effectiveModVoltage(l,value(id(i))):cv(i);
                 int x=7+i*16,y=27-static_cast<int>(v*4.4f);
                 int ramp=mod?integer(Metropolix::modParam(l,Metropolix::MOD_RAMP+i)):integer(Metropolix::cvRampParam(t,i));
                 if(ramp) {
@@ -257,7 +257,7 @@ struct HardwareDisplay : HardwareControl {
         if(pendingConfirmation(m))c.text(32,19,"?");
         if(detail && (mod || row==Metropolix::CV)){
             int cc=integer(mod?Metropolix::midiModParam(l,Metropolix::MIDI_MOD_CC):Metropolix::midiTrackParam(t,Metropolix::MIDI_CV_CC));
-            if(cc>0){float voltage=mod?m->effectiveModVoltage(l,value(id(s))):metro::trackCvVoltage(value(id(s)),m->effectiveCvType(t));bool bipolar=mod?(integer(Metropolix::modParam(l,Metropolix::MOD_TYPE))==metro::ModBipolar && !gates):m->effectiveCvType(t)==metro::BipolarCv;c.text(1,48,string::f("CC %d:%d",cc-1,metro::midiVoltage(voltage,bipolar)));}
+            if(cc>0){float voltage=mod?m->effectiveModVoltage(l,value(id(s))):metro::trackCvVoltage(value(id(s)),m->effectiveCvType(t));bool bipolar=mod?(m->effectiveModType(l)==metro::ModBipolar):m->effectiveCvType(t)==metro::BipolarCv;c.text(1,48,string::f("CC %d:%d",cc-1,metro::midiVoltage(voltage,bipolar)));}
         }
         footer(c,detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
     }
@@ -309,9 +309,11 @@ struct HardwareDisplay : HardwareControl {
             if(!mod)field(c,29,"PULSE COUNT DIV","/"+std::to_string(integer(Metropolix::extraParam(t,Metropolix::PULSE_DIV),1)),f==1);
         } else if(page==Metropolix::CV_TYPE_PAGE) {
             const char* types[]={"Bipolar ±","Unipolar +","Gate Toggle"};
-            int type=mod?integer(Metropolix::modParam(l,Metropolix::MOD_TYPE)):integer(Metropolix::cvTypeParam(t));
+            int type=mod?int(m->effectiveModType(l)):integer(Metropolix::cvTypeParam(t));
             if(!mod && type==metro::BipolarCv && integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3)type=metro::UnipolarCv;
-            field(c,0,"CV TYPE",types[metro::clamp(type,0,2)],true,128,1);
+            bool forced=mod && integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))!=metro::ModNone;
+            field(c,0,"CV TYPE",types[metro::clamp(type,0,2)],!forced,128,1);
+            if(forced){c.text(1,34,"TYPE FROM DEST");c.fit(1,44,126,m->getParamQuantity(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))->getDisplayValueString(),1);}
             if(!mod && m && integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3)c.text(1,40,"CV = VELOCITY");
         } else if(page==Metropolix::SLIDE_PAGE) {
             if(mod){c.text(2,3,"SLIDE");c.text(2,23,"NOTE TRACKS ONLY");}

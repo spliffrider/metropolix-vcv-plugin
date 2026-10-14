@@ -27,15 +27,9 @@ struct ModVoltageQuantity : ParamQuantity {
     int typeParam = -1;
     int destinationParam = -1;
     metro::ModDestination destination()const{return module && destinationParam>=0?static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue())):metro::ModNone;}
-    bool gate() const {return module && typeParam>=0 && destinationParam>=0 && (module->params[typeParam].getValue()==metro::ModGate || metro::modGateDestination(static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue()))));}
-    float getMinValue() override {
-        if (module && typeParam >= 0 && destinationParam >= 0) {
-            bool positive = module->params[typeParam].getValue() > .5f;
-            bool gate = metro::modGateDestination(static_cast<metro::ModDestination>(static_cast<int>(module->params[destinationParam].getValue())));
-            if (positive || gate) return 0.f;
-        }
-        return -5.f;
-    }
+    metro::ModType type() const {auto saved=module && typeParam>=0?static_cast<metro::ModType>(int(module->params[typeParam].getValue())):metro::ModBipolar;return metro::effectiveModType(saved,destination());}
+    bool gate() const {return type()==metro::ModGate;}
+    float getMinValue() override {return type()==metro::ModBipolar?-5.f:0.f;}
     float getValue() override {
         // Keep numeric editing and drag origins aligned with the effective
         // voltage when a bipolar lane changes to a positive-only CV type.
@@ -46,6 +40,15 @@ struct ModVoltageQuantity : ParamQuantity {
     std::string getDisplayValueString() override {return gate()?(getValue()>=1.5f?"On":"Off"):metro::modDisplayText(getValue(),destination(),false);}
     std::string getUnit() override {return gate()?"":metro::modDisplay(destination()).unit;}
     void setDisplayValueString(std::string s) override {if(gate() && (s=="On" || s=="on"))setValue(5);else if(gate() && (s=="Off" || s=="off"))setValue(0);else ParamQuantity::setDisplayValueString(s);}
+};
+struct ModTypeQuantity : SwitchQuantity {
+    int destinationParam=-1;
+    metro::ModDestination destination()const{return module && destinationParam>=0?static_cast<metro::ModDestination>(int(module->params[destinationParam].getValue())):metro::ModNone;}
+    bool forced()const{return destination()>metro::ModNone && destination()<metro::ModDestinationCount;}
+    metro::ModType type()const{return metro::effectiveModType(module?static_cast<metro::ModType>(int(module->params[paramId].getValue())):metro::ModBipolar,destination());}
+    std::string getDisplayValueString()override{return forced()?std::string(type()==metro::ModGate?"Gate Toggle":"Bipolar ±")+" (Internal destination)":SwitchQuantity::getDisplayValueString();}
+    std::string getDescription()override{return forced()?"The internal destination fixes this lane's CV type. Clear that destination to edit the type; the saved unassigned choice is preserved.":SwitchQuantity::getDescription();}
+    void setValue(float value)override{if(!forced())SwitchQuantity::setValue(value);}
 };
 struct RoutingAssignmentQuantity : SwitchQuantity {
     int destinationParam=-1;
@@ -218,7 +221,8 @@ struct Metropolix : Module {
     static int midiTrackParam(int track,int field){return MIDI_TRACK+track*MIDI_TRACK_STRIDE+field;}
     static int midiModParam(int lane,int field){return MIDI_MOD+lane*MIDI_MOD_STRIDE+field;}
     metro::TrackCvType effectiveCvType(int t){auto type=static_cast<metro::TrackCvType>(integer(cvTypeParam(t)));return type==metro::BipolarCv && integer(outputTrackParam(t,VELOCITY_SOURCE))==3?metro::UnipolarCv:type;}
-    float effectiveModVoltage(int lane,float value){auto type=static_cast<metro::ModType>(integer(modParam(lane,MOD_TYPE)));auto destination=static_cast<metro::ModDestination>(integer(modParam(lane,MOD_DESTINATION)));if(type==metro::ModGate || metro::modGateDestination(destination))return value>=1.5f?5.f:0.f;return metro::modClamp(value,type==metro::ModUnipolar?0.f:-5.f,5.f);}
+    metro::ModType effectiveModType(int lane){return metro::effectiveModType(static_cast<metro::ModType>(integer(modParam(lane,MOD_TYPE))),static_cast<metro::ModDestination>(integer(modParam(lane,MOD_DESTINATION))));}
+    float effectiveModVoltage(int lane,float value){auto type=effectiveModType(lane);if(type==metro::ModGate)return value>=1.5f?5.f:0.f;return metro::modClamp(value,type==metro::ModUnipolar?0.f:-5.f,5.f);}
     static std::vector<std::string> midiChannels(){std::vector<std::string> names{"--"};for(int n=1;n<=16;++n)names.push_back(std::to_string(n));return names;}
     static std::vector<std::string> midiCCs(){std::vector<std::string> names{"--"};for(int n=0;n<128;++n)names.push_back(std::to_string(n));return names;}
     static std::vector<std::string> gateSourceLabels(){return {"Switch","Single","Single + Rest","Multi","Multi + Rest","Hold","Hold + Rest"};}
@@ -499,7 +503,7 @@ struct Metropolix : Module {
             configSwitch(modParam(lane, MOD_ORDER), 0, 20, 0, name + "play order", orderLabels());
             configSwitch(modParam(lane, MOD_REVERSED), 0, 1, 0, name + "direction", {"Forward", "Reverse"});
             configParam(modParam(lane, MOD_PULSE_LIMIT), 0, 64, 0, name + "pulse length (0 = Auto)")->snapEnabled = true;
-            configSwitch(modParam(lane, MOD_TYPE), 0, 2, 0, name + "CV type", {"Bipolar", "Unipolar", "Gate"});
+            auto* modType=configSwitch<ModTypeQuantity>(modParam(lane, MOD_TYPE), 0, 2, 0, name + "CV type", {"Bipolar ±", "Unipolar +", "Gate Toggle"});modType->destinationParam=modParam(lane,MOD_DESTINATION);
             configSwitch(modParam(lane, MOD_DESTINATION), 0, metro::ModDestinationCount - 1, 0, name + "internal destination", modDestinations());
             auto* assignment=configSwitch<RoutingAssignmentQuantity>(modParam(lane, MOD_ASSIGNMENT), 0, 2, 0, name + "destination tracks", {"Track 1", "Track 2", "Both tracks"});assignment->destinationParam=modParam(lane,MOD_DESTINATION);
             configSwitch(modParam(lane, MOD_MUTE), 0, 1, 0, name + "mute", {"Off", "On"});
