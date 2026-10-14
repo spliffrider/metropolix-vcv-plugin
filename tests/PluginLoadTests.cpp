@@ -1,4 +1,8 @@
 #include <dlfcn.h>
+// This executable supplies the host that Rack normally constructs. Production
+// plugin code continues to use the public API only.
+#include <engine/Engine.hpp>
+#undef PRIVATE
 #include <rack.hpp>
 #include <cmath>
 #include <cstdlib>
