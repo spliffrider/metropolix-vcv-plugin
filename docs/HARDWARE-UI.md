@@ -1,4 +1,6 @@
-# Hardware panel and desktop interaction — 2.30.0
+# Hardware panel and desktop interaction — 2.39.0
+
+CTRL routing now uses [mandatory confirmation and long-encoder clear](CTRL-KNOBS.md), while performance knobs stay live.
 
 PROB and ACCUM support [paired resets and whole-pattern ALT gestures](STAGE-PAIRS.md), including confirmation and exact undo.
 

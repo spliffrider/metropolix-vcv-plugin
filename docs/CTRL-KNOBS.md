@@ -1,14 +1,19 @@
-# CTRL 1 and CTRL 2 — 2.6.0
+# CTRL 1 and CTRL 2 — 2.39.0
 
 The two large white knobs are assignable performance controls. Their black
 buttons open the manual-style CTRL page: destination above, target tracks below,
-with a live knob gauge. Click the encoder or display to switch fields, then
-drag up/down. Right-click either knob or button for named destinations and
+with a live knob gauge. Drag the destination up/down to preview a choice;
+press the encoder or display to confirm it. Press again to switch to target
+tracks, drag to preview Track 1 / Track 2 / Both, and press to confirm. This
+confirmation is always required for routing, even with Enc Confirm Off.
+The black assignment button also previews its destination when dragged. Right-click either knob or button for named destinations and
 Track 1 / Track 2 / Both assignments. The hardware reference is manual pp.146–153.
 
 Knob dragging supports fine adjustment with Ctrl, numeric entry, and Rack undo.
 Numeric position is 0% fully left, 50% at noon, 100% fully right. The context
-menu includes **Centre knob (noon)** and **Clear assignment**. Double-click
+menu includes **Centre knob (noon)** and **Clear assignment**. Named desktop
+destination/target choices and Clear assignment apply immediately and cancel
+an obsolete pending routing choice. Double-click
 resets that knob's position to its new-module default. Assignments are saved
 with Rack patches and module presets.
 
@@ -16,6 +21,20 @@ New modules start with CTRL 1 controlling **Gate Length**, both tracks, at 50%;
 CTRL 2 controls **Slide Amount**, both tracks, at 25%. Slide is audible only
 on stages with slide enabled. Patches from 2.5.0 and earlier load with both
 knobs unassigned so that their saved settings and sound remain intact.
+
+On the CTRL settings screen, **hold the encoder for more than one second**
+to clear that knob's assignment from either field. Pending choices are discarded;
+destination becomes No assignment, while the physical knob and target selection
+stay where they were. Clear has one Rack undo; clearing an already unassigned
+knob adds no action. EXIT or opening another screen discards an unconfirmed
+route without changing the currently working assignment.
+
+The unconfirmed destination/target is marked with `?` on the display and drag
+readout. The confirmed route continues to work until confirmation. White CTRL
+knob movement stays live and does not require an encoder press. Clearing a
+direct route releases its owned field and retains the last programmed value.
+The clearing scope for target/position is a documented interpretation; the
+manual explicitly specifies No assignment but does not describe their reset.
 
 ## Direct settings and offsets
 

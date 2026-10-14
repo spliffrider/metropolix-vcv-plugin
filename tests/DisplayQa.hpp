@@ -58,7 +58,8 @@ if(qaFrame==10) {
     drag(find("CTRL 1"),80);check(m->params[value].getValue()<0,"CTRL downward knob drag decreases value");
     APP->history->undo();
     click(find("Encoder"));check(screenParam(m)==Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT),"CTRL encoder click selects track assignment");
-    drag(find("Encoder"),80);check(m->integer(Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT))<2,"CTRL target edits through encoder");APP->history->undo();
+    drag(find("Encoder"),80);check(m->integer(Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT))==2 && pendingConfirmation(m) && m->uiDraftValue==0,"CTRL target previews through encoder without changing confirmed routing");
+    click(find("Encoder"));check(m->integer(Metropolix::ctrlParam(0,Metropolix::CTRL_ASSIGNMENT))==0 && !pendingConfirmation(m),"CTRL encoder press confirms target before switching fields");APP->history->undo();
     click(find("CTRL 2 assignment"));check(m->selectedCtrl.load()==1 && screenParam(m)==Metropolix::ctrlParam(1,Metropolix::CTRL_DESTINATION),"CTRL 2 has independent assignment page");
     click(find("TRK 1"));click(find("GATE"));find("Encoder")->bind();
     check(find("Encoder")->getParamQuantity()==nullptr && find("Encoder")->tooltipText().find("Controlled by CTRL 1")!=std::string::npos,"direct destination locks encoder and explains owner");
