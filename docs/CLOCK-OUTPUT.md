@@ -1,4 +1,4 @@
-# Clock output
+# Clock output — 2.48.0
 
 2.15.0 adds the global CLK output settings from manual pp.120–121.
 Press **ALT**, then **CLK** (stage 5). Drag the encoder or the display up/down
@@ -25,6 +25,16 @@ If a smaller division masks a previously saved offset, the effective value is
 clamped to the valid range. Raising the divider restores that stored offset,
 so undo and automation do not destroy its previous value. Explicitly editing
 offset stores the new value.
+
+## Editing masked offsets
+
+If a smaller division hides a stored offset, an encoder or OLED drag now
+undoes to that exact stored offset, including movement below three pixels.
+For a small edit, the value action is recorded before the normal click that
+switches fields. Field navigation adds no parameter action. At `/1`, the
+disabled offset remains untouched; confirmed previews apply once, and
+unconfirmed previews do not enter Undo or a saved patch. Clock timing is
+unchanged.
 
 ## Demo
 

@@ -261,8 +261,8 @@ struct ValueCell : ValueKnob {
     float dragDistance = 0.f;
     bool dragStarted = false;
     bool dragCancelled = false;
-    bool cvDrag=false;
-    float cvBefore=0;
+    bool rawDrag=false;
+    float rawBefore=0;
     bool locked() const { return metroModule && metroModule->ctrlOwner(paramId)>=0; }
 
     ValueCell() {
@@ -324,8 +324,8 @@ struct ValueCell : ValueKnob {
     }
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
-        dragDistance=0;dragCancelled=false;dragStarted=!locked();cvDrag=dragStarted && dynamic_cast<TrackCvQuantity*>(getParamQuantity());
-        if(cvDrag)cvBefore=metroModule->params[paramId].getValue();
+        dragDistance=0;dragCancelled=false;dragStarted=!locked();rawDrag=dragStarted && needsRawDragHistory(getParamQuantity());
+        if(rawDrag)rawBefore=metroModule->params[paramId].getValue();
         if(dragStarted)ValueKnob::onDragStart(e);
     }
     void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm();if(dragStarted && locked())dragCancelled=true;if(dragStarted && !dragCancelled)ValueKnob::onDragMove(e);else clearAdjustmentTip(); }
@@ -335,27 +335,27 @@ struct ValueCell : ValueKnob {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
         if(dragStarted && (dragCancelled || locked())){
             dragCancelled=true;auto* boundModule=module;module=nullptr;ValueKnob::onDragEnd(e);module=boundModule;
-            dragStarted=false;cvDrag=false;dragCancelled=false;return;
+            dragStarted=false;rawDrag=false;dragCancelled=false;return;
         }
         if(dragStarted && dragDistance==0){
             // Native drag history would otherwise include external writes even
             // when the mouse never moved. Dispatch the genuine cell click only
             // after restoring its quantity, so toggle/menu history stays exact.
             auto* boundModule=module;module=nullptr;dragCancelled=true;ValueKnob::onDragEnd(e);module=boundModule;dragCancelled=false;
-            event::Action click;onAction(click);dragStarted=false;cvDrag=false;return;
+            event::Action click;onAction(click);dragStarted=false;rawDrag=false;return;
         }
-        bool cvBatch=cvDrag && dragDistance>0;
-        bool cvMicro=cvBatch && dragDistance<3;
-        float after=cvBatch?metroModule->params[paramId].getValue():0;
-        if(cvBatch)metroModule->params[paramId].setValue(cvBefore);
+        bool rawBatch=rawDrag && dragDistance>0;
+        bool rawMicro=rawBatch && dragDistance<3;
+        float after=rawBatch?metroModule->params[paramId].getValue():0;
+        if(rawBatch)metroModule->params[paramId].setValue(rawBefore);
         // Preserve the click threshold, but dispatch a tiny drag's click after
-        // its raw CV edit so a Gate toggle sees the latest value.
-        dragCancelled=cvMicro;
+        // its raw edit so a Gate toggle sees the latest value.
+        dragCancelled=rawMicro;
         if(dragStarted)ValueKnob::onDragEnd(e);
         dragCancelled=false;
-        if(cvBatch){metroModule->params[paramId].setValue(after);parameterHistory(metroModule,{paramId},{cvBefore},"edit stage CV");}
-        if(cvMicro){event::Action click;onAction(click);}
-        dragStarted=false;cvDrag=false;
+        if(rawBatch){metroModule->params[paramId].setValue(after);parameterHistory(metroModule,{paramId},{rawBefore},"edit value");}
+        if(rawMicro){event::Action click;onAction(click);}
+        dragStarted=false;rawDrag=false;
     }
     void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }

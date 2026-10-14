@@ -1,4 +1,48 @@
-# Validation and fidelity status — 2.47.0
+# Validation and fidelity status — 2.48.0
+
+## 2.48 Raw MOD voltage and masked clock-offset history
+
+Actual Rack callbacks reproduced four failures: Unipolar MOD grid and encoder
+drags lost a dormant negative raw voltage on Undo; ALT MOD shifted other
+stages from hidden raw negatives; and a two-pixel CLK offset edit lost a
+stored offset hidden by a smaller divider. All four original probes pass
+after their fixes. Track CV, MOD voltage and CLK offset share raw drag-history
+selection. Every nonzero edit of those quantities is recorded from its stored
+origin; tiny drags finish native capture, record the edit and then perform the
+genuine click. MOD group offsets use each stage's effective origin and limits.
+The previous Track CV range/click fixes remain covered in the same suite.
+
+Expanded Pending performs 5,712 actual MOD drag/click cases. Core combinations
+cover all eight lanes/stages/types, encoder/OLED/grid, ALT, both directions,
+0.2/2/22-pixel movement and zero-delta events. All 38 assigned destinations are
+also checked across types, both controllers, ALT and small/large movement.
+Full raw state checks exclude unrelated writes and verify each edit/click
+receipt in order. Additional MOD confirmation tests cover every lane, both
+controllers and both scopes without an extra transition action. Another 1,536
+actual CLK offset drags cover every division 1–256, both controllers, both
+directions and small/large movement, checking raw Undo/Redo, field navigation
+and disabled /1. Confirming offsets cover /1, /2, /4, /16 and /256.
+
+The fixture pauses processing and isolates the bounded QA history, restoring
+both before original Pending save/reopen. This is real application callback
+coverage, not OS mouse/focus or physical hardware comparison. Sequencing,
+output timing, parameter IDs/settings/musical formats remain unchanged at
+787/33/11/522. Linux runs these checks in its existing Pending application group.
+
+Windows expanded Pending and original save/reopen pass, alongside the existing
+699 long-reset receipts, stationary-click probes and 48 held GATE/SLIDE
+shortcuts. CtrlEditor, Chains, ScaleCopy, Timing, StagePair, StagePattern,
+StageCv, Scales, Swing, Overrides, Workflows, SetupOptions, Outputs, Fidelity,
+Polish, all 181 Display states, ChainAudio and Order pass. ChainAudio records
+twelve real seconds at 48 kHz; these finite checks do not establish continuous
+human sessions or physical sound equivalence.
+
+Native integration and the stripped production host pass 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 state restores,
+144 fresh instances, 12 initializes and 145 reciprocal links across both
+public models at 44.1/48/96 kHz. This simulates 361.083 seconds in a single
+thread, with Windows wall time 13.5792 seconds. Released binaries exclude QA
+code; public platform packages are separately audited against current assets.
 
 ## 2.47 Small CV edits and effective ALT range
 

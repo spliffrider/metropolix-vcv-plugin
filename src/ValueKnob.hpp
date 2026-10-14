@@ -1,5 +1,8 @@
 // Shared Rack drag behavior for panel controls and the optional value grids.
 // Keep a compact readout alive even when the pointer leaves during a drag.
+bool needsRawDragHistory(ParamQuantity* q) {
+    return dynamic_cast<TrackCvQuantity*>(q) || dynamic_cast<ModVoltageQuantity*>(q) || dynamic_cast<ClockOffsetQuantity*>(q);
+}
 struct AdjustmentTooltip : ui::Tooltip {
     app::ParamWidget* owner=nullptr;
     std::function<std::string()> readout;
