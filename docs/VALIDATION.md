@@ -1,4 +1,36 @@
-# Validation and fidelity status — 2.51.0
+# Validation and fidelity status — 2.52.0
+
+## 2.52 locked MOD type grid context menu
+
+Actual right-click callbacks reproduced a forced MOD type cell showing
+**CTRL 0**. Its Clear assignment action reset Track 1 accumulation mode,
+because controller index -1 addressed the preceding parameter. The grid
+now distinguishes destination-controlled type from actual CTRL ownership;
+the controller menu helper also rejects invalid indices.
+
+The final Pending suite checks 912 assigned type menus across every lane,
+saved type and internal destination. Menus show the effective type and its
+destination while leaving all parameters/history intact. Another 72 cases
+open the clicked lane's settings after selection changes, clear its internal
+destination, restore the saved type and verify exact full-parameter Undo/Redo.
+Invalid controller menu indices leave no options or state/history changes.
+Earlier MOD type, 712 paired-page Undo, reset, shortcut, preview and save/reopen
+matrices remain passing. These are actual injected Rack callbacks, not OS
+mouse/focus or physical hardware comparison. No sequencer behavior, public
+parameter IDs or formats changed: 787/33/11/522 remain intact.
+
+All 25 local engine suites and native Rack integration pass. Twenty-five
+neighboring Windows UI/audio groups pass after the menu correction. Final
+Pending was rerun after the bounds refinement; other workflow paths are
+unchanged. Display checks retain 181 implemented states; no panel/OLED drawing
+changed. Finite signal recordings do not establish long human playtests.
+
+The current-source stripped production host passes 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 state restores,
+144 fresh instances, 12 initializes and 145 reciprocal links across both
+public models at 44.1/48/96 kHz. This is 361.083 simulated seconds in one
+thread, with Windows wall time 12.3784 seconds. The final packaged binary
+must pass this host separately and its assets must match current source.
 
 ## 2.51 paired-page drag ownership
 

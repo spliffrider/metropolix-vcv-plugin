@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.51.0
+# UI setup, confirmation and external clock input — 2.52.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,15 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Assigned MOD type grid menu
+
+Right-click the optional MOD grid's type cell while an internal destination
+fixes its type. The menu explains the effective type and destination. **MOD
+lane settings** opens settings for the clicked lane, even if another lane is
+selected after the menu opens. Clearing that lane's destination restores its
+saved type choice with one Undo action. Actual CTRL-owned cells retain their
+controller settings menus.
 
 ## Paired-page dragging and Undo
 

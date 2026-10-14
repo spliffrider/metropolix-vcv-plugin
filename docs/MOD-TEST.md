@@ -1,4 +1,4 @@
-# Modulation playtest — 2.50.0
+# Modulation playtest — 2.52.0
 
 Open `examples/Hardware-panel-demo.vcv` in Rack. It is already running and patched. Right-click **MOD**, then choose **Open MOD editor** to expose the grid used in these checks. The older `Modulation-demo.vcv` uses the same musical settings. Use **File > Save As** to keep your own test copy. Choose your output device in the AUDIO module to hear the two voices. The patch's two VCAs are set to 32%.
 
@@ -23,6 +23,12 @@ Raw stage voltages and transitions stay stored. Switching destinations or
 types does not overwrite them or alter preset/patch formats. If assignment
 changes during an unconfirmed type preview, its obsolete confirmation is
 discarded. Confirmed voltage edits and existing raw Undo remain supported.
+
+The optional MOD grid's assigned type cell also has a read-only right-click
+menu. It explains the type/destination and opens the clicked lane's settings.
+Clearing its internal destination there restores the saved choice, without
+changing another lane or Track 1's accumulation mode. Lane settings remain
+bound to the clicked lane if selection changes while the menu is open.
 
 ## Stored voltages, ALT and Undo
 
