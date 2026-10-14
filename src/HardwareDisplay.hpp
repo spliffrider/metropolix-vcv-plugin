@@ -92,7 +92,7 @@ struct HardwareDisplay : HardwareControl {
             for(int row=0;row<3;++row) {
                 bool mod=row==2;
                 int length=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_LENGTH):Metropolix::trackParam(row,Metropolix::LENGTH),8);
-                int offset=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_OFFSET):Metropolix::trackParam(row,Metropolix::OFFSET));
+                int offset=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_STAGE_OFFSET):Metropolix::trackParam(row,Metropolix::OFFSET));
                 int position=m?(mod?m->modStage[lane].load():m->playStage[row].load()):-1;
                 bool mute=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_MUTE):Metropolix::trackParam(row,Metropolix::MUTE));
                 for(int s=0;s<8;++s) {
@@ -300,7 +300,7 @@ struct HardwareDisplay : HardwareControl {
         } else if(page==Metropolix::LENGTH_PAGE) {
             bool offset=m && m->uiAlt.load();
             field(c,0,"STAGES",std::to_string(integer(tm(Metropolix::LENGTH,Metropolix::MOD_LENGTH),8)),f==0 && !offset,74);
-            c.text(82,3,"OFFSET");c.fit(98,14,27,std::to_string(integer(tm(Metropolix::OFFSET,Metropolix::MOD_OFFSET))),1);
+            c.text(82,3,"OFFSET");c.fit(98,14,27,std::to_string(integer(tm(Metropolix::OFFSET,Metropolix::MOD_STAGE_OFFSET))),1);
             c.box(81,16,17,7);c.text(83,17,"ALT");if(offset)c.corners(78,0,50,27);
             int id=mod?Metropolix::modParam(l,Metropolix::MOD_PULSE_LIMIT):Metropolix::extraParam(t,Metropolix::PULSE_LIMIT);
             int n=integer(id);field(c,29,"PULSES",n?std::to_string(n):"Auto",f==1 && !offset,74,1);

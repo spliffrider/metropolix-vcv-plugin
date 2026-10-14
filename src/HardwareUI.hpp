@@ -59,7 +59,7 @@ int screenParam(Metropolix* m) {
         case Metropolix::SCALE_PAGE: return f ? (m->scaleEditing.load()?Metropolix::SCALE_NOTE:Metropolix::SCALE) : m->scaleRootParam();
         case Metropolix::ORDER_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_ORDER) : Metropolix::trackParam(t,Metropolix::ORDER);
         case Metropolix::LENGTH_PAGE:
-            if(m->uiAlt.load())return mod?Metropolix::modParam(l,Metropolix::MOD_OFFSET):Metropolix::trackParam(t,Metropolix::OFFSET);
+            if(m->uiAlt.load())return mod?Metropolix::modParam(l,Metropolix::MOD_STAGE_OFFSET):Metropolix::trackParam(t,Metropolix::OFFSET);
             return mod?Metropolix::modParam(l,f?Metropolix::MOD_PULSE_LIMIT:Metropolix::MOD_LENGTH):(f?Metropolix::extraParam(t,Metropolix::PULSE_LIMIT):Metropolix::trackParam(t,Metropolix::LENGTH));
         case Metropolix::DIV_PAGE: return mod ? Metropolix::modParam(l,Metropolix::MOD_DIVISION) : (f?Metropolix::extraParam(t,Metropolix::PULSE_DIV):Metropolix::trackParam(t,Metropolix::DIVISION));
         case Metropolix::SWING_PAGE: return mod ? -1 : Metropolix::swingParam(t);

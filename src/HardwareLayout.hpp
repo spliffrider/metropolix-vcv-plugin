@@ -330,7 +330,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     auto* len=valueButton("LEN",52.2f,340,Metropolix::LENGTH_PAGE,[trackOrMod] { return trackOrMod(Metropolix::LENGTH,Metropolix::MOD_LENGTH); });
     len->extraMenu=[choice,m,trackOrMod](ui::Menu* menu) {
         std::vector<std::string> offsets; for(int i=0;i<8;++i)offsets.push_back(std::to_string(i));
-        menu->addChild(new ui::MenuSeparator); choice(menu,m,"Stage offset",trackOrMod(Metropolix::OFFSET,Metropolix::MOD_OFFSET),offsets);
+        menu->addChild(new ui::MenuSeparator); choice(menu,m,"Stage offset",trackOrMod(Metropolix::OFFSET,Metropolix::MOD_STAGE_OFFSET),offsets);
     };
     valueButton("DIV",83.4f,340,Metropolix::DIV_PAGE,[trackOrMod] { return trackOrMod(Metropolix::DIVISION,Metropolix::MOD_DIVISION); });
     auto* swing=valueButton("SWING",114.6f,340,Metropolix::SWING_PAGE,[m] { return m && !m->uiMod.load()?Metropolix::swingParam(m->selectedTrack.load()):-1; });

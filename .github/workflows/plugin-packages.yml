@@ -35,7 +35,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y jq zstd libglu1-mesa libxrandr2 libxinerama1 libxcursor1 libasound2 libgtk2.0-0 libgtk-3-0 libjack-jackd2-0 libpulse0
+          sudo apt-get install -y jq zstd libglu1-mesa libxrandr2 libxinerama1 libxcursor1 libasound2 libgtk2.0-0 libgtk-3-0 libjack-jackd2-0 libpulse0 xvfb
       - name: Mac dependencies
         if: runner.os == 'macOS'
         run: brew install jq zstd
@@ -65,6 +65,16 @@ jobs:
           ./build/tests/plugin-load "$PWD/dist/MetropolixLab/plugin.$extension" | tee dist/production-load.txt
           version=$(jq -r .version plugin.json)
           python3 scripts/audit-package.py --platform "$PLATFORM" --package "dist/MetropolixLab-$version-$PLATFORM.vcvplugin" --report "dist/package-audit-$PLATFORM.json"
+      - name: Actual Linux Rack rendering, gestures and audio
+        if: runner.os == 'Linux'
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/rack.zip" https://vcvrack.com/downloads/RackFree-2.6.6-lin-x64.zip
+          echo '69acf0c98d47db381291a115d609dcfbb99887bd7bd8641f0489da063fb0fc6e  '"$RUNNER_TEMP/rack.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/rack.zip" -d "$RUNNER_TEMP"
+          make native-ui-test-build
+          for mode in Fidelity Backup Polish Display MxAudio MidiAudio; do
+            xvfb-run -a -s '-screen 0 1600x1000x24' python3 scripts/test-ui-linux.py --rack "$RUNNER_TEMP/Rack2Free/Rack" --mode "$mode"
+          done
       - name: Save verified package and evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -74,5 +84,10 @@ jobs:
             dist/package-audit-*.json
             dist/native-tests.txt
             dist/production-load.txt
+            tmp/linux-*-qa/report.txt
+            tmp/linux-*-qa/*.pgm
+            tmp/linux-*-qa/*.png
+            tmp/linux-*-qa/*.wav
+            tmp/linux-*-qa/rack-*.log
           if-no-files-found: error
           retention-days: 30

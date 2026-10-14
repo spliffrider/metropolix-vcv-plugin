@@ -99,3 +99,8 @@ native-test-build:
 	@mkdir -p build/tests
 	$(CXX) $(CXXFLAGS) -O2 tests/RackIntegrationTests.cpp -L$(RACK_DIR) -lRack -o build/tests/rack-native
 	$(CXX) $(CXXFLAGS) -O2 tests/PluginLoadTests.cpp -L$(RACK_DIR) -lRack $(if $(ARCH_LIN),-ldl,) -o build/tests/plugin-load
+
+.PHONY: native-ui-test-build
+native-ui-test-build:
+	@mkdir -p build/native-ui-test
+	$(CXX) $(CXXFLAGS) -O1 -g -DMETROPOLIX_QA src/plugin.cpp src/Metropolix.cpp $(LDFLAGS) -o build/native-ui-test/$(TARGET)
