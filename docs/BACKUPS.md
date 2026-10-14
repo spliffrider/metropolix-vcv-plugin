@@ -1,18 +1,22 @@
-# Portable backups — 2.26.0
+# Portable backups — 2.29.0
 
 Open **SETUP → MIDI → Backup files…**, or use the module's right-click menu.
 Drag the encoder or display up/down to select an action. Click the encoder to
-open the computer's file chooser; the same actions are available by right-click.
+open the computer's file chooser. **Export Presets** first opens a selection
+submenu; EXIT returns to Backup files. Right-click offers the same choices.
 
 | Action | Saved contents |
 | --- | --- |
 | Export All | Current settings/state, all 64 preset slots, the working chain and eight saved chains |
 | Export Settings | All 770 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
-| Export Presets | All 64 slots, including empty slots, the working chain and eight saved chains |
+| Export Presets → All Presets | All 64 slots, including empty slots, the working chain and eight saved chains |
+| Export Presets → Filled Presets | Only occupied slots, keeping their original bank/slot addresses; no chains or live settings |
+| Export Presets → Bank 1–8 | Exactly eight slots in the selected bank, including explicit empty slots; no chains or live settings |
 | Import Backup | Restore the scope recorded in the selected file |
 
-Files use readable JSON with `type: MetropolixLabBackup`, `format: 1`, and a
-scope of `all`, `settings` or `presets`. Keep the complete file. Sharing an All
+Files use readable JSON with `type: MetropolixLabBackup`. All, Settings and All
+Presets retain `format: 1` and a scope of `all`, `settings` or `presets`. Filled
+and Bank selections use `format: 2`, described below. Keep the complete file. Sharing an All
 backup lets another tester reproduce your module settings and musical bank.
 They still need a Rack patch to supply oscillators, envelopes and cables.
 An [example All backup](../examples/Backup-example.json) is included for trying
@@ -31,7 +35,17 @@ transport assignments are included in Settings. Module identity, cable
 connections, bypass state, neighbours, and optional editor size stay as they
 are in the receiving patch. Settings-only import keeps its existing bank;
 presets-only import keeps its current parameter settings, apart from stopping
-RUN/RESET. Preset imports replace all slots and chains in that scope.
+RUN/RESET. **All Presets replaces every slot and chain**, including empties.
+**Filled merges only the occupied slots listed in the file**. **Bank replaces
+exactly its eight slots**, so empty source slots clear the corresponding target
+slots. Both selective imports preserve other banks and all chains.
+
+Slots retain their addresses: importing Bank 8 affects slots 8-1 through 8-8;
+it does not copy them into the currently selected bank. Filled is useful for
+adding a sparse shared collection. Bank is useful for replacing a complete
+bank. A file with no filled slots changes no presets but still stops playback
+like every import. Merge/replacement semantics are explicit desktop behavior;
+they have not been verified against a hardware SysEx receiver.
 
 Pitch/CTRL physical positions and remembered pickup targets are restored
 together. Signed CV settings and dormant clock offsets retain their stored
@@ -43,8 +57,28 @@ chains and files over 4 MiB are rejected before any settings change. A failed
 save preserves an existing destination file; a successful save replaces it
 using a fully written temporary file in the same directory.
 
-The hardware manual's **Send All / Send Settings-State / Send All Presets**
-scopes inspired these export options ([firmware 1.6 manual, p.183](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf)).
+## Selective file format and compatibility
+
+Format 2 contains exactly `type`, `format`, `scope`, `selection` and `bank`.
+`scope` is `presets`. `selection` is either `{"kind":"filled"}` or
+`{"kind":"bank","bank":8}` (public bank numbers 1–8). `bank` contains
+`presetFormat: 9` and a `slots` array. Each entry has an absolute `slot` index
+0–63 and `values`, the existing 518-value musical snapshot. A Bank entry may
+use `null` for an empty slot; Filled entries must contain a snapshot.
+Duplicate IDs, foreign bank IDs, missing bank slots, wrong snapshot sizes and
+out-of-range values are rejected before import. The files contain no chains.
+
+Use **2.29.0 or later** to import selective files. For earlier builds, export
+All Presets or All instead. Existing 2.26–2.28 All/Settings/All Presets backups
+continue to import, including settings schema 29; current settings use schema
+30 solely to remember the new submenu. The 770 parameter IDs and format
+9/518-value musical snapshots stay fixed. The
+[example Bank 8 backup](../examples/Backup-bank-8.json) intentionally replaces
+Bank 8 with three occupied slots and five empty slots; try it in a spare patch.
+
+The hardware manual's **Send All / Send Settings-State / Send Presets →
+All, Filled, 1–8** scopes inspired these export options
+([firmware 1.6 manual, p.53](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf)).
 Chains are included as a desktop convenience. These files are **Metropolix Lab
 JSON**, and cannot be transferred to the hardware's Receive Any screen. The
 manual does not specify a hardware SysEx packet format; hardware SysEx

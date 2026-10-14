@@ -304,7 +304,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
-        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE, BACKUP_PAGE };
+        LOAD_PAGE, SAVE_PAGE, PRESET_SETUP_PAGE, CHAIN_PAGE, SWING_PAGE, LOOPY_PAGE, CV_TYPE_PAGE, CLOCK_OUT_PAGE, TRACK_MENU_PAGE, GLOBAL_SETUP_PAGE, TUNER_PAGE, UI_SETUP_PAGE, MOD_ASSIGN_PAGE, MOD_MENU_PAGE, MIDI_SETUP_PAGE, MX_SETUP_PAGE, BACKUP_PAGE, BACKUP_PRESET_PAGE };
     std::atomic<int> uiPage{HOME}, uiField{0};
     std::atomic<int> outputDraft[2]{{-1},{-1}}; // Unconfirmed choices never reach DSP or saved patches.
     std::vector<float> workflowBaseline, workflowClipboard;
@@ -318,6 +318,7 @@ struct Metropolix : Module {
     std::vector<int> uiDraftIds;std::vector<float> uiDraftBefore;
     std::atomic<int> uiSetupCursor{0},modMenuCursor{0},midiSetupCursor{0};
     std::atomic<int> backupCursor{0};
+    std::atomic<int> backupPresetCursor{0};
     std::string backupNotice;double backupNoticeUntil=0; // UI thread only.
     metro::MxLogic mx;std::uint64_t mxResetSerial=0;std::atomic<bool> mxConnected{false};
     metro::ExternalDivider externalDivider;metro::OutputDelay<NUM_OUTPUTS> outputDelay;
@@ -786,8 +787,9 @@ struct Metropolix : Module {
         json_t* root = json_object();
         json_object_set_new(root,"midiInput",midiInput.toJson());json_object_set_new(root,"midiOutput",midiOutput.toJson());json_object_set_new(root,"midiSetupCursor",json_integer(midiSetupCursor.load()));
         json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
-        json_object_set_new(root, "schemaVersion", json_integer(29));
+        json_object_set_new(root, "schemaVersion", json_integer(30));
         json_object_set_new(root,"backupCursor",json_integer(backupCursor.load()));
+        json_object_set_new(root,"backupPresetCursor",json_integer(backupPresetCursor.load()));
         json_object_set_new(root,"pickup",pickupToJson());
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
@@ -823,6 +825,7 @@ struct Metropolix : Module {
         int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
         midiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"midiSetupCursor"))),0,5));
         backupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"backupCursor"))),0,3));
+        backupPresetCursor.store(schema<30?0:metro::clamp(int(json_integer_value(json_object_get(root,"backupPresetCursor"))),0,9));
         modMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"modMenuCursor")))+(schema<27?2:0),0,3));
         int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
         if(schema<27 && cursor>=10)cursor+=5;
@@ -889,7 +892,7 @@ struct Metropolix : Module {
         selectedRow.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedRow"))), 0, 7));
         selectedAux.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedAux"))),0,2));
         selectedCtrl.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root,"selectedCtrl"))),0,1));
-        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(BACKUP_PAGE)));
+        uiPage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiPage"))), 0, static_cast<int>(BACKUP_PRESET_PAGE)));
         if(uiPage.load()==TUNER_PAGE){uiPage.store(GLOBAL_SETUP_PAGE);globalCursor.store(5);}
         uiField.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiField"))), 0, uiPage.load()==PRESET_SETUP_PAGE?7:uiPage.load()==ACCUM_PAGE?5:1));
         uiHome.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "uiHome"))),0,3));
