@@ -662,7 +662,7 @@ struct MetropolixWidget : ModuleWidget {
 
     void step() override {
         auto* m = getModule<Metropolix>();
-        if (m) {pumpPresetUi(m);if(m->uiDraftParam>=0 && (m->uiDraftParam!=screenParam(m) || m->params[m->uiDraftParam].getValue()!=m->uiDraftBase))m->cancelDraft();}
+        if (m) {pumpPresetUi(m);invalidateDraft(m);}
         bool expanded = m && m->expanded.load();
         if (expanded != isExpanded) {
             app::ModuleWidget* mxWidget=nullptr;Vec anchor=box.pos;

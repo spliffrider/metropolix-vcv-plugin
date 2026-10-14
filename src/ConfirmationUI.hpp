@@ -10,6 +10,15 @@ bool requiresConfirmation(Metropolix* m,int id){
     return m->integer(Metropolix::ENC_CONFIRM)!=0;
 }
 bool pendingConfirmation(Metropolix* m){return m && m->uiDraftParam>=0 && m->uiDraftParam==screenParam(m);}
+bool validDraft(Metropolix* m){
+    if(!pendingConfirmation(m) || m->uiDraftAlt!=m->uiAlt.load() || !requiresConfirmation(m,m->uiDraftParam))return false;
+    if(m->uiDraftIds.empty() || m->uiDraftIds.size()!=m->uiDraftRawBefore.size())return false;
+    // Compare stored parameters, not their effective values: unipolar/gate CV
+    // quantities can hide a negative voltage that must survive cancellation.
+    for(size_t i=0;i<m->uiDraftIds.size();++i){int id=m->uiDraftIds[i];if(m->ctrlOwner(id)>=0 || m->params[id].getValue()!=m->uiDraftRawBefore[i])return false;}
+    return true;
+}
+void invalidateDraft(Metropolix* m){if(m && m->uiDraftParam>=0 && !validDraft(m))m->cancelDraft();}
 std::string previewDisplayString(Metropolix* m,int id){
     auto* q=m->getParamQuantity(id);if(id!=m->uiDraftParam)return q->getDisplayValueString();
     float v=m->uiDraftValue;
@@ -23,6 +32,9 @@ std::string previewDisplayString(Metropolix* m,int id){
 }
 bool confirmDraft(Metropolix* m){
     if(!pendingConfirmation(m))return false;
+    // Consume an obsolete confirmation without falling through to a field or
+    // secondary action. The external edit remains the applied value.
+    if(!validDraft(m)){m->cancelDraft();return true;}
     int id=m->uiDraftParam;float value=m->uiDraftValue,base=m->uiDraftOrigin;auto ids=m->uiDraftIds;auto before=m->uiDraftBefore;m->cancelDraft();
     if(m->ctrlOwner(id)<0){
         if(ids.size()<=1)setWithHistory(m->getParamQuantity(id),value);
@@ -35,11 +47,13 @@ bool confirmDraft(Metropolix* m){
     return true;
 }
 void turnDraft(Metropolix* m,int id,float dy,float& remainder,bool fine){
-    auto* q=m->getParamQuantity(id);if(m->uiDraftParam!=id){m->cancelDraft();m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftOrigin=m->uiDraftValue=q->getValue();m->uiDraftIds.push_back(id);
+    if(m->uiDraftParam>=0 && !validDraft(m)){m->cancelDraft();remainder=0;}
+    if(id!=screenParam(m) || !requiresConfirmation(m,id))return;
+    auto* q=m->getParamQuantity(id);if(m->uiDraftParam!=id){m->cancelDraft();m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftAlt=m->uiAlt.load();m->uiDraftOrigin=m->uiDraftValue=q->getValue();m->uiDraftIds.push_back(id);
         if(m->uiAlt.load() && m->uiPage.load()==Metropolix::STAGE_PAGE && (m->uiMod.load() || m->selectedRow.load()==Metropolix::CV || m->selectedRow.load()>=Metropolix::PITCH_OVERRIDE)){m->uiDraftIds.clear();for(int s=0;s<8;++s)m->uiDraftIds.push_back(m->uiMod.load()?Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_VALUE+s):Metropolix::stageParam(m->selectedTrack.load(),s,m->selectedRow.load()));}
         if(stagePairPage(m) && m->uiAlt.load())m->uiDraftIds=stagePairIds(m,false,true);
         if(simpleStagePage(m) && !binaryStagePage(m) && m->uiAlt.load())m->uiDraftIds=simpleStageIds(m);
-        for(int next:m->uiDraftIds)m->uiDraftBefore.push_back(m->getParamQuantity(next)->getValue());}
+        for(int next:m->uiDraftIds){m->uiDraftBefore.push_back(m->getParamQuantity(next)->getValue());m->uiDraftRawBefore.push_back(m->params[next].getValue());}}
     bool gate=false;if(auto* cv=dynamic_cast<TrackCvQuantity*>(q))gate=cv->type()==metro::GateCv;if(auto* cv=dynamic_cast<ModVoltageQuantity*>(q))gate=cv->gate();
     if(q->snapEnabled || gate){remainder-=dy/(fine?10.f:1.f);int steps=int(remainder/22.f);if(steps){if(gate)m->uiDraftValue=steps>0?5:0;else if(auto* pitch=dynamic_cast<PitchOverrideQuantity*>(q)){auto scale=pitch->scale();int off=metro::nearestDegree(0,scale)-1;int degree=m->uiDraftValue<0?off:metro::nearestDegree(m->uiDraftValue,scale);degree=metro::clamp(degree+steps,off,metro::nearestDegree(60,scale));m->uiDraftValue=degree==off?-1.f:float(metro::degreeToSemitone(degree,scale));}else m->uiDraftValue+=steps;remainder-=steps*22.f;}}
     else m->uiDraftValue-=dy*q->getRange()*.0007f*(fine?.1f:1.f);

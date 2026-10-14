@@ -270,6 +270,7 @@ struct HardwareControl : ValueKnob {
     }
     void onLeave(const event::Leave& e) override { clearTip(); ValueKnob::onLeave(e); }
     void step() override {
+        invalidateDraft(metroModule);
         if(metroModule && metroModule->scaleEditing.load() && !metro::userScale(metroModule->integer(Metropolix::SCALE)))metroModule->scaleEditing.store(false);
         bind(); ValueKnob::step();
         if(tip) { tip->text=tooltipText(); tip->box.pos=getAbsoluteOffset(box.size); }
@@ -284,6 +285,7 @@ struct HardwareControl : ValueKnob {
         if(e.button==GLFW_MOUSE_BUTTON_LEFT && e.action==GLFW_PRESS)pressMods=e.mods;
         bind();
         if(e.button==GLFW_MOUSE_BUTTON_RIGHT && e.action==GLFW_PRESS) {
+            if(metroModule && std::find(metroModule->uiDraftIds.begin(),metroModule->uiDraftIds.end(),paramId)!=metroModule->uiDraftIds.end())metroModule->cancelDraft();
             clearTip();
             if(controllerOwner>=0)appendCtrlMenu(createMenu(),metroModule,controllerOwner);
             else if(rightAction) rightAction();
@@ -349,6 +351,13 @@ struct HardwareControl : ValueKnob {
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        if(confirming && moved>=3 && !longFired){
+            // A preview drag never writes parameters. Finish Rack's cursor and
+            // knob state without attributing external writes to this gesture.
+            auto* boundModule=module;module=nullptr;ValueKnob::onDragEnd(e);module=boundModule;
+            invalidateDraft(metroModule);gestureIds.clear();gestureBefore.clear();
+            if(releaseAction)releaseAction();dragging=false;pressMods=0;clearTip();return;
+        }
         bool batch=!gestureIds.empty() && (gestureIds.size()>1 || !getParamQuantity() || cvPage(metroModule)) && (moved>=3 || longFired);
         float pickupPhysicalAfter=pickupGestureParam>=0?metroModule->params[pickupGestureParam].getValue():0;
         if(pickupGestureParam>=0)metroModule->params[pickupGestureParam].setValue(pickupPhysicalBefore);

@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.22.0
+# UI setup, confirmation and external clock input — 2.41.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -15,13 +15,34 @@ the 64 musical presets.
 | Button / Slider LED / Screen Level | Four brightness levels; pitch lights continue using Rack's Bloom setting. Default 4. |
 | CV Out Delay | 0–21 ms applied equally to all seven pitch, gate, clock and A/B outputs. Default 0. |
 
-AUX destination/assignment, MOD destination/assignment and A/B source choices
+AUX destination/assignment, CTRL destination/assignment, MOD destination/assignment and A/B source choices
 always require confirmation when browsed with the encoder/display. A confirmed
 edit creates one normal Rack undo action. Leaving a page cancels its preview;
 unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Pending edits and desktop value actions
+
+With Enc Confirm enabled, an encoder or OLED drag previews a value; it does
+not write a parameter or create an undo entry until confirmed. If external
+automation changes any value captured by that preview, it is discarded.
+Bulk previews check all eight captured stages. This preserves stored negative
+CV values even when a Unipolar quantity displays zero. A new CTRL assignment
+that owns the value also discards the preview.
+
+Continuing a drag after an external change starts a new preview from the latest
+applied value. Changing page, selected parameter or ALT scope cancels the old
+preview. An unrelated external parameter change leaves it valid. Opening a
+matching control's right-click menu cancels it, including when Initialize
+would leave the applied value unchanged. Native choices and numeric entry
+apply immediately and retain Rack's normal undo. Merely opening that menu or
+releasing a preview drag adds no undo entry. A confirmed bulk edit remains one
+action, and undo restores the exact stored values.
+
+These pending states are UI-only and are not serialized. There are no changes
+to parameter IDs, settings schema33, musical format11 or the 522-value snapshot.
 
 With an external clock selected, BPM shows the measured divided tempo and input
 division. Drag its button/encoder to choose `/1`–`/256`. Hold BPM and click stages
@@ -46,4 +67,4 @@ Try [Setup-performance.vcv](../examples/Setup-performance.vcv), select your AUDI
 device and press RUN. It opens the delay preference at 8 ms with two voices;
 changes to that delay shift pitch and gates together. This is a software
 interpretation of manual pp. 37–38, 57–61 and 139–144, without physical-module
-comparison. MIDI/MX interfaces and physical pickup are subsequent work.
+comparison. See the current [MIDI](MIDI.md), [MX](MX.md) and [pickup](PRESET-PICKUP.md) guides for those implemented interfaces.
