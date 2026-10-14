@@ -260,6 +260,7 @@ struct ValueCell : ValueKnob {
     std::vector<std::string> shortChoices;
     float dragDistance = 0.f;
     bool dragStarted = false;
+    bool dragCancelled = false;
     bool cvDrag=false;
     float cvBefore=0;
     bool locked() const { return metroModule && metroModule->ctrlOwner(paramId)>=0; }
@@ -271,6 +272,7 @@ struct ValueCell : ValueKnob {
         speed = 0.55f;
     }
     void step() override {
+        if(dragStarted && locked()){dragCancelled=true;clearAdjustmentTip();}
         if (metroModule && !dragStarted) {
             int t = metroModule->selectedTrack.load();
             if (trackProperty >= 0) paramId = Metropolix::trackParam(t, trackProperty);
@@ -280,7 +282,7 @@ struct ValueCell : ValueKnob {
                 metroModule->selectedStage.load(), metroModule->selectedRow.load());
             if (modProperty >= 0) paramId = Metropolix::modParam(metroModule->selectedLane.load(), modProperty);
         }
-        ValueKnob::step();
+        if(dragCancelled){app::Knob::step();clearAdjustmentTip();}else ValueKnob::step();
         if (auto* q = getParamQuantity()) speed = q->snapEnabled ? std::max(1.f, 30.f / q->getRange()) : 1.f;
     }
     std::string valueText() {
@@ -322,15 +324,19 @@ struct ValueCell : ValueKnob {
     }
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
-        dragDistance=0;dragStarted=!locked();cvDrag=dragStarted && dynamic_cast<TrackCvQuantity*>(getParamQuantity());
+        dragDistance=0;dragCancelled=false;dragStarted=!locked();cvDrag=dragStarted && dynamic_cast<TrackCvQuantity*>(getParamQuantity());
         if(cvDrag)cvBefore=metroModule->params[paramId].getValue();
         if(dragStarted)ValueKnob::onDragStart(e);
     }
-    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm(); if(dragStarted && !locked())ValueKnob::onDragMove(e); }
+    void onDragMove(const event::DragMove& e) override { dragDistance += e.mouseDelta.norm();if(dragStarted && locked())dragCancelled=true;if(dragStarted && !dragCancelled)ValueKnob::onDragMove(e);else clearAdjustmentTip(); }
     void onDragEnd(const event::DragEnd& e) override {
         // Automation may assign a CTRL while this drag is active. Always finish
         // a started Rack gesture so cursor capture and history are released.
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        if(dragStarted && (dragCancelled || locked())){
+            dragCancelled=true;auto* boundModule=module;module=nullptr;ValueKnob::onDragEnd(e);module=boundModule;
+            dragStarted=false;cvDrag=false;dragCancelled=false;return;
+        }
         bool cvBatch=cvDrag && dragDistance>=3;
         float after=cvBatch?metroModule->params[paramId].getValue():0;
         if(cvBatch)metroModule->params[paramId].setValue(cvBefore);
@@ -341,7 +347,7 @@ struct ValueCell : ValueKnob {
     void onDoubleClick(const event::DoubleClick& e) override { if(!locked())app::Knob::onDoubleClick(e); }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onAction(const event::Action&) override {
-        if(locked())return;
+        if(dragCancelled || locked())return;
         if (dragDistance >= 3.f) return;
         if (toggleCell()) {
             if (auto* q = getParamQuantity()) {

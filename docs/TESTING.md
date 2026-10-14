@@ -1,10 +1,10 @@
-# Metropolix Lab 2.43.0 — public alpha quick start
+# Metropolix Lab 2.44.0 — public alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
 
-2.43.0 protects [A/B output previews](OUTPUT-ROUTING.md). Open ALT → A/B, drag a function or target, then confirm and try Undo/Redo. The cable should keep its applied source during the preview. Changing that source in the expanded MOD editor discards an obsolete preview; further dragging starts from the new source.
+2.44.0 protects [CTRL ownership during held edits](CTRL-KNOBS.md). Assign a direct destination and check that its field is controlled by the white CTRL knob. Clear the assignment and start a fresh drag to edit the field again. Automated tests also cover assignment changes during a hold, cancellation and exact Undo/Redo.
 
 2.39.0 corrects [CTRL assignment editing](CTRL-KNOBS.md). Open a black CTRL assignment button, drag destination or target, and check that it previews until you press the encoder. Press again to switch fields. Hold the encoder to clear the assignment, then try Undo/Redo. White performance knobs remain live; right-click choices apply directly.
 

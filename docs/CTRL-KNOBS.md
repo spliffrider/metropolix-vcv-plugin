@@ -1,4 +1,4 @@
-# CTRL 1 and CTRL 2 — 2.39.0
+# CTRL 1 and CTRL 2 — 2.44.0
 
 The two large white knobs are assignable performance controls. Their black
 buttons open the manual-style CTRL page: destination above, target tracks below,
@@ -44,6 +44,21 @@ parameters. The display marks the active field with a circled controller number;
 the encoder and optional editor cannot change it independently. Right-click
 the field to change or clear the controller assignment. Accumulator Mode and
 Polarity also show ownership on LIM. Unassigning retains the last panel value.
+
+If a direct controller takes ownership during a held field edit, that gesture
+is cancelled. Encoder/OLED and optional-grid movement stop, the controller's
+latest value remains applied, and release adds no drag undo for its writes.
+This also discards a matching confirmation preview. Clearing the route while
+still holding does not resume the cancelled edit: release and start a fresh
+drag. Earlier movement within that cancelled gesture is not committed as a
+separate undo; the controller has taken over its value. Controller assignment
+actions retain their own normal undo.
+
+A field that was already owned when the gesture began remains read-only.
+Short encoder navigation still switches fields, and a whole-page long reset
+can reset its other unowned fields with their usual grouped undo. A newly
+acquired owner during a hold cancels that hold instead of firing its reset.
+Offset routes and unrelated track assignments do not own the field.
 
 **Offset destinations** preserve programmed settings. Noon gives no offset;
 turning left subtracts and right adds. Returning to noon or clearing the

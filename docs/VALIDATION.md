@@ -1,4 +1,57 @@
-# Validation and fidelity status — 2.43.0
+# Validation and fidelity status — 2.44.0
+
+## 2.44 Live CTRL ownership
+
+Actual Rack callbacks reproduced five failures: encoder and OLED movement
+continued after direct CTRL takeover, their releases recorded controller writes
+as drag history, and an optional gate grid likewise attributed the controller
+write to native history. HardwareControl now observes ownership during movement,
+refresh and release and latches cancellation until release. Its matching pending
+confirmation is discarded. ValueCell also latches cancellation and finishes
+Rack's cursor/knob state without native history. Applied controller values are
+preserved; fresh gestures after unassignment restore ordinary editing/undo.
+Starting already owned still permits short navigation and whole-page resets of
+other unowned fields. Earlier movement in a cancelled gesture is not separately
+committed; controller assignment actions retain their own history.
+
+The extended CtrlEditor suite uses the visible encoder, OLED and actual gate
+grid, then real HardwareControl/ValueCell callbacks bound to every one of the
+fourteen direct destinations, both knobs and all track scopes. It covers takeover
+before movement, before release, during refresh and after earlier live movement;
+clearing while held, initially owned gestures, cursor/adjustment-tip cleanup,
+fresh exact raw-state single-action undo/redo, short navigation and partial
+long-reset preservation. Matching confirmation cancellation is checked even
+when its base value did not change before the controller was cleared.
+Linux runs the same extended CtrlEditor suite in its existing eighteen groups.
+Manual printed146–153 specifies controller ownership; Clock Div In on p.150 is
+the track's DIV field, not the global external-input divider. Saved IDs/schema/
+musical formats stay 787/33/11/522.
+
+Cursor cleanup uses the [official Rack 2.6.6 Knob implementation](https://raw.githubusercontent.com/VCVRack/Rack/v2.6.6/src/app/Knob.cpp):
+ending the native gesture with no bound quantity releases capture and skips
+its parameter history. This is actual callback coverage, not an OS mouse/focus
+or physical-module equivalence check.
+
+Windows extended CtrlEditor and its original routing/save/reopen pass. Raw
+ownership/history receipts pause module processing for the probe frame and
+emulate the controller's base write using its native direct-value mapping;
+processing resumes before the original UI and rendering/storage checks. Offset
+routes and direct assignments to the other track retain live editing/undo;
+Tempo's ownership remains global. The probes are removed before saving.
+
+Overrides exposed an asynchronous fixture mismatch: it expected a 75% gate
+while assigning a noon CTRL that can legitimately write 50% on the processing
+thread. Its knob position now maps to the expected 75%, preserving the strong
+owned-value assertion rather than changing production behavior. Overrides,
+Timing, Swing, Pending, Outputs, Pickup, Fidelity, Polish and all 181 Display
+states pass. Controls also passes real twelve-second stereo/CV performance.
+Native integration and the stripped production host pass 22,624,609 frames,
+339,369,135 output checks, 56,664 edits, 145 restores, 144 fresh instances,
+12 initializes and 145 reciprocal links over 361.083 virtual seconds; the local
+host took 12.5019 seconds. Linux requires the extended CtrlEditor plus its
+seventeen other application groups; all four packages require native and
+production checks. Finite recordings and virtual runtime do not establish
+long realtime sessions, human listening quality or physical hardware parity.
 
 ## 2.43 A/B output preview conflicts
 

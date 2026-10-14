@@ -216,6 +216,8 @@ struct HardwareControl : ValueKnob {
     NVGcolor lightColor=nvgRGB(135,187,227);
     ui::Tooltip* tip=nullptr;
     bool dragging=false;
+    int gestureParam=-1,gestureOwner=-1;
+    bool ctrlBlocked=false,ctrlTakeover=false;
     int pressMods=0;
     bool navigating=false;
     float navigationDelta=0;
@@ -237,6 +239,16 @@ struct HardwareControl : ValueKnob {
         return ValueKnob::adjustmentText();
     }
     ~HardwareControl() { clearTip(); }
+    bool blockCtrlGesture() {
+        if(!dragging || gestureParam<0)return false;
+        int owner=metroModule?metroModule->ctrlOwner(gestureParam):-1;
+        if(owner!=gestureOwner){ctrlBlocked=true;ctrlTakeover=true;}
+        if(ctrlBlocked){
+            module=nullptr;clearAdjustmentTip();clearTip();if(owner>=0)controllerOwner=owner;
+            if(ctrlTakeover && metroModule && metroModule->uiDraftParam==gestureParam)metroModule->cancelDraft();
+        }
+        return ctrlBlocked;
+    }
     void bind() {
         if(dragging) return;
         int id=binding ? binding() : -1;
@@ -272,10 +284,11 @@ struct HardwareControl : ValueKnob {
     void step() override {
         invalidateDraft(metroModule);
         invalidateOutputDrafts(metroModule);
+        blockCtrlGesture();
         if(metroModule && metroModule->scaleEditing.load() && !metro::userScale(metroModule->integer(Metropolix::SCALE)))metroModule->scaleEditing.store(false);
         bind(); ValueKnob::step();
         if(tip) { tip->text=tooltipText(); tip->box.pos=getAbsoluteOffset(box.size); }
-        if(dragging && moved<3 && !longFired && longAction && (!longEnabled || longEnabled()) && system::getTime()-heldSince>=longSeconds) {longFired=true;longAction();}
+        if(dragging && !ctrlTakeover && moved<3 && !longFired && longAction && (!longEnabled || longEnabled()) && system::getTime()-heldSince>=longSeconds) {longFired=true;longAction();}
         if(dragging && navigating && moved>0 && navigationValue && settings::tooltips) {
             if(!tip){auto* t=new HardwareTooltip;t->owner=this;tip=t;APP->scene->addChild(t);}
             tip->text=navigationValue();
@@ -299,6 +312,7 @@ struct HardwareControl : ValueKnob {
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
         bind(); dragging=true; moved=0; clearTip();heldSince=system::getTime();longFired=false;
+        gestureParam=(module || controllerOwner>=0)?paramId:-1;gestureOwner=controllerOwner;ctrlBlocked=controllerOwner>=0;ctrlTakeover=false;
         navigating=navigationMode && navigationMode(); navigationDelta=0;
         if(dragAction) dragAction();
         if(navigating && navigationStart)navigationStart();
@@ -310,6 +324,7 @@ struct HardwareControl : ValueKnob {
     }
     void onDragMove(const event::DragMove& e) override {
         moved+=e.mouseDelta.norm();
+        if(blockCtrlGesture())return;
         if(confirming && getParamQuantity())turnDraft(metroModule,paramId,e.mouseDelta.y,navigationDelta,APP->window->getMods() & GLFW_MOD_CONTROL);
         else if(navigating && navigationTurn) {
             navigationDelta-=e.mouseDelta.y;
@@ -352,6 +367,11 @@ struct HardwareControl : ValueKnob {
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
+        if(blockCtrlGesture() && (!longFired || ctrlTakeover)){
+            ValueKnob::onDragEnd(e);gestureIds.clear();gestureBefore.clear();pickupGestureParam=-1;
+            invalidateDraft(metroModule);
+            if(releaseAction)releaseAction();dragging=false;pressMods=0;ctrlTakeover=false;clearTip();return;
+        }
         if((confirming || (navigating && outputPage(metroModule))) && moved>=3 && !longFired){
             // A preview drag never writes parameters. Finish Rack's cursor and
             // knob state without attributing external writes to this gesture.
@@ -379,7 +399,7 @@ struct HardwareControl : ValueKnob {
         if(releaseAction)releaseAction();
         dragging=false;pressMods=0;clearTip();
     }
-    void onAction(const event::Action&) override { if(moved<3.f && !longFired && action) action(); }
+    void onAction(const event::Action&) override { if(!ctrlTakeover && moved<3.f && !longFired && action) action(); }
     void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();app::Knob::onDoubleClick(e);} }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu);auto* m=metroModule;int id=paramId;if(m && m->waitingPickup(id))menu->addChild(createMenuItem("Take over at current physical position","",[m,id]{takeOverPanel(m,id);})); }
     void draw(const DrawArgs& args) override {
