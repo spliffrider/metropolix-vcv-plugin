@@ -1,5 +1,7 @@
 # Hardware panel and desktop interaction — 2.30.0
 
+LEN and DIV now support [held stage shortcuts and whole-screen encoder resets](TIMING-SHORTCUTS.md), preserving the active field and Rack undo.
+
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
 The panel follows the supplied photograph at 34 HP. This revision refines lettering, component proportions, slider grips, button colors, metal sockets, secondary legends, mounting details, and the logo. The display uses a native 128 × 64 pixel canvas with lettering and diagrams based on the manual's screen images. Further comparison is still needed before calling it an exact recreation.

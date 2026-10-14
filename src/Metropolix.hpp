@@ -359,6 +359,8 @@ struct Metropolix : Module {
     std::atomic<bool> uiChooseFunction{false};
     std::atomic<bool> scaleEditing{false},scaleShortcutHeld{false},scaleShortcutUsed{false};
     std::atomic<bool> orderShortcutHeld{false},orderShortcutUsed{false};
+    std::atomic<int> timingShortcutHeld{0};
+    std::atomic<bool> timingShortcutUsed{false};
     std::atomic<int> soundingScale[2];
     std::atomic<int> modStage[8];
     std::atomic<float> modVoltage[8];
@@ -791,6 +793,7 @@ struct Metropolix : Module {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         orderShortcutHeld.store(false);orderShortcutUsed.store(false);
+        timingShortcutHeld.store(0);timingShortcutUsed.store(false);
         resetPresetRuntime();
         resetChainRuntime();
         { std::lock_guard<std::mutex> lock(presetMutex);chainState.enabled=false;chainEnabled.store(false); }
@@ -850,6 +853,7 @@ struct Metropolix : Module {
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);
         orderShortcutHeld.store(false);orderShortcutUsed.store(false);
+        timingShortcutHeld.store(0);timingShortcutUsed.store(false);
         outputDraft[0].store(-1);outputDraft[1].store(-1);
         tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
         uiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"uiSetupCursor"))),0,7));

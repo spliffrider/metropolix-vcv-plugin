@@ -85,6 +85,7 @@ int screenParam(Metropolix* m) {
 }
 void screenPage(Metropolix* m, int page) {
     if(!m) return;
+    if(m->timingShortcutHeld.load() && m->timingShortcutHeld.load()!=page){m->timingShortcutHeld.store(0);m->timingShortcutUsed.store(true);}
     if(page!=Metropolix::TUNER_PAGE)m->tunerActive.store(false);
     if(m->uiPage.load()==Metropolix::LOOPY_PAGE && page!=Metropolix::LOOPY_PAGE && m->loopyHeld.load() && m->integer(Metropolix::RUN))m->latchLoopy();
     m->cancelDraft();
