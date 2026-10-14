@@ -93,6 +93,14 @@ void screenPage(Metropolix* m, int page) {
     m->uiPage.store(page); m->uiField.store(0); m->uiChooseFunction.store(false);
     m->outputDraft[0].store(-1);m->outputDraft[1].store(-1);
 }
+int parentPage(Metropolix* m){
+    switch(m->uiPage.load()){
+        case Metropolix::BACKUP_PAGE:return Metropolix::MIDI_SETUP_PAGE;
+        case Metropolix::TUNER_PAGE:return Metropolix::GLOBAL_SETUP_PAGE;
+        case Metropolix::GLOBAL_SETUP_PAGE:case Metropolix::UI_SETUP_PAGE:case Metropolix::MIDI_SETUP_PAGE:case Metropolix::PRESET_SETUP_PAGE:return Metropolix::SETUP_PAGE;
+        default:return Metropolix::HOME;
+    }
+}
 void encoderPress(Metropolix* m) {
     if(!m) return;
     if(confirmDraft(m))return;
@@ -213,6 +221,11 @@ struct HardwareControl : ValueKnob {
     std::vector<float> gestureBefore;
     int pickupGestureParam=-1;float pickupPhysicalBefore=0;metro::Pickup pickupBefore,pickupAfter;
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
+    std::string adjustmentText() override {
+        auto* q=getParamQuantity();if(!q)return {};
+        if(metroModule && metroModule->uiDraftParam==paramId){std::string value=previewDisplayString(metroModule,paramId);if(value.size()>2 && value.substr(value.size()-2)==" ?")value.resize(value.size()-2);return q->getLabel()+": "+value+q->getUnit()+" ?\nPress encoder to apply.";}
+        return ValueKnob::adjustmentText();
+    }
     ~HardwareControl() { clearTip(); }
     void bind() {
         if(dragging) return;
@@ -319,6 +332,7 @@ struct HardwareControl : ValueKnob {
             }
         }
         if(pickupGestureParam>=0){bool pitch=Metropolix::panelIndex(pickupGestureParam)<8;int mode=metroModule->integer(pitch?Metropolix::LOAD_PITCH:Metropolix::LOAD_CTRL);pickupAfter.process(metroModule->params[pickupGestureParam].getValue(),mode==(pitch?Metropolix::PitchThru:Metropolix::CtrlThru),mode>=(pitch?Metropolix::PitchThru:Metropolix::CtrlThru));}
+        updateAdjustmentTip();
     }
     void onDragEnd(const event::DragEnd& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;

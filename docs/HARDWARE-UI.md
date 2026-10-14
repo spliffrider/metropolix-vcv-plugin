@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.12.0
+# Hardware panel and desktop interaction — 2.27.0
 
 Open `examples/Hardware-panel-demo.vcv`. Its musical settings and signal connections come from the accepted MOD demo, with a new 34 HP front panel. Select an output device in the AUDIO module to hear its two voices.
 
@@ -15,15 +15,15 @@ and author metadata also identify sensiburner. This is an independent homage.
 - **Hover for help.** Controls identify their value and purpose. Ports retain Rack cable behavior and tooltips. Controls for unfinished features explain their status.
 - **Read values while dragging.** A compact popup follows the edited parameter on the panel, display, encoder and optional grids. It stays visible if the pointer leaves the control while held. Rack's Tooltips preference controls both hover help and adjustment readouts.
 - **Gentler sliders.** At Rack's default linear sensitivity, pitch takes approximately 400 mouse pixels across its range; pulse-count and gate switches take about 24 pixels per step. Rack's global sensitivity and fine-adjustment modifiers still apply. Pitch-slider lights follow **View → Bloom** and remain illuminated when room brightness is reduced.
-- **Right-click for direct access.** Numeric controls provide Rack value entry and reset; named settings such as ORDER offer their choices. TRK 1/2 expose track settings. MOD offers lane selection and its expanded editor. EDIT opens the stage editor; EXIT offers either editor and a close action.
-- **HOME:** turn the encoder with a vertical drag, or click the encoder/display, to browse four views: stage positions, base notes, panel values, and CV/MOD activity. EXIT returns to HOME. The note view excludes accumulation and modulation from its stage notes; the pre/post readouts show the corresponding live routes.
+- **Right-click for direct access.** Numeric controls provide Rack value entry and reset; named settings such as ORDER offer their choices. TRK 1/2 expose track settings. MOD offers lane selection and its expanded editor. EDIT opens the stage editor; EXIT offers either editor, a close action and Sync to Panel.
+- **HOME:** turn the encoder with a vertical drag, or click the encoder/display, to browse four views: stage positions, base notes, panel values, and CV/MOD activity. EXIT steps back through Setup submenus and otherwise returns HOME. Hold EXIT for Sync to Panel ([guide](UI-FIDELITY.md)). The note view excludes accumulation and modulation from its stage notes; the pre/post readouts show the corresponding live routes.
 - **Click a settings button** to put its setting on the display. Drag the encoder or display to change its active value. Click the encoder/display to switch root/scale, stages/pulses, or clock/pulse-count division. On LEN, ALT selects offset; on SCALE, ALT switches between scale and root.
 - **Encoder presses** toggle Forward/Reverse on ORDER, Stage/Pulse on probability, Stage/Pulse/Ratchet on accumulation, and Step/Ramp on a MOD stage. Turning still edits the corresponding main value. These changes support Rack undo.
 - **BPM:** the first click opens the tempo page. Subsequent BPM clicks tap an internal tempo. External clock shows measured tempo after two edges; the existing input convention remains one edge per sixteenth note.
 - **Select TRK 1 or TRK 2** before editing note-track settings. Select MOD for modulation; MOD → EDIT → a stage button chooses that MOD lane. Right-click MOD also provides direct lane selection.
 - **Stage editing:** press EDIT, choose the printed function with a stage button, then select a stage. Drag the encoder or hold and drag a stage button to edit its value. Slide/Skip stage clicks toggle that stage. Right-click a stage button for direct editing and related choices.
 - **ALT** enables the secondary stage-button actions. LOAD/SAVE open the internal 8 × 8 preset banks ([guide](PRESETS.md)); A/B select output assignment on the display. EXIT returns to the overview.
-- **Optional grids** remain available through menus. They share parameters with the panel and preserve undo/redo. The hardware panel is 34 HP; opening a grid expands the module to 66 HP. Rack moves it to available space if needed.
+- **Optional grids** remain available through menus. They share parameters with the panel and preserve undo/redo. The hardware panel is 34 HP; opening a grid expands the module to 66 HP. Rack moves it to available space if needed. An adjacent MX follows the new right edge while the main panel stays anchored.
 
 ## Stage overrides and Gate Scale
 
@@ -71,21 +71,21 @@ sources; see [the documented interpretations](VALIDATION.md).
 
 ## Compatibility and remaining controls
 
-All 415 previous parameter IDs and all ports retain their identities. Six CTRL
-parameters append at IDs 415–420. Schema 9 saves the CTRL page and selected
-knob. Older patches and presets clear CTRL assignments, preserving their
-existing panel values; previous AUX/mode migrations are unchanged. Temporary
-ALT state clears on load.
+All 770 parameter IDs and all ports retain their identities. Settings schema29
+and format9/518-value musical presets are unchanged in 2.27.0. Existing patch
+and bank migrations remain in place. Temporary ALT state clears on load;
+the tuner does not activate on reopen. See [Feature status](FEATURE-STATUS.md)
+and the current guides for compatibility details.
 
-AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). ALT+AUX now randomizes, morphs and restores the current screen; see [Editing workflows](EDITING-WORKFLOWS.md). MX remains unimplemented.
+AUX X/Y/Z now accept cables. Their knobs attenuvert; their black buttons open destination/track settings, with a live CV or gate meter on the display. Right-click either for named routing choices; encoder clicks switch fields. See the [AUX guide](AUX-INPUTS.md). Both CTRL knobs now work; see the [CTRL guide](CTRL-KNOBS.md). ALT+AUX now randomizes, morphs and restores the current screen; see [Editing workflows](EDITING-WORKFLOWS.md). All seven [MX modes](MX.md) are implemented; ALT → MX selects mode and assignment.
 
 All four HOME views and editing pages for current parameters are represented. The display shows filled/current stages, thick starting stages, skipped stages, inactive dots, muted hatching, the scale keyboard, ratchet stacks, probability/accumulator bars, and CV/MOD graphs. Selection corners pulse and the selected numeric stage button flashes. MOD footers show A/B assignment where present.
 
-Slide offers Tempo, Analog and Acid; see the [slide guide](SLIDES.md). Note-track ALT → TYPE and EDIT → CV now offer the three CV types, transitions and ALT pattern edits; see the [stage CV guide](STAGE-CV.md). ALT → CLK edits global output division/offset; click switches fields and a long encoder press resets both. See [Clock output](CLOCK-OUTPUT.md). External clock input division remains fixed at /1. CTRL dials in the panel-value HOME view show the live knob positions. MOD values remain expressed in volts, including internal destinations; destination-specific units are a later refinement. A/B offers all sixteen hardware function types with track/MOD choices and pending confirmation; see [Output routing](OUTPUT-ROUTING.md). SETUP now opens a selectable menu with Preset Settings and [Preset Chains](PRESET-CHAINS.md); holding SETUP opens chains, with encoder/stage holds for deletion/saving. Other long-press shortcuts and remaining secondary functions are incomplete. Numeric editing and context menus are intentional computer conveniences.
+Slide offers Tempo, Analog and Acid; see the [slide guide](SLIDES.md). Note-track ALT → TYPE and EDIT → CV now offer the three CV types, transitions and ALT pattern edits; see the [stage CV guide](STAGE-CV.md). ALT → CLK edits global output division/offset; click switches fields and a long encoder press resets both. See [Clock output](CLOCK-OUTPUT.md). External clock input division is adjustable from /1–/256 ([guide](UI-SETUP.md)). CTRL dials in the panel-value HOME view show the live knob positions. MOD values show destination-specific offsets; voltage-output lanes stay in volts ([guide](UI-FIDELITY.md)). A/B offers all sixteen hardware function types with track/MOD choices and pending confirmation; see [Output routing](OUTPUT-ROUTING.md). SETUP now opens a selectable menu with Preset Settings and [Preset Chains](PRESET-CHAINS.md); holding SETUP opens chains, with encoder/stage holds for deletion/saving. [MIDI](MIDI.md), [backup files](BACKUPS.md), [UI setup](UI-SETUP.md), [global settings](CLOCK-RESET.md) and [editing workflows](EDITING-WORKFLOWS.md) have dedicated guides. Remaining fidelity work is tracked in [Feature status](FEATURE-STATUS.md). Numeric editing and context menus are intentional computer conveniences.
 
 ## Verification
 
-The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 44 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
+The Rack widget test exercises held upward/downward drags, discrete values, numeric entry, menus, hover text, undo/redo, track/lane rebinding, optional editor sizing, and save/load. The separate display test exercises HOME/LIM navigation and renders 167 screen states for inspection. The hardware and accumulator demos also run through the stereo audio recorder. These callback tests complement a physical mouse playtest; they do not certify every operating-system input/focus interaction.
 
 ## Loopy performance
 

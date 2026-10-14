@@ -280,6 +280,7 @@ struct ValueCell : ValueKnob {
     std::string valueText() {
         auto* q = getParamQuantity();
         if (!q) return "--";
+        if(dynamic_cast<ModVoltageQuantity*>(q))return q->getDisplayValueString()+q->getUnit();
         if(auto* assignment=dynamic_cast<RoutingAssignmentQuantity*>(q))if(assignment->global())return "Global";
         if (modProperty >= Metropolix::MOD_RAMP) return q->getValue() > .5f ? "RAMP" : "STEP";
         if (modGateCell()) return q->getValue() >= 1.5f ? "ON" : "OFF";
@@ -295,7 +296,10 @@ struct ValueCell : ValueKnob {
         font(args.vg);
         rect(args.vg, 0, 0, box.size.x, box.size.y, dark ? ink() : nvgRGB(244, 243, 235));
         line(args.vg, 2, box.size.y - 1, box.size.x - 2, box.size.y - 1, nvgRGB(190, 191, 184));
-        text(args.vg, box.size.x / 2, box.size.y / 2, locked()?string::f("C%d ",metroModule->ctrlOwner(paramId)+1)+valueText():valueText(), 10.5f,
+        std::string label=locked()?string::f("C%d ",metroModule->ctrlOwner(paramId)+1)+valueText():valueText();
+        nvgFontSize(args.vg,10.5f);float width=nvgTextBounds(args.vg,0,0,label.c_str(),nullptr,nullptr);
+        float size=width>box.size.x-6?std::max(6.f,10.5f*(box.size.x-6)/width):10.5f;
+        text(args.vg, box.size.x / 2, box.size.y / 2, label, size,
              dark ? paper() : ink(), NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
     }
     bool toggleCell() const {
@@ -650,11 +654,15 @@ struct MetropolixWidget : ModuleWidget {
         if (m) {pumpPresetUi(m);if(m->uiDraftParam>=0 && (m->uiDraftParam!=screenParam(m) || m->params[m->uiDraftParam].getValue()!=m->uiDraftBase))m->cancelDraft();}
         bool expanded = m && m->expanded.load();
         if (expanded != isExpanded) {
+            app::ModuleWidget* mxWidget=nullptr;Vec anchor=box.pos;
+            if(parent && APP->scene && APP->scene->rack)for(auto* child:APP->scene->rack->getModuleContainer()->children){auto* candidate=dynamic_cast<app::ModuleWidget*>(child);if(candidate && candidate->getModel()==modelMX && std::abs(candidate->box.pos.x-(anchor.x+box.size.x))<.1f && std::abs(candidate->box.pos.y-anchor.y)<.1f){mxWidget=candidate;break;}}
             isExpanded = expanded;
             box.size.x = expanded ? HARDWARE_WIDTH + EDITOR_WIDTH : HARDWARE_WIDTH;
             panel->box.size.x = box.size.x;
-            if (parent && APP->scene && APP->scene->rack)
-                APP->scene->rack->setModulePosNearest(this, box.pos);
+            if (parent && APP->scene && APP->scene->rack){
+                if(mxWidget){APP->scene->rack->setModulePosForce(this,anchor);APP->scene->rack->setModulePosForce(mxWidget,Vec(box.pos.x+box.size.x,box.pos.y));}
+                else APP->scene->rack->setModulePosNearest(this, box.pos);
+            }
         }
         editor->visible = expanded && m && !m->modEditor.load();
         modPanel->visible = expanded && m && m->modEditor.load();

@@ -1,8 +1,10 @@
-# Metropolix Lab 2.26.0 — Windows alpha quick start
+# Metropolix Lab 2.27.0 — Windows alpha quick start
 
 This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
+
+2.27.0 refines [panel interaction and display](UI-FIDELITY.md): pending readouts, MOD units, long EXIT Sync and attached MX resizing.
 
 2.26.0 adds [portable backups](BACKUPS.md) for settings, all 64 presets and chains, with undoable restore.
 
@@ -14,11 +16,11 @@ welcome. See Known limitations for remaining fidelity checks.
 
 ## Downloads
 
-- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.26.0/MetropolixLab-2.26.0-win-x64.vcvplugin)
-- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.26.0/MX-performance.vcv)
-- [Example backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.26.0/Backup-example.json)
+- [Windows x64 plugin](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/MetropolixLab-2.27.0-win-x64.vcvplugin)
+- [MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/MX-performance.vcv)
+- [Example backup](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.27.0/Backup-example.json)
 - [Ready-patched two-voice demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Aux-inputs-demo.vcv)
-- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.26.0)
+- [Release page and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.27.0)
 
 Download the `.vcvplugin` file from **Assets**. GitHub's automatic “Source code”
 ZIP is for building the plugin yourself; it is not the installable plugin.
@@ -32,7 +34,7 @@ engine tests on Linux do not establish Linux plugin compatibility.
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch, then close Rack.
-3. Copy `MetropolixLab-2.26.0-win-x64.vcvplugin` into the user folder's
+3. Copy `MetropolixLab-2.27.0-win-x64.vcvplugin` into the user folder's
    **`plugins-win-x64`** directory. Keep the file intact; Rack extracts it.
 4. Start Rack and search for **Metropolix Lab** in the module browser.
 
@@ -127,7 +129,7 @@ Download [CTRL-performance.vcv](https://github.com/spliffrider/metropolix-vcv-pl
 CTRL 1 changes Track 2 pulse counts; CTRL 2 adds ratchet fills. Both start at
 noon, preserving the original evolving arrangement. Right-click either for
 assignments and exact centre. See the [CTRL guide](CTRL-KNOBS.md) for ranges,
-direct parameter ownership, and five unavailable destinations.
+direct parameter ownership, and all 29 destinations.
 
 ## Compare accumulator modes
 
@@ -285,3 +287,12 @@ and a preset, import your file, then try Rack Undo and Redo. Settings and the
 bank should return with RUN stopped; local MIDI devices and cables should stay
 in place. Try Settings and Presets exports separately, and cancel a chooser.
 The [backup guide](BACKUPS.md) describes scopes and the example JSON file.
+
+## Panel and display — new in 2.27.0
+
+With Enc Confirm On, hold and drag LEN or TYPE: the popup should show the pending
+value, and the encoder should apply it. Try EXIT cancellation, fine dragging,
+numeric MOD entry in semitones/BPM/percent and one-step undo. ALT should mark all
+MOD vertices. With pitch/CTRL Thru recall, long EXIT should sync visible positions
+and undo should restore every pickup target. Open and close an optional editor
+with MX beside it and check the link/cables. See [Panel refinement](UI-FIDELITY.md).

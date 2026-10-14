@@ -237,6 +237,16 @@ const DisplayCase cases[]={
     {"mod-midi-cc",Metropolix::MOD_MENU_PAGE,1,0,0,true},
     {"bpm-midi",Metropolix::BPM_PAGE,0,0,0,false},
     {"cv-velocity",Metropolix::STAGE_PAGE,0,0,Metropolix::CV,false},
+    {"cv-type-velocity",Metropolix::CV_TYPE_PAGE,0,0,Metropolix::CV,false},
+    {"cv-type-pending",Metropolix::CV_TYPE_PAGE,0,0,Metropolix::CV,false},
+    {"sync-to-panel",Metropolix::HOME,0,2,0,false},
+    {"mod-units-pitch",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"mod-units-tempo",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"mod-units-probability",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"mod-units-offset",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"mod-units-octave",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"mod-all-vertices",Metropolix::STAGE_PAGE,0,0,0,true},
+    {"mod-gate-midi",Metropolix::STAGE_PAGE,0,0,0,true},
 
 };
 const int count=sizeof(cases)/sizeof(cases[0]);
@@ -247,6 +257,7 @@ if(qaFrame>=20 && index<count) {
         m->uiPage.store(test.page);m->uiField.store(test.field);m->uiHome.store(test.home);m->selectedRow.store(test.row);m->uiMod.store(test.mod);
         m->uiStageDetail.store(true);m->selectedStage.store(2);m->selectedLane.store(1);
         m->uiAlt.store(false);m->clearWorkflows();m->cancelDraft();m->params[Metropolix::SHOW_POSITION].setValue(1);m->params[Metropolix::SCREEN_LEVEL].setValue(4);m->clearPickup();
+        m->params[Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE)].setValue(0);
         if(std::string(test.name)=="setup-init")m->setupCursor.store(4);
         if(std::string(test.name)=="preset-init")m->params[Metropolix::INIT_PRESET].setValue(64);
         if(std::string(test.name)=="workflow-stage-copy" || std::string(test.name)=="workflow-lane-copy"){m->workflowStageHeld=1;m->workflowStageSource=0;m->workflowLaneCopy=test.mod;}
@@ -337,6 +348,14 @@ if(qaFrame>=20 && index<count) {
         if(setupName=="mod-midi-cc"){m->modMenuCursor.store(1);m->params[Metropolix::midiModParam(1,Metropolix::MIDI_MOD_CC)].setValue(128);}
         if(setupName=="bpm-midi"){m->params[Metropolix::CLOCK_SOURCE].setValue(3);m->externalClock.store(true);m->displayBpm.store(120);}
         if(setupName=="cv-velocity"){m->params[Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE)].setValue(3);m->params[Metropolix::stageParam(0,2,Metropolix::CV)].setValue(2.5);}
+        if(setupName=="cv-type-velocity")m->params[Metropolix::outputTrackParam(0,Metropolix::VELOCITY_SOURCE)].setValue(3);
+        if(setupName=="cv-type-pending"){int id=Metropolix::cvTypeParam(0);m->uiDraftParam=id;m->uiDraftBase=m->params[id].getValue();m->uiDraftValue=2;}
+        if(setupName=="sync-to-panel"){m->workflowMessage="SYNC TO PANEL";m->workflowUntil=system::getTime()+2;}
+        if(setupName.find("mod-units-")==0 || setupName=="mod-all-vertices" || setupName=="mod-gate-midi"){
+            int destination=setupName=="mod-units-tempo"?metro::ModTempo:setupName=="mod-units-probability"?metro::ModProbability:setupName=="mod-units-offset"?metro::ModPitchOffset:setupName=="mod-units-octave"?metro::ModOctave:setupName=="mod-gate-midi"?metro::ModMute:metro::ModPitchPre;
+            m->params[Metropolix::modParam(1,Metropolix::MOD_DESTINATION)].setValue(destination);m->params[Metropolix::modParam(1,Metropolix::MOD_TYPE)].setValue(0);m->params[Metropolix::modParam(1,Metropolix::MOD_VALUE+2)].setValue(setupName=="mod-gate-midi"?2:setupName=="mod-units-offset"?.125f:setupName=="mod-units-octave"?-1.9f:1);
+            m->uiAlt.store(setupName=="mod-all-vertices");m->params[Metropolix::midiModParam(1,Metropolix::MIDI_MOD_CC)].setValue(setupName=="mod-gate-midi"?21:0);
+        }
 
         if(setupName=="stage-position-off")m->params[Metropolix::SHOW_POSITION].setValue(0);
         if(setupName=="bpm-divider"){m->params[Metropolix::CLOCK_SOURCE].setValue(2);m->externalClock.store(true);m->displayBpm.store(120);m->params[Metropolix::EXT_CLOCK_DIV].setValue(6);}

@@ -1,4 +1,34 @@
-# Validation and fidelity status — 2.26.0
+# Validation and fidelity status — 2.27.0
+
+## Panel and display refinement — 2.27.0
+
+Twenty-five portable suites and native Rack integration pass. Native tests check
+MOD units/numeric conversion, octave/scale truncation, root limits, dormant
+negative CV, effective velocity type and actual running/stopped gate MIDI
+CC0/127 bytes. A ten-control PanelEdit preserves the running clock tick, reset
+serial, stage and pulse position.
+
+Real Rack widget callbacks pass held pending popups, leaving/releasing a drag,
+confirmation/cancel and one undo; submenu back and tuner shutdown; all ten
+Sync targets with one undo/redo and an unchanged-action no-op; MOD editor units;
+expanded/compact MX adjacency, no overlap and reciprocal engine links; save/reopen.
+All 22 prior panel modes pass. The 167 OLED captures include ten new unit,
+preview, ALT, gate CC and Sync states. Enlarged bitmap and optional-editor
+screenshots were visually inspected, including a maximum +400.0 BPM field.
+Old routing tests now enter two destination units; tuner EXIT expects its parent.
+
+Both real 12-second 48 kHz audio paths pass. MX percussion has RMS
+.201048/.202356 V, peaks 1.32221/1.13008 V and DC .000502745/.000501498 V;
+all eight 0/5V stage cables have six edges and are mutually exclusive. MIDI-CV
+voices have RMS .426562/.469804 V, peaks 1.59957/1.29377 V and negligible DC.
+These validate the Rack paths, not subjective or physical hardware equivalence.
+
+No parameter IDs, schema29 or format9/518-value musical banks change. MOD
+formatting reflects this engine's gains where the manual omits numeric gains;
+numeric entry uses the displayed units. Virtual Jump controls move directly;
+Sync releases recalled Thru pitch/CTRL values. Native OS mouse/focus, exact
+material matching and physical comparisons remain tester checks. See
+[Panel refinement](UI-FIDELITY.md).
 
 ## Portable backups — 2.26.0
 

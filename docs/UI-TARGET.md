@@ -61,3 +61,13 @@ This is not yet a pixel-perfect recreation. Typography, component artwork, displ
 The panel now uses closer bold lettering, revised control caps and slider grips, metal socket highlights, blue/cream button colors, boxed secondary labels, corrected connection marks, mounting details, and a vector trace of the manual's logo. The live display uses a 128 × 64 pixel canvas based on the manual's native screen images. All four HOME views are present, with manual-based field layouts, selection corners, scale keyboard, and stage-edit diagrams. Encoder actions, MOD lane selection, tap tempo, and stage button colors have been refined alongside these views.
 
 Manual references: HOME pp.28–31; BPM/scale pp.60–62; order/length/division pp.70,75,77; slide/gate pp.80,82; stage editing pp.85–104; output assignment pp.115–117; MOD pp.137–141. `tests/DisplayQa.hpp` captures the implemented screens for direct comparison. Photographic texture/lighting, some glyphs and animation details, destination-specific MOD units, long-press shortcuts, and unavailable firmware features still require work. This is a refinement milestone, not a declaration of exact fidelity.
+
+## Current interaction refinement — 2.27.0
+
+The earlier milestone paragraphs record their original scope. MIDI, MX,
+portable backups, long-press workflows and destination-specific MOD units are
+now implemented. Pending drag readouts, EXIT submenu back and grouped Sync,
+effective CV-type hints and MX attachment during optional-editor resizing are
+documented in [Panel refinement](UI-FIDELITY.md). Current remaining work is in
+[Feature status](FEATURE-STATUS.md); exact material matching and hardware
+comparison are still separate human acceptance checks.

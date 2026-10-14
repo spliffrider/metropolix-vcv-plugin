@@ -14,7 +14,7 @@ std::string previewDisplayString(Metropolix* m,int id){
     if(auto* pitch=dynamic_cast<PitchOverrideQuantity*>(q)){if(v<-.5f)return "-- ?";int note=metro::degreeToSemitone(metro::nearestDegree(v,pitch->scale()),pitch->scale());const char* names[]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};return string::f("%s%d ?",names[metro::modulo(note,12)],note/12);}
     if(auto* choice=dynamic_cast<SwitchQuantity*>(q)){int index=metro::clamp(int(std::round(v-q->getMinValue())),0,int(choice->labels.size())-1);return choice->labels[index]+" ?";}
     if(auto* cv=dynamic_cast<TrackCvQuantity*>(q))if(cv->type()==metro::GateCv)return v>=1.5f?"On ?":"Off ?";
-    if(auto* cv=dynamic_cast<ModVoltageQuantity*>(q))if(cv->gate())return v>=1.5f?"On ?":"Off ?";
+    if(auto* cv=dynamic_cast<ModVoltageQuantity*>(q))return cv->gate()?(v>=1.5f?"On ?":"Off ?"):metro::modDisplayText(v,cv->destination(),false)+" ?";
     float shown=v;if(q->displayBase>0)shown=std::pow(q->displayBase,shown);else if(q->displayBase<0)shown=std::log(shown)/std::log(-q->displayBase);
     shown=shown*q->displayMultiplier+q->displayOffset;
     return string::f(q->snapEnabled?"%.0f ?":"%.3g ?",shown);
