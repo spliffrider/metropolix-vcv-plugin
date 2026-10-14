@@ -1,4 +1,4 @@
-# Validation and fidelity status — 2.34.0
+# Validation and fidelity status — 2.35.0
 
 ## 2.35 timing panel workflows
 
@@ -8,7 +8,9 @@ The new callbacks preserve the selected field. Dedicated actual Windows Rack
 checks cover every stage/field on both note tracks and eight MOD lanes, threshold
 and all-field resets, native numeric entry, direct menus, pending cancellation,
 multi-target one-action undo/redo, CTRL exclusion, unrelated group mute and
-save/reopen. Native engine/library integration also passes. Platform CI retains
+save/reopen. Neighboring Group, Order, Workflows, Scales, Slides, Stage CV,
+Fidelity, Polish and 181-state Display checks pass. Native engine/library
+integration also passes. Platform CI retains
 its own evidence; these are callback checks rather than OS mouse/focus playtests.
 
 No saved fields changed: 787 parameters, schema33 and format11/522 remain fixed.
