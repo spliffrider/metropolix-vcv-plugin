@@ -1,0 +1,78 @@
+name: Plugin packages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: ${{ matrix.platform }} production
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: lin-x64
+            runner: ubuntu-22.04
+            sha256: 420da2452def7b195f98e3a0650c35f1e0f058a98a71840b4347d3d203618532
+          - platform: mac-x64
+            runner: macos-15-intel
+            sha256: 9b8b0d7582ca25fac879f8f64de40f2481df2fd903b65f3abb5d6801689060ec
+          - platform: mac-arm64
+            runner: macos-15
+            sha256: 29414e52417992cbafa47e30f947c3c0c7a34e5c424bb83c5a0af8c24840481f
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y jq zstd libglu1-mesa libxrandr2 libxinerama1 libxcursor1 libasound2 libgtk2.0-0 libgtk-3-0 libjack-jackd2-0 libpulse0
+      - name: Mac dependencies
+        if: runner.os == 'macOS'
+        run: brew install jq zstd
+      - name: Fetch and verify official SDK
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          SDK_SHA256: ${{ matrix.sha256 }}
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/sdk.zip" "https://vcvrack.com/downloads/Rack-SDK-2.6.6-$PLATFORM.zip"
+          python3 -c 'import hashlib,os,pathlib; assert hashlib.sha256(pathlib.Path(os.environ["RUNNER_TEMP"],"sdk.zip").read_bytes()).hexdigest()==os.environ["SDK_SHA256"]'
+          unzip -q "$RUNNER_TEMP/sdk.zip" -d "$RUNNER_TEMP"
+          echo "RACK_DIR=$RUNNER_TEMP/Rack-SDK" >> "$GITHUB_ENV"
+      - name: Build production and native hosts
+        run: make -j2 dist native-test-build
+      - name: Test native host and stripped production binary
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          export LD_LIBRARY_PATH="$RACK_DIR"
+          export DYLD_LIBRARY_PATH="$RACK_DIR"
+          mkdir -p /tmp/Rack2
+          if [ "$RUNNER_OS" = macOS ]; then cp "$RACK_DIR/libRack.dylib" /tmp/Rack2/; fi
+          if [ "$RUNNER_OS" = Linux ]; then cp "$RACK_DIR/libRack.so" /tmp/Rack2/; fi
+          ./build/tests/rack-native | tee dist/native-tests.txt
+          extension=so
+          if [ "$RUNNER_OS" = macOS ]; then extension=dylib; fi
+          ./build/tests/plugin-load "$PWD/dist/MetropolixLab/plugin.$extension" | tee dist/production-load.txt
+          version=$(jq -r .version plugin.json)
+          python3 scripts/audit-package.py --platform "$PLATFORM" --package "dist/MetropolixLab-$version-$PLATFORM.vcvplugin" --report "dist/package-audit-$PLATFORM.json"
+      - name: Save verified package and evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: plugin-${{ matrix.platform }}
+          path: |
+            dist/*.vcvplugin
+            dist/package-audit-*.json
+            dist/native-tests.txt
+            dist/production-load.txt
+          if-no-files-found: error
+          retention-days: 30
