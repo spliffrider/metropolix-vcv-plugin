@@ -1,4 +1,4 @@
-# Preset chains — 2.8.0
+# Preset chains — 2.42.0
 
 Arrange the 64 internal presets into **up to 32 links**, each with **1–64
 repeats** and independent **TRK 1 / TRK 2 / MOD** mute flags. The last link loops
@@ -35,6 +35,21 @@ is empty; the most recently loaded/saved slot flashes. Click a filled button to
 load. Hold a button for more than two seconds to save. Overwriting a saved chain
 opens a confirmation menu. **Clear Chain** only clears the working copy. Rack
 undo/redo supports edits, storage changes, loading, clearing and enable/disable.
+
+## Undo in Rack
+
+Inserting a link, Clear Chain and a selected-link long deletion each create
+one Rack undo action. Undo/Redo restores the entire working-chain state,
+including its loaded-slot indicator, while preserving all eight saved chains.
+Clicks and long holds record their own actions; they no longer also receive
+the history entry intended for a bank/repeat drag.
+
+Encoder and OLED bank/repeat drags still accumulate into one action. Cursor
+browsing, a drag that returns to its original repeat count, clipped no-op
+adjustments and a failed insertion into a full 32-link chain add no undo.
+Playback must be disabled for insertion, clearing or deletion; a long hold
+on an insertion line retains its ordinary short-click insertion action. Saved
+formats stay unchanged.
 
 ## Quick Chain
 

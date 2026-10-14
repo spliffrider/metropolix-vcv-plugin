@@ -209,7 +209,9 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         };
         auto before=std::make_shared<Metropolix::ChainState>();
         c->navigationStart=[m,before]{if(chainPage(m))*before=m->getChainState();};
-        c->navigationEnd=[m,before]{if(chainPage(m) && !(before->working==m->getChainState().working))chainHistory(m,*before,"edit chain link");};
+        // Click/long actions record their own history; only turns need the
+        // accumulated bank/repeat edit recorded at the end of a drag.
+        c->navigationEnd=[m,c,before]{if(c->moved>=3 && !c->longFired && chainPage(m) && !(before->working==m->getChainState().working))chainHistory(m,*before,"edit chain link");};
         c->navigationValue=[m]{
             if(trackMenuPage(m))return std::string(trackMenuName(m->trackMenuCursor.load()))+"\nDrag to browse; encoder edits or toggles.";
             if(outputPage(m))return metro::outputLabel(shownOutputSource(m))+(m->outputDraft[outputIndex(m)].load()>=0?" ?\nPress encoder to confirm.":"\nDrag to choose; encoder switches fields.");

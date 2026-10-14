@@ -1,3 +1,5 @@
+auto lastChainAction=[]()->history::Action*{return APP->history->actionIndex?APP->history->actions[APP->history->actionIndex-1]:nullptr;};
+auto oneNewChainAction=[&](history::Action* prior){int index=APP->history->actionIndex;return lastChainAction()!=prior && (prior?(index>=2 && APP->history->actions[index-2]==prior):index==1);};
 auto hold=[&](HardwareControl* c,double seconds) {
     press(c,GLFW_MOUSE_BUTTON_LEFT);
     widget::EventContext ctx;event::DragStart start;start.context=&ctx;start.button=GLFW_MOUSE_BUTTON_LEFT;c->onDragStart(start);
@@ -20,6 +22,7 @@ if(std::getenv("METROPOLIX_CHAIN_REOPEN_QA")) {
     }
     return;
 }
+#include "ChainHistoryWidgetQa.hpp"
 if(qaFrame==5) {
     m->params[Metropolix::RUN].setValue(0);
     for(int k=0;k<2;++k)m->params[Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION)].setValue(metro::CtrlNone);
@@ -27,7 +30,9 @@ if(qaFrame==5) {
     preset.values[Metropolix::TOTAL_PULSES]=2;m->putPreset(0,preset);preset.values[Metropolix::PITCH]=.6f;m->putPreset(9,preset);
     click(find("SETUP"));drag(find("Encoder"),-44);click(find("Encoder"));
     check(chainPage(m),"Setup encoder navigation opens Preset Chains");imageChain("empty");
-    click(find("Encoder"));click(find("Stage 1 / SLIDE"));click(find("Encoder"));
+    auto* editHistory=lastChainAction();click(find("Encoder"));
+    check(oneNewChainAction(editHistory),"new chain insertion records exactly one history action");
+    click(find("Stage 1 / SLIDE"));click(find("Encoder"));
     check(m->chainEdit.load()==2 && m->getChainState().working.size==1,"New Chain creates first link and selects repeat field");
     drag(find("Encoder"),-44);check(m->getChainState().working.links[0].repeats==3,"held upward drag increases repeats");
     APP->history->undo();check(m->getChainState().working.links[0].repeats==1,"one undo restores complete repeat drag");
@@ -35,9 +40,11 @@ if(qaFrame==5) {
     click(find("TRK 1"));click(find("MOD"));check(m->getChainState().working.links[0].mutes==5,"track and MOD buttons edit independent link mutes");imageChain("edit");
     click(find("EXIT"));check(chainPage(m) && !m->chainEdit.load(),"EXIT finishes link editing without leaving chain screen");
     hold(find("Stage 8 / CV"),2.1);check(m->getChainState().saved[7].size==1,"long stage press saves chain to slot 8");
-    hold(find("Encoder"),1.1);check(!m->getChainState().working.size,"long encoder press deletes selected link");
+    editHistory=lastChainAction();hold(find("Encoder"),1.1);check(!m->getChainState().working.size,"long encoder press deletes selected link");
+    check(oneNewChainAction(editHistory),"long chain deletion records exactly one history action");
     APP->history->undo();check(m->getChainState().working.size==1,"link deletion supports undo");
-    m->chainCursor.store(4);click(find("Encoder"));check(!m->getChainState().working.size && m->getChainState().saved[7].size==1,"Clear Chain preserves saved copy");
+    m->chainCursor.store(4);editHistory=lastChainAction();click(find("Encoder"));check(!m->getChainState().working.size && m->getChainState().saved[7].size==1,"Clear Chain preserves saved copy");
+    check(oneNewChainAction(editHistory),"clear chain records exactly one history action");
     APP->history->undo();check(m->getChainState().working.size==1,"clear chain supports undo");
     click(find("Stage 8 / CV"));check(m->getChainState().loaded==7,"stage click recalls saved chain");
     // Long hold enters Quick Chain; use the actual press/release callbacks,

@@ -1,4 +1,40 @@
-# Validation and fidelity status — 2.41.0
+# Validation and fidelity status — 2.42.0
+
+## 2.42 Chain editing history
+
+Actual Rack callbacks reproduced two history entries for new-link insertion,
+Clear Chain and long-encoder deletion. Their existing direct ChainChange is
+now retained alone; the shared navigation-end snapshot records only a real
+drag, preserving grouped bank/repeat history. The manual's disabled-playback
+and >1-second deletion workflow is unchanged (printed pages174/177).
+
+The existing Chains suite is extended with all insertion/deletion positions
+through 32 links, all clear sizes, all eight saved-chain preservation, loaded
+indicator restoration, hold threshold/guards, both encoder/display bank/repeat
+drags, all banks and 64 repeat values, clipped no-ops, reversal, browsing and
+exact full-state undo/redo. History receipt checks handle Rack's bounded deque
+without relying on a forever-increasing index. Original Quick Chain, storage,
+playback, following and save/reopen checks remain. Linux now runs mode Chain
+alongside its sixteen existing application suites. IDs/schema/formats remain
+787/33/11/522; these tests do not establish hardware or OS mouse/focus parity.
+
+Windows passes the expanded Chains suite and its original save/reopen workflow.
+An initial exhaustive fixture assumed inactive insertion-line holds had no
+short action and failed to restore its cursor/bank/queued runtime before the
+old musical fixture. Those test assumptions were corrected: inactive long
+holds retain the existing short click; queued fixture commands are discarded
+under bypass and original state restored before normal processing resumes.
+No production behavior was changed for those fixture corrections.
+
+ChainAudio and PresetAudio both pass real twelve-second signal-path checks.
+Pending, SetupOptions, Workflows, Fidelity, Polish and all 181 Display states
+pass on Windows. Native integration and the stripped production host pass
+22,624,609 frames, 339,369,135 output checks, 56,664 edits, 145 restores, 144 fresh
+instances, 12 initializes and 145 reciprocal links over 361.083 virtual seconds.
+The local host took 14.6259 seconds. Linux CI requires the extended Chain suite
+and the sixteen existing application suites; all packages require native and
+production checks. Virtual runtime and finite recordings do not establish
+long realtime sessions, human listening quality or hardware parity.
 
 ## 2.41 Pending-edit conflicts
 
