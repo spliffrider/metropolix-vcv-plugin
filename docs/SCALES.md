@@ -1,4 +1,4 @@
-# Scales and chord changes — 2.12.0 alpha
+# Scales and chord changes — 2.33.0
 
 The SCALE screen offers all **49 factory scales/chord shapes** shown in the
 [firmware 1.6 manual, pp.62–68](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf),
@@ -75,18 +75,17 @@ and survive patch saving. They are not stored inside the 64 internal sequence pr
 
 ## Compatibility and validation
 
-Old patch scale IDs, routing destination IDs, ports and preset format 3 remain
-compatible. New scale parameters append after the 467 existing parameters.
-The expanded module has 685 parameters; repeated user masks, roots and shortcuts
-account for most of the increase. Loading an older patch resets the new definitions,
-shortcuts and lock to their defaults.
+Scale IDs, routing destinations and ports retain their identities. Custom note
+definitions, custom roots and shortcuts remain global. Scale Lock is stored
+with each musical preset as of 2.33, following manual p.169. The selected Scale
+and factory Root were already stored. Locks load even when physical control
+recall is Off, and participate in preset undo, Init, chains and MIDI PC.
 
-Internal presets recall the Scale and factory Root selector parameters. The
-manual explicitly includes SCALE settings in presets (p.112); the previous
-wording describing their recall as a hardware mismatch was incorrect. Custom
-definitions, custom roots, shortcuts and the lock remain global to this plugin
-instance and are preserved by internal preset recall. The precise hardware
-boundary for custom definitions and lock state still needs confirmation.
+Format10 appends Scale Lock and both Loopy settings after the frozen 518-value
+prefix. Old banks still import with their old fields intact and neutral new
+values (Unlocked/Auto/Current Track); recalling a migrated old preset can
+therefore unlock the previously sounding scale. New banks require 2.33. The
+786 Rack parameter IDs and settings schema32 stay fixed. See [Preset storage](PRESET-STORAGE.md).
 
 Scale changes requantize slider pitches and chromatic override anchors.
 Accumulation continues in the selected scale's degrees, preserving its stored

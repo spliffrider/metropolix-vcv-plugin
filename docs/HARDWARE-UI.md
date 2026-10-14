@@ -73,7 +73,8 @@ sources; see [the documented interpretations](VALIDATION.md).
 
 The established 770 parameter IDs and all ports retain their identities;
 sixteen ORDER shortcut values are appended, for 786 parameters. Settings schema32
-adds global ORDER shortcuts; format9/518-value musical presets stay fixed. Existing patch
+includes global ORDER shortcuts. Musical format10 adds Scale Lock and Loopy
+settings after the frozen format9/518-value prefix. Existing patch
 and bank migrations remain in place. Temporary ALT state clears on load;
 the tuner does not activate on reopen. See [Feature status](FEATURE-STATUS.md)
 and the current guides for compatibility details.
@@ -110,8 +111,8 @@ Fractional-voltage truncation, default C-major custom slots and root-only empty
 mask fallback are implementation choices; hardware comparison remains necessary.
 Internal presets recall Scale/Root settings, as the manual describes on p.112;
 the earlier claim that their recall differs from hardware was incorrect. Custom
-definitions and locks stay global in this plugin; their exact hardware preset
-boundary remains unverified.
+definitions remain global. As of 2.33, Scale Lock follows the preset storage
+column on p.169; see [Preset storage](PRESET-STORAGE.md).
 
 ## Track menu — 2.17.0
 

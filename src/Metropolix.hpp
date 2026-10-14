@@ -821,7 +821,7 @@ struct Metropolix : Module {
         json_object_set_new(root,"pickup",pickupToJson());
         json_object_set_new(root, "chainFormat", json_integer(1));
         json_object_set_new(root, "chains", chainsToJson());
-        json_object_set_new(root, "presetFormat", json_integer(9));
+        json_object_set_new(root, "presetFormat", json_integer(PRESET_FORMAT));
         json_object_set_new(root, "presets", presetsToJson());
         json_object_set_new(root, "presetBank", json_integer(presetBankIndex.load()));
         json_object_set_new(root, "selectedCtrl", json_integer(selectedCtrl.load()));

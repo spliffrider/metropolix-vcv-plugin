@@ -1,0 +1,64 @@
+#include "../src/BackupRestore.hpp"
+void presetStorageRackTests() {
+    using M=Metropolix;using namespace metrobackup;
+    static_assert(M::FORMAT9_PARAMS==518 && M::SNAPSHOT_PARAMS==521 && M::PRESET_FORMAT==10 && M::NUM_PARAMS==786,"preset storage appends three fields without adding Rack parameters");
+    for(int i=0;i<M::FORMAT9_PARAMS;++i) {
+        int old=i<=M::TOTAL_PULSES?i:i<M::FORMAT3_PARAMS?M::SWING_1+i-M::TOTAL_PULSES-1:i<M::FORMAT5_PARAMS?M::SLIDE_TYPE_1+i-M::FORMAT3_PARAMS:i<M::FORMAT6_PARAMS?M::OUTPUT_TRACK_OPTIONS+i-M::FORMAT5_PARAMS:i<M::FORMAT7_PARAMS?M::TRACK_BEHAVIOR+i-M::FORMAT6_PARAMS:i<M::FORMAT8_PARAMS?M::TRACK_GLOBAL_RESET_1+i-M::FORMAT7_PARAMS:M::MIDI_TRACK+i-M::FORMAT8_PARAMS;
+        require(M::presetParam(i)==old && M::presetIndex(old)==i,"all 518 released snapshot positions remain unchanged");
+    }
+    const std::array<int,3> fields={{M::SCALE_LOCK,M::LOOPY_PULSES,M::LOOPY_TARGET}};
+    for(int i=0;i<3;++i)require(M::presetParam(518+i)==fields[i] && M::presetIndex(fields[i])==518+i,"three manual preset fields append in a stable order");
+    rack::plugin::Plugin plugin;plugin.slug="MetropolixLab";plugin.version="2.33.0";modelMetropolix->plugin=&plugin;modelMetropolix->slug="Metropolix";plugin.models.push_back(modelMetropolix);rack::plugin::plugins.push_back(&plugin);
+    auto m=std::unique_ptr<M>(new M),other=std::unique_ptr<M>(new M);m->model=other->model=modelMetropolix;m->id=834;other->id=835;
+    Module::ProcessArgs args{};args.sampleRate=48000;args.sampleTime=1.f/48000;
+    auto process=[&](M& module,int count=1){for(int i=0;i<count;++i){module.process(args);++args.frame;}};
+    auto drain=[&](M& module){M::PresetRecall receipt;while(module.presetRecalls.pop(receipt)){};};
+    auto load=[&](M& module,int slot){drain(module);module.requestPreset(slot);module.sendPresetCommand();process(module);};
+    for(auto* module:{m.get(),other.get()}){for(int k=0;k<2;++k)module->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);module->params[M::RUN].setValue(0);module->params[M::LOAD_PITCH].setValue(0);module->params[M::LOAD_SWITCHES].setValue(0);module->params[M::LOAD_CTRL].setValue(0);module->params[M::LOAD_AUX].setValue(0);}
+    m->params[M::userScaleParam(0)].setValue(0x91);m->params[M::userScaleParam(0,true)].setValue(9);m->params[M::orderShortcutParam(7)].setValue(17);m->params[M::scaleShortcutParam(7)].setValue(49);
+    auto musical=m->capturePreset();
+    for(int lock=-1;lock<149;++lock)for(int pulses:{0,1,2,16,63,64})for(int target=0;target<2;++target){
+        musical.values[518]=float(lock);musical.values[519]=float(pulses);musical.values[520]=float(target);m->putPreset(0,musical);
+        m->params[M::SCALE_LOCK].setValue(lock==148?-1:148);m->params[M::LOOPY_PULSES].setValue((pulses+1)%65);m->params[M::LOOPY_TARGET].setValue(1-target);load(*m,0);
+        require(m->integer(M::SCALE_LOCK)==lock && m->integer(M::LOOPY_PULSES)==pulses && m->integer(M::LOOPY_TARGET)==target,"all scale locks, Loopy endpoints and both target policies recall with physical loads Off");
+    }
+    for(int pulses=0;pulses<=64;++pulses){musical.values[519]=float(pulses);m->putPreset(0,musical);load(*m,0);require(m->integer(M::LOOPY_PULSES)==pulses,"every Loopy pulse count is retained");}
+    require(m->integer(M::userScaleParam(0))==0x91 && m->integer(M::userScaleParam(0,true))==9 && m->integer(M::orderShortcutParam(7))==17 && m->integer(M::scaleShortcutParam(7))==49,"musical recall preserves custom definitions/roots and both shortcut types");
+    Json params(m->paramsToJson());require(m->presetFromParamsJson(params.get()).values==m->capturePreset().values,"UI JSON snapshot captures all three new fields");
+    // Native history receipts cover all three fields, independent of later globals.
+    musical.values[518]=49;musical.values[519]=9;musical.values[520]=1;m->putPreset(0,musical);m->params[M::SCALE_LOCK].setValue(1);m->params[M::LOOPY_PULSES].setValue(2);m->params[M::LOOPY_TARGET].setValue(0);load(*m,0);M::PresetRecall receipt;require(m->presetRecalls.pop(receipt),"ordinary recall publishes a native history receipt");
+    M::PresetCommand undo;undo.kind=M::PresetCommand::Restore;undo.snapshot=receipt.before;undo.other=receipt.after;m->params[M::TEMPO].setValue(177);m->presetUiCommands.push_back(undo);m->sendPresetCommand();process(*m);require(m->integer(M::SCALE_LOCK)==1 && m->integer(M::LOOPY_PULSES)==2 && m->integer(M::LOOPY_TARGET)==0 && m->integer(M::TEMPO)==177,"history restores all three fields without reverting global tempo");
+    std::swap(undo.snapshot,undo.other);m->presetUiCommands.push_back(undo);m->sendPresetCommand();process(*m);require(m->integer(M::SCALE_LOCK)==49 && m->integer(M::LOOPY_PULSES)==9 && m->integer(M::LOOPY_TARGET)==1,"native redo restores the stored tuple");
+    // Old full banks retain every old prefix and gain neutral new fields. Live
+    // Rack settings are distinct from the missing fields of a legacy snapshot.
+    Json module(APP->engine->moduleToJson(m.get()));std::string error;Scope scope=All;
+    for(int format=1;format<=9;++format){
+        Json legacy(capture(module.get(),Presets));json_object_set_new(legacy.get(),"bank",json_deep_copy(json_object_get(legacy.get(),"bank")));auto* bank=json_object_get(legacy.get(),"bank");json_object_set_new(bank,"presetFormat",json_integer(format));auto* values=json_array_get(json_object_get(bank,"presets"),0);while(json_array_size(values)>size_t(M::presetSize(format)))json_array_remove(values,json_array_size(values)-1);
+        other->params[M::SCALE_LOCK].setValue(67);other->params[M::LOOPY_PULSES].setValue(7);other->params[M::LOOPY_TARGET].setValue(1);Json before,after;require(restore(other.get(),legacy.get(),before,after,error),"each old full bank format imports through validated restore");auto saved=other->getPreset(0);require(saved.occupied && saved.values[518]==-1 && saved.values[519]==0 && saved.values[520]==0,"legacy presets initialize unlocked/Auto/current target");for(int i=0;i<M::presetSize(format);++i)require(saved.values[i]==float(json_number_value(json_array_get(values,i))),"old snapshot prefix survives migration exactly");require(other->integer(M::SCALE_LOCK)==67 && other->integer(M::LOOPY_PULSES)==7 && other->integer(M::LOOPY_TARGET)==1,"presets-only legacy import preserves current live settings");
+    }
+    // Old selective files need per-slot upgrading within an already current bank.
+    auto untouched=other->capturePreset();untouched.values[518]=88;untouched.values[519]=11;untouched.values[520]=1;other->putPreset(12,untouched);
+    for(int selected:{-1,0})for(int format:{9,10}){
+        Json selectedFile(captureSelected(module.get(),selected));json_object_set_new(selectedFile.get(),"bank",json_deep_copy(json_object_get(selectedFile.get(),"bank")));auto* bank=json_object_get(selectedFile.get(),"bank");json_object_set_new(bank,"presetFormat",json_integer(format));auto* slots=json_object_get(bank,"slots");for(size_t i=0;i<json_array_size(slots);++i){auto* values=json_object_get(json_array_get(slots,i),"values");if(json_is_array(values))while(json_array_size(values)>size_t(M::presetSize(format)))json_array_remove(values,json_array_size(values)-1);}
+        Json before,after;require(restore(other.get(),selectedFile.get(),before,after,error),"both old/new Filled and Bank files restore");auto saved=other->getPreset(0);require(saved.occupied && saved.values[518]==(format==9?-1:49) && saved.values[519]==(format==9?0:9) && saved.values[520]==(format==9?0:1),"selected slot uses file's tuple or legacy neutral defaults");require(other->getPreset(12).values==untouched.values,"selective migration retains unrelated current-format fields");Json actual(APP->engine->moduleToJson(other.get()));APP->engine->moduleFromJson(other.get(),before.get());APP->engine->moduleFromJson(other.get(),after.get());Json redone(APP->engine->moduleToJson(other.get()));require(json_equal(actual.get(),redone.get()),"old/new selective receipt redo is exact");
+    }
+    Json current(captureSelected(module.get(),-1));
+    auto rejects=[&](Json bad){Json before(APP->engine->moduleToJson(other.get())),old,next;require(!restore(other.get(),bad.get(),old,next,error),"malformed storage format rejects before mutation");Json after(APP->engine->moduleToJson(other.get()));require(json_equal(before.get(),after.get()),"rejected file preserves bank and live settings");};
+    for(int field=0;field<3;++field)for(float badValue:{-2.f,149.f}){Json bad(json_deep_copy(current.get()));auto* values=json_object_get(json_array_get(json_object_get(json_object_get(bad.get(),"bank"),"slots"),0),"values");json_array_set_new(values,518+field,json_real(badValue));rejects(std::move(bad));}
+    {Json bad(json_deep_copy(current.get()));json_object_set_new(json_object_get(bad.get(),"bank"),"presetFormat",json_integer(9));rejects(std::move(bad));}
+    {Json bad(json_deep_copy(current.get()));json_object_set_new(json_object_get(bad.get(),"bank"),"presetFormat",json_integer(11));rejects(std::move(bad));}
+    for(int delay=0;delay<3;++delay){
+        auto queued=std::unique_ptr<M>(new M);for(int k=0;k<2;++k)queued->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(metro::CtrlNone);queued->params[M::RUN].setValue(1);queued->params[M::CLOCK_SOURCE].setValue(2);queued->inputs[M::CLOCK_IN].channels=1;queued->inputs[M::CLOCK_IN].setVoltage(0);queued->params[M::LOAD_DELAY].setValue(delay);queued->params[M::QUEUE_PULSES].setValue(2);queued->params[M::TOTAL_PULSES].setValue(3);queued->params[M::SCALE_LOCK].setValue(1);queued->params[M::LOOPY_PULSES].setValue(2);queued->params[M::LOOPY_TARGET].setValue(0);auto saved=queued->capturePreset();saved.values[518]=49;saved.values[519]=9;saved.values[520]=1;queued->putPreset(0,saved);process(*queued,64);load(*queued,0);
+        if(delay){require(queued->pendingSlot.load()==0 && queued->integer(M::SCALE_LOCK)==1 && queued->integer(M::LOOPY_PULSES)==2,"queued tuple remains live until its boundary");for(int edge=1;edge<=(delay==1?3:4);++edge){queued->inputs[M::CLOCK_IN].setVoltage(0);process(*queued,64);queued->inputs[M::CLOCK_IN].setVoltage(5);process(*queued);if(edge<(delay==1?3:4))require(queued->pendingSlot.load()==0 && queued->integer(M::SCALE_LOCK)==1,"new fields do not apply before queue/Total boundary");}}
+        require(queued->pendingSlot.load()==-1 && queued->integer(M::SCALE_LOCK)==49 && queued->integer(M::LOOPY_PULSES)==9 && queued->integer(M::LOOPY_TARGET)==1,"Instant, Queue and Total all apply the tuple on their proper boundary");
+    }
+    // Custom Init, automatic chains and real MIDI input use the same snapshot.
+    m->params[M::INIT_PRESET].setValue(1);m->params[M::SCALE_LOCK].setValue(-1);m->params[M::LOOPY_PULSES].setValue(3);drain(*m);m->requestInitialize();m->sendPresetCommand();process(*m);require(m->integer(M::SCALE_LOCK)==49 && m->integer(M::LOOPY_PULSES)==9 && m->integer(M::LOOPY_TARGET)==1,"custom Init recalls its three musical fields");
+    M::ChainState chain;metro::ChainLink link;link.slot=0;chain.working.insert(0,link);chain.enabled=true;m->params[M::SCALE_LOCK].setValue(-1);m->params[M::LOOPY_PULSES].setValue(3);m->setChainState(chain);m->sendChainCommand();process(*m);require(m->integer(M::SCALE_LOCK)==49 && m->integer(M::LOOPY_PULSES)==9,"chain preview recalls the tuple from its linked preset");chain.enabled=false;m->setChainState(chain);m->sendChainCommand();process(*m);
+    m->params[M::MIDI_PC_CHANNEL].setValue(1);m->params[M::SCALE_LOCK].setValue(-1);m->params[M::LOOPY_PULSES].setValue(3);midi::Message message;message.bytes={0xc0,0};message.frame=-1;m->midiInput.onMessage(message);process(*m);require(m->integer(M::SCALE_LOCK)==49 && m->integer(M::LOOPY_PULSES)==9 && m->integer(M::LOOPY_TARGET)==1,"actual queued MIDI program change recalls the tuple");
+    // The restored user lock drives the existing native pitch quantizer.
+    m->params[M::SCALE].setValue(1);m->params[M::PITCH].setValue(0);m->params[M::stageParam(0,0,M::PITCH_OVERRIDE)].setValue(0);m->params[M::RUN].setValue(1);m->readSettings();m->sequencer.reset();process(*m,64);require(m->soundingScale[0].load()==49 && std::abs(m->outputs[M::PITCH_1].getVoltage()-.75f)<1e-5,"restored user lock reaches the actual native pitch port");
+    Json data(m->dataToJson());require(json_integer_value(json_object_get(data.get(),"presetFormat"))==10 && json_integer_value(json_object_get(data.get(),"schemaVersion"))==32,"new bank format keeps the settings schema unchanged");other->dataFromJson(data.get());require(other->getPreset(0).values==m->getPreset(0).values,"format10 tuple survives native bank serialization");
+    rack::plugin::plugins.pop_back();plugin.models.clear();modelMetropolix->plugin=nullptr;
+    std::cout<<"PASS: preset Scale Lock/Loopy storage, frozen prefix, legacy full/selective migration, history, Init, chain, MIDI and pitch output\n";
+}

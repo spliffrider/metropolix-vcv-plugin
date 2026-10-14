@@ -60,7 +60,8 @@ lets you supply your own starting pattern. The global preference is also
 available in the preset context menu.
 
 Init follows the existing Pitch/Switch/CTRL/AUX recall policies and retains
-global clock, Loopy, tuner and setup preferences. It disables a running preset
+global clock, tuner and setup preferences. As of 2.33, Scale Lock and both Loopy
+settings follow the initialized or custom musical preset. It disables a running preset
 chain before initializing, so the chain cannot immediately overwrite the
 result. Pattern initialization is undoable; chain transport remains disabled.
 

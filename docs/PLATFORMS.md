@@ -1,4 +1,4 @@
-# Platform packages — 2.32.0
+# Platform packages — 2.33.0
 
 Choose the `.vcvplugin` matching the computer and the Rack application you run:
 
@@ -17,7 +17,7 @@ There is no separate installer or GitHub account requirement.
 The new Linux/Mac packages use the official Rack 2.6.6 SDK; the established
 Windows build retains its Rack 2.3.0 SDK and runs in Rack Free 2.6.6. All use
 Rack 2's plugin ABI. They share the same
-786 parameter IDs, settings schema32, format9 musical banks, backup formats and
+786 parameter IDs, settings schema32, format10 musical banks, backup formats and
 examples. Patches and portable backups can move between these builds; physical
 audio/MIDI device choices remain local and may need reselection.
 
@@ -36,7 +36,7 @@ SDK downloads have fixed versions and verified SHA-256 hashes.
 Linux also runs the actual Rack 2.6.6 application with a software renderer under
 Xvfb. Linux scene captures use Rack's framebuffer renderer because Mesa's
 default front buffer can be empty under Xvfb; image checks reject blank scenes,
-require visible blue OLED pixels and compare pitch-light Bloom. Its callback tests cover ORDER shortcuts, panel refinement, backups, hover/drag/readout
+require visible blue OLED pixels and compare pitch-light Bloom. Its callback tests cover musical preset storage, ORDER shortcuts, panel refinement, backups, hover/drag/readout
 polish, display captures, save/reopen, MX gates/percussion and MIDI-CV voices.
 This complements the native host check; it is not an OS mouse/focus playtest.
 
