@@ -62,13 +62,13 @@ struct HardwareDisplay : HardwareControl {
             bool a=integer(Metropolix::OUTPUT_SOURCE_A)==source,b=integer(Metropolix::OUTPUT_SOURCE_B)==source;
             if(a || b)right+=a?(b?":AB":":A"):":B";
         }
-        if(m && m->uiPage.load()==Metropolix::SCALE_PAGE) {
-            bool wave=!m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE;
-            int edge=wave?113:126;right=OledCanvas::glyphText(right);
+        if(m && (m->uiPage.load()==Metropolix::SCALE_PAGE || m->uiPage.load()==Metropolix::ACCUM_PAGE)) {
+            bool wave=m->uiPage.load()==Metropolix::SCALE_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE;
+            int edge=m->uiPage.load()==Metropolix::ACCUM_PAGE?127:wave?113:126;right=OledCanvas::glyphText(right);
             while(c.captionWidth(left)+c.captionWidth(right)+10>edge && !right.empty())right.pop_back();
             int rightX=edge-c.captionWidth(right);
             c.captionText(2,56,left);c.captionText(rightX,56,right);
-            for(int x=2+c.captionWidth(left)+7;x<rightX-4;x+=4)c.dot(x,58);
+            for(int x=2+c.captionWidth(left)+7;x<=rightX-4;x+=4)c.dot(x,58);
             if(wave){const uint16_t rows[]={120,72,72,72,79};c.bitmap(119,56,7,5,rows);}
             return;
         }
@@ -121,7 +121,7 @@ struct HardwareDisplay : HardwareControl {
         if(selected){
             c.corners(0,y,w,y?27:28);
             int owner=metroModule?metroModule->ctrlOwner(screenParam(metroModule)):-1;
-            if(owner>=0){c.circle(7,y+20,6);c.text(5,y+18,std::to_string(owner+1));}
+            if(owner>=0)c.ownerHint(1,y+14,owner);
             else {
                 bool output=m && (m->uiPage.load()==Metropolix::A_PAGE || m->uiPage.load()==Metropolix::B_PAGE);
                 bool editingScale=m && m->uiPage.load()==Metropolix::SCALE_PAGE && m->scaleEditing.load();
@@ -355,7 +355,7 @@ struct HardwareDisplay : HardwareControl {
                 std::string shown=string::f("%.0f%%",value(Metropolix::swingParam(t),50));if(pendingConfirmation(m))shown+=" ?";
                 c.valueFit(18,23,108,shown,true);
                 c.corners(0,0,128,28);
-                if(owner>=0){c.circle(7,20,6);c.text(5,18,std::to_string(owner+1));}else c.turnHint(3,18,requiresConfirmation(m,Metropolix::swingParam(t)),pendingConfirmation(m));
+                if(owner>=0)c.ownerHint(1,14,owner);else c.turnHint(3,18,requiresConfirmation(m,Metropolix::swingParam(t)),pendingConfirmation(m));
             }
         } else if(page==Metropolix::GATE_PAGE) {
             if(mod){c.text(2,3,"GATE");c.text(2,23,"NOTE TRACKS ONLY");}
@@ -415,7 +415,7 @@ struct HardwareDisplay : HardwareControl {
         } else if(page==Metropolix::ACCUM_PAGE) {
             const char* labels[]={"Positive Limit","Negative Limit","Mode","Order","Polarity","Reset"};
             int first=metro::clamp(f,0,5)/3*3;
-            c.text(2,2,"LIMITS + SETUP");
+            c.captionText(1,2,"LIMITS + SETUP");
             for(int i=first;i<first+3;++i) {
                 int id=Metropolix::accumScreenParam(t,i),n=integer(id,i<2?9:0);
                 std::string v;
@@ -430,7 +430,7 @@ struct HardwareDisplay : HardwareControl {
                 uint8_t ink=owner>=0?155:255;
                 if(i==f){c.fill(0,y-3,128,15,ink);ink=0;}
                 c.menuText(owner>=0?14:2,y,labels[i],ink);c.menuRight(124,y,v,ink);
-                if(owner>=0){c.circle(6,y+4,5,false,ink);c.text(4,y+2,std::to_string(owner+1),true,1,ink);}
+                if(owner>=0)c.ownerHint(0,y-2,owner,ink);
             }
         } else if(page==Metropolix::LOAD_PAGE || page==Metropolix::SAVE_PAGE) {
             int bank=m?m->presetBankIndex.load():0;

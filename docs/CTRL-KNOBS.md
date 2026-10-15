@@ -123,3 +123,10 @@ the effective skip mask; the SKIP editor retains the programmed mask.
 
 Direct CTRL Gate Length retains 1–99%; the track page also offers Hold since
 2.10.0. No physical module comparison has been made.
+
+## Controller markers — 2.64.0
+
+Circled CTRL numbers now use the native-reference outline and seven-row digits.
+LIM also uses measured caption lettering and footer alignment. Editing, ownership
+and saved formats retain their existing behavior; see [visual evidence and its
+limits](UI-FIDELITY.md#ctrl-ownership-symbols-and-lim-captions--2640).

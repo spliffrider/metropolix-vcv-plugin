@@ -51,7 +51,7 @@ void scale(OledCanvas& c) const {
         if(field) {
             c.scaleCorners(0,0,128,27);
             int owner=m?m->ctrlOwner(screenParam(m)):-1;
-            if(owner>=0){c.circle(7,20,6);c.text(5,18,std::to_string(owner+1));}
+            if(owner>=0)c.ownerHint(1,14,owner);
             else {
                 c.turnHint(3,17,queued,pending);
                 if(!pending){c.scaleLockHint(queued?24:17,17);if(user)c.scaleLongHint(queued?39:32,16);}

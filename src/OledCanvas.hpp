@@ -142,6 +142,15 @@ struct OledCanvas {
     void bitmap(int x,int y,int w,int h,const uint16_t* rows,uint8_t v=255) {
         for(int j=0;j<h;++j)for(int i=0;i<w;++i)if(rows[j]&(1<<(w-1-i)))dot(x+i,y+j,v);
     }
+    void ownerHint(int x,int y,int owner,uint8_t v=255) {
+        // The outline and CTRL 2 digit follow the native encoder legend.
+        // CTRL 1 uses the same outline and the observed seven-row digit face.
+        const uint16_t circle[]={496,520,1028,2050,4097,4097,4097,4097,4097,2050,1028,520,496};
+        bitmap(x,y,13,13,circle,v);
+        auto digit=metrodisplay::chainGlyph(owner?'2':'1');
+        for(int row=0;row<7;++row)for(int col=0;col<digit.width;++col)
+            if(digit.rows[row]&(1<<(digit.width-1-col)))dot(x+(13-digit.width)/2+col,y+3+row,v);
+    }
     void scaleCorners(int x,int y,int w,int h) {
         uint8_t v=std::sin(system::getTime()*5.f)>.1f?255:155;
         for(int a:{0,1})for(int b:{0,1}) {
