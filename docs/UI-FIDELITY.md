@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.59.0
+# Panel and display refinement — 2.60.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,32 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Menu lettering — 2.60.0
+
+SETUP, Track/MOD/Global/UI/MIDI, Presets Setup, Backup/maintenance and LIM
+use a separate proportional font. The regular lettering has nine-pixel capitals
+and eleven-pixel descenders. Thirty-eight observed glyphs reproduce native
+OLED samples from the firmware 1.6 manual pp33/48/126/135; the remaining printable
+glyphs follow those metrics and remain interpretations. Tiny headings/footer
+lettering and the performance/numeric fonts keep their existing rendering.
+
+Four-row lists retain their compact desktop spacing and separate status line.
+Their selection bar now includes the full descenders, including the bottom row.
+LIM retains its three fifteen-pixel rows. Existing pending markers, inverted
+values, CTRL dimming/knob numbers and brightness behavior remain available.
+
+Labels shorten only when their current value needs room: Slider Octaves becomes
+Slider Oct, Slide Toggle/Amount CC becomes Slide Tog/Amt CC, and Gate Type
+becomes Gate for its longest pending choice. Full names remain in hover help
+and native menus. The input gestures, Undo/Redo, sequencing, all 787 parameters,
+schema34 and format11/522 musical snapshots are unchanged.
+
+Fourteen independent golden text rows check shapes and proportional spacing
+against the embedded images; every printable glyph is checked for bounded
+metrics and right alignment. Whole-screen captures include applied/pending
+values, both CTRL owners and bottom-row descenders. This does not establish
+complete typeface, animation, brightness or physical-module equivalence.
 
 ## Accumulator/LIM display — 2.59.0
 

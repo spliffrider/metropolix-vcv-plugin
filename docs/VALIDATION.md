@@ -1,4 +1,42 @@
-# Validation and fidelity status — 2.59.0
+# Validation and fidelity status — 2.60.0
+
+## 2.60 proportional menu lettering
+
+The small OLED images were extracted without resampling from the supplied
+firmware1.6 manual. Four source pages (33/48/126/135) provide 38 observed glyphs
+for a separate regular menu font: nine-pixel capitals, eleven-pixel descenders,
+variable widths, measured tracking and a one-pixel left bearing. Fifty-eight
+companion glyphs follow these metrics; they are not hardware-verified. Tiny
+headings and the existing performance/numeric faces are unchanged.
+
+Fourteen golden text rows come directly from image pixels, independently of
+the font lookup. Actual Rack callbacks pass every row comparison, all 96
+printable glyph bounds/right alignment and plus/minus normalization. Source
+bytes were also checked against the inspected full charset. Native-reference,
+before/after and pending/owned captures were inspected at enlarged resolution.
+
+The font is used by primary/secondary SETUP, Presets Setup, Backup/maintenance
+and LIM. Four-row lists retain their compact spacing/status line with a
+twelve-pixel selection bar, preserving all eleven descender rows. LIM retains
+its existing three-row geometry. Conditional aliases keep long values and
+pending markers apart; full hover/menu names remain. A first actual Rack run
+caught a one-pixel Gate Type / Multi+Rst ? overlap; the conditional Gate label
+corrects it. The repeat run passes all label/value fit checks.
+
+All nine Windows groups pass: Pending, Display, CtrlEditor, Backup, Config,
+Storage, Presets, Polish and Fidelity. Pending includes 2,528 applied and
+4,896 actual pending secondary readouts; 99/178 preset-setting states;
+132/240/48 applied/pending/owned LIM states; and their existing full-parameter
+Undo/Redo, navigation, ownership and external-edit conflict checks. The 181
+Display captures, 73 LIM captures and 56 Backup list captures are retained.
+The production package host and exact-source release CI are recorded
+separately; release CI covers 25 portable suites, three native platform hosts
+and 18 Linux Rack groups including these golden image rows.
+
+This is rendering only: the engine, input behavior, all 787 parameter IDs,
+schema34, format11/522 snapshots and backup formats are unchanged. Remaining
+typography/page geometry, animations, materials, brightness and hardware
+comparisons remain explicit work. No OS input or human listening is inferred.
 
 ## 2.59 accumulator/LIM display
 
