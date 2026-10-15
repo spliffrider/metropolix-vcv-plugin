@@ -1,4 +1,52 @@
-# Validation and fidelity status — 2.67.0
+# Validation and fidelity status — 2.68.0
+
+## Four HOME overviews and accurate base notes — 2.68.0
+
+HOME follows the measured page-indicator margins, stage boxes, row spacing,
+note/caption positions, panel controls and CV/MOD columns in manual pp28–31.
+The note-track action footer retains its measured edge; existing MOD waveform
+and routing layouts remain intact. Selected, first, skipped, unused and muted
+stages remain distinct, including a skipped starting stage.
+
+HOME2 now includes fixed Bottom Pitch in its base-note calculation and marks
+per-stage pitch overrides above their notes. It follows the remembered Thru
+pitch, selected scale/root, range, direction, transpose and stage overrides.
+Temporary Pitch Pre/Post and accumulation stay out of note names, as required
+by p29; Pre degrees and Post semitones appear separately in the header. The
+physical-slider popup remains a separate view of the actual slider position.
+
+HOME3 places remembered pitch/CTRL values and pickup dots above their controls,
+with pulse counts and gate symbols below. Virtual switches recalled with Jump
+actually move to their saved values; the desktop does not invent a separate
+hidden physical switch or add hardware override dots for that moved switch.
+HOME4 shows signed CV/MOD meters, destination-forced gate boxes and their
+track/output assignments. The 1.5V gate threshold and underlying signals stay
+unchanged. Meter gain and the knob diagram's 270-degree travel are visual
+desktop interpretations of the available drawings.
+
+HOME has its own observed five-row figures/degree mark and regular note face,
+including F/G shapes and the measured left bearings of 7/8. Nine and unobserved
+note glyphs remain companions. C harmonic minor displays the observed Eb;
+seven-note factory scales use letter-degree spelling when a single accidental
+suffices. Other notes retain the established sharp names. This is an explicit
+desktop spelling policy, not a claim about every firmware enharmonic choice.
+Compact aliases keep all 149 scale headers and roots clear of the modulation
+columns; the full names remain in scale menus.
+
+All 1,325 cells in six independent, unannotated heading/degree/lane-number
+regions match the supplied images in actual Rack and a separate saved-image
+comparison. The HOME source pictures are filtered and annotated: these region
+checks do **not** establish full 8,192-cell screen equivalence. Twelve actual
+captures were inspected alongside those reference pictures. A running reference
+engine agrees with 194,400 base-note cases across both tracks, representative
+factory/user scales, all roots, range/direction/transpose/Bottom Pitch choices
+and five override states. Separate checks cover all note spellings/header
+widths, sixteen override dots, remembered pickup, position symbols, gates,
+module-browser rendering and read-only rendering with unchanged history.
+
+The sequencing algorithm, 787 parameter IDs, schema34, format11/522 musical
+snapshots and backup formats stay unchanged. Further stage/edit diagrams,
+unobserved glyphs, animations and physical appearance remain under review.
 
 ## Physical pitch preview and recalled-value Undo — 2.67.0
 
@@ -1850,8 +1898,8 @@ IDs, ports, settings schema, and example patches are unchanged from 2.4.0.
 - **Pulse probability with long gates.** Each physical track pulse makes a new decision in Pulse mode. That decision gates the current pulse, including a stretched gate. The manual explains probability targets but does not fully specify every long-gate interaction.
 - **Accumulator combinations.** The p.102 trigger matrix is matched with ordinary gates and ratchets. Pulse accumulation uses each eligible track-clock pulse for MULTI; Ratchet accumulation follows emitted ratchet events. Interactions with pulse-count division, probability, stretch, or live setting changes need more reference evidence before claiming exact firmware behavior.
 - **Gate duration.** Gate tests reproduce the printed 50% ratchet examples and 75% stretch examples. Gated-ratchet behavior at other gate lengths is inferred. The nominal minimum high duration is 333 microseconds, capped below the ratchet interval to preserve edges at unusually fast external clocks.
-- **Clock input.** One edge is a sixteenth note. Hardware input-mode/PPQN options are absent; per-track Swing is available. The first external period is estimated from internal tempo until two edges arrive.
-- **Pitch on rests.** Rest/rejected stages hold pitch. CV lanes still follow the selected stage unless muted/stopped. Hardware configuration alternatives are not implemented.
+- **Clock input.** Explicit clock source and input division are implemented; one source edge is a sixteenth-note pulse before input division. Per-track Swing is available. The first external period is estimated from internal tempo until two edges arrive. See [Clock/reset](CLOCK-RESET.md) and [input division](UI-SETUP.md).
+- **Pitch on rests.** Per-track Rest Pitch offers Hold and Update. Update changes pitch on a silent Rest stage; probability-rejected stages still hold it. CV lanes follow their selected stage unless muted/stopped. See [Track options](TRACK-OPTIONS.md).
 - **MOD timing.** Each lane advances one stage per divided base-clock pulse, independently of note-stage pulse counts. Ramps interpolate from the previous voltage to the new stage's target over that whole stage; the initial voltage after reset is zero. A ramp uses the most recently estimated clock period and holds its target if the clock stalls. Exact first-ramp and abrupt external-tempo-change behavior has not been compared with hardware.
 - **MOD pitch scaling.** Octave uses whole-volt thresholds at 1 V/oct, truncating toward zero. Pitch Pre adds 1 V/oct before scale quantization; Pitch Post rounds to chromatic semitones at 1 V/oct; Pitch Offset adds continuous voltage after quantization. Mute toggles the programmed mute while its route is at least 1.5 V. Gate-type lanes use 0/5 V and ignore ramps.
 - **Inferred MOD gains.** Gate Length and Probability add 20 percentage points per volt; Ratchets adds a rounded 1.4 counts per volt. Thus ±5 V spans ±100 percentage points or ±7 ratchets before the destination's final range limit. The manual describes the direction and parameter bounds but does not provide these exact numeric gains. These mappings are implementation choices pending better reference evidence.

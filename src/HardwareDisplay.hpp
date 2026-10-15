@@ -105,11 +105,11 @@ struct HardwareDisplay : HardwareControl {
         bool wave=m && page!=Metropolix::ACCUM_PAGE && (page!=Metropolix::CV_TYPE_PAGE || m->uiMod.load()) && page!=Metropolix::LOOPY_PAGE && page!=Metropolix::LOAD_PAGE && page!=Metropolix::SAVE_PAGE && right!="EDIT ALL / ALT" &&
             (m->uiMod.load()?m->effectiveModType(m->selectedLane.load())==metro::ModGate:m->selectedRow.load()==Metropolix::SLIDE || m->selectedRow.load()==Metropolix::SKIP);
         bool assignment=page==Metropolix::A_PAGE || page==Metropolix::B_PAGE || page==Metropolix::AUX_PAGE || page==Metropolix::CTRL_PAGE || page==Metropolix::MOD_ASSIGN_PAGE;
-        int edge=assignment || page==Metropolix::LOOPY_PAGE || (page==Metropolix::SCALE_PAGE && !wave)?126:127;
+        int edge=assignment || (page==Metropolix::HOME && (!m || !m->uiMod.load())) || page==Metropolix::LOOPY_PAGE || (page==Metropolix::SCALE_PAGE && !wave)?126:127;
         actionFooter(c,left,right,wave,edge,suffix);
     }
     void pages(OledCanvas& c,int selected) const {
-        for(int i=0;i<4;++i)for(int x=i*32;x<i*32+28;++x)if(i==selected || x%3==0)c.dot(x,0);
+        for(int i=0;i<4;++i)for(int x=3+i*32;x<28+i*32;++x)if(i==selected || (x-3-i*32)%3==0)c.dot(x,1);
     }
     // Native rows use a fifteen-pixel pitch. Shift only bottom-row text when
     // needed to retain lowercase descenders. File/status pages stay compact.
@@ -168,87 +168,7 @@ struct HardwareDisplay : HardwareControl {
         }
         else c.pressHint(3,y+(y==27?17:18),pressOptions);
     }
-    void home(OledCanvas& c) const {
-        auto* m=metroModule;int h=m?m->uiHome.load():0,lane=m?m->selectedLane.load():0;
-        pages(c,h);
-        if(h==0) {
-            for(int row=0;row<3;++row) {
-                bool mod=row==2;
-                int length=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_LENGTH):Metropolix::trackParam(row,Metropolix::LENGTH),8);
-                int offset=integer(mod?Metropolix::modParam(lane,Metropolix::MOD_STAGE_OFFSET):Metropolix::trackParam(row,Metropolix::OFFSET));
-                int position=m?(mod?m->modStage[lane].load():m->playStage[row].load()):-1;
-                bool mute=mod?(m && m->modLaneMuted(lane)):integer(Metropolix::trackParam(row,Metropolix::MUTE));
-                for(int s=0;s<8;++s) {
-                    int x=2+16*s,y=7+16*row;
-                    if(metro::modulo(s-offset,8)>=length){c.dot(x+5,y+5);continue;}
-                    if(!mod && effectiveSkip(row,s)) {
-                        c.line(x,y,x+9,y+9);c.line(x+9,y,x,y+9);
-                    } else {
-                        c.box(x,y,10,10);
-                        if(s==offset)c.box(x+1,y+1,8,8);
-                        if(s==position)c.fill(x,y,10,10);
-                    }
-                    if(mute)c.hatch(x,y,10,10);
-                }
-            }
-        } else if(h==1) {
-            for(int t=0;t<2;++t) {
-                int locked=integer(Metropolix::SCALE_LOCK,-1),index=locked<0?integer(Metropolix::SCALE,1):locked;
-                if(m && metro::userScale(locked)){int playing=m->soundingScale[t].load();if(metro::userScale(playing) && (playing-49)/10==(locked-49)/10)index=playing;}
-                int root=integer(m?m->scaleRootParam(index):Metropolix::ROOT);
-                auto scale=m?m->uiScale(index):metro::scaleAt(index);
-                int y=5+t*25;
-                c.fit(0,y,80,std::string(notes[root])+" "+metro::scaleName(index),1);
-                int pre=m?metro::nearestDegree(m->pitchPre[t].load()*12.f,scale):0;
-                int post=m?static_cast<int>(std::round(m->pitchPost[t].load()*12.f)):0;
-                c.right(102,y,string::f("%+d",pre));c.right(127,y,string::f("%+d",post));
-                for(int s=0;s<8;++s) {
-                    int anchor=integer(Metropolix::stageParam(t,s,Metropolix::PITCH_OVERRIDE),-1);
-                    float sliderPitch=m?m->uiSliderPosition(t,s)*12*m->uiSliderOctaves(t):value(Metropolix::PITCH+s)*36.f;
-                    int deg=metro::nearestDegree(anchor<0?sliderPitch:float(anchor),scale);
-                    int note=metro::modulo(metro::degreeToSemitone(deg,scale)+root+integer(Metropolix::trackParam(t,Metropolix::TRANSPOSE)),12);
-                    c.text(s*16,y+10,notes[note],false);
-                    if(used(t,s) && !effectiveSkip(t,s)) {
-                        bool playing=m && m->playStage[t].load()==s;
-                        for(int x=s*16;x<s*16+11;++x)if(playing || x%2==0)c.dot(x,y+19);
-                    }
-                }
-            }
-        } else if(h==2) {
-            // Override dots distinguish sounding memories from physical controls.
-            for(int i=0;i<2;++i){
-                float a=value(Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE))*2.61f;
-                c.circle(8,14+i*25,6);c.line(8,14+i*25,8+std::round(std::sin(a)*5),14+i*25-std::round(std::cos(a)*5));
-                c.text(7,22+i*25,std::to_string(i+1));
-                if(m && m->waitingPickup(Metropolix::ctrlParam(i,Metropolix::CTRL_VALUE)))c.circle(18,14+i*25,1,true);
-            }
-            for(int s=0;s<8;++s) {
-                int x=30+s*13;c.text(x-2,4,std::to_string(s+1));
-                c.line(x,14,x,34);int y=34-static_cast<int>(value(Metropolix::PITCH+s)*20);c.line(x-3,y,x+3,y);
-                if(m && m->waitingPickup(Metropolix::PITCH+s))c.circle(x+5,y,1,true);
-                c.text(x-2,40,std::to_string(integer(Metropolix::PULSES+s,1)));
-                int gate=integer(Metropolix::GATES+s,2);
-                c.box(x-4,49,9,3);if(gate==1)c.fill(x-4,49,3,3);if(gate==2){c.fill(x-4,49,2,3);c.fill(x,49,2,3);}if(gate==3)c.fill(x-4,49,9,3);
-            }
-        } else {
-            for(int j=0;j<10;++j) {
-                int x=j<2?j*12:29+(j-2)*12;
-                int l=j-2;
-                c.text(x+2,4,std::to_string(j<2?j+1:l+1));
-                float v=m?(j<2?m->playCv[j].load():m->modVoltage[l].load()):0;
-                bool gate=j>=2 && m && m->effectiveModType(l)==metro::ModGate;
-                if(gate){c.box(x,35,7,7);if(v>=1.5f)c.fill(x+1,36,5,5);}
-                else { c.box(x,12,7,30);for(int k=1;k<6;k+=2)c.dot(x+k,26);int y=26-static_cast<int>(metro::clamp(v,-5.f,5.f)*2.7f);c.fill(x+2,std::min(y,26),3,std::max(1,std::abs(y-26))); }
-                if(j>=2 && integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))) {
-                    int target=integer(Metropolix::modParam(l,Metropolix::MOD_ASSIGNMENT));c.text(x,44,metro::modGlobalDestination(static_cast<metro::ModDestination>(integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))))?"G":target==2?"12":std::to_string(target+1));
-                }
-                bool a=integer(Metropolix::OUTPUT_SOURCE_A)==j,b=integer(Metropolix::OUTPUT_SOURCE_B,1)==j;
-                c.text(x,50,a?(b?"AB":"A"):(b?"B":""));
-                if(j==1)for(int y=10;y<53;y+=3)c.dot(25,y);
-            }
-        }
-        footer(c);
-    }
+    #include "HardwareHomeDisplay.hpp"
     #include "HardwareScaleDisplay.hpp"
     void stage(OledCanvas& c) const {
         auto* m=metroModule;if(!m)return;
