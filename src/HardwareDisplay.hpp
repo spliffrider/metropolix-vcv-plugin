@@ -54,7 +54,7 @@ struct HardwareDisplay : HardwareControl {
         if(m && m->heldTrackReset.load() && !workflowTrackIds(m,m->selectedTrack.load()).empty()){c.text(1,56,string::f("COPY TRK %d",m->heldTrackReset.load()&1?1:2));return;}
         std::string left=m && m->uiMod.load()?string::f("MOD %d",m->selectedLane.load()+1):string::f("TRK %d",m?m->selectedTrack.load()+1:1);
         if(detailed && m)left+=string::f(":%d",m->selectedStage.load()+1);
-        std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUM OPTIONS":
+        std::string right=m && m->uiPage.load()==Metropolix::ACCUM_PAGE?"ACCUMULATOR":
             m && m->uiPage.load()==Metropolix::CTRL_PAGE?string::f("CTRL %d",m->selectedCtrl.load()+1):m && m->uiPage.load()==Metropolix::CV_TYPE_PAGE?"CV TYPE":functionName();
         if((overridePage(m) || cvPage(m) || stagePairPage(m) || simpleStagePage(m)) && m->uiAlt.load())right="EDIT ALL / ALT";
         if(m && m->uiMod.load()) {
@@ -416,6 +416,7 @@ struct HardwareDisplay : HardwareControl {
         } else if(page==Metropolix::ACCUM_PAGE) {
             const char* labels[]={"Positive Limit","Negative Limit","Mode","Order","Polarity","Reset"};
             int first=metro::clamp(f,0,5)/3*3;
+            c.text(2,2,"LIMITS + SETUP");
             for(int i=first;i<first+3;++i) {
                 int id=Metropolix::accumScreenParam(t,i),n=integer(id,i<2?9:0);
                 std::string v;
@@ -424,11 +425,13 @@ struct HardwareDisplay : HardwareControl {
                 else if(i==3){const char* orders[]={"Wrap","Pendulum","Random","Hold"};v=orders[metro::clamp(n,0,3)];}
                 else if(i==4)v=n?"Bipolar":"Unipolar";
                 else v=n?"Auto":"Manual";
-                int y=(i-first)*17;
+                if(m && m->uiDraftParam==id)v+=" ?";
+                int y=10+(i-first)*15;
                 int owner=m?m->ctrlOwner(id):-1;
-                c.text(13,y+5,labels[i],true,1,owner>=0?155:255);c.right(126,y+5,v);
-                if(owner>=0){c.circle(6,y+8,6);c.text(4,y+6,std::to_string(owner+1));}
-                if(i==f){c.corners(0,y,128,16);if(owner<0)c.turn(1,y+5);}
+                uint8_t ink=owner>=0?155:255;
+                if(i==f){c.fill(0,y-3,128,15,ink);ink=0;}
+                c.text(owner>=0?14:2,y,labels[i],false,1,ink);c.text(124-c.width(v,false),y,v,false,1,ink);
+                if(owner>=0){c.circle(6,y+4,5,false,ink);c.text(4,y+2,std::to_string(owner+1),true,1,ink);}
             }
         } else if(page==Metropolix::LOAD_PAGE || page==Metropolix::SAVE_PAGE) {
             int bank=m?m->presetBankIndex.load():0;

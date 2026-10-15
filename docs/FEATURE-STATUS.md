@@ -1,9 +1,10 @@
-# Feature status — 2.58.0 public alpha
+# Feature status — 2.59.0 public alpha
 
 Assessment date: 2026-10-15. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.59.0 refines the [accumulator/LIM display](HARDWARE-UI.md), following its three-row reference while retaining field cycling, CTRL locks and saved formats.
 2.58.0 refines [Backup and maintenance lists](BACKUPS.md), preserving file scopes, Cancel-first confirmation and saved formats.
 2.57.0 refines [Presets Setup](PRESETS.md), including manual order, browse/edit selection, pending readouts and preserved saved logical setting IDs.
 2.56.0 refines [track/MOD/Global/UI/MIDI lists](UI-SETUP.md), their selection/readouts and the Shared octave preview without changing saved formats.

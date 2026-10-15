@@ -1,4 +1,43 @@
-# Validation and fidelity status — 2.58.0
+# Validation and fidelity status — 2.59.0
+
+## 2.59 accumulator/LIM display
+
+The firmware1.6 printed p126 OLED was extracted at its original 136×72 pixels,
+including the four-pixel border, and inspected alongside before/after renders.
+Its active area uses three rows at y10/25/40, a LIMITS + SETUP title, a 15-pixel
+selection bar and track/ACCUMULATOR footer. LIM now follows that geometry with
+mixed-case text, signed limits, dimmed CTRL-owned labels/values and knob markers.
+Pending values add an inline `?` beside the existing confirmation footer.
+The reference +7/-7 state was captured explicitly; plugin defaults remain +9/-9.
+Typeface/glyph details, brightness and physical equivalence remain unverified.
+
+A pre-change actual-callback probe passed all 32 CTRL-owned click-navigation
+cases, 32 blocked drags and 24 pending value/footer cases. These behaviors
+already worked; no driver/binding or accumulator fix was needed. This is a
+display refinement. Six-field click cycling, direct vertical editing, grouping,
+native menus, CTRL ownership and the existing long-press policy remain intact.
+
+Windows Pending now checks 132 applied value renders, 240 actual pending
+renders, 48 owned display states with both knobs/track scopes, nonoverlapping
+labels, 24 field-cycle cases, 48 immediate/confirmed edits with full-parameter
+exact Undo/Redo, 32 read-only drag/reset/navigation cases and 24 external-edit
+conflicts. There are 73 direct LIM captures including the reference state,
+extremes, pending values and selected/unselected ownership. ALT entry and EXIT
+retain their existing targets. Actual native controller menus remain available.
+All nine relevant Windows groups pass: Pending, Display, CtrlEditor, Backup,
+Config, Storage, Presets, Polish and Fidelity. Display retains 181 states.
+
+Only the OLED renderer changes in production. DSP, all 787 parameter IDs,
+schema34, format11/522 musical snapshots and backup formats are unchanged.
+No new LIM reset gesture, preference or serialized edit state is introduced.
+The stripped Windows production host passes 22,624,609 frames, 339,369,135
+output checks, 56,664 edits, 145 restores, 144 fresh instances, 12 initializes
+and 145 reciprocal links at 44.1/48/96kHz across both models: 361.083 virtual
+seconds, single-thread wall time 12.7699 seconds. The final package is tested
+separately. Release CI runs 25 portable suites, native/production hosts on
+Linux and both Mac architectures, plus 18 real Linux Rack groups including
+the same Pending matrix. Exact-head receipts and package audits are verified
+separately before publication. OS input and human listening are not inferred.
 
 ## 2.58 Backup and maintenance lists
 
