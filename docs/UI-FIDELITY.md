@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.63.0
+# Panel and display refinement — 2.64.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,39 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## CTRL ownership symbols and LIM captions — 2.64.0
+
+Owned fields use a thirteen-pixel circled controller number with the native
+outline and seven-row digits. The complete CTRL 2 symbol matches the inverted
+encoder legend on manual p26. CTRL 1 uses the same outline and a digit observed
+elsewhere in the manual; its composition and placement are interpretations.
+Markers retain the existing gray and selected inversion on LIM. This change
+does not alter which destinations own a field or the controller priority.
+
+The LIM heading and footer use the proportional caption face, including two
+more observed glyphs (plus and P), bringing its observed coverage to 28. The
+footer, dots, existing menu rows and selected Negative Limit reproduce every
+foreground cell of the firmware 1.6 p126 image in actual Rack. No pixels are
+excluded. This is a shape comparison, not a hardware brightness or animation
+measurement. Positive/Negative Limit follows the main p126 chapter; the p135
+illustration uses the older Upper/Lower wording.
+
+Tests retain all six LIM fields, 132 applied states, 240 actual pending states,
+48 owned states, 24 field-navigation clicks, 48 immediate/confirmed edits,
+32 owned read-only cases and 24 stale-confirmation conflicts. Another 80 actual
+selected-field cases cover both controllers, both tracks and individual/both
+assignment across ten fields. The independent symbol mask and contextual
+pixels pass, including the lower selection corner where it crosses the marker
+region. Encoder/OLED drag, reset, menus, preview isolation and exact Undo/Redo
+retain their existing behavior. All 18 affected Windows groups pass; the
+packaged production host and native/Linux checks run separately for release.
+
+The first independent comparison caught a one-pixel LIM footer shift. A second
+test assumption was corrected to include the existing selection-corner pixels;
+the frame remains intact. Sequencing, 787 parameter IDs, settings schema34,
+format11/522 snapshots and backup formats are unchanged. Other edit headings,
+diagrams and panel materials remain separate visual work.
 
 ## Scale screen and editor — 2.63.0
 

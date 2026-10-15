@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.63.0
+# Hardware panel and desktop interaction — 2.64.0
 
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
@@ -186,3 +186,10 @@ right-click equivalents; see [Scale copying](SCALES.md#copy-and-paste-a-scale).
 
 EDIT Slide/Skip now supports ALT rotate/invert/reset; Ratchet supports ALT
 bulk count edits and selected/all long resets. See [Stage patterns](STAGE-PATTERNS.md).
+
+## Controller markers — 2.64.0
+
+Circled CTRL numbers now use the native-reference outline and seven-row digits.
+LIM also uses measured caption lettering and footer alignment. Editing, ownership
+and saved formats retain their existing behavior; see [visual evidence and its
+limits](UI-FIDELITY.md#ctrl-ownership-symbols-and-lim-captions--2640).
