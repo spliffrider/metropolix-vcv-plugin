@@ -1,9 +1,30 @@
-# Scales and chord changes — 2.40.0
+# Scales and chord changes — 2.63.0
 
 The SCALE screen offers all **49 factory scales/chord shapes** shown in the
 [firmware 1.6 manual, pp.62–68](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf),
 plus **100 editable user scales**, in ten banks of ten slots. Factory note sets
 were transcribed from the keyboard diagrams on pp.63–64.
+
+## Screen and confirmation
+
+Factory/user selection, lock/search/MOD-lock symbols and the larger note editor
+follow the [native reference layout](UI-FIDELITY.md). The arrow follows the
+selected note; ALT switches the active frame to Root. Hover help and right-click
+menus retain full scale names. The OLED shortens Whole half diminished and Half
+whole diminished to Whole Half Dim and Half Whole Dim when displaying them.
+
+Encoder Confirm Off applies browsing immediately. With it On, browsing previews
+the same hardware bank order and shows a question mark until you click to apply.
+For example, Major advances to Dorian in both modes. Before 2.63, confirmed
+browsing instead advanced through legacy numeric IDs and previewed Minor.
+Existing stored IDs and older patches remain compatible.
+
+If a question mark is visible, the first click confirms that value. A following
+click performs the ordinary Scale Lock action. A pre-existing lock remains
+separate from the selected scale and continues to control the sounding scale
+until you apply a new lock or unlock it. Root and note-cursor editing also keep
+the current confirmation preference. Their previews, toggles and cancellations
+retain Rack Undo/Redo.
 
 ## Choose a scale
 

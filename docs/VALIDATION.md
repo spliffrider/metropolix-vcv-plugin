@@ -1,4 +1,56 @@
-# Validation and fidelity status — 2.62.0
+# Validation and fidelity status — 2.63.0
+
+## 2.63 native-reference scale screen and confirmed bank order
+
+The supplied firmware1.6 images on pp62/66/67/68 provide eleven complete 128x64
+screen masks. Every foreground pixel matches in actual Rack, including normal,
+locked, searched, user, note-edit and Root-edit views. Saved captures were
+independently compared again. The native/reference, all 52 current states and
+both actual-source charsets were inspected. Eighty-one observed glyph masks
+match their source bytes: 55 bold and 26 caption glyphs. Unobserved glyphs remain
+companions; the existing thirteen observed large glyphs are unchanged.
+
+The layout uses measured keyboard sizes/key profiles/checkers, root marks,
+selection corners, bank/value headings, lock/search/MOD-lock, press/long-press
+cues, ALT/EXIT badges, note arrow and footer. Compact bank headings beyond the
+sampled Major/User views, a black-key root mark and two Dim aliases remain
+interpretations. Foreground masks do not establish physical brightness, color
+or animation equivalence.
+
+The first actual Rack run passed all eleven native masks, root marks and Root
+previews. It found that two long diminished-scale names exceeded their area;
+compact OLED aliases correct this while preserving full menu/quantity names.
+It also exposed an existing confirmed-browsing inconsistency: the confirmation
+path advanced numeric scale IDs, whereas immediate navigation used hardware
+bank positions. Confirmed previews now use bank positions too. Major therefore
+advances to Dorian in both modes, while retaining all 149 legacy IDs. The
+confirmation requirement itself is unchanged. The test's immediate note-cursor
+drag was also lengthened to cross Rack's normal snap threshold; sensitivity
+and note bindings are unchanged. The repeat run passes all cases.
+
+New actual tests cover eleven complete native masks; 447 name/header states
+across ordinary, queued and pending layouts; twelve transposed root markers;
+four immediate/confirmed encoder/OLED browse cases; 596 confirmed transitions
+across all 149 scales, both directions and clipped endpoints; twelve factory/
+user/editor Root previews; and four note-cursor/toggle workflows. Full 787-value
+Undo/Redo, preview isolation and no-op history are checked. Existing all-user/
+factory editor guards, final-note protection, shortcuts, lock, desktop menus,
+copy/paste and native patch reopening still pass.
+
+All 27 affected Windows groups pass: Scales, Pending, Display, CtrlEditor, Backup,
+Config, Storage, Presets, Polish, Fidelity, StagePair, Overrides, Slides, StageCv,
+Clock, Outputs, Mx, Controls, Tracks, SetupOptions, Timing, Order, StagePattern,
+Loopy, Chains, ScaleCopy and ScaleAudio. ScaleAudio observes C/Am/F/G definitions
+and roots on both tracks during actual stereo/CV playback. This is automated
+signal-path verification, not a human listen. Production-host and exact-source
+release CI are recorded separately: 25 portable suites, three native platform
+hosts and eighteen Linux Rack groups including these scale checks.
+
+The confirmed SCALE preview traversal is the sole input-behavior correction.
+Other confirmation, cursor/root sensitivity, sequencing code, 787 parameter IDs,
+schema34, format11/522 snapshots and backup formats remain unchanged. Remaining
+ownership markers, other diagrams/captions/materials and physical comparisons
+are explicit work; no full physical-module equivalence is claimed.
 
 ## 2.62 native-reference chain display
 

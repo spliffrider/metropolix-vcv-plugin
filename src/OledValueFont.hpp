@@ -8,6 +8,9 @@ namespace metrodisplay {
 struct ValueGlyph { int width,bearing,advance,right,height;uint16_t rows[18]; };
 inline ValueGlyph boldValueGlyph(unsigned char c) {
     switch(c) {
+        case '-':return {4,1,6,6,11,{0,0,0,0,15,0,0,0,0,0,0}}; // scale reference
+        case '3':return {6,1,8,8,11,{30,51,3,3,14,3,3,51,30,0,0}}; // scale reference
+        case '4':return {6,1,8,8,11,{3,7,15,27,51,63,3,3,3,0,0}}; // scale reference
         case '%':return {10,1,12,12,11,{448,868,876,472,48,110,219,155,14,0,0}};
         case '+':return {6,1,8,8,11,{0,0,12,12,63,12,12,0,0,0,0}};
         case '.':return {2,1,4,4,11,{0,0,0,0,0,0,0,0,3,0,0}};

@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.60.0
+# UI setup, confirmation and external clock input — 2.63.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,12 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Confirmed scale browsing
+
+With Encoder Confirm On, [SCALE previews](SCALES.md) now follow the same hardware
+bank order as immediate browsing. The displayed question mark remains until
+confirmation. Stored scale IDs and lock state remain separate and unchanged.
 
 ## Menu lettering
 

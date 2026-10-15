@@ -1,6 +1,7 @@
 #include "OledMenuFont.hpp"
 #include "OledValueFont.hpp"
 #include "OledChainFont.hpp"
+#include "OledCaptionFont.hpp"
 
 // A 128 x 64 monochrome display, matching the native screenshots in the manual.
 // Text and diagrams are pixels, so zooming never substitutes a desktop font.
@@ -108,7 +109,8 @@ struct OledCanvas {
     }
     void menuRight(int x,int y,const std::string& s,uint8_t v=255) {menuText(x-menuWidth(s),y,s,v);}
     static metrodisplay::MenuGlyph chainCaption(unsigned char c) {
-        auto glyph=metrodisplay::chainCaptionGlyph(c);
+        c=static_cast<unsigned char>(std::toupper(c));
+        auto glyph=metrodisplay::captionGlyph(c);
         if(glyph.width>=0)return glyph;
         auto source=small(static_cast<char>(std::toupper(c)));
         glyph.width=source.w;glyph.advance=source.w+2;
@@ -127,6 +129,31 @@ struct OledCanvas {
             for(int row=0;row<(caption?5:9);++row)for(int col=0;col<g.width;++col)if(g.rows[row]&(1<<(g.width-1-col)))dot(x+1+col,y+row,v);
             x+=g.advance;
         }
+    }
+    int captionWidth(const std::string& s) const {return chainWidth(s,true);}
+    void captionText(int x,int y,const std::string& s,uint8_t v=255,int tracking=2) {
+        for(unsigned char c:glyphText(s)) {
+            auto g=chainCaption(c);
+            for(int row=0;row<5;++row)for(int col=0;col<g.width;++col)if(g.rows[row]&(1<<(g.width-1-col)))dot(x+1+col,y+row,v);
+            x+=g.width?g.advance+tracking-2:g.advance;
+        }
+    }
+    void captionRight(int x,int y,const std::string& s,uint8_t v=255) {captionText(x-captionWidth(s),y,s,v);}
+    void bitmap(int x,int y,int w,int h,const uint16_t* rows,uint8_t v=255) {
+        for(int j=0;j<h;++j)for(int i=0;i<w;++i)if(rows[j]&(1<<(w-1-i)))dot(x+i,y+j,v);
+    }
+    void scaleCorners(int x,int y,int w,int h) {
+        uint8_t v=std::sin(system::getTime()*5.f)>.1f?255:155;
+        for(int a:{0,1})for(int b:{0,1}) {
+            int px=x+a*(w-1),py=y+b*(h-1),extent=b && !a?4:5;
+            line(px,py,px+(a?-5:5),py,v);line(px,py,px,py+(b?-extent:extent),v);
+        }
+    }
+    void scaleLongHint(int x,int y,uint8_t v=255) {const uint16_t rows[]={56,68,186,381,381,381,186,68,56};bitmap(x,y,9,9,rows,v);}
+    void scaleLockHint(int x,int y,uint8_t v=255) {const uint16_t rows[]={28,450,994,1007,1007,479,63};bitmap(x,y,10,7,rows,v);}
+    void scaleStatus(bool search) {
+        if(search){const uint16_t rows[]={112,136,260,260,260,136,116,2,1};bitmap(116,2,9,9,rows);}
+        else {const uint16_t rows[]={28,34,34,127,127,127,127};bitmap(117,3,7,7,rows);}
     }
     int valueWidth(const std::string& s,bool big=false) const {
         int cursor=0,right=0;
