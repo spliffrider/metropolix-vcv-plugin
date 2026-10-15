@@ -62,6 +62,16 @@ struct HardwareDisplay : HardwareControl {
             bool a=integer(Metropolix::OUTPUT_SOURCE_A)==source,b=integer(Metropolix::OUTPUT_SOURCE_B)==source;
             if(a || b)right+=a?(b?":AB":":A"):":B";
         }
+        if(m && m->uiPage.load()==Metropolix::SCALE_PAGE) {
+            bool wave=!m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE;
+            int edge=wave?113:126;right=OledCanvas::glyphText(right);
+            while(c.captionWidth(left)+c.captionWidth(right)+10>edge && !right.empty())right.pop_back();
+            int rightX=edge-c.captionWidth(right);
+            c.captionText(2,56,left);c.captionText(rightX,56,right);
+            for(int x=2+c.captionWidth(left)+7;x<rightX-4;x+=4)c.dot(x,58);
+            if(wave){const uint16_t rows[]={120,72,72,72,79};c.bitmap(119,56,7,5,rows);}
+            return;
+        }
         int edge=127;
         if(m && m->uiPage.load()!=Metropolix::ACCUM_PAGE && m->uiPage.load()!=Metropolix::CTRL_PAGE && m->uiPage.load()!=Metropolix::CV_TYPE_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SLIDE) {
             c.line(120,61,120,56);c.line(120,56,123,56);c.line(123,56,123,61);c.line(123,61,127,61);edge=117;
@@ -204,21 +214,7 @@ struct HardwareDisplay : HardwareControl {
         }
         footer(c);
     }
-    void keyboard(OledCanvas& c,int x,int y,int w) const {
-        int scale=integer(Metropolix::SCALE,1),root=integer(metroModule?metroModule->scaleRootParam(scale):Metropolix::ROOT);
-        auto sc=metroModule?metroModule->uiScale(scale):metro::scaleAt(scale);const int white[]={0,2,4,5,7,9,11};
-        auto enabled=[&](int note){for(int i=0;i<sc.count;++i)if(metro::modulo(note-root,12)==sc.notes[i])return true;return false;};
-        int kw=w/7;
-        for(int k=0;k<7;++k){c.fill(x+k*kw,y,kw-1,23);if(!enabled(white[k]))c.hatch(x+k*kw,y,kw-1,23);if(white[k]==root)c.fill(x+k*kw+kw/2-1,y+19,2,2,0);}
-        const int after[]={0,1,3,4,5},black[]={1,3,6,8,10};
-        for(int k=0;k<5;++k){int bx=x+(after[k]+1)*kw-2;c.fill(bx,y,4,14,0);if(!enabled(black[k])){c.fill(bx,y,4,14);c.hatch(bx,y,4,14);}if(black[k]==root)c.dot(bx+1,y+11);}
-        if(metroModule && metroModule->scaleEditing.load()) {
-            int note=metro::modulo(integer(Metropolix::SCALE_NOTE)+root,12),px=x;
-            for(int k=0;k<7;++k)if(white[k]==note)px=x+k*kw+kw/2;
-            for(int k=0;k<5;++k)if(black[k]==note)px=x+(after[k]+1)*kw;
-            c.arrow(px,y-5);
-        }
-    }
+    #include "HardwareScaleDisplay.hpp"
     void stage(OledCanvas& c) const {
         auto* m=metroModule;if(!m)return;
         int t=m->selectedTrack.load(),s=m->selectedStage.load(),l=m->selectedLane.load(),row=m->selectedRow.load();
@@ -321,17 +317,7 @@ struct HardwareDisplay : HardwareControl {
             field(c,0,"CLK OUT","/"+std::to_string(integer(Metropolix::CLOCK_OUT_DIV,1)),f==0);
             field(c,28,"CLK OFFSET",std::to_string(metro::ClockOutput::offset(integer(Metropolix::CLOCK_OUT_OFFSET),integer(Metropolix::CLOCK_OUT_DIV,1))),f==1);
         } else if(page==Metropolix::SCALE_PAGE) {
-            int shown=integer(Metropolix::SCALE,1),locked=integer(Metropolix::SCALE_LOCK,-1);
-            bool edit=m && m->scaleEditing.load();
-            std::string name=shown==1?"Ionian":shown==2?"Aeolian":metro::scaleName(shown);
-            field(c,0,edit?"EDIT USER SCALE":"SCALE",name,f==1,128,1,1,-1);
-            if(locked>=0) {
-                if(locked==shown){c.box(115,3,7,6);c.box(117,1,3,3);if(metro::userScale(locked))c.text(100,3,"M");}
-                else {c.circle(117,4,3);c.line(119,6,124,11);}
-            }
-            c.text(2,30,"ROOT");c.valueRight(50,43,notes[integer(m?m->scaleRootParam():Metropolix::ROOT)]);
-            if(f==0)c.corners(0,28,51,27);
-            c.box(2,45,17,7);c.text(4,46,"ALT");keyboard(c,58,29,70);
+            scale(c);
         } else if(page==Metropolix::ORDER_PAGE) {
             field(c,0,"PLAY ORDER",Metropolix::orderLabels()[integer(tm(Metropolix::ORDER,Metropolix::MOD_ORDER))],true,128,1);
             int id=mod?Metropolix::modParam(l,Metropolix::MOD_REVERSED):Metropolix::extraParam(t,Metropolix::REVERSED);

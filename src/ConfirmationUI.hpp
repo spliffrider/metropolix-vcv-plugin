@@ -70,7 +70,25 @@ void turnDraft(Metropolix* m,int id,float dy,float& remainder,bool fine){
         for(int next:m->uiDraftIds){m->uiDraftBefore.push_back(m->getParamQuantity(next)->getValue());m->uiDraftRawBefore.push_back(m->params[next].getValue());}
         m->uiDraftContextIds=draftContextParams(m,id);for(int next:m->uiDraftContextIds)m->uiDraftContextBefore.push_back(m->params[next].getValue());}
     bool gate=false;if(auto* cv=dynamic_cast<TrackCvQuantity*>(q))gate=cv->type()==metro::GateCv;if(auto* cv=dynamic_cast<ModVoltageQuantity*>(q))gate=cv->gate();
-    if(q->snapEnabled || gate){remainder-=dy/(fine?10.f:1.f);int steps=int(remainder/22.f);if(steps){if(gate)m->uiDraftValue=steps>0?5:0;else if(auto* pitch=dynamic_cast<PitchOverrideQuantity*>(q)){auto scale=pitch->scale();int off=metro::nearestDegree(0,scale)-1;int degree=m->uiDraftValue<0?off:metro::nearestDegree(m->uiDraftValue,scale);degree=metro::clamp(degree+steps,off,metro::nearestDegree(60,scale));m->uiDraftValue=degree==off?-1.f:float(metro::degreeToSemitone(degree,scale));}else m->uiDraftValue+=steps;remainder-=steps*22.f;}}
+    if(q->snapEnabled || gate){
+        remainder-=dy/(fine?10.f:1.f);int steps=int(remainder/22.f);
+        if(steps){
+            if(gate)m->uiDraftValue=steps>0?5:0;
+            else if(id==Metropolix::SCALE && m->uiPage.load()==Metropolix::SCALE_PAGE){
+                // Preview the hardware bank order while keeping legacy stored IDs.
+                int position=metro::scaleBrowsePosition(int(std::round(m->uiDraftValue)));
+                m->uiDraftValue=float(metro::scaleBrowseId(metro::clamp(position+steps,0,148)));
+            }
+            else if(auto* pitch=dynamic_cast<PitchOverrideQuantity*>(q)){
+                auto scale=pitch->scale();int off=metro::nearestDegree(0,scale)-1;
+                int degree=m->uiDraftValue<0?off:metro::nearestDegree(m->uiDraftValue,scale);
+                degree=metro::clamp(degree+steps,off,metro::nearestDegree(60,scale));
+                m->uiDraftValue=degree==off?-1.f:float(metro::degreeToSemitone(degree,scale));
+            }
+            else m->uiDraftValue+=steps;
+            remainder-=steps*22.f;
+        }
+    }
     else m->uiDraftValue-=dy*q->getRange()*.0007f*(fine?.1f:1.f);
     m->uiDraftValue=metro::clamp(m->uiDraftValue,q->getMinValue(),q->getMaxValue());
     if(m->uiDraftValue==q->getValue())m->cancelDraft();

@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.62.0
+# Panel and display refinement — 2.63.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,37 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Scale screen and editor — 2.63.0
+
+Factory and user scale views follow the native headings, value baselines,
+keyboards, root marks, lock/search/MOD-lock indicators, encoder hints, ALT badge
+and footer. Note editing has its own larger keyboard, note arrow, EDITING/name
+header and EXIT/long-press cue. The active frame moves between notes and Root.
+Eleven complete native-screen foreground masks reproduce the supplied firmware
+1.6 images on pp62/66/67/68 inside Rack, without excluding any pixels. This is
+a foreground-shape comparison, not a physical brightness or animation claim.
+
+Six additional caption glyphs and three bold glyphs come from these images.
+There are now 26 observed five-row captions and 55 observed bold glyphs; the
+thirteen observed large glyphs retain their existing rendering. Remaining glyphs
+are companions. Compact bank headings outside the sampled Major/User views,
+the black-key root mark and the two Dim aliases remain interpretations. Whole
+Half Dim and Half Whole Dim keep their full names in hover help and menus.
+
+With Encoder Confirm enabled, previews follow the same hardware bank order as
+immediate browsing. A forward turn from Major now previews Dorian; it previously
+previewed Minor by advancing a legacy stored ID. The change remains pending
+until confirmed. Existing IDs and formats are preserved. Queued/pending hints
+leave room for lock/long-press symbols and value question marks. Root and note
+editing retain their confirmation preferences and exact Undo/Redo.
+
+All 52 captured states and both actual-source charsets were inspected. Tests
+cover all names in ordinary/queued/pending layouts, every confirmed bank
+transition in both directions, roots, note editing and existing copy/shortcut/
+lock/storage workflows. Sequencing code, all 787 parameter IDs, schema34,
+format11/522 snapshots and backup formats are unchanged. Further ownership,
+other page diagrams/captions and material matching remain separate work.
 
 ## Preset-chain display — 2.62.0
 

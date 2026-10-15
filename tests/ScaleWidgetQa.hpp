@@ -6,6 +6,7 @@ if(std::getenv("METROPOLIX_SCALE_REOPEN_QA")) {
     }
     return;
 }
+#include "ScaleDisplayWidgetQa.hpp"
 auto begin=[&](HardwareControl* c){if(!c){check(false,"scale hold control exists");return;}widget::EventContext context;event::DragStart e;e.context=&context;e.button=GLFW_MOUSE_BUTTON_LEFT;c->onDragStart(e);};
 auto end=[&](HardwareControl* c){widget::EventContext context;event::DragEnd e;e.context=&context;e.button=GLFW_MOUSE_BUTTON_LEFT;c->onDragEnd(e);};
 if(qaFrame==6) {
