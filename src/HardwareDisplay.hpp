@@ -470,35 +470,51 @@ struct HardwareDisplay : HardwareControl {
             auto state=m->getChainState();int n=state.working.size;
             int cursor=m->chainCursor.load(),playing=m->chainPlayingLink.load(),edit=m->chainEdit.load();
             if(state.enabled && m->chainFollow.load() && playing>=0)cursor=2*playing+1;
-            c.text(1,1,"#");c.box(18,1,6,4);c.box(22,3,6,4);c.text(74,1,"X");c.text(103,1,"MUTE");
-            // List positions alternate links and insertion lines. Only the
-            // selected insertion line occupies a row, as on the hardware.
+            auto icon=[&](int x,int y,uint8_t v=255){const uint16_t rows[]={8176,4112,4567,4369,7537,257,511};for(int j=0;j<7;++j)for(int i=0;i<13;++i)if(rows[j]&(1<<(12-i)))c.dot(x+i,y+j,v);};
+            auto plus=[&](int x,int y,uint8_t v=255){c.line(x,y+2,x+4,y+2,v);c.line(x+2,y,x+2,y+4,v);};
+            auto bar=[&](int x,int y,int width){c.fill(x,y-2,width,11);};
+            auto caption=[&](int x,int y,const std::string& text){c.chainText(x,y,text,255,true);};
+            caption(2,1,"#");icon(20,0);caption(73,1,"X");caption(104,1,"MUTE");
+            // An insertion line occupies a row only while it is selected.
             int selected=cursor/2,first=std::max(0,selected-1);
             if(cursor>=2*n+1)first=std::max(0,n-2);
             int y=12;
             for(int i=first;i<=n && y<=45;++i) {
                 if(cursor==2*i && !state.enabled && !edit) {
-                    if(!n){c.text(18,y,"New Chain",false);c.box(0,y-1,128,10,155);}else {c.line(0,y+4,126,y+4);c.text(56,y,"+",true);}
-                    y+=10;
+                    if(!n){bar(1,y,127);c.chainText(19,y,"New Chain",0);plus(3,y+1,0);}
+                    else {c.line(1,y+3,127,y+3);c.fill(57,y,9,7,0);plus(59,y+1);}
+                    y+=11;
                 }
-                if(i==n)break;
-                const auto& l=state.working.links[i];
-                bool active=cursor==2*i+1;
-                if(active)c.box(edit==1?16:edit==2?73:0,y-1,edit==1?56:edit==2?27:128,10,155);
-                c.text(1,y,std::to_string(i+1),false);
-                c.text(18,y,std::string(colors[l.slot/8])+" "+std::to_string(l.slot%8+1),false);
-                c.text(75,y,"x"+std::to_string(l.repeats),false);
-                for(int t=0;t<3;++t)c.circle(108+8*t,y+4,2,!(l.mutes&(1u<<t)));
-                if(i==playing && state.enabled)c.fill(0,y+2,1,5);
-                y+=10;
+                if(i==n || y>45)break;
+                const auto& link=state.working.links[i];bool active=cursor==2*i+1;
+                if(active)bar(edit==1?18:edit==2?73:1,y,edit==1?54:edit==2?29:127);
+                c.chainText(2,y,std::to_string(i+1),active && !edit?0:255);
+                std::string preset=std::string(colors[link.slot/8])+" "+std::to_string(link.slot%8+1);
+                if(c.chainWidth(preset)>53)preset="Mag "+std::to_string(link.slot%8+1);
+                c.chainText(19,y,preset,active && edit!=2?0:255);
+                c.chainText(73,y,"x"+std::to_string(link.repeats),active && edit!=1?0:255);
+                for(int t=0;t<3;++t){const uint8_t solid[]={14,31,31,31,14},ring[]={14,17,17,17,14};const auto* rows=link.mutes&(1u<<t)?ring:solid;for(int j=0;j<5;++j)for(int k=0;k<5;++k)if(rows[j]&(1<<(4-k)))c.dot(103+9*t+k,y+1+j,active && !edit?0:255);}
+                if(m->chainQuick && i==n-1)plus(96,y+1,active && edit!=1?0:255);
+                if(i==playing && state.enabled && !active)c.fill(0,y+1,1,5);
+                y+=11;
             }
-            if(y<=45) {if(cursor==2*n+1)c.box(0,y-1,128,10,155);c.text(18,y,state.enabled?"Disable Chain":"Enable Chain",false);y+=10;}
-            if(y<=45) {if(cursor==2*n+2)c.box(0,y-1,128,10,155);c.text(18,y,"Clear Chain",false);}
+            auto action=[&](int position,const char* name){
+                if(y>45)return;
+                bool active=cursor==position;if(active)bar(1,y,127);
+                c.chainText(19,y,name,active?0:255);
+                if(!n)for(int j=y;j<y+9;++j)for(int x=19;x<128;++x)if((x+j)%2==0)c.dot(x,j,0);
+                y+=11;
+            };
+            action(2*n+1,state.enabled?"Disable Chain":"Enable Chain");action(2*n+2,"Clear Chain");
             if(state.enabled) {
-                if(std::fmod(system::getTime(),.8)<.5) {c.box(1,56,7,4);c.box(5,59,7,4);}
-                c.text(15,57,playing<0?"-":string::f("%d:%d",playing+1,m->chainPlayingRepeat.load()));
-                c.text(38,57,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
-            } else c.text(1,57,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
+                if(std::fmod(system::getTime(),.8)<.5)icon(1,56);
+                caption(15,58,playing<0?"-":string::f("%d:%d",playing+1,m->chainPlayingRepeat.load()));
+                caption(43,58,m->chainFollow.load()?"FOLLOWING CHAIN":"CHAIN PLAYBACK");
+            } else {
+                caption(2,58,m->uiMod.load()?string::f("MOD %d",m->selectedLane.load()+1):string::f("TRK %d",m->selectedTrack.load()+1));
+                c.dot(34,60);c.dot(38,60);
+                caption(43,58,m->chainQuick?"ADD TO CHAIN":edit?"EDIT LINK":"SAVE/LOAD CHAIN");
+            }
             return c;
         } else if(page==Metropolix::BACKUP_PAGE || page==Metropolix::BACKUP_PRESET_PAGE){
             bool presets=page==Metropolix::BACKUP_PRESET_PAGE;

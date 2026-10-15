@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.61.0
+# Panel and display refinement — 2.62.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,30 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Preset-chain display — 2.62.0
+
+The chain table uses seven-pixel capitals with two rows for descenders, plus a
+separate five-row caption face. Twenty observed glyphs in each face reproduce
+the native firmware 1.6 images on pp171/174. Other glyphs remain companions;
+they are not a claim of complete native-font equivalence.
+
+Selected rows fill and invert; Preset and Repeats invert separately when being
+edited. Eleven-pixel rows, the chain icon, table columns, mute symbols and track
+footer follow the sampled layout. Unavailable empty-chain actions are hatched.
+Magenta shortens to Mag when its full name would enter the repeat column; full
+bank names remain in desktop menus. Quick Chain shows a plus beside the last
+link's repeats, indicating that another matching stage press can increase them.
+This cue follows the workflow on p175; its exact placement is an interpretation.
+Playback retains the desktop repeat count and follow/static status.
+
+Three independent native-screen foreground masks pass in actual Rack, with
+one footer dot excluded because the source images give it different luminance.
+Both font charsets and eighteen captured states were inspected. The 32-link
+scrolling, field selection, mutes, Quick Chain Undo/Redo and Chain Follow cases
+pass without render-time parameter, chain or history changes. Existing input,
+playback, storage, 787 parameter IDs, schema34 and format11/522 remain unchanged.
+Brightness, animation and physical-module equivalence remain unverified.
 
 ## Performance readouts — 2.61.0
 

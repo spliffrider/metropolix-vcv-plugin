@@ -1,4 +1,42 @@
-# Validation and fidelity status — 2.61.0
+# Validation and fidelity status — 2.62.0
+
+## 2.62 native-reference chain display
+
+Three native 128x64 OLED screens were extracted from firmware1.6 manual
+pp171/174 without resampling. Twenty regular seven-capital/nine-descender
+glyphs and twenty five-row caption glyphs reproduce their observed shapes and
+spacing. Regular companions reduce the menu face; caption companions retain
+the earlier tiny shapes. Unobserved glyphs remain interpretations.
+
+Actual Rack tests compare all foreground pixels in each native screen except
+one footer dot at (38,60). Its source luminance is 219 in two images and 29 in
+the other, so it is excluded from the binary-mask claim. This does not prove
+animation or brightness equivalence. Saved captures were independently compared
+again; before/after/native layouts, twelve representative states and both actual
+source charsets were visually inspected. Forty observed source glyph masks
+also match the extracted reference bytes.
+
+The new cases pass all three screen masks, 194 glyph metrics, 63 selected-link
+and field states through 32-link scrolling, all eight mute combinations, actual
+Quick Chain repeats with exact Undo/Redo, and actual Chain Follow toggles.
+Rendering does not write raw parameters, chain state or history. Existing
+exhaustive insertion/deletion/clear and bank/repeat history checks still pass,
+along with actual saved-chain patch reopening.
+
+All nine Windows groups pass: Chains, ChainAudio, Display, Pending, Polish,
+Fidelity, Storage, Presets and Backup. ChainAudio verifies the stereo/CV signal
+path and arrangement transitions; it is not a human listening test. Eighteen
+new direct chain captures are retained alongside existing display, LIM, menu
+and backup coverage. Production-host and exact-source release CI evidence is
+recorded separately: 25 portable suites, three native platform hosts and
+eighteen Linux Rack groups, including the same chain screen checks.
+
+Only chain rendering changes: inverted row/field selection, measured row/column
+geometry, captions/icons/mutes, hatched empty actions and the Quick Chain plus
+cue. Its placement and compact Magenta alias are interpretations. Input policy,
+playback, eight saved chains, all 787 IDs, schema34, format11/522 and backup
+formats are unchanged. Scale-editor geometry, other diagrams, remaining tiny
+lettering, ownership markers, materials and physical comparisons remain open.
 
 ## 2.61 performance lettering and encoder cues
 

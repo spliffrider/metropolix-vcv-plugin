@@ -1,5 +1,6 @@
 #include "OledMenuFont.hpp"
 #include "OledValueFont.hpp"
+#include "OledChainFont.hpp"
 
 // A 128 x 64 monochrome display, matching the native screenshots in the manual.
 // Text and diagrams are pixels, so zooming never substitutes a desktop font.
@@ -106,6 +107,27 @@ struct OledCanvas {
         }
     }
     void menuRight(int x,int y,const std::string& s,uint8_t v=255) {menuText(x-menuWidth(s),y,s,v);}
+    static metrodisplay::MenuGlyph chainCaption(unsigned char c) {
+        auto glyph=metrodisplay::chainCaptionGlyph(c);
+        if(glyph.width>=0)return glyph;
+        auto source=small(static_cast<char>(std::toupper(c)));
+        glyph.width=source.w;glyph.advance=source.w+2;
+        int row=0;
+        for(const char* p=source.rows;*p && row<5;++p)if(*p!=' ')glyph.rows[row++]=uint8_t(bits(*p));
+        return glyph;
+    }
+    int chainWidth(const std::string& s,bool caption=false) const {
+        int cursor=0,right=0;
+        for(unsigned char c:glyphText(s)){auto g=caption?chainCaption(c):metrodisplay::chainGlyph(c);if(g.width)right=cursor+1+g.width;cursor+=g.advance;}
+        return right;
+    }
+    void chainText(int x,int y,const std::string& s,uint8_t v=255,bool caption=false) {
+        for(unsigned char c:glyphText(s)) {
+            auto g=caption?chainCaption(c):metrodisplay::chainGlyph(c);
+            for(int row=0;row<(caption?5:9);++row)for(int col=0;col<g.width;++col)if(g.rows[row]&(1<<(g.width-1-col)))dot(x+1+col,y+row,v);
+            x+=g.advance;
+        }
+    }
     int valueWidth(const std::string& s,bool big=false) const {
         int cursor=0,right=0;
         for(unsigned char c:glyphText(s)){auto g=metrodisplay::valueGlyph(c,big);right=cursor+g.right;cursor+=g.advance;}

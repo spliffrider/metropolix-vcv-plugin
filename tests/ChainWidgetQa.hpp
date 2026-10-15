@@ -23,6 +23,7 @@ if(std::getenv("METROPOLIX_CHAIN_REOPEN_QA")) {
     return;
 }
 #include "ChainHistoryWidgetQa.hpp"
+#include "ChainDisplayWidgetQa.hpp"
 if(qaFrame==5) {
     m->params[Metropolix::RUN].setValue(0);
     for(int k=0;k<2;++k)m->params[Metropolix::ctrlParam(k,Metropolix::CTRL_DESTINATION)].setValue(metro::CtrlNone);
