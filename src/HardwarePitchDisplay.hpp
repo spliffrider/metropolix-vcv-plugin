@@ -5,13 +5,15 @@ int previewScale(int track) const {
     if(metro::userScale(locked)){int playing=m->soundingScale[track].load();if(metro::userScale(playing) && (playing-49)/10==(locked-49)/10)shown=playing;}
     return shown;
 }
-int previewPitch(int track,int stage,int shown) const {
+int baseSliderPitch(int track,int stage,int shown,bool physical,bool overrides) const {
     auto* m=metroModule;auto scale=m->uiScale(shown);int root=m->integer(m->scaleRootParam(shown));
-    float source=m->uiSliderPosition(track,stage,true)*12.f*m->uiSliderOctaves(track);
+    int anchor=overrides?integer(Metropolix::stageParam(track,stage,Metropolix::PITCH_OVERRIDE),-1):-1;
+    float source=anchor<0?m->uiSliderPosition(track,stage,physical)*12.f*m->uiSliderOctaves(track):float(anchor);
     int bottom=m->integer(Metropolix::BOTTOM_PITCH);
-    if(bottom<12){int relative=metro::clamp(bottom,0,11)-root,first=metro::nearestDegree(float(relative),scale);if(metro::degreeToSemitone(first,scale)<relative)++first;source+=metro::degreeToSemitone(first,scale);}
+    if(anchor<0 && bottom<12){int relative=metro::clamp(bottom,0,11)-root,first=metro::nearestDegree(float(relative),scale);if(metro::degreeToSemitone(first,scale)<relative)++first;source+=metro::degreeToSemitone(first,scale);}
     return metro::degreeToSemitone(metro::nearestDegree(source,scale),scale)+root+m->integer(Metropolix::trackParam(track,Metropolix::TRANSPOSE));
 }
+int previewPitch(int track,int stage,int shown) const {return baseSliderPitch(track,stage,shown,true,false);}
 void pitchPreview(OledCanvas& c) const {
     auto* m=metroModule;int track=metro::clamp(m->selectedTrack.load(),0,1),stage=metro::clamp(m->pitchPreviewStage.load(),0,7),shown=previewScale(track);
     auto scale=m->uiScale(shown);int root=m->integer(m->scaleRootParam(shown)),pitch=previewPitch(track,stage,shown),note=metro::modulo(pitch,12);

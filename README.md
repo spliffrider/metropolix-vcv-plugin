@@ -4,17 +4,17 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.67.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.68.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/MetropolixLab-2.67.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/MetropolixLab-2.67.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/MetropolixLab-2.67.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/MetropolixLab-2.67.0-mac-arm64.vcvplugin)**
+**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/MetropolixLab-2.68.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/MetropolixLab-2.68.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/MetropolixLab-2.68.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/MetropolixLab-2.68.0-mac-arm64.vcvplugin)**
 
-**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.67.0)**
+**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.68.0)**
 
-2.67.0 adds the [physical pitch-slider popup](docs/UI-FIDELITY.md) and fixes complete Undo for recalled pitch/CTRL value actions. The popup preserves the underlying page and consumes its first dismissal gesture. Saved formats stay unchanged.
+2.68.0 refines all four [HOME views](docs/UI-FIDELITY.md), fixes fixed-Bottom-Pitch note names, adds pitch-override dots and the Pre degree cue, and shows remembered panel values and live CV/MOD gauges in the measured layout. Sequencing and saved formats stay unchanged.
 
-Try the [scale progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/Scale-progression.vcv) to hear custom scales and roots move through C, Am, F and G.
+Try the [scale progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/Scale-progression.vcv) to hear custom scales and roots move through C, Am, F and G.
 
-Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.67.0/Chain-performance.vcv) to watch the sequencer follow an arrangement.
+Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.68.0/Chain-performance.vcv) to watch the sequencer follow an arrangement.
 
 2.58.0 brings [Backup and maintenance lists](docs/BACKUPS.md) into the compact display style, with mixed-case labels, inverted selection and separate status lines. Cancel-first confirmations, file scopes and saved formats stay unchanged.
 
@@ -220,7 +220,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the intact file in the **plugin folder for your OS/CPU** listed in [Platform packages](docs/PLATFORMS.md), and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.67.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.68.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1

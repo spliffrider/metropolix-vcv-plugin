@@ -2,6 +2,7 @@
 #include "OledValueFont.hpp"
 #include "OledChainFont.hpp"
 #include "OledCaptionFont.hpp"
+#include "OledHomeFont.hpp"
 
 // A 128 x 64 monochrome display, matching the native screenshots in the manual.
 // Text and diagrams are pixels, so zooming never substitutes a desktop font.

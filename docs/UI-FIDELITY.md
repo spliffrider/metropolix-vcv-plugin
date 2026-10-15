@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.67.0
+# Panel and display refinement — 2.68.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,54 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Four HOME overviews and accurate base notes — 2.68.0
+
+HOME follows the measured page-indicator margins, stage boxes, row spacing,
+note/caption positions, panel controls and CV/MOD columns in manual pp28–31.
+The note-track action footer retains its measured edge; existing MOD waveform
+and routing layouts remain intact. Selected, first, skipped, unused and muted
+stages remain distinct, including a skipped starting stage.
+
+HOME2 now includes fixed Bottom Pitch in its base-note calculation and marks
+per-stage pitch overrides above their notes. It follows the remembered Thru
+pitch, selected scale/root, range, direction, transpose and stage overrides.
+Temporary Pitch Pre/Post and accumulation stay out of note names, as required
+by p29; Pre degrees and Post semitones appear separately in the header. The
+physical-slider popup remains a separate view of the actual slider position.
+
+HOME3 places remembered pitch/CTRL values and pickup dots above their controls,
+with pulse counts and gate symbols below. Virtual switches recalled with Jump
+actually move to their saved values; the desktop does not invent a separate
+hidden physical switch or add hardware override dots for that moved switch.
+HOME4 shows signed CV/MOD meters, destination-forced gate boxes and their
+track/output assignments. The 1.5V gate threshold and underlying signals stay
+unchanged. Meter gain and the knob diagram's 270-degree travel are visual
+desktop interpretations of the available drawings.
+
+HOME has its own observed five-row figures/degree mark and regular note face,
+including F/G shapes and the measured left bearings of 7/8. Nine and unobserved
+note glyphs remain companions. C harmonic minor displays the observed Eb;
+seven-note factory scales use letter-degree spelling when a single accidental
+suffices. Other notes retain the established sharp names. This is an explicit
+desktop spelling policy, not a claim about every firmware enharmonic choice.
+Compact aliases keep all 149 scale headers and roots clear of the modulation
+columns; the full names remain in scale menus.
+
+All 1,325 cells in six independent, unannotated heading/degree/lane-number
+regions match the supplied images in actual Rack and a separate saved-image
+comparison. The HOME source pictures are filtered and annotated: these region
+checks do **not** establish full 8,192-cell screen equivalence. Twelve actual
+captures were inspected alongside those reference pictures. A running reference
+engine agrees with 194,400 base-note cases across both tracks, representative
+factory/user scales, all roots, range/direction/transpose/Bottom Pitch choices
+and five override states. Separate checks cover all note spellings/header
+widths, sixteen override dots, remembered pickup, position symbols, gates,
+module-browser rendering and read-only rendering with unchanged history.
+
+The sequencing algorithm, 787 parameter IDs, schema34, format11/522 musical
+snapshots and backup formats stay unchanged. Further stage/edit diagrams,
+unobserved glyphs, animations and physical appearance remain under review.
 
 ## Physical pitch preview and recalled-value Undo — 2.67.0
 

@@ -1,4 +1,4 @@
-# Preset Thru pickup — 2.67.0
+# Preset Thru pickup — 2.68.0
 
 SETUP → Presets Setup offers **Pitch Load: Off / Thru / Jump** and
 **Ctrl Load: Off / Assigns / Thru / Jump**. The same named choices are in the
@@ -25,7 +25,8 @@ change as one history action. Zero/clamped scrolling adds none, outside edits
 survive leaving the control, and patch reset/restore discards pending scrolling.
 
 The temporary pitch popup shows the physical slider selection while HOME2
-retains the remembered base-note overview; neither includes temporary
+retains the remembered base-note overview, including fixed Bottom Pitch and
+per-stage override dots. Neither includes temporary
 modulation or accumulation. See [display behavior](UI-FIDELITY.md).
 
 Use explicit takeover when you want to apply a value short of the saved
@@ -34,8 +35,9 @@ next movement take over without requiring a crossing.
 
 Saving an internal pattern stores the effective sounding pitches and CTRL
 positions. Saving the Rack patch retains both physical positions and remembered
-targets. Earlier patches migrate their existing Jump settings to the expanded
-lists; all parameter IDs and format 8 musical banks remain unchanged.
+targets. Older patches retain their existing Jump behavior and all parameter IDs
+remain stable. See [Preset storage](PRESET-STORAGE.md) for current bank formats
+and legacy import.
 
 Open [Pickup-performance.vcv](../examples/Pickup-performance.vcv), select AUDIO
 and press RUN. The sliders begin low while the memorized melody sounds. Move one
