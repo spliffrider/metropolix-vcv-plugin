@@ -1,9 +1,10 @@
-# Feature status — 2.60.0 public alpha
+# Feature status — 2.61.0 public alpha
 
 Assessment date: 2026-10-15. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.61.0 refines [performance values and encoder cues](UI-FIDELITY.md), with reference-based bold/large lettering and pending tempo feedback.
 2.60.0 refines [menu lettering](UI-FIDELITY.md), with proportional glyphs based on native OLED images and complete pending/descender rendering.
 2.59.0 refines the [accumulator/LIM display](HARDWARE-UI.md), following its three-row reference while retaining field cycling, CTRL locks and saved formats.
 2.58.0 refines [Backup and maintenance lists](BACKUPS.md), preserving file scopes, Cancel-first confirmation and saved formats.

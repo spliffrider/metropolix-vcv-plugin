@@ -8,6 +8,7 @@ namespace metrodisplay {
 struct MenuGlyph { int width,advance; uint8_t rows[11]; };
 inline MenuGlyph menuGlyph(unsigned char c) {
     switch(c) {
+        case 1:return {3,5,{2,5,2,0,0,0,0,0,0,0,0}}; // degree companion
         case ' ':return {0,4,{0,0,0,0,0,0,0,0,0,0,0}};
         case '!':return {1,3,{1,1,1,1,1,1,1,0,1,0,0}};
         case '"':return {3,5,{5,5,5,0,0,0,0,0,0,0,0}};

@@ -1,4 +1,5 @@
 #include "OledMenuFont.hpp"
+#include "OledValueFont.hpp"
 
 // A 128 x 64 monochrome display, matching the native screenshots in the manual.
 // Text and diagrams are pixels, so zooming never substitutes a desktop font.
@@ -27,6 +28,7 @@ struct OledCanvas {
     struct Glyph { int w; const char* rows; };
     static Glyph small(char c) {
         switch(c) {
+            case 1:return {3,"25200"}; // degree
             case 'A':return {4,"69F99"}; case 'B':return {3,"65656"}; case 'C':return {3,"34443"};
             case 'D':return {3,"65556"}; case 'E':return {3,"74747"}; case 'F':return {3,"74744"};
             case 'G':return {4,"788B7"}; case 'H':return {3,"55755"}; case 'I':return {1,"11111"};
@@ -50,6 +52,7 @@ struct OledCanvas {
     }
     static const char* large(char c) {
         switch(c) {
+            case 1:return "EHHE000"; // degree
             case 'A':return "EH H VHHH"; case 'B':return "UHHUHHU"; case 'C':return "FGGGGGF";
             case 'D':return "UHHHHHU"; case 'E':return "VGGUGGV"; case 'F':return "VGGUGGG";
             case 'G':return "FGGNHHF"; case 'H':return "HHHVHHH"; case 'I':return "E44444E";
@@ -85,6 +88,7 @@ struct OledCanvas {
         std::string result;
         for(size_t i=0;i<s.size();++i) {
             if(static_cast<unsigned char>(s[i])==0xc2 && i+1<s.size() && static_cast<unsigned char>(s[i+1])==0xb1){result+=char(127);++i;}
+            else if(static_cast<unsigned char>(s[i])==0xc2 && i+1<s.size() && static_cast<unsigned char>(s[i+1])==0xb0){result+=char(1);++i;}
             else result+=s[i];
         }
         return result;
@@ -102,6 +106,40 @@ struct OledCanvas {
         }
     }
     void menuRight(int x,int y,const std::string& s,uint8_t v=255) {menuText(x-menuWidth(s),y,s,v);}
+    int valueWidth(const std::string& s,bool big=false) const {
+        int cursor=0,right=0;
+        for(unsigned char c:glyphText(s)){auto g=metrodisplay::valueGlyph(c,big);right=cursor+g.right;cursor+=g.advance;}
+        return right;
+    }
+    void valueText(int x,int y,const std::string& s,bool big=false,uint8_t v=255) {
+        for(unsigned char c:glyphText(s)) {
+            auto g=metrodisplay::valueGlyph(c,big);
+            for(int row=0;row<g.height;++row)for(int col=0;col<g.width;++col)if(g.rows[row]&(1<<(g.width-1-col)))dot(x+g.bearing+col,y+row,v);
+            x+=g.advance;
+        }
+    }
+    void valueRight(int x,int y,const std::string& s,bool big=false,uint8_t v=255) {valueText(x-valueWidth(s,big),y,s,big,v);}
+    int valueFit(int x,int bottom,int w,const std::string& s,bool big=false,bool left=false,uint8_t v=255) {
+        if(big && valueWidth(s,true)<=w){valueText(left?x:x+w-valueWidth(s,true),bottom-13,s,true,v);return 14;}
+        if(valueWidth(s)<=w){valueText(left?x:x+w-valueWidth(s),bottom-8,s,false,v);return 9;}
+        if(menuWidth(s)<=w){menuText(left?x:x+w-menuWidth(s),bottom-8,s,v);return 9;}
+        std::string shown=glyphText(s);while(!shown.empty() && width(shown)>w)shown.pop_back();text(left?x:x+w-width(shown),bottom-4,shown,true,1,v);return 5;
+    }
+    void pressHint(int x,int y,int count=1,uint8_t v=255) {
+        const uint8_t solid[]={14,31,31,31,14},outline[]={14,17,17,17,14};
+        for(int n=0;n<count;++n)for(int row=0;row<5;++row)for(int col=0;col<5;++col)if((n?outline[row]:solid[row])&(1<<(4-col)))dot(x+n*8+col,y+row,v);
+    }
+    void turnHint(int x,int y,bool queued=false,bool pending=false,uint8_t v=255,bool typeStyle=false) {
+        int right=queued?(typeStyle?12:13):6;
+        for(int i=0;i<4;++i){line(x+i,y+3-i,x+i,y+3+i,v);line(x+right+i,y+i,x+right+i,y+6-i,v);}
+        if(!queued)return;
+        if(pending){pressHint(x+6,y+1,1,v);return;}
+        // TYPE retains the full-height question mark shown in its reference.
+        const uint8_t compact[]={14,1,6,0,4},tall[]={6,9,1,2,2,0,2};
+        const uint8_t* mark=typeStyle?tall:compact;
+        int height=typeStyle?7:5,dx=typeStyle?6:7,dy=typeStyle?0:1;
+        for(int row=0;row<height;++row)for(int col=0;col<4;++col)if(mark[row]&(1<<(3-col)))dot(x+dx+col,y+dy+row,v);
+    }
     int width(const std::string& s,bool tiny=true,int scale=1) const { int w=0;for(char c:glyphText(s))w+=(tiny?small(static_cast<char>(std::toupper(static_cast<unsigned char>(c)))).w+2:6)*scale;return std::max(0,w-(tiny?2:1)*scale); }
     void text(int x,int y,const std::string& s,bool tiny=true,int scale=1,uint8_t v=255) {
         for(char c:glyphText(s)) {
