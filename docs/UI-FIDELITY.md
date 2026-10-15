@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.58.0
+# Panel and display refinement — 2.59.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,18 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Accumulator/LIM display — 2.59.0
+
+The embedded OLED on manual p126 uses three rows. LIM now follows its title,
+15-pixel row spacing, selection bar and track/ACCUMULATOR footer. The existing
+six-field cycle and first/last groups of three remain. Labels use mixed case;
+CTRL-owned Mode/Polarity labels and values are dimmed and identify CTRL 1/2.
+Pending values show an inline `?` alongside the existing confirmation footer.
+All six fields remain readable at their limits without abbreviated labels.
+See [LIM controls](HARDWARE-UI.md) for the unchanged gestures and ownership rules.
+The manual's +7/-7 example is used for comparison; the plugin's +9/-9 defaults
+remain. Fonts, animation/material details and physical comparison remain open.
 
 ## Values and confirmation
 

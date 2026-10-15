@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.50.0
+# Hardware panel and desktop interaction — 2.59.0
 
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
@@ -48,6 +48,31 @@ now has Length/Scale fields and Hold. See the [override guide](STAGE-OVERRIDES.m
 2.9.0 also activates SWING independently for both note tracks, with percentage
 display, shortcuts, encoder long-press reset, and desktop editing. CTRL sets
 its base amount; AUX and MOD offset it. See [Swing operation](SWING.md).
+
+## LIM display — 2.59.0
+
+Press **ALT → LIM** (stage button 7) for **LIMITS + SETUP**. Click the encoder
+or display to cycle Positive Limit, Negative Limit, Mode, Order, Polarity and
+Reset; drag vertically to edit the selected value. The first three and last
+three settings retain their existing groups. Three mixed-case rows, a full
+selection bar and the track/ACCUMULATOR footer follow the manual's p126 image.
+
+Positive/Negative Limit show a signed magnitude from 1–28 scale degrees.
+With Enc. Confirm On, a drag previews the value with `?`; click to apply with
+one Undo. Confirmation retains the field; a later click selects the next one.
+EXIT cancels an unconfirmed preview. Native menus and numeric entry stay
+immediate, and ordinary edits retain their existing Undo/Redo behavior.
+
+CTRL-owned Mode and Polarity show the owning knob number and dim both their
+name and value. Dragging or double-clicking cannot overwrite the knob's
+setting. Clicking still selects the next field; right-click opens the owning
+controller's assignment menu. These behaviors already worked before this
+display pass and are retained. No new LIM long-press reset gesture is added.
+
+The reference image's +7/-7 values are an example, not a default specification.
+The plugin retains its +9/-9 defaults. DSP, all 787 parameter IDs, settings
+schema34 and format11/522 musical snapshots remain unchanged. Exact glyph and
+physical-module equivalence remain unverified.
 
 ## Accumulator modes
 
