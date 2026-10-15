@@ -139,9 +139,11 @@ struct OledCanvas {
         }
     }
     int captionWidth(const std::string& s) const {return chainWidth(s,true);}
-    void captionText(int x,int y,const std::string& s,uint8_t v=255,int tracking=2) {
+    void captionText(int x,int y,const std::string& s,uint8_t v=255,int tracking=2,bool wideDash=false) {
         for(unsigned char c:glyphText(s)) {
             auto g=chainCaption(c);
+            // The MX heading uses the wider dash; Scale retains its own face.
+            if(wideDash && c=='-')g={3,5,{0,0,7,0,0}};
             for(int row=0;row<5;++row)for(int col=0;col<g.width;++col)if(g.rows[row]&(1<<(g.width-1-col)))dot(x+1+col,y+row,v);
             x+=g.width?g.advance+tracking-2:g.advance;
         }
@@ -165,6 +167,26 @@ struct OledCanvas {
             int px=x+a*(w-1),py=y+b*(h-1),extent=b && !a?4:5;
             line(px,py,px+(a?-5:5),py,v);line(px,py,px,py+(b?-extent:extent),v);
         }
+    }
+    void fieldCorners(int x,int y,int w,int h) {
+        uint8_t v=std::sin(system::getTime()*5.f)>.1f?255:155;
+        for(int a:{0,1})for(int b:{0,1}) {
+            int px=x+a*(w-1),py=y+b*(h-1);
+            line(px,py,px+(a?-5:5),py,v);line(px,py,px,py+(b?-5:5),v);
+        }
+    }
+    void bipolarGauge(float voltage) {
+        box(82,2,43,7);
+        int end=103+static_cast<int>(std::round(std::max(-5.f,std::min(voltage,5.f))*4.f));
+        if(end==103)line(103,3,103,7);
+        else fill(std::min(end,103),4,std::abs(end-103)+1,3);
+    }
+    void controlGauge(float value) {
+        box(82,2,43,7);
+        // One native sample establishes a moving thirteen-pixel indicator.
+        // Interpolation across its available travel is a desktop interpretation.
+        int x=83+static_cast<int>((std::max(-1.f,std::min(value,1.f))+1.f)*14.f);
+        fill(x,4,13,3);
     }
     void scaleLongHint(int x,int y,uint8_t v=255) {const uint16_t rows[]={56,68,186,381,381,381,186,68,56};bitmap(x,y,9,9,rows,v);}
     void scaleLockHint(int x,int y,uint8_t v=255) {const uint16_t rows[]={28,450,994,1007,1007,479,63};bitmap(x,y,10,7,rows,v);}

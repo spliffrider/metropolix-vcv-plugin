@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.65.0
+# Panel and display refinement — 2.66.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,45 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Performance fields, live gauges and action footer — 2.66.0
+
+Performance pages use the measured five-row captions, six-pixel selection
+corners and encoder cue positions. BPM uses its shorter frame, including the
+external-clock divider and the applied/base-tempo view. Preset Load Delay
+retains its lower value baseline with the measured heading and press cue.
+Five additional observed caption glyphs bring the native set to 33; the bold
+and large value glyph tables are unchanged. Scale keeps its separately measured
+frame and keyboard.
+
+CTRL assignment shows a rectangular position indicator. AUX/MOD continuous
+destinations show signed bars around the center; AUX reads the already
+post-attenuverter value. Gate destinations retain the on/off indicator and
+existing threshold. The CTRL travel interpolation and continuous meter gain
+are desktop interpretations of the available samples, not hardware measurements.
+
+The action footer uses proportional captions, four-pixel dots and a native
+gate waveform for Slide/Skip or gate MOD lanes. It retains the current stage
+function on CTRL/AUX pages, CV on note-track TYPE, and A/B routing suffixes.
+Unassigned MOD lanes routed to A/B show OUTPUT. Loopy and preset pages show
+their native action labels while keeping latch, mute, queued-load and error
+messages. Pending confirmation, held-copy and workflow notices take priority.
+
+Twelve complete 128×64 foreground masks match native manual images in Rack:
+internal/external/modulated BPM, Order, Swing, Slide, Gate, Loopy, Output A/B,
+AUX and CTRL. These compare all 98,304 cells with no excluded regions, using
+source images independent of the renderer. Fourteen signed/bounded AUX/MOD
+cases, gate-threshold checks and seven gate-MOD footer contexts preserve signal
+and history state. All 118 current performance/ownership captures were inspected.
+Existing
+tempo preview, owned-control, menu, Scale, chain and full-parameter Undo tests
+also pass. Saved captures are separately compared and inspected. These are
+display-shape checks, not physical brightness or hardware timing measurements.
+
+DSP, the 787 parameter IDs, settings schema34, format11/522 musical snapshots
+and backup formats are unchanged. Native host/package and production runtime
+checks are reported separately. The pitch-slider popup and remaining HOME/
+stage diagrams are the next software display work.
 
 ## Native menu layout and complete descenders — 2.65.0
 

@@ -2,8 +2,8 @@
 #include "OledMenuFont.hpp"
 
 namespace metrodisplay {
-// Five-row proportional captions. Twenty-eight observed glyphs reproduce native
-// chain/scale/LIM images. A negative width asks the canvas for a companion glyph.
+// Five-row proportional captions. Thirty-three observed glyphs reproduce native
+// chain/scale/LIM and performance images. Negative widths request companions.
 inline MenuGlyph captionGlyph(unsigned char c) {
     switch(c) {
         case ' ':return {0,4,{0,0,0,0,0}};
@@ -14,11 +14,14 @@ inline MenuGlyph captionGlyph(unsigned char c) {
         case '-':return {2,4,{0,0,3,0,0}};
         case '/':return {3,5,{1,1,2,4,4}};
         case '1':return {3,5,{6,2,2,2,7}};
+        case '2':return {4,6,{14,1,6,8,15}};
+        case ':':return {1,3,{0,1,0,1,0}};
         case 'A':return {4,6,{6,9,15,9,9}};
         case 'B':return {4,6,{14,9,14,9,14}};
         case 'C':return {4,6,{6,9,8,9,6}};
         case 'D':return {4,6,{14,9,9,9,14}};
         case 'E':return {3,5,{7,4,7,4,7}};
+        case 'F':return {3,5,{7,4,7,4,4}};
         case 'G':return {4,6,{7,8,11,9,6}};
         case 'H':return {4,6,{9,9,15,9,9}};
         case 'I':return {1,3,{1,1,1,1,1}};
@@ -34,7 +37,9 @@ inline MenuGlyph captionGlyph(unsigned char c) {
         case 'T':return {3,5,{7,2,2,2,2}};
         case 'U':return {4,6,{9,9,9,9,6}};
         case 'V':return {5,7,{17,17,10,10,4}};
+        case 'W':return {5,7,{17,21,21,21,10}};
         case 'X':return {5,7,{17,10,4,10,17}};
+        case 'Y':return {5,7,{17,10,4,4,4}};
         default:return {-1,0,{0,0,0,0,0}};
     }
 }

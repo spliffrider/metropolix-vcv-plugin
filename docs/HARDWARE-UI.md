@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.65.0
+# Hardware panel and desktop interaction — 2.66.0
 
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
@@ -199,3 +199,9 @@ limits](UI-FIDELITY.md#ctrl-ownership-symbols-and-lim-captions--2640).
 Settings menus use native row spacing, headings and margins. The bottom row
 keeps lowercase tails visible, and desktop file/status screens retain compact
 rows. Gestures and saving are unchanged; see [menu layout](UI-SETUP.md).
+
+## Performance field refinement — 2.66.0
+
+Performance headings, frames, action labels and CTRL/AUX/MOD gauges now follow
+the native references. Confirmation and desktop gestures remain available; see
+[display coverage and interpretations](UI-FIDELITY.md).

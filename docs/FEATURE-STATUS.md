@@ -1,9 +1,10 @@
-# Feature status — 2.65.0 public alpha
+# Feature status — 2.66.0 public alpha
 
 Assessment date: 2026-10-15. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.66.0 refines the [performance fields, gauges and action footer](UI-FIDELITY.md), preserving editing and saved formats.
 2.65.0 refines the [settings menu layout](UI-SETUP.md), with native spacing and margins, complete bottom-row descenders and correct right alignment.
 2.64.0 refines the [CTRL ownership symbols and LIM captions](UI-FIDELITY.md), preserving existing editing and saved formats.
 2.63.0 refines the [scale display and editor](SCALES.md), and confirmed browsing now follows the same hardware bank order as immediate browsing.
@@ -85,7 +86,7 @@ configuration, preset workflows, and external interfaces.
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing, individual mute and a separate group mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
 | A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT Slide/Skip pattern, Ratchet and PROB/ACCUM edits and resets, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
-| Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Further edit-page, glyph/animation and exact material/detail matching |
+| Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Pitch-slider popup, HOME/edit diagrams, remaining glyph/animation and material/detail matching |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets with Scale Lock and Loopy settings, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes, scoped JSON backups | Hardware SysEx interchange |
 
 The current 787 parameters include repeated stage/lane controls; that number is

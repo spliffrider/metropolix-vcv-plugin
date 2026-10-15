@@ -16,9 +16,9 @@ for(int track=0;track<2;++track)for(int knob=0;knob<2;++knob)for(bool both:{fals
     clean();m->selectedTrack.store(track);screenPage(m,item.page);m->uiField.store(item.field);m->params[M::ctrlParam(knob,M::CTRL_DESTINATION)].setValue(item.destination);m->params[M::ctrlParam(knob,M::CTRL_ASSIGNMENT)].setValue(both?2:track);
     int id=screenParam(m),top=item.field?42:14;auto before=raw();auto actual=display->render();pixels &= m->ctrlOwner(id)==knob && raw()==before && !APP->history->actionIndex;
     const uint16_t outline[]={496,520,1028,2050,4097,4097,4097,4097,4097,2050,1028,520,496};const uint8_t one[]={1,3,5,1,1,1,1};
-    // The lower selection's bottom corner also occupies four cells in this
+    // Lower and BPM selections' bottom corners also occupy five cells in this
     // region. Compare their union explicitly, without excluding any cells.
-    for(int y=0;y<13;++y){uint16_t row=knob?nativeOwner2[y]:outline[y];if(!knob && y>=3 && y<10)row|=uint16_t(one[y-3])<<5;for(int x=0;x<13;++x)pixels &= bool(actual.pixels[top+y][1+x])==(bool(row&(1<<(12-x))) || (item.field && y==12 && x<4));}
+    for(int y=0;y<13;++y){uint16_t row=knob?nativeOwner2[y]:outline[y];if(!knob && y>=3 && y<10)row|=uint16_t(one[y-3])<<5;for(int x=0;x<13;++x)pixels &= bool(actual.pixels[top+y][1+x])==(bool(row&(1<<(12-x))) || ((item.field || item.page==M::BPM_PAGE) && y==12 && x<5));}
     if(track==0 && !both){std::ofstream out(dir+"/owner-field-"+std::to_string(count)+".pgm",std::ios::binary);out<<"P5\n128 64\n255\n";out.write(reinterpret_cast<char*>(actual.pixels),8192);}
     for(auto* control:{encoder,static_cast<HardwareControl*>(display)}){drag(control,-220);locked &= raw()==before && !pendingConfirmation(m) && !APP->history->actionIndex;widget::EventContext ctx;event::DoubleClick dbl;dbl.context=&ctx;control->onDoubleClick(dbl);locked &= raw()==before && !APP->history->actionIndex;press(control,GLFW_MOUSE_BUTTON_RIGHT);menus &= seek(APP->scene,[&](widget::Widget* w){auto* label=dynamic_cast<ui::MenuLabel*>(w);return label && label->text=="CTRL "+std::to_string(knob+1);})!=nullptr && raw()==before && !APP->history->actionIndex;closeMenus();}
     ++count;
