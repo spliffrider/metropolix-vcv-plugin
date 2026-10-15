@@ -1,9 +1,18 @@
-# Preset chains — 2.42.0
+# Preset chains — 2.62.0
 
 Arrange the 64 internal presets into **up to 32 links**, each with **1–64
 repeats** and independent **TRK 1 / TRK 2 / MOD** mute flags. The last link loops
 back to the first. Eight chain storage slots, the working chain and its enabled
 state are saved inside the Rack patch, alongside the preset banks.
+
+## Chain display
+
+The table uses [reference-based lettering and geometry](UI-FIDELITY.md), with
+inverted row/field selection and solid/hollow mute symbols. Empty-chain actions
+are hatched. Magenta appears as Mag when needed to keep the repeat column clear.
+Quick Chain adds a plus beside the last repeat count; another matching stage
+press can increase it. The track footer, playing repeat and follow status remain
+visible. These display changes preserve the existing gestures and saved chains.
 
 ## Panel workflow
 
