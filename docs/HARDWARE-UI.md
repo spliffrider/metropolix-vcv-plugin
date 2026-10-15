@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.60.0
+# Hardware panel and desktop interaction — 2.61.0
 
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
@@ -48,6 +48,12 @@ now has Length/Scale fields and Hold. See the [override guide](STAGE-OVERRIDES.m
 2.9.0 also activates SWING independently for both note tracks, with percentage
 display, shortcuts, encoder long-press reset, and desktop editing. CTRL sets
 its base amount; AUX and MOD offset it. See [Swing operation](SWING.md).
+
+## Performance readouts
+
+Performance fields use [reference-based bold and large values](UI-FIDELITY.md),
+with measured encoder cues, stage units and pending tempo feedback. Existing
+confirmation preferences and desktop input gestures are preserved.
 
 ## Menu lettering
 

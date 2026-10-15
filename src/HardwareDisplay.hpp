@@ -103,17 +103,25 @@ struct HardwareDisplay : HardwareControl {
         if(m->uiDraftParam==id && shown.find('?')==std::string::npos)shown+=" ?";
         return shown;
     }
-    void field(OledCanvas& c,int y,const std::string& name,const std::string& v,bool selected,int w=128,int size=2) const {
+    void field(OledCanvas& c,int y,const std::string& name,const std::string& v,bool selected,int w=128,int size=2,int pressOptions=1,int baselineShift=0) const {
+        auto* m=metroModule;
         c.text(2,y+2,name);
-        std::string shown=v;if(selected && pendingConfirmation(metroModule))shown+=" ?";
-        c.fit(18,y+10,w-22,shown,size);
+        std::string shown=v;if(selected && pendingConfirmation(metroModule) && shown.find('?')==std::string::npos)shown+=" ?";
+        c.valueFit(18,(y?y+22:23)+baselineShift,w-20,shown,size==2);
         if(selected){
-            c.corners(0,y,w,27);
+            c.corners(0,y,w,y?27:28);
             int owner=metroModule?metroModule->ctrlOwner(screenParam(metroModule)):-1;
             if(owner>=0){c.circle(7,y+20,6);c.text(5,y+18,std::to_string(owner+1));}
-            else c.turn(3,y+17);
+            else {
+                bool output=m && (m->uiPage.load()==Metropolix::A_PAGE || m->uiPage.load()==Metropolix::B_PAGE);
+                bool editingScale=m && m->uiPage.load()==Metropolix::SCALE_PAGE && m->scaleEditing.load();
+                bool queued=m && !editingScale && (output || requiresConfirmation(m,screenParam(m)));
+                bool pending=pendingConfirmation(m) || (output && m->outputDraft[m->uiPage.load()==Metropolix::A_PAGE?0:1].load()>=0);
+                int hintY=y+18-(m && m->uiPage.load()==Metropolix::SCALE_PAGE && !y?1:0);
+                c.turnHint(3,hintY,queued,pending,255,m && m->uiPage.load()==Metropolix::CV_TYPE_PAGE);
+            }
         }
-        else c.circle(5,y+21,2,true);
+        else c.pressHint(3,y+18,pressOptions);
     }
     void home(OledCanvas& c) const {
         auto* m=metroModule;int h=m?m->uiHome.load():0,lane=m?m->selectedLane.load():0;
@@ -222,8 +230,8 @@ struct HardwareDisplay : HardwareControl {
             int selected=integer(id(s),-1);
             std::string label=selected<0?"--":pitch?previewDisplayString(m,id(s)):selected==0?"Rest":string::f("%d%%",selected);
             if(pitch && pendingConfirmation(m) && label.size()>2 && label.substr(label.size()-2)==" ?")label.resize(label.size()-2);
-            c.fit(1,4,39,label);c.corners(0,0,40,25);c.turn(3,16);
-            if(pitch){c.text(0,30,"Sync",false);c.circle(5,41,2,true);}
+            c.valueFit(2,11,36,label,false,true);c.corners(0,0,40,28);c.turnHint(3,18,requiresConfirmation(m,id(s)),pendingConfirmation(m));
+            if(pitch){c.valueFit(2,37,40,"Sync",false,true);c.pressHint(3,43);}
             for(int i=0;i<8;++i) {
                 int x=44+i*10,v=integer(id(i),-1),h=pitch?int(std::max(0,v)*.7f):int(std::max(0,v)*.42f);
                 bool active=i==s;
@@ -259,17 +267,17 @@ struct HardwareDisplay : HardwareControl {
                 previous=y;
             }
             if(detail) {
-                c.fill(0,0,43,43,0);c.fit(1,4,40,mod?modValueLabel(c,l,m->effectiveModVoltage(l,value(id(s)))):string::f("%+.2fV",cv(s)),1);c.corners(0,0,43,25);c.turn(3,16);
+                c.fill(0,0,43,43,0);c.valueFit(2,11,39,mod?modValueLabel(c,l,m->effectiveModVoltage(l,value(id(s)))):string::f("%+.2fV",cv(s)),false,true);c.corners(0,0,43,28);c.turnHint(3,18,requiresConfirmation(m,id(s)),pendingConfirmation(m));
                 int ramp=mod?integer(Metropolix::modParam(l,Metropolix::MOD_RAMP+s)):integer(Metropolix::cvRampParam(t,s));
-                const char* ramps[]={"Step","sRmp","pRmp"};c.text(1,29,mod?(ramp?"Ramp":"Step"):ramps[metro::clamp(ramp,0,2)],false);
-                for(int k=0;k<(mod?2:3);++k)c.circle(5+k*7,41,2,k==ramp);
+                const char* ramps[]={"Step","sRmp","pRmp"};c.valueFit(2,37,40,mod?(ramp?"Ramp":"Step"):ramps[metro::clamp(ramp,0,2)],false,true);
+                c.pressHint(3,43,mod?2:3);
             }
         } else {
             bool accum=row==Metropolix::ACCUMULATION,prob=row==Metropolix::PROBABILITY;
             if(detail) {
-                c.fit(1,4,39,prob?string::f("%d%%",integer(id(s))):accum?string::f("%+d",integer(id(s))):std::to_string(integer(id(s))));
-                c.corners(0,0,40,25);c.turn(3,16);
-                if(prob || accum){int trigger=integer(Metropolix::stageOption(t,s,prob?Metropolix::PROB_TARGET:Metropolix::ACCUM_TRIGGER));c.text(0,30,trigger==0?"Stage":trigger==1?"Pulse":"Ratch",false);for(int k=0;k<(prob?2:3);++k)c.circle(5+k*7,42,2,k==trigger);}
+                c.valueFit(2,11,36,prob?string::f("%d%%",integer(id(s))):accum?string::f("%d°",integer(id(s))):std::to_string(integer(id(s))),false,true);
+                c.corners(0,0,40,28);c.turnHint(3,18,requiresConfirmation(m,id(s)),pendingConfirmation(m));
+                if(prob || accum){int trigger=integer(Metropolix::stageOption(t,s,prob?Metropolix::PROB_TARGET:Metropolix::ACCUM_TRIGGER));c.valueFit(2,37,40,trigger==0?"Stage":trigger==1?"Pulse":"Ratch",false,true);c.pressHint(3,43,prob?2:3);}
             }
             for(int i=0;i<8;++i) {
                 int x=44+i*10;bool selected=detail && (m->uiAlt.load() || i==s);int n=integer(id(i));
@@ -306,67 +314,69 @@ struct HardwareDisplay : HardwareControl {
         if(page==Metropolix::STAGE_PAGE){stage(c);return c;}
         if(page==Metropolix::BPM_PAGE) {
             bool ext=m && m->externalClock.load(),midi=m && m->integer(Metropolix::CLOCK_SOURCE)==3;
-            field(c,0,midi?"MIDI CLOCK":ext?"EXTERNAL":"INTERNAL",string::f("%.1f",ext?m->displayBpm.load():value(Metropolix::TEMPO,120)),!ext);
-            if(!ext && m && std::abs(m->displayBpm.load()-value(Metropolix::TEMPO,120))>.05f){c.fill(15,9,111,16,0);c.text(17,12,string::f("%.1f",m->displayBpm.load()),true);c.text(17,20,"MOD",true);c.fit(58,10,67,string::f("%.1f",value(Metropolix::TEMPO,120)),2);}
-            field(c,29,midi?"CLOCK RESOLUTION":ext?"EXT CLOCK DIV":"TAP TEMPO",midi?"24 PPQN":ext?"/"+std::to_string(integer(Metropolix::EXT_CLOCK_DIV,1)):"Tap BPM",ext && !midi,128,1);
+            field(c,0,midi?"MIDI CLOCK":ext?"EXTERNAL":"INTERNAL",string::f("%.1f",ext?m->displayBpm.load():value(Metropolix::TEMPO,120)),!ext,128,2,0);
+            if(!ext && m && std::abs(m->displayBpm.load()-m->params[Metropolix::TEMPO].getValue())>.05f){c.fill(20,9,107,18,0);c.valueText(19,15,string::f("%.1f",m->displayBpm.load()));std::string base=string::f("%.1f",value(Metropolix::TEMPO,120));if(pendingConfirmation(m))base+=" ?";c.valueFit(56,23,70,base,true);}
+            field(c,28,midi?"CLOCK RESOLUTION":ext?"EXT CLOCK DIV":"TAP TEMPO",midi?"24 PPQN":ext?"/"+std::to_string(integer(Metropolix::EXT_CLOCK_DIV,1)):"Tap BPM",ext && !midi,128,1,0);
         } else if(page==Metropolix::CLOCK_OUT_PAGE) {
             field(c,0,"CLK OUT","/"+std::to_string(integer(Metropolix::CLOCK_OUT_DIV,1)),f==0);
-            field(c,29,"CLK OFFSET",std::to_string(metro::ClockOutput::offset(integer(Metropolix::CLOCK_OUT_OFFSET),integer(Metropolix::CLOCK_OUT_DIV,1))),f==1);
+            field(c,28,"CLK OFFSET",std::to_string(metro::ClockOutput::offset(integer(Metropolix::CLOCK_OUT_OFFSET),integer(Metropolix::CLOCK_OUT_DIV,1))),f==1);
         } else if(page==Metropolix::SCALE_PAGE) {
             int shown=integer(Metropolix::SCALE,1),locked=integer(Metropolix::SCALE_LOCK,-1);
             bool edit=m && m->scaleEditing.load();
-            field(c,0,edit?"EDIT USER SCALE":"SCALE",metro::scaleName(shown),f==1,128,1);
+            std::string name=shown==1?"Ionian":shown==2?"Aeolian":metro::scaleName(shown);
+            field(c,0,edit?"EDIT USER SCALE":"SCALE",name,f==1,128,1,1,-1);
             if(locked>=0) {
                 if(locked==shown){c.box(115,3,7,6);c.box(117,1,3,3);if(metro::userScale(locked))c.text(100,3,"M");}
                 else {c.circle(117,4,3);c.line(119,6,124,11);}
             }
-            c.text(2,32,"ROOT");c.text(37,45,notes[integer(m?m->scaleRootParam():Metropolix::ROOT)],false);
-            if(f==0)c.corners(0,29,51,26);
+            c.text(2,30,"ROOT");c.valueRight(50,43,notes[integer(m?m->scaleRootParam():Metropolix::ROOT)]);
+            if(f==0)c.corners(0,28,51,27);
             c.box(2,45,17,7);c.text(4,46,"ALT");keyboard(c,58,29,70);
         } else if(page==Metropolix::ORDER_PAGE) {
             field(c,0,"PLAY ORDER",Metropolix::orderLabels()[integer(tm(Metropolix::ORDER,Metropolix::MOD_ORDER))],true,128,1);
             int id=mod?Metropolix::modParam(l,Metropolix::MOD_REVERSED):Metropolix::extraParam(t,Metropolix::REVERSED);
-            field(c,29,"DIRECTION",integer(id)?"Reverse":"Forward",false,128,1);c.circle(12,50,2,false);
+            field(c,28,"DIRECTION",integer(id)?"Reverse":"Forward",false,128,1,2);
         } else if(page==Metropolix::LENGTH_PAGE) {
             bool offset=m && m->uiAlt.load();
             field(c,0,"STAGES",std::to_string(integer(tm(Metropolix::LENGTH,Metropolix::MOD_LENGTH),8)),f==0 && !offset,74);
-            c.text(82,3,"OFFSET");c.fit(98,14,27,std::to_string(integer(tm(Metropolix::OFFSET,Metropolix::MOD_STAGE_OFFSET))),1);
-            c.box(81,16,17,7);c.text(83,17,"ALT");if(offset)c.corners(78,0,50,27);
+            c.text(82,3,"OFFSET");c.valueRight(126,15,std::to_string(integer(tm(Metropolix::OFFSET,Metropolix::MOD_STAGE_OFFSET))));
+            c.box(81,16,17,7);c.text(83,17,"ALT");if(offset)c.corners(78,0,50,28);
             int id=mod?Metropolix::modParam(l,Metropolix::MOD_PULSE_LIMIT):Metropolix::extraParam(t,Metropolix::PULSE_LIMIT);
-            int n=integer(id);field(c,29,"PULSES",n?std::to_string(n):"Auto",f==1 && !offset,74,1);
+            int n=integer(id);field(c,28,"PULSES",n?std::to_string(n):"Auto",f==1 && !offset,74,1);
         } else if(page==Metropolix::DIV_PAGE) {
             field(c,0,"CLOCK DIV","/"+std::to_string(integer(tm(Metropolix::DIVISION,Metropolix::MOD_DIVISION),1)),f==0);
-            if(!mod)field(c,29,"PULSE COUNT DIV","/"+std::to_string(integer(Metropolix::extraParam(t,Metropolix::PULSE_DIV),1)),f==1);
+            if(!mod)field(c,28,"PULSE COUNT DIV","/"+std::to_string(integer(Metropolix::extraParam(t,Metropolix::PULSE_DIV),1)),f==1);
         } else if(page==Metropolix::CV_TYPE_PAGE) {
             const char* types[]={"Bipolar ±","Unipolar +","Gate Toggle"};
             int type=mod?int(m->effectiveModType(l)):integer(Metropolix::cvTypeParam(t));
             if(!mod && type==metro::BipolarCv && integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3)type=metro::UnipolarCv;
             bool forced=mod && integer(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))!=metro::ModNone;
-            field(c,0,"CV TYPE",types[metro::clamp(type,0,2)],!forced,128,1);
-            if(forced){c.text(1,34,"TYPE FROM DEST");c.fit(1,44,126,m->getParamQuantity(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))->getDisplayValueString(),1);}
+            field(c,0,"CV TYPE",types[metro::clamp(type,0,2)],!forced,128,1,0,-1);
+            if(forced){c.text(1,34,"TYPE FROM DEST");c.valueFit(1,52,126,m->getParamQuantity(Metropolix::modParam(l,Metropolix::MOD_DESTINATION))->getDisplayValueString());}
             if(!mod && m && integer(Metropolix::outputTrackParam(t,Metropolix::VELOCITY_SOURCE))==3)c.text(1,40,"CV = VELOCITY");
         } else if(page==Metropolix::SLIDE_PAGE) {
             if(mod){c.text(2,3,"SLIDE");c.text(2,23,"NOTE TRACKS ONLY");}
             else {
-            field(c,0,"SLIDE AMOUNT",string::f("%.0f%%",value(Metropolix::trackParam(t,Metropolix::SLIDE_TIME),25)),true);
+            field(c,0,"SLIDE AMOUNT",string::f("%.0f",value(Metropolix::trackParam(t,Metropolix::SLIDE_TIME),25)),true);
             const char* types[]={"Tempo","Analog","Acid"};
-            c.text(2,31,"SLIDE TYPE");c.fit(20,41,105,types[metro::clamp(integer(Metropolix::slideTypeParam(t)),0,2)],1);
+            field(c,28,"SLIDE TYPE",types[metro::clamp(integer(Metropolix::slideTypeParam(t)),0,2)],false,128,1,3);
             }
         } else if(page==Metropolix::SWING_PAGE) {
             if(mod){c.text(2,3,"SWING");c.text(2,23,"NOTE TRACKS ONLY");}
             else {
                 int owner=m?m->ctrlOwner(Metropolix::swingParam(t)):-1;
                 c.text(2,2,"SWING",true,1,owner>=0?155:255);
-                c.right(126,10,string::f("%.0f%%",value(Metropolix::swingParam(t),50)),false,2);
-                c.corners(0,0,128,27);
-                if(owner>=0){c.circle(7,20,6);c.text(5,18,std::to_string(owner+1));}else c.turn(3,17);
+                std::string shown=string::f("%.0f%%",value(Metropolix::swingParam(t),50));if(pendingConfirmation(m))shown+=" ?";
+                c.valueFit(18,23,108,shown,true);
+                c.corners(0,0,128,28);
+                if(owner>=0){c.circle(7,20,6);c.text(5,18,std::to_string(owner+1));}else c.turnHint(3,18,requiresConfirmation(m,Metropolix::swingParam(t)),pendingConfirmation(m));
             }
         } else if(page==Metropolix::GATE_PAGE) {
             if(mod){c.text(2,3,"GATE");c.text(2,23,"NOTE TRACKS ONLY");}
             else {
                 float length=value(Metropolix::trackParam(t,Metropolix::GATE_LENGTH),50);
                 field(c,0,"GATE LENGTH",length>=100?"Hold":string::f("%.0f%%",length),f==0);
-                field(c,29,"GATE SCALE",string::f("%.0f%%",value(Metropolix::gateScaleParam(t),100)),f==1);
+                field(c,28,"GATE SCALE",string::f("%.0f%%",value(Metropolix::gateScaleParam(t),100)),f==1);
             }
         } else if(page==Metropolix::TRACK_MENU_PAGE) {
             int cursor=m?m->trackMenuCursor.load():0,start=listStart(cursor,TrackMenuCount);
@@ -381,8 +391,9 @@ struct HardwareDisplay : HardwareControl {
             std::string name=metro::outputKindName(selection.kind);if(pending && f==0)name+=" ?";
             field(c,0,page==Metropolix::A_PAGE?"OUTPUT A":"OUTPUT B",name,f==0,128,1);
             std::string assignment=metro::outputTargetCount(selection.kind)?string::f(metro::outputIsMod(selection.kind)?"Mod %d":"Trk %d",selection.target+1):"Global";
+            if(metro::outputTargetCount(selection.kind))assignment+=page==Metropolix::A_PAGE?" > Out A":" > Out B";
             if(pending && f==1)assignment+=" ?";
-            field(c,29,"OUTPUT ASSIGN",assignment,f==1 && metro::outputTargetCount(selection.kind),128,1);
+            field(c,28,"OUTPUT ASSIGN",assignment,f==1 && metro::outputTargetCount(selection.kind),128,1);
         } else if(page==Metropolix::AUX_PAGE || page==Metropolix::MOD_ASSIGN_PAGE) {
             int input=m?m->selectedAux.load():0;
             bool internal=page==Metropolix::MOD_ASSIGN_PAGE;int lane=m?m->selectedLane.load():0;
@@ -398,11 +409,11 @@ struct HardwareDisplay : HardwareControl {
                 if(end!=104)c.fill(std::min(end,104),4,std::abs(end-104),2);
             }
             bool global=metro::modGlobalDestination(static_cast<metro::ModDestination>(dest));
-            field(c,29,internal?"MOD ASSIGN":"AUX ASSIGN",global?"Global":(internal?string::f("MOD %d > ",lane+1):string::f("CV %c > ",'X'+input))+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1 && !global,128,1);
+            field(c,28,internal?"MOD ASSIGN":"AUX ASSIGN",global?"Global":(internal?string::f("Mod %d > ",lane+1):string::f("CV %c > ",'X'+input))+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1 && !global,128,1);
         } else if(page==Metropolix::LOOPY_PAGE) {
             int count=integer(Metropolix::LOOPY_PULSES),both=integer(Metropolix::LOOPY_TARGET);
             field(c,0,"LOOP PULSES",count?std::to_string(count):"Auto",true,128,2);
-            field(c,29,"LOOP TARGET",both?"1+2":"Current Trk",false,128,1);
+            field(c,28,"LOOP TARGET",both?"1+2":"Current Trk",false,128,1,2);
             if(m && m->loopyLatched.load()){c.box(1,58,6,5);c.box(2,55,4,5);c.text(11,57,"LATCHED");}
             else c.text(1,57,m && m->loopyMuteHeld.load()?"MUTE TRK/LANE":string::f("TRK %d :",t+1)+(integer(Metropolix::RUN)?"LOOP STAGES":"PLAY STAGES"));
             return c;
@@ -414,7 +425,7 @@ struct HardwareDisplay : HardwareControl {
             float a=value(Metropolix::ctrlParam(knob,Metropolix::CTRL_VALUE))*2.61f;
             c.circle(118,5,4);c.line(118,5,118+std::round(std::sin(a)*3),5-std::round(std::cos(a)*3));
             bool global=dest==metro::CtrlTempo || dest==metro::CtrlOutputSwap;
-            field(c,29,"CTRL ASSIGN",global?"Global":string::f("Ctrl %d > ",knob+1)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
+            field(c,28,"CTRL ASSIGN",global?"Global":string::f("Ctrl %d > ",knob+1)+(target==2?"Trk 1+2":string::f("Trk %d",target+1)),f==1,128,1);
         } else if(page==Metropolix::ACCUM_PAGE) {
             const char* labels[]={"Positive Limit","Negative Limit","Mode","Order","Polarity","Reset"};
             int first=metro::clamp(f,0,5)/3*3;
@@ -442,7 +453,7 @@ struct HardwareDisplay : HardwareControl {
             bool save=page==Metropolix::SAVE_PAGE;
             const char* delays[]={"Instant","Queue Pulses","Total Pulses"};
             const char* actions[]={"Save + Exit","Save","Clear"};
-            field(c,28,save?"ACTION":"LOAD DELAY",save?actions[m?m->presetSaveAction.load():0]:delays[integer(Metropolix::LOAD_DELAY)],false,128,1);
+            field(c,save?28:27,save?"ACTION":"LOAD DELAY",save?actions[m?m->presetSaveAction.load():0]:delays[integer(Metropolix::LOAD_DELAY)],false,128,1,3);
             int pending=m?m->pendingSlot.load():-1,notice=m?m->presetNotice.load():0;
             if(pending>=0)c.text(1,57,string::f("QUEUED %d-%d",pending/8+1,pending%8+1));
             else if(notice) {
@@ -506,10 +517,9 @@ struct HardwareDisplay : HardwareControl {
             c.text(1,14,action?"KEEP LIVE SETTINGS":"KEEP 64 PRESETS");
             for(int n=0;n<2;++n)listRow(c,n+2,n?"Apply":"Cancel","",n==choice,false);return c;
         } else if(page==Metropolix::MX_SETUP_PAGE){
-            c.text(1,1,"MX - EXPANDER");int mode=integer(Metropolix::MX_MODE);
-            c.fit(10,12,116,m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",1);if(!f)c.turn(0,12);
-            c.text(1,27,"MX ASSIGN");int assign=m?mxAssignment(m):-1;
-            c.fit(10,38,116,assign<0?(mode==metro::MxModClocks?"All MOD > MX":"Global/All > MX"):previewDisplayString(m,assign)+" > MX",1);if(f && assign>=0)c.turn(0,38);
+            int mode=integer(Metropolix::MX_MODE),assign=m?mxAssignment(m):-1;
+            field(c,0,"MX - EXPANDER",m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",!f,128,1);c.right(126,2,"GATE");
+            field(c,28,"MX ASSIGN",assign<0?(mode==metro::MxModClocks?"All MOD > MX":"Global/All > MX"):previewDisplayString(m,assign)+" > MX",f && assign>=0,128,1,assign<0?0:1);
             c.text(1,56,m && m->mxConnected.load()?"MX CONNECTED":"PLACE MX AT RIGHT");return c;
         } else if(page==Metropolix::SETUP_PAGE){
             int cursor=m?m->setupCursor.load():0,selected=setupDisplayRow(cursor);
@@ -534,8 +544,8 @@ struct HardwareDisplay : HardwareControl {
             for(int item=0;item<4;++item){int id=m?modMenuParam(m,item):-1;std::string label=modMenuName(item);if(id>=0)label+=":";listRow(c,item,label,id>=0?previewDisplayString(m,id):"",item==cursor,f && id>=0);}
             return c;
         } else if(page==Metropolix::TUNER_PAGE){
-            c.text(1,2,"TUNER");c.text(13,22,"Pitch");c.right(126,18,string::f("C%+d",integer(Metropolix::TUNER_OCTAVE)),2);c.turn(1,23);
-            c.text(13,44,"Gate");c.right(126,44,integer(Metropolix::TUNER_GATE)?"Clock":"High");c.text(1,56,"EXIT TO RESUME");return c;
+            field(c,0,"TUNER PITCHES","C"+std::to_string(integer(Metropolix::TUNER_OCTAVE)),true,128,2,0,-1);
+            field(c,28,"TUNER GATES",integer(Metropolix::TUNER_GATE)?"Clock":"High",false,128,1,2);c.text(1,56,"EXIT TO RESUME");return c;
         }
         else {c.text(8,13,"NOT IMPLEMENTED");c.text(8,30,"HOVER FOR DETAILS");}
         if(m && m->loopyMuteHeld.load()){c.fill(0,54,128,10,0);c.text(1,56,"MUTE TRK/LANE");return c;}

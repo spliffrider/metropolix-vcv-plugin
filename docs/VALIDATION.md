@@ -1,4 +1,38 @@
-# Validation and fidelity status — 2.60.0
+# Validation and fidelity status — 2.61.0
+
+## 2.61 performance lettering and encoder cues
+
+The native OLED images were extracted without resampling from the supplied
+firmware1.6 manual. Fifty-two observed bold glyphs and thirteen large glyphs
+provide measured shapes, bearings, advances and right edges; companion/fallback
+glyphs remain interpretations. Degree and plus/minus normalize before fitting.
+Fields choose the large, bold, regular or tiny face according to available room.
+
+Forty-three golden text regions come directly from the original image pixels,
+independently of the font lookup. Actual Rack tests pass all 43 captions,
+194 glyph metrics, seven independent native helper regions and 43 configured
+module text regions without parameter/history changes. Four real encoder/OLED
+tempo drags cover ordinary and modulated previews, one pending question mark,
+confirmation and exact full-parameter Undo/Redo. Fourteen real helper states
+cover clock, TYPE, AUX, CTRL, MOD, MX and A/B confirmation policies. Saved captures
+were separately compared against all 43 foreground masks and the modulated base
+tempo; both charsets and sixteen manual/module comparisons were inspected.
+Foreground shape matching does not establish brightness or color matching.
+
+All 24 affected Windows groups pass: Pending, Display, CtrlEditor, Backup,
+Config, Storage, Presets, Polish, Fidelity, StagePair, Overrides, Scales, Slides,
+StageCv, Clock, Outputs, Mx, Controls, Tracks, SetupOptions, Timing, Order,
+StagePattern and Loopy. Existing menu/pending/ownership/conflict/Undo coverage,
+181 Display captures, 73 LIM captures and 56 Backup list captures are retained.
+The production package host and exact-source release CI are recorded separately;
+release CI covers 25 portable suites, three native platform hosts and eighteen
+Linux Rack groups including the new pixel and pending-tempo checks.
+
+This changes rendering and the modulation-overlay predicate only. Engine,
+control bindings, confirmation policy, 787 parameter IDs, schema34, format11/522
+snapshots and backup formats are unchanged. Chain/scale-editor geometry, other
+diagrams, animation, materials and physical-module comparisons remain open.
+No physical timing, OS-input automation or human listening is inferred.
 
 ## 2.60 proportional menu lettering
 

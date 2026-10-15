@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.60.0
+# Panel and display refinement — 2.61.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -16,6 +16,35 @@ list style. Pending Init choices and question marks display correctly; see
 lists now share the compact rows and inverted selection, with separate status
 lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
 animation and material matching still require comparison with the reference.
+
+## Performance readouts — 2.61.0
+
+Performance fields use separate bold and large lettering based on native OLED
+images in the supplied firmware 1.6 manual. Fifty-two bold glyphs and thirteen
+large glyphs reproduce the sampled shapes, bearings and spacing. Companion
+glyphs remain interpretations; this does not establish a complete native font.
+Tiny headings and the proportional menu font retain their existing roles.
+
+Shared fields, stage values, tempo, tuner and assignments use the measured
+baselines. Immediate, queued, pending and one/two/three-choice encoder cues
+follow the existing confirmation policy. Stage accumulator values include the
+degree unit; the SLIDE amount readout is unitless while its desktop quantity
+continues to show percent. The main scale readout uses Ionian/Aeolian aliases
+without changing scale IDs or full menu names. A/B and MOD assignment context
+is clearer. Desktop status/help lines remain available.
+
+Pending BPM edits preserve their question mark during modulation. The smaller
+actual-tempo overlay compares against the applied base tempo, so previewing a
+new base value does not itself appear as modulation. Confirmation and exact
+Undo/Redo retain the existing behavior.
+
+Forty-three independent native text masks, 194 glyph metrics, seven helper
+masks, 43 actual module text regions, four pending-tempo drags and fourteen
+queued/pending helper states pass inside Rack. These compare foreground pixels,
+not physical brightness or color. Whole-screen captures and both charsets were
+inspected. Chain and scale-editor geometry, other diagrams, animation and panel
+materials remain separate refinement work. Sequencing, all 787 parameters,
+schema34, format11/522 snapshots and backup formats are unchanged.
 
 ## Menu lettering — 2.60.0
 
