@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.59.0
+# Hardware panel and desktop interaction — 2.60.0
 
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
@@ -48,6 +48,12 @@ now has Length/Scale fields and Hold. See the [override guide](STAGE-OVERRIDES.m
 2.9.0 also activates SWING independently for both note tracks, with percentage
 display, shortcuts, encoder long-press reset, and desktop editing. CTRL sets
 its base amount; AUX and MOD offset it. See [Swing operation](SWING.md).
+
+## Menu lettering
+
+Lists and LIM use the [proportional menu font](UI-FIDELITY.md), based on native
+OLED glyphs. Four-row selection includes the complete descenders; labels may
+shorten for long pending values while hover help keeps their full names.
 
 ## LIM display — 2.59.0
 

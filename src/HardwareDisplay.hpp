@@ -73,23 +73,25 @@ struct HardwareDisplay : HardwareControl {
     void pages(OledCanvas& c,int selected) const {
         for(int i=0;i<4;++i)for(int x=i*32;x<i*32+28;++x)if(i==selected || x%3==0)c.dot(x,0);
     }
-    // Four rows retain the nine-pixel lowercase descenders and a separate
+    // Four rows retain the eleven-pixel lowercase descenders and a separate
     // browsing/value highlight. Short aliases leave room for VCV extensions.
     static int listStart(int cursor,int count) { return cursor<4?0:metro::clamp(cursor-1,0,count-4); }
     static std::string listLabel(const OledCanvas& c,std::string label,const std::string& value) {
-        if(c.width(label,false)+c.width(value,false)+4<=126)return label;
+        if(c.menuWidth(label)+c.menuWidth(value)+4<=126)return label;
         if(label=="Slider Octaves:")label="Slider Oct:";
         else if(label=="Slide Toggle CC:")label="Slide Tog CC:";
         else if(label=="Slide Amount CC:")label="Slide Amt CC:";
         else if(label=="Clk/Rset Out:")label="Clock Mode:";
-        if(c.width(label,false)+c.width(value,false)+4>126 && !label.empty() && label.back()==':')label.pop_back();
+        else if(label=="Button LED Level:")label="Button LEDs:";
+        else if(label=="Gate Type:")label="Gate:";
+        if(c.menuWidth(label)+c.menuWidth(value)+4>126 && !label.empty() && label.back()==':')label.pop_back();
         return label;
     }
     static void listRow(OledCanvas& c,int row,const std::string& name,const std::string& value,bool selected,bool editing) {
-        int y=12+row*12,valueX=127-c.width(value,false);std::string label=listLabel(c,name,value);
+        int y=12+row*12,valueX=127-c.menuWidth(value);std::string label=listLabel(c,name,value);
         uint8_t labelInk=255,valueInk=255;
-        if(selected){if(editing){c.fill(valueX-2,y-1,130-valueX,11);valueInk=0;}else {c.fill(0,y-1,128,11);labelInk=valueInk=0;}}
-        c.text(1,y,label,false,1,labelInk);c.text(valueX,y,value,false,1,valueInk);
+        if(selected){if(editing){c.fill(valueX-2,y-1,130-valueX,12);valueInk=0;}else {c.fill(0,y-1,128,12);labelInk=valueInk=0;}}
+        c.menuText(1,y,label,labelInk);c.menuText(valueX,y,value,valueInk);
     }
     std::string trackListValue(int item) const {
         auto* m=metroModule;if(!m)return {};int id=trackMenuParam(m,item);if(id<0)return {};
@@ -430,7 +432,7 @@ struct HardwareDisplay : HardwareControl {
                 int owner=m?m->ctrlOwner(id):-1;
                 uint8_t ink=owner>=0?155:255;
                 if(i==f){c.fill(0,y-3,128,15,ink);ink=0;}
-                c.text(owner>=0?14:2,y,labels[i],false,1,ink);c.text(124-c.width(v,false),y,v,false,1,ink);
+                c.menuText(owner>=0?14:2,y,labels[i],ink);c.menuRight(124,y,v,ink);
                 if(owner>=0){c.circle(6,y+4,5,false,ink);c.text(4,y+2,std::to_string(owner+1),true,1,ink);}
             }
         } else if(page==Metropolix::LOAD_PAGE || page==Metropolix::SAVE_PAGE) {

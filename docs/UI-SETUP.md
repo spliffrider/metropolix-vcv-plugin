@@ -1,4 +1,4 @@
-# UI setup, confirmation and external clock input — 2.58.0
+# UI setup, confirmation and external clock input — 2.60.0
 
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
@@ -22,6 +22,13 @@ unconfirmed edits never enter a saved patch or preset. Direct named menus,
 native numeric entry, panel sliders, CTRL knobs and desktop grid controls remain
 immediate. ALT MOD voltage previews preserve relative offsets across all eight
 stages and confirm as one undoable edit.
+
+## Menu lettering
+
+Lists now use [proportional lettering](UI-FIDELITY.md) based on the native OLED
+images. Full descenders fit inside each selected row, including pending values
+on the bottom row. Long values can shorten their OLED label; full names remain
+in help and native menus. This changes display rendering, not saved preferences.
 
 ## Primary SETUP list
 

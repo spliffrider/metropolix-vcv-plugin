@@ -1,3 +1,5 @@
+#include "OledMenuFont.hpp"
+
 // A 128 x 64 monochrome display, matching the native screenshots in the manual.
 // Text and diagrams are pixels, so zooming never substitutes a desktop font.
 struct OledCanvas {
@@ -87,6 +89,19 @@ struct OledCanvas {
         }
         return result;
     }
+    int menuWidth(const std::string& s) const {
+        int cursor=0,right=0;
+        for(unsigned char c:glyphText(s)) {auto g=metrodisplay::menuGlyph(c);if(g.width)right=cursor+1+g.width;cursor+=g.advance;}
+        return right;
+    }
+    void menuText(int x,int y,const std::string& s,uint8_t v=255) {
+        for(unsigned char c:glyphText(s)) {
+            auto g=metrodisplay::menuGlyph(c);
+            for(int row=0;row<11;++row)for(int col=0;col<g.width;++col)if(g.rows[row]&(1<<(g.width-1-col)))dot(x+1+col,y+row,v);
+            x+=g.advance;
+        }
+    }
+    void menuRight(int x,int y,const std::string& s,uint8_t v=255) {menuText(x-menuWidth(s),y,s,v);}
     int width(const std::string& s,bool tiny=true,int scale=1) const { int w=0;for(char c:glyphText(s))w+=(tiny?small(static_cast<char>(std::toupper(static_cast<unsigned char>(c)))).w+2:6)*scale;return std::max(0,w-(tiny?2:1)*scale); }
     void text(int x,int y,const std::string& s,bool tiny=true,int scale=1,uint8_t v=255) {
         for(char c:glyphText(s)) {
