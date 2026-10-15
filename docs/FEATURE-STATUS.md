@@ -1,9 +1,10 @@
-# Feature status — 2.64.0 public alpha
+# Feature status — 2.65.0 public alpha
 
 Assessment date: 2026-10-15. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.65.0 refines the [settings menu layout](UI-SETUP.md), with native spacing and margins, complete bottom-row descenders and correct right alignment.
 2.64.0 refines the [CTRL ownership symbols and LIM captions](UI-FIDELITY.md), preserving existing editing and saved formats.
 2.63.0 refines the [scale display and editor](SCALES.md), and confirmed browsing now follows the same hardware bank order as immediate browsing.
 2.62.0 refines the [chain display](PRESET-CHAINS.md), with native-reference rows, selections, mutes and Quick Chain repeat feedback.

@@ -14,7 +14,7 @@ auto raw=[&]{std::vector<float> v;for(auto& p:m->params)v.push_back(p.getValue()
 auto clean=[&](Entry e){closeMenus();for(auto* a:APP->history->actions)delete a;APP->history->actions.clear();APP->history->savedIndex=APP->history->actionIndex=0;for(int id=0;id<M::NUM_PARAMS;++id)m->params[id].setValue(original[id]);m->clearWorkflows();m->cancelDraft();m->params[M::RUN].setValue(0);for(int k=0;k<2;++k)m->params[M::ctrlParam(k,M::CTRL_DESTINATION)].setValue(0);m->uiMod.store(e.page==M::MOD_MENU_PAGE);m->uiAlt.store(false);m->selectedTrack.store(e.track);m->selectedLane.store(e.lane);screenPage(m,e.page);m->trackMenuCursor.store(e.item);m->globalCursor.store(e.item);m->uiSetupCursor.store(e.item);m->midiSetupCursor.store(e.item);m->modMenuCursor.store(e.item);};
 auto* display=dynamic_cast<HardwareDisplay*>(find("Metropolix display"));auto* encoder=find("Encoder");
 auto expectedValue=[&](Entry e,int v,bool pending){std::string text;if(e.id<0)return text;
-    if(e.page==M::TRACK_MENU_PAGE && e.item==0)text=v?string::f("%+d",v):"--";
+    if(e.page==M::TRACK_MENU_PAGE && e.item==0)text=v?string::f("%+d",v):"-";
     else if(e.page==M::TRACK_MENU_PAGE && e.item==1)text=v?std::to_string(v):"Shared";
     else if(e.page==M::TRACK_MENU_PAGE && e.item==4){const char* names[]={"Switch","Single","Sngl+Rst","Multi","Multi+Rst","Hold","Hold+Rst"};text=names[v];}
     else if(e.id==M::CLOCK_SOURCE){const char* names[]={"Auto","Internal","External","MIDI"};text=names[v];}
@@ -26,9 +26,9 @@ auto expectedValue=[&](Entry e,int v,bool pending){std::string text;if(e.id<0)re
     else if(auto* q=dynamic_cast<SwitchQuantity*>(m->getParamQuantity(e.id)))text=q->labels[v-int(q->getMinValue())];
     else text=std::to_string(v);
     if(pending)text+=" ?";return text;};
-auto rowY=[](Entry e){int start=e.item<4?0:std::min(e.item-1,e.count-4);return 12+12*(e.item-start);};
-auto pixels=[&](Entry e,const std::string& value,bool editing){auto c=display->render();int y=rowY(e),x=127-c.menuWidth(value);OledCanvas glyph;glyph.menuText(x,y,value);bool ok=true;
-    for(int yy=y;yy<y+11;++yy)for(int xx=std::max(0,x);xx<127;++xx)ok &= c.pixels[yy][xx]==(glyph.pixels[yy][xx]?0:255);
+auto rowY=[](Entry e){int start=e.item<4?0:std::min(e.item-1,e.count-4);return 10+15*(e.item-start);};
+auto pixels=[&](Entry e,const std::string& value,bool editing){auto c=display->render();int y=rowY(e),x=125-c.menuAdvanceWidth(value);auto label=HardwareDisplay::listLabel(c,e.label+":",value);y=std::min(y,64-std::max(c.menuInkHeight(label),c.menuInkHeight(value)));OledCanvas glyph;glyph.menuText(x,y,value);bool ok=true;
+    for(int yy=y;yy<std::min(64,y+11);++yy)for(int xx=std::max(0,x);xx<127;++xx)ok &= c.pixels[yy][xx]==(glyph.pixels[yy][xx]?0:255);
     for(int xx=0;xx<128;++xx)ok &= c.pixels[y-1][xx]==(editing && xx<x-2?0:255);
     return ok;};
 auto capture=[&](const std::string& name){auto c=display->render();std::ofstream out(dir+"/setup-secondary-"+name+".pgm",std::ios::binary);out<<"P5\n128 64\n255\n";out.write(reinterpret_cast<char*>(c.pixels),128*64);};
@@ -37,9 +37,9 @@ for(auto e:entries)for(auto* control:{encoder,static_cast<HardwareControl*>(disp
 check(nav,std::to_string(navCount)+" secondary menu encoder/OLED navigation cases preserve all parameters and history");
 bool values=true,spacing=true;int valueCount=0,previewCount=0;
 for(auto e:entries){clean(e);if(e.id<0){capture(string::f("page%d-item%d-trk%d-lane%d",e.page,e.item,e.track,e.lane));continue;}auto* q=m->getParamQuantity(e.id);
-    for(int v=int(q->getMinValue());v<=int(q->getMaxValue());++v){m->cancelDraft();m->uiField.store(0);m->params[e.id].setValue(float(v));std::string text=expectedValue(e,v,false);values &= pixels(e,text,false);std::string name=e.label+":";auto label=HardwareDisplay::listLabel(OledCanvas{},name,text);spacing &= OledCanvas{}.menuWidth(label)+OledCanvas{}.menuWidth(text)+4<=126;++valueCount;}
+    for(int v=int(q->getMinValue());v<=int(q->getMaxValue());++v){m->cancelDraft();m->uiField.store(0);m->params[e.id].setValue(float(v));std::string text=expectedValue(e,v,false);values &= pixels(e,text,false);std::string name=e.label+":";auto label=HardwareDisplay::listLabel(OledCanvas{},name,text);spacing &= OledCanvas{}.menuWidth(label)+OledCanvas{}.menuWidth(text)+5<=124;++valueCount;}
     if(q->getRange()>1)for(auto* control:{encoder,static_cast<HardwareControl*>(display)}){clean(e);m->params[M::ENC_CONFIRM].setValue(1);int base=int(q->getMinValue());m->params[e.id].setValue(float(base));auto before=raw();click(control);
-        for(int v=base+1;v<=int(q->getMaxValue());++v){drag(control,-22);std::string text=expectedValue(e,v,true);bool ok=m->uiDraftParam==e.id && m->uiValue(e.id)==v && raw()==before && !APP->history->actionIndex && pixels(e,text,true);values &= ok;auto label=HardwareDisplay::listLabel(OledCanvas{},e.label+":",text);spacing &= OledCanvas{}.menuWidth(label)+OledCanvas{}.menuWidth(text)+4<=126;++previewCount;}
+        for(int v=base+1;v<=int(q->getMaxValue());++v){drag(control,-22);std::string text=expectedValue(e,v,true);bool ok=m->uiDraftParam==e.id && m->uiValue(e.id)==v && raw()==before && !APP->history->actionIndex && pixels(e,text,true);values &= ok;auto label=HardwareDisplay::listLabel(OledCanvas{},e.label+":",text);spacing &= OledCanvas{}.menuWidth(label)+OledCanvas{}.menuWidth(text)+5<=124;++previewCount;}
     }
     clean(e);m->params[e.id].setValue(q->getMinValue());capture(string::f("page%d-item%d-trk%d-lane%d-min",e.page,e.item,e.track,e.lane));m->params[e.id].setValue(q->getMaxValue());capture(string::f("page%d-item%d-trk%d-lane%d-max",e.page,e.item,e.track,e.lane));
 }

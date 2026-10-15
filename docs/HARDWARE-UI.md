@@ -1,4 +1,4 @@
-# Hardware panel and desktop interaction — 2.64.0
+# Hardware panel and desktop interaction — 2.65.0
 
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
@@ -193,3 +193,9 @@ Circled CTRL numbers now use the native-reference outline and seven-row digits.
 LIM also uses measured caption lettering and footer alignment. Editing, ownership
 and saved formats retain their existing behavior; see [visual evidence and its
 limits](UI-FIDELITY.md#ctrl-ownership-symbols-and-lim-captions--2640).
+
+## Menu spacing — 2.65.0
+
+Settings menus use native row spacing, headings and margins. The bottom row
+keeps lowercase tails visible, and desktop file/status screens retain compact
+rows. Gestures and saving are unchanged; see [menu layout](UI-SETUP.md).
