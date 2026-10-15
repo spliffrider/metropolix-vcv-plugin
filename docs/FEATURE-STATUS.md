@@ -1,9 +1,10 @@
-# Feature status — 2.57.0 public alpha
+# Feature status — 2.58.0 public alpha
 
-Assessment date: 2026-10-14. The reference is the
+Assessment date: 2026-10-15. The reference is the
 [Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 This implementation has not been compared with a physical module.
 
+2.58.0 refines [Backup and maintenance lists](BACKUPS.md), preserving file scopes, Cancel-first confirmation and saved formats.
 2.57.0 refines [Presets Setup](PRESETS.md), including manual order, browse/edit selection, pending readouts and preserved saved logical setting IDs.
 2.56.0 refines [track/MOD/Global/UI/MIDI lists](UI-SETUP.md), their selection/readouts and the Shared octave preview without changing saved formats.
 2.55.0 adds the [compact primary SETUP list](UI-SETUP.md), with deliberate settings-schema34 migration and preserved native shortcuts.
@@ -77,7 +78,7 @@ configuration, preset workflows, and external interfaces.
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing, individual mute and a separate group mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
 | A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT Slide/Skip pattern, Ratchet and PROB/ACCUM edits and resets, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
-| Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Backup/maintenance layouts; remaining glyphs/animations and exact material/detail matching |
+| Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Further edit-page, glyph/animation and exact material/detail matching |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets with Scale Lock and Loopy settings, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes, scoped JSON backups | Hardware SysEx interchange |
 
 The current 787 parameters include repeated stage/lane controls; that number is

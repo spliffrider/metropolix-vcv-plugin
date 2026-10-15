@@ -487,18 +487,19 @@ struct HardwareDisplay : HardwareControl {
         } else if(page==Metropolix::BACKUP_PAGE || page==Metropolix::BACKUP_PRESET_PAGE){
             bool presets=page==Metropolix::BACKUP_PRESET_PAGE;
             int cursor=m?(presets?m->backupPresetCursor.load():m->backupCursor.load()):0;
-            int start=std::min(std::max(cursor-1,0),(presets?BackupPresetCount:BackupCount)-3);
-            for(int row=0;row<3;++row){int item=start+row,y=1+row*17;c.text(12,y+4,presets?backupPresetName(item):backupName(item));if(item==cursor){c.corners(0,y-1,128,16);c.arrow(3,y+5,true);}}
-            c.text(1,56,m && system::getTime()<m->backupNoticeUntil?m->backupNotice:presets?"PRESET EXPORT":"BACKUP FILES");return c;
+            int count=presets?BackupPresetCount:BackupCount,start=listStart(cursor,count);
+            c.text(1,1,presets?"PRESET EXPORT":"BACKUP FILES");
+            for(int row=0;row<4 && start+row<count;++row){int item=start+row;listRow(c,row,presets?backupPresetName(item):backupName(item),"",item==cursor,false);}
+            c.text(1,59,m && system::getTime()<m->backupNoticeUntil?m->backupNotice:presets?"CLICK TO EXPORT":"JSON BACKUP");return c;
         } else if(page==Metropolix::FACTORY_PAGE){
             c.text(1,1,"LAB "+labVersion());int cursor=m?m->factoryCursor.load():0;
-            for(int action=0;action<2;++action){int y=17+action*17;c.text(12,y+4,factoryName(action));if(action==cursor){c.corners(0,y-1,128,16);c.arrow(3,y+5,true);}}
-            c.text(1,56,m && system::getTime()<m->factoryNoticeUntil?m->factoryNotice:"CONFIRM / UNDO");return c;
+            for(int action=0;action<2;++action)listRow(c,action,factoryName(action),"",action==cursor,false);
+            c.text(1,59,m && system::getTime()<m->factoryNoticeUntil?m->factoryNotice:"CONFIRM / UNDO");return c;
         } else if(page==Metropolix::FACTORY_CONFIRM_PAGE){
             int action=m?m->factoryCursor.load():0,choice=m?m->factoryConfirmCursor:0;
             c.text(1,1,action?"CLEAR 64 PRESETS?":"RESET SETTINGS?");
             c.text(1,14,action?"KEEP LIVE SETTINGS":"KEEP 64 PRESETS");
-            for(int n=0;n<2;++n){int y=29+n*17;c.text(12,y+4,n?"Apply":"Cancel");if(n==choice){c.corners(0,y-1,128,16);c.arrow(3,y+5,true);}}return c;
+            for(int n=0;n<2;++n)listRow(c,n+2,n?"Apply":"Cancel","",n==choice,false);return c;
         } else if(page==Metropolix::MX_SETUP_PAGE){
             c.text(1,1,"MX - EXPANDER");int mode=integer(Metropolix::MX_MODE);
             c.fit(10,12,116,m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",1);if(!f)c.turn(0,12);

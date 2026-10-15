@@ -1,4 +1,4 @@
-# Panel and display refinement — 2.57.0
+# Panel and display refinement — 2.58.0
 
 This pass uses the supplied firmware 1.6 manual, especially EXIT on p.27,
 MOD editing on pp.138–141 and destination descriptions on pp.159–164.
@@ -13,7 +13,9 @@ See [UI setup](UI-SETUP.md) for gestures, compact labels and compatibility.
 Presets Setup now follows the manual's pp53–56 setting order, using this compact
 list style. Pending Init choices and question marks display correctly; see
 [Preset settings](PRESETS.md) for gestures and saved navigation. Backup/maintenance
-layouts remain follow-up work.
+lists now share the compact rows and inverted selection, with separate status
+lines and Cancel-first maintenance confirmation. Further edit-page, glyph,
+animation and material matching still require comparison with the reference.
 
 ## Values and confirmation
 

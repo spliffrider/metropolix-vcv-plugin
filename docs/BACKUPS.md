@@ -1,6 +1,7 @@
-# Portable backups — 2.34.0
+# Portable backups — 2.58.0
 
-Open **SETUP → MIDI → Backup files…**, or use the module's right-click menu.
+Open **SETUP → Backup Files**, or use the module's right-click menu. The
+desktop MIDI Setup shortcut also retains its Backup files entry.
 Drag the encoder or display up/down to select an action. Click the encoder to
 open the computer's file chooser. **Export Presets** first opens a selection
 submenu; EXIT returns to Backup files. Right-click offers the same choices.
@@ -56,6 +57,21 @@ versions, missing fields, duplicate JSON keys, invalid values, malformed
 chains and files over 4 MiB are rejected before any settings change. A failed
 save preserves an existing destination file; a successful save replaces it
 using a fully written temporary file in the same directory.
+
+## Compact lists — 2.58.0
+
+Backup Files and Preset Export show four mixed-case actions with an inverted
+selection bar. The first four export selections stay together; later banks
+scroll into view. The title stays at the top. Success, failure and imported/
+stopped notices occupy a separate bottom line and expire back to the page's
+normal hint. Navigation, native file choosers and right-click choices retain
+their existing behavior. EXIT returns from selection to Backup Files, then
+to the SETUP or desktop MIDI parent from which it was opened.
+
+These are this plugin's JSON files. The hardware manual's MIDI SysEx options
+are a reference for scope; hardware SysEx interchange is not implemented here.
+The display change does not alter schema34, 787 parameter IDs, format11/522
+musical snapshots, backup validation, file scope or Undo/Redo.
 
 ## Selective file format and compatibility
 
