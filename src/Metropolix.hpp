@@ -282,13 +282,14 @@ struct Metropolix : Module {
         int range=integer(outputTrackParam(t,SLIDER_OCTAVES));
         return metro::clamp(range?range:integer(RANGE),1,4);
     }
-    float uiSliderPosition(int t,int stage) {
+    float uiSliderPosition(int t,int stage,bool physical=false) {
         bool inverted=integer(outputTrackParam(t,SLIDER_DIRECTION));
         float ctrl=0;
         for(int k=0;k<2;++k)if(integer(ctrlParam(k,CTRL_DESTINATION))==metro::CtrlSliderInvert &&
             (integer(ctrlParam(k,CTRL_ASSIGNMENT))==2 || integer(ctrlParam(k,CTRL_ASSIGNMENT))==t))
             ctrl=panelValue(ctrlParam(k,CTRL_VALUE));
-        float value=panelValue(PITCH+metro::clamp(stage,0,7));
+        int id=PITCH+metro::clamp(stage,0,7);
+        float value=physical?params[id].getValue():panelValue(id);
         return inverted!=(ctrl>0)?1.f-value:value;
     }
     static int accumScreenParam(int t, int field) {
@@ -370,6 +371,19 @@ struct Metropolix : Module {
     bool transportRestoreHold=false; // Audio thread; restore writes under engine exclusion.
     std::atomic<unsigned> heldTrackReset{0};
     std::atomic<int> uiHome{0};
+    std::atomic<int> pitchPreviewStage{-1};
+    std::atomic<std::uint64_t> uiRestoreSerial{0}; // Invalidate pending UI input on reset/restore.
+    std::atomic<double> pitchPreviewUntil{0}; // Transient UI feedback, never serialized.
+    void clearPitchPreview(){pitchPreviewStage.store(-1);pitchPreviewUntil.store(0);}
+    bool pitchPreviewActive() const {
+        int stage=pitchPreviewStage.load();
+        return stage>=0 && stage<8 && rack::system::getTime()<pitchPreviewUntil.load() && !(uiPage.load()==HOME && uiHome.load()==1);
+    }
+    void previewPitchEdit(int id,float before,float after) {
+        if(id<PITCH || id>=PITCH+8 || before==after || !std::isfinite(after))return;
+        if(uiPage.load()==HOME && uiHome.load()==1){clearPitchPreview();return;}
+        pitchPreviewStage.store(id-PITCH);pitchPreviewUntil.store(rack::system::getTime()+1.5);
+    }
     std::atomic<bool> uiStageDetail{false};
     std::atomic<bool> uiMod{false}, uiEdit{false}, uiAlt{false};
     std::atomic<bool> uiChooseFunction{false};
@@ -803,6 +817,8 @@ struct Metropolix : Module {
 
     void onSampleRateChange(const SampleRateChangeEvent& e) override {outputDelay.prepare(e.sampleRate);}
     void onReset(const ResetEvent& e) override {
+        ++uiRestoreSerial;
+        clearPitchPreview();
         resetMidiRuntime();
         factoryCursor.store(0);factoryConfirmCursor=0;factoryNoticeUntil=0;if(uiPage.load()==FACTORY_CONFIRM_PAGE)uiPage.store(FACTORY_PAGE);
         Module::onReset(e);presetSetupEditing.store(false);clearPickup();tunerActive.store(false);heldTrackReset.store(0);setupCursor.store(0);globalCursor.store(0);setupDirectChild.store(false);clearWorkflows();cancelDraft();uiSetupCursor.store(0);modMenuCursor.store(0);externalDivider.reset();
@@ -865,6 +881,8 @@ struct Metropolix : Module {
         return root;
     }
     void dataFromJson(json_t* root) override {
+        ++uiRestoreSerial;
+        clearPitchPreview();
         resetMidiRuntime();midiInput.fromJson(json_object_get(root,"midiInput"));midiOutput.fromJson(json_object_get(root,"midiOutput"));midiInput.setChannel(-1);midiOutput.setChannel(-1);
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
         scaleEditing.store(false);scaleShortcutHeld.store(false);

@@ -13,6 +13,7 @@
 #include "../tests/RackCapture.hpp"
 #endif
 #include <functional>
+#include <app/RackScrollWidget.hpp>
 
 namespace {
 NVGcolor ink() { return nvgRGB(38, 44, 47); }
@@ -47,14 +48,18 @@ void line(NVGcontext* vg, float x1, float y1, float x2, float y2, NVGcolor color
     nvgStrokeWidth(vg, 1.f);
     nvgStroke(vg);
 }
+#include "PickupUI.hpp"
 void setWithHistory(ParamQuantity* q, float value) {
     if (!q || !q->module) return;
     if(auto* m=dynamic_cast<Metropolix*>(q->module))if(m->ctrlOwner(q->paramId)>=0)return;
+    auto* m=dynamic_cast<Metropolix*>(q->module);
+    auto pickup=m && m->waitingPickup(q->paramId)?uiPickup(m,q->paramId):metro::Pickup{};
     float before = q->ParamQuantity::getValue();
     q->setValue(value);
     float after=q->ParamQuantity::getValue();
-    if(auto* m=dynamic_cast<Metropolix*>(q->module))m->cancelDraft();
+    if(m){m->cancelDraft();m->previewPitchEdit(q->paramId,before,after);}
     if (after == before) return;
+    if(pickup.active){panelControlHistory(m,q->paramId,before,after,pickup,pickupAfterValue(m,q->paramId,pickup,after),"change recalled control");return;}
     auto* change = new history::ParamChange;
     change->moduleId = q->module->id;
     change->paramId = q->paramId;
@@ -498,7 +503,6 @@ struct MainDisplay : widget::Widget {
 void openChainPage(Metropolix* m);
 #include "PresetSetupUI.hpp"
 #include "SetupUI.hpp"
-#include "PickupUI.hpp"
 #include "HardwareUI.hpp"
 #include "TimingUI.hpp"
 #include "PresetUI.hpp"

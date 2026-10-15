@@ -207,6 +207,16 @@ struct OledCanvas {
         }
     }
     void valueRight(int x,int y,const std::string& s,bool big=false,uint8_t v=255) {valueText(x-valueWidth(s,big),y,s,big,v);}
+    void valueText7(int x,int y,const std::string& s,uint8_t v=255) {
+        // The popup's observed 3/D/0 face has these seven Bold9 rows. Other
+        // characters retain the same metrics as companion glyphs.
+        const int rows[]={0,1,3,4,5,7,8};
+        for(unsigned char c:glyphText(s)) {
+            auto g=metrodisplay::valueGlyph(c,false);
+            for(int row=0;row<7;++row)for(int col=0;col<g.width;++col)if(g.rows[rows[row]]&(1<<(g.width-1-col)))dot(x+g.bearing+col,y+row,v);
+            x+=g.advance;
+        }
+    }
     int valueFit(int x,int bottom,int w,const std::string& s,bool big=false,bool left=false,uint8_t v=255) {
         if(big && valueWidth(s,true)<=w){valueText(left?x:x+w-valueWidth(s,true),bottom-13,s,true,v);return 14;}
         if(valueWidth(s)<=w){valueText(left?x:x+w-valueWidth(s),bottom-8,s,false,v);return 9;}

@@ -1,4 +1,47 @@
-# Validation and fidelity status — 2.66.0
+# Validation and fidelity status — 2.67.0
+
+## Physical pitch preview and recalled-value Undo — 2.67.0
+
+Moving a shared pitch slider briefly overlays the manual p22 keyboard, stage
+number and note/octave. Disabled scale notes are hatched; the selected note has
+a marker. The selected note track supplies scale/root, Bottom Pitch, range,
+direction and transpose. The preview shows the **physical slider selection**,
+including during Thru pickup. It excludes the remembered pitch, stage override,
+temporary Pitch Pre/Post and accumulator changes that may affect the output.
+Labels use the hardware-relative C0 convention; output voltage is unchanged.
+
+Actual slider drags, wheel changes, numeric entry and reset can open the popup.
+Automation, preset recall and rendering do not. HOME2 already shows note names,
+so the popup is suppressed there. Its 1.5-second timeout is a desktop
+interpretation of the manual's brief display. Other controls dismiss it. The
+first OLED click, drag, double-click, context click or wheel gesture dismisses
+it without editing the hidden page; subsequent gestures resume normal editing.
+Pending selections, page position and history survive. Reset/reopen clears it.
+
+Recalled pitch and CTRL controls now retain both physical and remembered
+pickup state through numeric entry, Initialize, double-click reset, CTRL's
+Centre knob action and wheel Undo/Redo. A wheel gesture contributes one action;
+crossing the target and returning to the starting raw value still records its
+pickup change. Clamped/zero scrolling adds no action. Leaving a control
+preserves intervening outside edits; reset/restore discards pending wheel state.
+Delayed UI receipts preserve newer physical edits rather than rewinding them.
+
+The complete native p22 example matches all 8,192 foreground cells in actual
+Rack and an independent saved-image comparison. Its observed compact 3/D/0
+glyphs match the reference; other compact glyphs are companion shapes derived
+from the existing value face. Thirty-five captures were inspected. Checks cover
+16 track/stage slider gestures, all twelve note markers, 64,800 base-note
+comparisons against a running reference engine across representative factory/
+user scales and all roots, first-gesture dismissal, pending-page restoration,
+fourteen recalled value actions, wheel/drag transitions, queued physical edits,
+no-op scrolling and reset/restore cleanup. This is not a hardware timing or
+complete glyph-equivalence claim.
+
+The sequencing algorithm, 787 parameter IDs, settings schema34, format11/522
+musical snapshots and backup formats stay unchanged. The UI/audio receipt
+adapter adds a transient guard for newer physical edits; no new saved fields
+are introduced. Native host/package and production checks are reported
+separately. HOME and remaining stage diagrams remain under review.
 
 ## Performance fields, live gauges and action footer — 2.66.0
 
@@ -36,8 +79,7 @@ display-shape checks, not physical brightness or hardware timing measurements.
 
 DSP, the 787 parameter IDs, settings schema34, format11/522 musical snapshots
 and backup formats are unchanged. Native host/package and production runtime
-checks are reported separately. The pitch-slider popup and remaining HOME/
-stage diagrams are the next software display work.
+checks are reported separately. The remaining HOME/stage diagrams are the next software display work.
 
 ## Native menu layout and complete descenders — 2.65.0
 

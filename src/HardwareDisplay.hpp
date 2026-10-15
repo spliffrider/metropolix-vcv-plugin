@@ -1,6 +1,30 @@
 #include "OledCanvas.hpp"
 
 struct HardwareDisplay : HardwareControl {
+    bool dismissPreviewGesture=false;double previewDismissedUntil=0;
+    bool dismissPreview() {
+        if(!metroModule || (!metroModule->pitchPreviewActive() && system::getTime()>=previewDismissedUntil))return false;
+        metroModule->clearPitchPreview();previewDismissedUntil=system::getTime()+.4;clearTip();return true;
+    }
+    void onButton(const event::Button& e) override {
+        if(e.action==GLFW_PRESS && dismissPreview()){dismissPreviewGesture=e.button==GLFW_MOUSE_BUTTON_LEFT;e.consume(this);return;}
+        HardwareControl::onButton(e);
+    }
+    void onDragStart(const event::DragStart& e) override {
+        if(e.button==GLFW_MOUSE_BUTTON_LEFT && (dismissPreviewGesture || dismissPreview())){dismissPreviewGesture=true;return;}
+        HardwareControl::onDragStart(e);
+    }
+    void onDragMove(const event::DragMove& e) override {if(!dismissPreviewGesture)HardwareControl::onDragMove(e);}
+    void onDragEnd(const event::DragEnd& e) override {
+        if(dismissPreviewGesture){dismissPreviewGesture=false;return;}
+        HardwareControl::onDragEnd(e);
+    }
+    void onHoverScroll(const event::HoverScroll& e) override {if(dismissPreview()){e.consume(this);return;}HardwareControl::onHoverScroll(e);}
+    void onDoubleClick(const event::DoubleClick& e) override {if(!dismissPreview())HardwareControl::onDoubleClick(e);}
+    std::string tooltipText() override {
+        if(metroModule && metroModule->pitchPreviewActive())return string::f("Stage %d pitch preview\nMove the pitch slider to adjust. Click the display to return to the current editor.\nThis shows the physical slider; preset pickup or stage overrides can make the sounding pitch differ.",metroModule->pitchPreviewStage.load()+1);
+        return HardwareControl::tooltipText();
+    }
     // Rack can render into its normal and framebuffer NanoVG contexts. Each
     // needs its own image handle, released before the window context closes.
     std::map<NVGcontext*,int> displayImages;
@@ -306,8 +330,10 @@ struct HardwareDisplay : HardwareControl {
         }
         footer(c,detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
     }
+    #include "HardwarePitchDisplay.hpp"
     OledCanvas render() const {
         OledCanvas c;auto* m=metroModule;int page=m?m->uiPage.load():Metropolix::HOME;
+        if(m && m->pitchPreviewActive()){pitchPreview(c);return c;}
         int t=m?m->selectedTrack.load():0,l=m?m->selectedLane.load():0,f=m?m->uiField.load():0;bool mod=m && m->uiMod.load();
         auto tm=[&](int tp,int mp){return mod?Metropolix::modParam(l,mp):Metropolix::trackParam(t,tp);};
         if(m && m->uiChooseFunction.load()) {
