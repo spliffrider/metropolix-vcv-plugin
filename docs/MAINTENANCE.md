@@ -1,9 +1,11 @@
-# Maintenance — 2.30.0
+# Maintenance — 2.58.0
 
 Open **SETUP → Version / Factory**, or right-click SETUP and use its
 **Version / Factory** submenu. The header shows the current **Lab software
 version**, independently of the hardware firmware. Drag the encoder/display
-to select an action and click to open confirmation.
+to select an action and click to open confirmation. The two actions use compact
+mixed-case rows with an inverted selection bar. Status messages occupy their
+own bottom line; the plugin version remains visible at the top.
 
 Confirmation always starts on **Cancel**. Click to cancel, or drag upward once
 to select **Apply** and click. EXIT also cancels. Opening a menu, cancelling,
@@ -40,8 +42,9 @@ and custom shortcuts while keeping stored musical presets, as described in the
 The hardware's power-on, EEPROM tests and physical calibration have no virtual
 equivalent here.
 
-Schema31 remembers the maintenance menu selection. Confirmation choice is
-temporary and is never serialized. Parameter IDs and format9/518-value musical
-presets remain unchanged. Full/settings backups from schema29 or30 still import;
-current settings backups need 2.30.0 or later, while selective format2 backups
-remain compatible with 2.29.0.
+Schema31 introduced the saved maintenance cursor. Current settings use
+schema34; confirmation choice remains temporary and is never serialized.
+Current Settings/All backups require 2.55 or later; schemas29–33 still import.
+Current format11/522 musical banks require 2.34 or later. The 2.58 display pass
+changes none of these formats or the 787 parameter IDs. See [Backup formats](BACKUPS.md)
+for the distinction between full and selective preset exports.

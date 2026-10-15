@@ -6,6 +6,9 @@ if(std::getenv("METROPOLIX_BACKUP_REOPEN_QA")){
     if(qaFrame==6){check(m->uiPage.load()==M::BACKUP_PRESET_PAGE && m->backupPresetCursor.load()==9 && m->backupCursor.load()==2,"selective submenu and Bank 8 selection survive actual Rack reopen");check(m->integer(M::RUN)==0 && m->getPreset(63).occupied && !m->getPreset(57).occupied && m->getPreset(12).occupied,"selectively restored and untouched slots persist with transport stopped");check(true,"BACKUP REOPEN QA COMPLETE");APP->window->close();}return;
 }
 if(qaFrame==6){
+{
+#include "BackupListWidgetQa.hpp"
+}
     m->params[M::RUN].setValue(0);m->params[M::RUN_ON_BOOT].setValue(2);openMidiSetup(m);m->midiSetupCursor.store(0);drag(find("Encoder"),-3000);
     check(m->midiSetupCursor.load()==5 && screenParam(m)<0,"MIDI Setup appends backup entry without a numeric parameter");
     auto* encoder=dynamic_cast<HardwareControl*>(find("Encoder"));check(!encoder->longEnabled() && encoder->groupedParams().empty(),"backup entry cannot reset an invalid parameter on a long hold");

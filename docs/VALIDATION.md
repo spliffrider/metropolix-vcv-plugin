@@ -1,4 +1,45 @@
-# Validation and fidelity status — 2.57.0
+# Validation and fidelity status — 2.58.0
+
+## 2.58 Backup and maintenance lists
+
+Backup Files, its preset-selection submenu and maintenance now use the compact
+mixed-case list style shared by the other setup screens. The Backup main page
+shows all four actions. Preset Export scrolls its ten selections with the first
+four together. Whole-row inversion marks browsing; titles remain visible at
+the top and status messages occupy a separate bottom line. Maintenance keeps
+the Lab software version, explicit action/scope text and Cancel-first Apply
+confirmation. This is refinement of the plugin's desktop workflow, using the
+manual pp33/48 list style and pp53/59/189 scope references. It does not add
+hardware SysEx, calibration or EEPROM actions, or claim a firmware pixel match.
+
+Forty actual Rack encoder/OLED navigation cases reach every action and both
+boundaries without parameter or history changes. Fifty-six complete 128×64
+pixel states cover every selection, notice text, confirmation action/choice,
+mixed-case descenders and separate footer. Labels fit without abbreviation;
+expired notices restore the page hint. The 56 direct OLED captures were saved,
+and representative before/after captures were inspected against the 14 saved
+2.57 baseline screens. The old geometry was a known UI gap; this pass does not
+claim an additional functional defect in import, export or maintenance.
+
+Both controls preserve native context menus and Cancel-first/EXIT cancellation.
+Existing actual Rack tests also pass Unicode export, full/selective imports,
+atomic invalid-file rejection, exact native Undo/Redo, settings/bank preservation,
+correct EXIT parents, selective-selection reopen and disarmed maintenance
+reopen. Eight relevant Windows application groups pass: Backup, Pending,
+Display, Config, Storage, Presets, Polish and Fidelity. Display retains 181
+separate states. File/maintenance actions, DSP, 787 parameter IDs, schema34,
+format11/522 snapshots and backup formats are unchanged. Settings/All still
+require 2.55; current musical banks still require 2.34.
+
+The current-source stripped Windows production host passes 22,624,609 frames,
+339,369,135 output checks, 56,664 parameter edits, 145 restores, 144 fresh
+instances, 12 initializes and 145 reciprocal links at 44.1/48/96kHz across both
+models: 361.083 simulated seconds, single-thread wall time 13.9991 seconds.
+The final packaged binary is tested separately. Release CI runs all 25 portable
+suites, native integration and stripped production hosts on Linux/Intel Mac/
+Apple Silicon, plus 18 real Linux Rack groups including this Backup matrix.
+Those receipts and package audits are verified separately before publication.
+OS mouse/focus, human listening and hardware equivalence are not inferred.
 
 ## 2.57 Presets Setup list and pending readouts
 
