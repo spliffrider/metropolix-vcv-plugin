@@ -59,6 +59,9 @@ if(qaFrame==5){
 {
 #include "OwnershipDisplayWidgetQa.hpp"
 }
+{
+#include "MenuDisplayWidgetQa.hpp"
+}
 }
 auto raw=[&]{std::vector<float> values;for(auto& p:m->params)values.push_back(p.getValue());return values;};
 auto root=[&]{m->cancelDraft();m->params[M::SCALE].setValue(1);m->params[M::ROOT].setValue(0);screenPage(m,M::SCALE_PAGE);m->uiField.store(0);};

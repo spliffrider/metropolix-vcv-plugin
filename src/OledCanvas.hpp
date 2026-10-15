@@ -100,6 +100,14 @@ struct OledCanvas {
         for(unsigned char c:glyphText(s)) {auto g=metrodisplay::menuGlyph(c);if(g.width)right=cursor+1+g.width;cursor+=g.advance;}
         return right;
     }
+    int menuInkHeight(const std::string& s) const {
+        int height=0;
+        for(unsigned char c:glyphText(s)){auto g=metrodisplay::menuGlyph(c);for(int y=0;y<11;++y)if(g.rows[y])height=std::max(height,y+1);}
+        return height;
+    }
+    int menuAdvanceWidth(const std::string& s) const {
+        int width=0;for(unsigned char c:glyphText(s))width+=metrodisplay::menuGlyph(c).advance;return width;
+    }
     void menuText(int x,int y,const std::string& s,uint8_t v=255) {
         for(unsigned char c:glyphText(s)) {
             auto g=metrodisplay::menuGlyph(c);

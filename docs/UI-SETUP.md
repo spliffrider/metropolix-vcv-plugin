@@ -1,5 +1,37 @@
 # UI setup, confirmation and external clock input — 2.63.0
 
+## Native menu layout and complete descenders — 2.65.0
+
+Track, primary SETUP, MOD, Global, UI, MIDI and Presets Setup menus use the
+native fifteen-pixel row pitch, measured headings and margins, and inverted
+row/value selections. Right alignment respects advance cells, including the
+different trailing space of `t`. Zero transpose shows a single dash on the
+OLED; its stored value remains zero. Long values retain compact label aliases
+and full names in hover help and menus.
+
+The fourth row moves upward when needed to keep lowercase tails visible.
+The supplied SETUP image clips the `p` in Input; the desktop version retains
+it. Backup/maintenance screens keep compact rows for their status lines, and
+track copy feedback temporarily uses the compact layout. Browsing, binary
+clicks, confirmation, navigation, native menus and exact Undo/Redo are unchanged.
+
+The entire 8192-cell Track example matches the native p33 image. SETUP matches
+6656 native cells across its heading and first three rows; its final 1536 cells
+follow an independent bounded-row reference, using the native fourth row moved
+up two pixels and restoring its clipped tail from observed glyphs. This is
+explicitly a desktop adaptation, not a claim that every SETUP pixel matches
+the cropped hardware image. No cells are excluded from either comparison.
+
+Both complete reference arrays pass in actual Rack and a separate saved-image
+comparison. All 194 current menu captures were inspected. Sixteen bottom-row
+word/selection cases retain their tails, and the existing navigation, pending
+value, stale-preview, reset and full-parameter Undo matrices pass. All 20
+affected Windows groups pass; release CI separately checks native hosts and
+eighteen Linux Rack groups. Font glyph tables, DSP, 787 parameter IDs, schema34, format11/522
+snapshots and backup formats remain unchanged. Performance-field and gauge
+refinements continue separately.
+
+
 Open SETUP, drag the encoder to **UI Setup**, and press it. Drag to browse;
 press to toggle a two-choice option or enter a value. Hold the encoder for a
 second to restore the selected preference. Right-click SETUP/display for named

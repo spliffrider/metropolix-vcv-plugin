@@ -83,30 +83,35 @@ struct HardwareDisplay : HardwareControl {
     void pages(OledCanvas& c,int selected) const {
         for(int i=0;i<4;++i)for(int x=i*32;x<i*32+28;++x)if(i==selected || x%3==0)c.dot(x,0);
     }
-    // Four rows retain the eleven-pixel lowercase descenders and a separate
-    // browsing/value highlight. Short aliases leave room for VCV extensions.
+    // Native rows use a fifteen-pixel pitch. Shift only bottom-row text when
+    // needed to retain lowercase descenders. File/status pages stay compact.
     static int listStart(int cursor,int count) { return cursor<4?0:metro::clamp(cursor-1,0,count-4); }
-    static std::string listLabel(const OledCanvas& c,std::string label,const std::string& value) {
-        if(c.menuWidth(label)+c.menuWidth(value)+4<=126)return label;
+    static std::string listLabel(const OledCanvas& c,std::string label,const std::string& value,int edge=124,int left=2) {
+        if(left+c.menuWidth(label)+c.menuWidth(value)+3<=edge)return label;
         if(label=="Slider Octaves:")label="Slider Oct:";
         else if(label=="Slide Toggle CC:")label="Slide Tog CC:";
         else if(label=="Slide Amount CC:")label="Slide Amt CC:";
         else if(label=="Clk/Rset Out:")label="Clock Mode:";
         else if(label=="Button LED Level:")label="Button LEDs:";
         else if(label=="Gate Type:")label="Gate:";
-        if(c.menuWidth(label)+c.menuWidth(value)+4>126 && !label.empty() && label.back()==':')label.pop_back();
+        if(left+c.menuWidth(label)+c.menuWidth(value)+3>edge && !label.empty() && label.back()==':')label.pop_back();
         return label;
     }
-    static void listRow(OledCanvas& c,int row,const std::string& name,const std::string& value,bool selected,bool editing) {
-        int y=12+row*12,valueX=127-c.menuWidth(value);std::string label=listLabel(c,name,value);
+    static int listY(int row,bool compact=false) {return compact?12+row*12:10+row*15;}
+    static void listRow(OledCanvas& c,int row,const std::string& name,const std::string& value,bool selected,bool editing,bool compact=false) {
+        int base=listY(row,compact),left=compact?1:2,edge=compact?127:124;
+        // Native right alignment uses advance cells; final t has one less
+        // trailing column than other letters. Compact desktop lists keep theirs.
+        int valueX=compact?edge-c.menuWidth(value):125-c.menuAdvanceWidth(value);std::string label=listLabel(c,name,value,edge,left);
+        int y=std::min(base,64-std::max(c.menuInkHeight(label),c.menuInkHeight(value)));
         uint8_t labelInk=255,valueInk=255;
-        if(selected){if(editing){c.fill(valueX-2,y-1,130-valueX,12);valueInk=0;}else {c.fill(0,y-1,128,12);labelInk=valueInk=0;}}
-        c.menuText(1,y,label,labelInk);c.menuText(valueX,y,value,valueInk);
+        if(selected){int top=base-(compact?1:3),height=compact?12:15;if(editing){c.fill(valueX-2,top,130-valueX,height);valueInk=0;}else {c.fill(0,top,128,height);labelInk=valueInk=0;}}
+        c.menuText(left,y,label,labelInk);c.menuText(valueX,y,value,valueInk);
     }
     std::string trackListValue(int item) const {
         auto* m=metroModule;if(!m)return {};int id=trackMenuParam(m,item);if(id<0)return {};
         int v=integer(id);std::string shown;
-        if(item==0)shown=v?string::f("%+d",v):"--";
+        if(item==0)shown=v?string::f("%+d",v):"-";
         else if(item==1)shown=v?std::to_string(v):"Shared";
         else if(item==4){const char* names[]={"Switch","Single","Sngl+Rst","Multi","Multi+Rst","Hold","Hold+Rst"};shown=names[metro::clamp(v,0,6)];}
         else shown=previewDisplayString(m,id);
@@ -366,8 +371,9 @@ struct HardwareDisplay : HardwareControl {
             }
         } else if(page==Metropolix::TRACK_MENU_PAGE) {
             int cursor=m?m->trackMenuCursor.load():0,start=listStart(cursor,TrackMenuCount);
-            c.text(1,1,string::f("TRACK %d SETUP",t+1));
-            for(int row=0;row<4;++row){int item=start+row,id=m?trackMenuParam(m,item):-1;std::string label=trackMenuName(item);if(id>=0)label+=":";listRow(c,row,label,trackListValue(item),item==cursor,f && id>=0);}
+            bool compact=m && (m->workflowUntil>system::getTime() || m->heldTrackReset.load());
+            c.captionText(1,2,string::f("TRACK %d SETUP",t+1));
+            for(int row=0;row<4;++row){int item=start+row,id=m?trackMenuParam(m,item):-1;std::string label=trackMenuName(item);if(id>=0)label+=":";listRow(c,row,label,trackListValue(item),item==cursor,f && id>=0,compact);}
             if(m && m->workflowUntil>system::getTime())c.text(1,59,m->workflowMessage);
             else if(m && m->heldTrackReset.load())c.text(1,59,string::f("COPY TRK %d MENU",m->heldTrackReset.load()&1?1:2));
             return c;
@@ -448,8 +454,8 @@ struct HardwareDisplay : HardwareControl {
             } else c.text(1,57,save?"SELECT SLOT TO SAVE":"SELECT SLOT TO LOAD");
             return c;
         } else if(page==Metropolix::PRESET_SETUP_PAGE) {
-            int selected=presetSetupDisplayRow(f),start=metro::clamp(selected-1,0,5);if(selected<4)start=0;c.text(1,1,"PRESETS SETUP");
-            for(int row=0;row<4;++row){int item=presetSetupDisplayItem(start+row);if(item<0){c.text(1,14+row*12,"RACK");continue;}listRow(c,row,std::string(presetSetupName(item))+":",presetSetupValue(m,item),item==f,m && m->presetSetupEditing.load());}
+            int selected=presetSetupDisplayRow(f),start=metro::clamp(selected-1,0,5);if(selected<4)start=0;c.captionText(1,2,"PRESETS SETUP");
+            for(int row=0;row<4;++row){int item=presetSetupDisplayItem(start+row);if(item<0){c.captionText(1,listY(row)+2,"RACK");continue;}listRow(c,row,std::string(presetSetupName(item))+":",presetSetupValue(m,item),item==f,m && m->presetSetupEditing.load());}
             return c;
         } else if(page==Metropolix::CHAIN_PAGE && m) {
             const char* colors[]={"Red","Orange","Yellow","Green","Cyan","Blue","Magenta","Pink"};
@@ -507,17 +513,17 @@ struct HardwareDisplay : HardwareControl {
             int cursor=m?(presets?m->backupPresetCursor.load():m->backupCursor.load()):0;
             int count=presets?BackupPresetCount:BackupCount,start=listStart(cursor,count);
             c.text(1,1,presets?"PRESET EXPORT":"BACKUP FILES");
-            for(int row=0;row<4 && start+row<count;++row){int item=start+row;listRow(c,row,presets?backupPresetName(item):backupName(item),"",item==cursor,false);}
+            for(int row=0;row<4 && start+row<count;++row){int item=start+row;listRow(c,row,presets?backupPresetName(item):backupName(item),"",item==cursor,false,true);}
             c.text(1,59,m && system::getTime()<m->backupNoticeUntil?m->backupNotice:presets?"CLICK TO EXPORT":"JSON BACKUP");return c;
         } else if(page==Metropolix::FACTORY_PAGE){
             c.text(1,1,"LAB "+labVersion());int cursor=m?m->factoryCursor.load():0;
-            for(int action=0;action<2;++action)listRow(c,action,factoryName(action),"",action==cursor,false);
+            for(int action=0;action<2;++action)listRow(c,action,factoryName(action),"",action==cursor,false,true);
             c.text(1,59,m && system::getTime()<m->factoryNoticeUntil?m->factoryNotice:"CONFIRM / UNDO");return c;
         } else if(page==Metropolix::FACTORY_CONFIRM_PAGE){
             int action=m?m->factoryCursor.load():0,choice=m?m->factoryConfirmCursor:0;
             c.text(1,1,action?"CLEAR 64 PRESETS?":"RESET SETTINGS?");
             c.text(1,14,action?"KEEP LIVE SETTINGS":"KEEP 64 PRESETS");
-            for(int n=0;n<2;++n)listRow(c,n+2,n?"Apply":"Cancel","",n==choice,false);return c;
+            for(int n=0;n<2;++n)listRow(c,n+2,n?"Apply":"Cancel","",n==choice,false,true);return c;
         } else if(page==Metropolix::MX_SETUP_PAGE){
             int mode=integer(Metropolix::MX_MODE),assign=m?mxAssignment(m):-1;
             field(c,0,"MX - EXPANDER",m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",!f,128,1);c.right(126,2,"GATE");
@@ -528,9 +534,9 @@ struct HardwareDisplay : HardwareControl {
             int start=metro::clamp(selected-1,0,setupDisplayRow(SetupMenuCount-1)-3);
             // Keep the first four reference options together at the top.
             if(cursor<4)start=0;
-            c.text(1,1,"SETUP");
-            for(int row=0;row<4;++row){int displayRow=start+row,item=setupDisplayItem(displayRow),y=12+row*12;
-                if(item<0){c.text(1,y+2,setupCategoryName(displayRow));continue;}
+            c.captionText(2,1,"SETUP");
+            for(int row=0;row<4;++row){int displayRow=start+row,item=setupDisplayItem(displayRow),y=listY(row);
+                if(item<0){c.captionText(1,y+2,setupCategoryName(displayRow));continue;}
                 int id=m?setupMenuParam(m,item):-1;std::string label=setupMenuName(item);if(id>=0)label+=":";
                 listRow(c,row,label,setupMenuValue(m,id),item==cursor,f && id>=0);
             }
@@ -538,11 +544,11 @@ struct HardwareDisplay : HardwareControl {
         } else if(page==Metropolix::GLOBAL_SETUP_PAGE || page==Metropolix::UI_SETUP_PAGE || page==Metropolix::MIDI_SETUP_PAGE) {
             bool global=page==Metropolix::GLOBAL_SETUP_PAGE,ui=page==Metropolix::UI_SETUP_PAGE;
             int cursor=m?(global?m->globalCursor.load():ui?m->uiSetupCursor.load():m->midiSetupCursor.load()):0,count=global?GlobalMenuCount:ui?UiSetupCount:MidiSetupCount,start=listStart(cursor,count);
-            c.text(1,1,global?"GLOBAL SETUP":ui?"UI SETUP":"MIDI SETUP");
+            c.captionText(1,2,global?"GLOBAL SETUP":ui?"UI SETUP":"MIDI SETUP");
             for(int row=0;row<4;++row){int item=start+row,id=m?(global?globalMenuParam(m,item):ui?uiSetupParam(m,item):midiSetupParam(m,item)):-1;std::string label=global?globalMenuName(item):ui?uiSetupName(item):midiSetupName(item);if(id>=0)label+=":";else if(label=="Backup files…")label="Backup Files...";listRow(c,row,label,setupMenuValue(m,id),item==cursor,f && id>=0);}
             return c;
         } else if(page==Metropolix::MOD_MENU_PAGE){
-            int cursor=m?m->modMenuCursor.load():0;c.text(1,1,string::f("MOD %d SETUP",l+1));
+            int cursor=m?m->modMenuCursor.load():0;c.captionText(1,2,string::f("MOD %d SETUP",l+1));
             for(int item=0;item<4;++item){int id=m?modMenuParam(m,item):-1;std::string label=modMenuName(item);if(id>=0)label+=":";listRow(c,item,label,id>=0?previewDisplayString(m,id):"",item==cursor,f && id>=0);}
             return c;
         } else if(page==Metropolix::TUNER_PAGE){
