@@ -1,4 +1,4 @@
-# Preset Thru pickup — 2.23.0
+# Preset Thru pickup — 2.67.0
 
 SETUP → Presets Setup offers **Pitch Load: Off / Thru / Jump** and
 **Ctrl Load: Off / Assigns / Thru / Jump**. The same named choices are in the
@@ -18,7 +18,17 @@ position** to apply its current position immediately. Undo/redo preserves both
 physical position and pickup state, including the takeover action.
 
 Native numeric entry and reset move the physical control and follow its pickup
-policy. Use explicit takeover when you want to apply a value short of the saved
+policy. Undo/Redo preserves both the physical position and recalled target for
+numeric entry, Initialize, double-click reset, wheel edits and CTRL's Centre
+knob action. A crossing-and-return wheel gesture retains its pickup-state
+change as one history action. Zero/clamped scrolling adds none, outside edits
+survive leaving the control, and patch reset/restore discards pending scrolling.
+
+The temporary pitch popup shows the physical slider selection while HOME2
+retains the remembered base-note overview; neither includes temporary
+modulation or accumulation. See [display behavior](UI-FIDELITY.md).
+
+Use explicit takeover when you want to apply a value short of the saved
 position. Setting Off releases the saved override; changing to Jump lets the
 next movement take over without requiring a crossing.
 

@@ -22,9 +22,12 @@ struct ParameterMenuTarget {
     }
     void write(const std::function<void(ParamQuantity*)>& apply,const std::string& name) const {
         auto* q=quantity();if(!q || readOnly())return;
+        auto* m=dynamic_cast<Metropolix*>(q->module);
+        auto pickup=m && m->waitingPickup(paramId)?uiPickup(m,paramId):metro::Pickup{};
         float before=q->ParamQuantity::getValue();apply(q);float after=q->ParamQuantity::getValue();
-        if(auto* m=dynamic_cast<Metropolix*>(q->module))m->cancelDraft();
+        if(m){m->cancelDraft();m->previewPitchEdit(paramId,before,after);}
         if(before==after)return;
+        if(pickup.active){panelControlHistory(m,paramId,before,after,pickup,pickupAfterValue(m,paramId,pickup,after),name);return;}
         auto* h=new history::ParamChange;h->name=name;h->moduleId=moduleId;h->paramId=paramId;h->oldValue=before;h->newValue=after;APP->history->push(h);
     }
 };

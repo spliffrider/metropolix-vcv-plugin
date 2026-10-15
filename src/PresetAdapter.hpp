@@ -26,6 +26,7 @@ struct PresetCommand {
     enum Kind { Load, Cancel, Restore, Initialize, PanelEdit } kind = Cancel;
     Snapshot snapshot, other;
     metro::PanelPickup pickup;std::array<float,10> physical{};unsigned pickupMask=0;
+    bool preservePhysicalEdits=false; // UI receipts must not rewind a newer direct edit.
     int slot = -1;
 };
 struct PresetRecall {
@@ -175,7 +176,7 @@ void processPresetCommands(bool run, bool external, bool reset) {
     bool consumed = presetCommands.pop(c);
     if (consumed) {
         if(c.kind!=PresetCommand::PanelEdit)audioPendingMidi=false;
-        if(c.kind==PresetCommand::PanelEdit){for(int i=0;i<10;++i)if(c.pickupMask & (1u<<i)){params[panelParam(i)].setValue(c.physical[i]);panelPickup[i]=c.pickup[i];}readSettings();}
+        if(c.kind==PresetCommand::PanelEdit){for(int i=0;i<10;++i)if(c.pickupMask & (1u<<i)){int id=panelParam(i);if(!c.preservePhysicalEdits || params[id].getValue()==c.physical[i])params[id].setValue(c.physical[i]);panelPickup[i]=c.pickup[i];}readSettings();}
         else if(c.kind==PresetCommand::Initialize){pendingPreset=c.snapshot;audioPendingSlot=-2;applyPendingPreset(false);}
         else if (c.kind == PresetCommand::Restore) {
             audioPendingSlot = -1;

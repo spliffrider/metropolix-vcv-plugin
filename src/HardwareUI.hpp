@@ -85,6 +85,7 @@ int screenParam(Metropolix* m) {
 }
 void screenPage(Metropolix* m, int page) {
     if(!m) return;
+    m->clearPitchPreview();
     if(m->timingShortcutHeld.load() && m->timingShortcutHeld.load()!=page){m->timingShortcutHeld.store(0);m->timingShortcutUsed.store(true);}
     if(page!=Metropolix::TUNER_PAGE)m->tunerActive.store(false);
     if(m->uiPage.load()==Metropolix::LOOPY_PAGE && page!=Metropolix::LOOPY_PAGE && m->loopyHeld.load() && m->integer(Metropolix::RUN))m->latchLoopy();
@@ -236,6 +237,20 @@ struct HardwareControl : ValueKnob {
     std::vector<int> gestureIds;
     std::vector<float> gestureBefore;
     int pickupGestureParam=-1;float pickupPhysicalBefore=0;metro::Pickup pickupBefore,pickupAfter;
+    int pickupScrollParam=-1;float pickupScrollPhysicalBefore=0,pickupScrollPhysicalAfter=0;metro::Pickup pickupScrollBefore,pickupScrollAfter;std::uint64_t pickupScrollSerial=0;
+    bool finishPickupScroll(const event::Leave& e) {
+        if(pickupScrollParam<0 || !metroModule)return false;
+        int id=pickupScrollParam;float current=metroModule->params[id].getValue();
+        if(pickupScrollSerial!=metroModule->uiRestoreSerial.load()) {
+            auto* boundModule=module;module=nullptr;bool enabled=settings::knobScroll;settings::knobScroll=true;ValueKnob::onLeave(e);settings::knobScroll=enabled;module=boundModule;pickupScrollParam=-1;return true;
+        }
+        // Native Knob commits scroll history on Leave. Hide its raw-only
+        // difference, then record the physical value and pickup state together.
+        metroModule->params[id].setValue(pickupScrollPhysicalBefore);
+        bool enabled=settings::knobScroll;settings::knobScroll=true;ValueKnob::onLeave(e);settings::knobScroll=enabled;
+        metroModule->params[id].setValue(current);pickupScrollParam=-1;
+        panelControlHistory(metroModule,id,pickupScrollPhysicalBefore,pickupScrollPhysicalAfter,pickupScrollBefore,pickupScrollAfter,"scroll recalled control");return true;
+    }
     HardwareControl() { smooth=false; forceLinear=true; speed=.55f; box.size=Vec(16,16); }
     std::string adjustmentText() override {
         auto* q=getParamQuantity();if(!q)return {};
@@ -266,7 +281,7 @@ struct HardwareControl : ValueKnob {
         paramId=id>=0 ? id : 0;
         if(auto* q=getParamQuantity()) speed=customSpeed>0?customSpeed:(q->snapEnabled && q->getRange()>0?std::max(.7f,30.f/q->getRange()):.7f);
     }
-    std::string tooltipText() {
+    virtual std::string tooltipText() {
         auto* q=getParamQuantity();
         std::string s=q ? q->getString() : name;
         if(controllerOwner>=0 && metroModule) s=metroModule->getParamQuantity(paramId)->getString()+string::f("\nControlled by CTRL %d. Turn that knob; right-click to change its assignment.",controllerOwner+1);
@@ -288,7 +303,7 @@ struct HardwareControl : ValueKnob {
         auto* tooltip=new HardwareTooltip; tooltip->owner=this; tip=tooltip;
         tip->text=tooltipText(); APP->scene->addChild(tip);
     }
-    void onLeave(const event::Leave& e) override { clearTip(); ValueKnob::onLeave(e); }
+    void onLeave(const event::Leave& e) override { clearTip();if(!finishPickupScroll(e))ValueKnob::onLeave(e); }
     void step() override {
         invalidateDraft(metroModule);
         invalidateOutputDrafts(metroModule);
@@ -312,8 +327,10 @@ struct HardwareControl : ValueKnob {
     }
     void onHover(const event::Hover& e) override { app::ParamWidget::onHover(e); }
     void onButton(const event::Button& e) override {
+        if(e.action==GLFW_PRESS && pickupScrollParam>=0){event::Leave leave;leave.context=e.context;finishPickupScroll(leave);}
         if(e.button==GLFW_MOUSE_BUTTON_LEFT && e.action==GLFW_PRESS)pressMods=e.mods;
         bind();
+        if(metroModule && (e.button!=GLFW_MOUSE_BUTTON_LEFT || paramId<Metropolix::PITCH || paramId>=Metropolix::PITCH+8))metroModule->clearPitchPreview();
         if(e.button==GLFW_MOUSE_BUTTON_RIGHT && e.action==GLFW_PRESS) {
             if(metroModule && std::find(metroModule->uiDraftIds.begin(),metroModule->uiDraftIds.end(),paramId)!=metroModule->uiDraftIds.end())metroModule->cancelDraft();
             clearTip();
@@ -327,7 +344,9 @@ struct HardwareControl : ValueKnob {
     }
     void onDragStart(const event::DragStart& e) override {
         if(e.button!=GLFW_MOUSE_BUTTON_LEFT)return;
-        bind(); dragging=true; moved=0; shortcutEdited=false;clearTip();heldSince=system::getTime();longFired=false;
+        if(pickupScrollParam>=0){event::Leave leave;leave.context=e.context;finishPickupScroll(leave);}
+        bind();if(metroModule && (paramId<Metropolix::PITCH || paramId>=Metropolix::PITCH+8))metroModule->clearPitchPreview();
+        dragging=true; moved=0; shortcutEdited=false;clearTip();heldSince=system::getTime();longFired=false;
         gestureParam=(module || controllerOwner>=0)?paramId:-1;gestureOwner=controllerOwner;ctrlBlocked=controllerOwner>=0;ctrlTakeover=false;
         navigating=navigationMode && navigationMode(); navigationDelta=0;
         if(dragAction) dragAction();
@@ -449,8 +468,28 @@ struct HardwareControl : ValueKnob {
         if(releaseAction)releaseAction();
         dragging=false;pressMods=0;clearTip();
     }
+    void onHoverScroll(const event::HoverScroll& e) override {
+        if(e.scrollDelta.y==0)return;
+        if(pickupScrollParam>=0 && metroModule && pickupScrollSerial!=metroModule->uiRestoreSerial.load()){event::Leave leave;leave.context=e.context;finishPickupScroll(leave);}
+        bind();if(metroModule && (paramId<Metropolix::PITCH || paramId>=Metropolix::PITCH+8))metroModule->clearPitchPreview();
+        int candidate=-1;float candidateValue=0;metro::Pickup candidatePickup;std::uint64_t candidateSerial=0;
+        if(pickupScrollParam<0 && !dragging && !adjusting && metroModule && getParamQuantity() && metroModule->waitingPickup(paramId) && settings::knobScroll && !APP->scene->rackScroll->isScrolling()) {
+            // Finish an earlier native scroll before capturing a newly recalled
+            // target, so its old-value cell cannot generate a duplicate receipt.
+            event::Leave leave;leave.context=e.context;ValueKnob::onLeave(leave);
+            candidate=paramId;candidateValue=metroModule->params[paramId].getValue();candidatePickup=uiPickup(metroModule,paramId);candidateSerial=metroModule->uiRestoreSerial.load();
+        }
+        float before=getParamQuantity()?getParamQuantity()->ParamQuantity::getValue():0;
+        ValueKnob::onHoverScroll(e);
+        if(candidate>=0) {
+            if(metroModule->params[candidate].getValue()!=candidateValue){pickupScrollParam=candidate;pickupScrollPhysicalBefore=pickupScrollPhysicalAfter=candidateValue;pickupScrollBefore=pickupScrollAfter=candidatePickup;pickupScrollSerial=candidateSerial;}
+            else {event::Leave leave;leave.context=e.context;ValueKnob::onLeave(leave);}
+        }
+        if(pickupScrollParam>=0 && metroModule->params[pickupScrollParam].getValue()!=before){pickupScrollPhysicalAfter=metroModule->params[pickupScrollParam].getValue();pickupScrollAfter=pickupAfterValue(metroModule,pickupScrollParam,pickupScrollAfter,pickupScrollPhysicalAfter);}
+        if(pickupGestureParam>=0 && getParamQuantity() && getParamQuantity()->ParamQuantity::getValue()!=before)pickupAfter=pickupAfterValue(metroModule,pickupGestureParam,pickupAfter,getParamQuantity()->ParamQuantity::getValue());
+    }
     void onAction(const event::Action&) override { if(!finishingClick && !ctrlTakeover && moved<3.f && !longFired && action) action(); }
-    void onDoubleClick(const event::DoubleClick& e) override { if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();ValueKnob::onDoubleClick(e);} }
+    void onDoubleClick(const event::DoubleClick& e) override { if(pickupScrollParam>=0){event::Leave leave;leave.context=e.context;finishPickupScroll(leave);}if(doubleClickReset && getParamQuantity()){if(metroModule)metroModule->cancelDraft();ValueKnob::onDoubleClick(e);} }
     void appendContextMenu(ui::Menu* menu) override { if(extraMenu) extraMenu(menu);auto* m=metroModule;int id=paramId;if(m && m->waitingPickup(id))menu->addChild(createMenuItem("Take over at current physical position","",[m,id]{takeOverPanel(m,id);})); }
     void draw(const DrawArgs& args) override {
         auto* vg=args.vg; float x=box.size.x/2, y=box.size.y/2, r=std::min(x,y)-.7f;
@@ -505,6 +544,16 @@ struct HardwareSlider : HardwareControl {
     int stage=0;
     PitchSliderLight* pitchLight=nullptr;
     HardwareSlider() { box.size=Vec(22,82);pitchLight=new PitchSliderLight;addChild(pitchLight); }
+    void onDragMove(const event::DragMove& e) override {
+        float before=getParamQuantity()?getParamQuantity()->ParamQuantity::getValue():0;
+        HardwareControl::onDragMove(e);
+        if(kind==PITCH_SLIDER && metroModule && getParamQuantity())metroModule->previewPitchEdit(paramId,before,getParamQuantity()->ParamQuantity::getValue());
+    }
+    void onHoverScroll(const event::HoverScroll& e) override {
+        bind();float before=getParamQuantity()?getParamQuantity()->ParamQuantity::getValue():0;
+        HardwareControl::onHoverScroll(e);
+        if(kind==PITCH_SLIDER && metroModule && getParamQuantity())metroModule->previewPitchEdit(paramId,before,getParamQuantity()->ParamQuantity::getValue());
+    }
     float handleHeight() const { return kind==PULSE_SWITCH?25.f:16.f; }
     float handleCenter() {
         auto* q=getParamQuantity();float v=q?q->getScaledValue():.35f;
