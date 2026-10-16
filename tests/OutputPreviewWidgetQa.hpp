@@ -67,7 +67,7 @@ for(int n=0;n<2;++n) {
         open(n,field,37);drag(display,22);before=raw();previous=lastAction();resets &= hold(1.1) && m->integer(id)==(n?14:0) && m->uiField.load()==0 && m->outputDraft[n].load()<0 && exactUndo(previous,before,raw()) && only(before,id);
         before=raw();previous=lastAction();noops &= hold(1.1) && raw()==before && lastAction()==previous;
     }
-    for(int source:{10,37}){open(n,0,source);auto before=raw();auto* previous=lastAction();drag(display,source==10?22:-22);click(encoder);noops &= raw()==before && lastAction()==previous && m->outputDraft[n].load()<0;}
+    for(int source:{10,metro::OutputSourceCount-1}){open(n,0,source);auto before=raw();auto* previous=lastAction();drag(display,source==10?22:-22);click(encoder);noops &= raw()==before && lastAction()==previous && m->outputDraft[n].load()<0;}
     open(n,0,0);drag(display,-22);m->params[id].setValue(.25f);auto before=raw();auto* previous=lastAction();click(encoder);conflict &= raw()==before && m->outputDraft[n].load()<0 && lastAction()==previous;
     open(n,0,0);drag(encoder,-22);before=raw();previous=lastAction();press(display,GLFW_MOUSE_BUTTON_RIGHT);auto* item=menuItem("Discard pending choice");menus &= item!=nullptr;if(item){event::Action action;item->onAction(action);}closeMenus();menus &= raw()==before && m->outputDraft[n].load()<0 && lastAction()==previous;
     open(n,0,37);drag(encoder,22);before=raw();previous=lastAction();press(display,GLFW_MOUSE_BUTTON_RIGHT);item=menuItem("Reset output assignment");menus &= item!=nullptr;if(item){event::Action action;item->onAction(action);}closeMenus();resets &= m->integer(id)==(n?14:0) && m->outputDraft[n].load()<0 && exactUndo(previous,before,raw());
