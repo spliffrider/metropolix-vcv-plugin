@@ -314,7 +314,11 @@ struct Metropolix : Module {
     int controlCounter = 0;
     std::atomic<int> selectedTrack{0}, selectedStage{0}, selectedRow{0};
     std::atomic<bool> expanded{false}, externalClock{false};
-    std::atomic<bool> modEditor{false};
+    std::atomic<bool> modEditor{false}, performanceEditor{false};
+    void openDesktopView(int view) {
+        performanceEditor.store(view==2);modEditor.store(view==1);
+        uiMod.store(view==1);expanded.store(true);
+    }
     std::atomic<int> selectedLane{0};
     std::atomic<int> selectedAux{0};
     std::atomic<int> selectedCtrl{0};
@@ -370,6 +374,7 @@ struct Metropolix : Module {
     std::atomic<bool> tunerActive{false}, transportRunning{false};
     bool transportRestoreHold=false; // Audio thread; restore writes under engine exclusion.
     std::atomic<unsigned> heldTrackReset{0};
+    std::atomic<bool> resetFromUi{false};
     std::atomic<int> uiHome{0};
     std::atomic<int> pitchPreviewStage{-1};
     std::atomic<std::uint64_t> uiRestoreSerial{0}; // Invalidate pending UI input on reset/restore.
@@ -397,6 +402,9 @@ struct Metropolix : Module {
     std::atomic<int> playStage[2];
     std::atomic<int> playPulse[2];
     std::atomic<float> playPitch[2];
+    std::atomic<float> playGate[2];
+    std::atomic<int> playAccumulation[2];
+    std::atomic<bool> playMuted[2];
     std::atomic<float> playCv[2], pitchPre[2], pitchPost[2];
     std::atomic<float> displayBpm{120.f};
     double meterClockElapsed=0.0;
@@ -464,6 +472,7 @@ struct Metropolix : Module {
             playStage[t].store(-1);
             playPulse[t].store(0);
             playPitch[t].store(0.f);
+            playGate[t].store(0.f);playAccumulation[t].store(0);playMuted[t].store(false);
             playCv[t].store(0.f); pitchPre[t].store(0.f); pitchPost[t].store(0.f);
             soundingScale[t].store(1);
             std::string name = "Track " + std::to_string(t + 1) + " ";
@@ -731,6 +740,7 @@ struct Metropolix : Module {
         bool clockEdge = clockTrigger.process(inputs[CLOCK_IN].getVoltage(), 0.1f, 1.5f);
         bool resetEdge = resetTrigger.process(inputs[RESET_IN].getVoltage(), 0.1f, 1.5f);
         bool button = resetButton.process(params[RESET].getValue());
+        button=resetFromUi.exchange(false)||button;
         int source=integer(CLOCK_SOURCE);
         bool external = source==2 || source==3 || (source==0 && inputs[CLOCK_IN].isConnected());
         if(external!=meterWasExternal || (button && !heldTrackReset.load()) || (resetEdge && integer(RESET_INPUT_MODE)==0))externalDivider.reset();
@@ -777,6 +787,9 @@ struct Metropolix : Module {
                 playStage[t].store(state.stage, std::memory_order_relaxed);
                 playPulse[t].store(state.pulse, std::memory_order_relaxed);
                 playPitch[t].store(state.pitch, std::memory_order_relaxed);
+                playGate[t].store(state.gate,std::memory_order_relaxed);
+                playAccumulation[t].store(state.activeAccumulation,std::memory_order_relaxed);
+                playMuted[t].store(sequencer.trackMuted(t),std::memory_order_relaxed);
                 playCv[t].store(state.cv, std::memory_order_relaxed);
                 soundingScale[t].store(sequencer.scaleIndex(t),std::memory_order_relaxed);
                 pitchPre[t].store(sequencer.modulation.routes[t][metro::ModPitchPre]+sequencer.controls.values[t][metro::CtrlPitchPre], std::memory_order_relaxed);
@@ -829,6 +842,7 @@ struct Metropolix : Module {
     void onSampleRateChange(const SampleRateChangeEvent& e) override {outputDelay.prepare(e.sampleRate);}
     void onReset(const ResetEvent& e) override {
         ++uiRestoreSerial;
+        resetFromUi.store(false);
         clearPitchPreview();
         resetMidiRuntime();
         factoryCursor.store(0);factoryConfirmCursor=0;factoryNoticeUntil=0;if(uiPage.load()==FACTORY_CONFIRM_PAGE)uiPage.store(FACTORY_PAGE);
@@ -884,6 +898,7 @@ struct Metropolix : Module {
         json_object_set_new(root, "uiEdit", json_boolean(uiEdit.load()));
         json_object_set_new(root, "uiChooseFunction", json_boolean(uiChooseFunction.load()));
         json_object_set_new(root, "modEditor", json_boolean(modEditor.load()));
+        json_object_set_new(root, "performanceEditor", json_boolean(performanceEditor.load()));
         json_object_set_new(root, "selectedLane", json_integer(selectedLane.load()));
         json_object_set_new(root, "expanded", json_boolean(expanded.load()));
         json_object_set_new(root, "selectedTrack", json_integer(selectedTrack.load()));
@@ -893,6 +908,7 @@ struct Metropolix : Module {
     }
     void dataFromJson(json_t* root) override {
         ++uiRestoreSerial;
+        resetFromUi.store(false);
         clearPitchPreview();
         resetMidiRuntime();midiInput.fromJson(json_object_get(root,"midiInput"));midiOutput.fromJson(json_object_get(root,"midiOutput"));midiInput.setChannel(-1);midiOutput.setChannel(-1);
         clearLoopy();loopyMuteCommands.store(0);loopyMuteHeld.store(false);
@@ -972,6 +988,7 @@ struct Metropolix : Module {
         }
         expanded.store(json_is_true(json_object_get(root, "expanded")));
         modEditor.store(json_is_true(json_object_get(root, "modEditor")));
+        performanceEditor.store(json_is_true(json_object_get(root,"performanceEditor")));
         selectedLane.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedLane"))), 0, 7));
         selectedTrack.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedTrack"))), 0, 1));
         selectedStage.store(metro::clamp(static_cast<int>(json_integer_value(json_object_get(root, "selectedStage"))), 0, 7));

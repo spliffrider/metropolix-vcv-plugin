@@ -8,7 +8,7 @@ hardware-layout panel and desktop editing. This is **not an official Intellijel
 product**. It outputs pitch, gates, modulation and MIDI; connect voice modules
 or load a demo patch to hear it.
 
-**Current release: [2.70.0 — public alpha](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.70.0).** Core sequencing and performance
+**Current release: [2.71.0 — public alpha](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.71.0).** Core sequencing and performance
 workflows are implemented. Hardware SysEx and the original factory preset bank
 are missing, and equivalence with a physical Metropolix has not been verified.
 The behavioral reference is the [firmware 1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf).
@@ -19,7 +19,7 @@ The behavioral reference is the [firmware 1.6.5 manual](https://intellijel.com/d
 
 ## Feature status
 
-### Implemented in 2.70.0
+### Implemented in 2.71.0
 
 These features are available for testing. “Implemented” describes the software;
 the hardware-comparison and platform limits below still apply.
@@ -33,7 +33,7 @@ the hardware-comparison and platform limits below still apply.
 | Modulation and performance | Eight MOD lanes, three AUX inputs, both CTRL knobs, 38 AUX/MOD destinations and 29 CTRL destinations; Loopy, Stage Player, latching, mutes, copy/paste and randomize/morph/restore. [Routing](docs/COMPLETE-ROUTING.md), [Loopy](docs/LOOPY.md) |
 | Presets and chains | 64 user presets, selective/queued recall, pickup, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain and plugin JSON backups. [Presets](docs/PRESETS.md), [chains](docs/PRESET-CHAINS.md) |
 | Clock, MIDI and MX | Internal/external clock and reset options; assignable A/B including CV Mod Trigs; MIDI notes/CC/clock/transport/control; nine MX modes and independent MIDI MX output. [Clock](docs/CLOCK-RESET.md), [MIDI](docs/MIDI.md), [MX](docs/MX.md) |
-| Rack interaction | Hover help, live adjustment readouts, click-and-drag editing, right-click menus, numeric entry, undo/redo, parameter automation and patch persistence. [Controls](docs/HARDWARE-UI.md) |
+| Rack interaction | Optional [Performance view](docs/DESKTOP-PERFORMANCE.md) with keyboard stage playing, mouse loop ranges, visible mutes and live feedback; hover help, live adjustment readouts, click-and-drag editing, right-click menus, numeric entry, undo/redo, parameter automation and patch persistence. [Controls](docs/HARDWARE-UI.md) |
 
 ### Missing functions
 
@@ -77,10 +77,10 @@ ZIP/TAR downloads are for developers, not installation.
 
 | Rack platform | Plugin download | Folder inside Rack's user folder |
 | --- | --- | --- |
-| Windows x64 | [Windows package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-win-x64.vcvplugin) | `plugins-win-x64` |
-| Linux x64 | [Linux package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-lin-x64.vcvplugin) | `plugins-lin-x64` |
-| Intel Mac / Intel Rack under Rosetta | [Intel Mac package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-x64.vcvplugin) | `plugins-mac-x64` |
-| Native Apple Silicon Rack | [Apple Silicon package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-arm64.vcvplugin) | `plugins-mac-arm64` |
+| Windows x64 | [Windows package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.0/MetropolixLab-2.71.0-win-x64.vcvplugin) | `plugins-win-x64` |
+| Linux x64 | [Linux package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.0/MetropolixLab-2.71.0-lin-x64.vcvplugin) | `plugins-lin-x64` |
+| Intel Mac / Intel Rack under Rosetta | [Intel Mac package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.0/MetropolixLab-2.71.0-mac-x64.vcvplugin) | `plugins-mac-x64` |
+| Native Apple Silicon Rack | [Apple Silicon package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.0/MetropolixLab-2.71.0-mac-arm64.vcvplugin) | `plugins-mac-arm64` |
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch and close Rack.
@@ -90,7 +90,7 @@ ZIP/TAR downloads are for developers, not installation.
 Rack extracts and loads the package on startup, following the
 [official manual installation procedure](https://vcvrack.com/manual/Installing#installing-plugins-not-available-on-the-vcv-library).
 For a future GitHub update, repeat these steps with the newer package.
-[Release notes and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.70.0) ·
+[Release notes and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.71.0) ·
 [Installation help and test guide](docs/TESTING.md)
 
 ## Watch or play a demo
@@ -108,6 +108,12 @@ the sidechain compression. [Pulse Pressure routing](docs/PULSE-PRESSURE.md) ·
 [Sidechain routing](docs/SIDECHAIN-DEMO.md) · [More example patches](examples/)
 
 ## Playing and editing
+
+For mouse/keyboard performance, hover over Metropolix and press **Shift+P**.
+The optional view has stage pads, range dragging and visible mutes. Click
+**CLICK TO ARM KEYBOARD** for stage keys 1–8; Escape releases and disarms.
+[Desktop performance guide](docs/DESKTOP-PERFORMANCE.md) ·
+[Opening groove with the view ready](examples/Pulse-Pressure-Desktop.vcv)
 
 - **RUN** starts/stops; **RESET** restarts the sequence and accumulators.
 - Drag sliders and value fields **up to increase, down to decrease**. Hover for

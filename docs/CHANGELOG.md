@@ -6,6 +6,10 @@ implemented features, missing functions and verification limits, use the
 Earlier milestones are recorded in [development history](DEVELOPMENT.md#imported-milestones).
 Download packages from [GitHub Releases](https://github.com/spliffrider/metropolix-vcv-plugin/releases).
 
+## 2.71.0
+
+Adds an optional [Desktop performance view](DESKTOP-PERFORMANCE.md): held number-row/numpad stage keys, two-boundary keyboard latching, mouse range drags, visible track/MOD mutes, transport and live pitch/gate/accumulator feedback. Keyboard control is explicitly armed and releases temporary inputs on focus/view changes. The view is saved, but input ownership and holds never are. Hardware panel, parameter/port IDs and musical preset formats remain unchanged.
+
 ## 2.70.0
 
 Adds the firmware 1.6.5 [Mod Trigs outputs](OUTPUT-ROUTING.md), [MX Mod Gate/Mod Trig and MIDI MX](MX.md), including MIDI operation without an expander. The MX screen follows the new manual. Older patches and banks import; files saved in the new formats require 2.70.

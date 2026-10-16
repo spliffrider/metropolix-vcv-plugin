@@ -94,7 +94,7 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
 }
 inline json_t* capture(json_t* module,Scope scope){
     auto* root=json_pack("{s:s,s:i,s:s}","type","MetropolixLabBackup","format",1,"scope",scopeName(scope));auto* data=json_object_get(module,"data");
-    if(scope!=Presets){json_object_set(root,"params",json_object_get(module,"params"));Json state(json_deep_copy(data));for(const char* key:{"midiInput","midiOutput","presets","presetFormat","chains","chainFormat","expanded","modEditor"})json_object_del(state.get(),key);json_object_set_new(root,"state",state.release());}
+    if(scope!=Presets){json_object_set(root,"params",json_object_get(module,"params"));Json state(json_deep_copy(data));for(const char* key:{"midiInput","midiOutput","presets","presetFormat","chains","chainFormat","expanded","modEditor","performanceEditor"})json_object_del(state.get(),key);json_object_set_new(root,"state",state.release());}
     if(scope!=Settings){auto* bank=json_object();for(const char* key:{"presets","presetFormat","chains","chainFormat"})json_object_set(bank,key,json_object_get(data,key));json_object_set_new(root,"bank",bank);}
     return root;
 }

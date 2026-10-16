@@ -1,4 +1,4 @@
-# Feature status — 2.70.0 public alpha
+# Feature status — 2.71.0 public alpha
 
 Assessment date: 2026-10-16. The reference is the
 [Metropolix firmware 1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf).
@@ -26,7 +26,7 @@ configuration, preset workflows, and external interfaces.
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing, individual mute and a separate group mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
 | A/B and performance routing | All 17 A/B function types, including 5 ms CV Mod Trigs; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT Slide/Skip pattern, Ratchet and PROB/ACCUM edits and resets, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
-| Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Unobserved glyphs/animation phases, full hardware behavior and photographic material comparisons |
+| Display and desktop editing | Optional [desktop performance view](DESKTOP-PERFORMANCE.md) with armed keyboard stages, mouse range selection, visible mutes and live pitch/gate/accumulator readouts; four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Unobserved glyphs/animation phases, full hardware behavior and photographic material comparisons |
 | Saving and integration | Rack persistence, parameter automation, 64 internal presets with Scale Lock and Loopy settings, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, nine MX expander modes and independent MIDI MX CC/Note output, scoped JSON backups | Hardware SysEx interchange |
 
 The current 789 parameters include repeated stage/lane controls; that number is

@@ -156,7 +156,7 @@ void trackSettingsMenu(Metropolix* m) {
     menu->addChild(createMenuItem("Initialize this track","",[m]{resetTrackMenu(m,true,true);}));
     menu->addChild(new ui::MenuSeparator);
     menu->addChild(createMenuItem("Open stage editor", "", [m] {
-        m->uiMod.store(false); m->modEditor.store(false); m->expanded.store(true);
+        m->openDesktopView(0);
     }));
 }
 
@@ -507,6 +507,7 @@ void openChainPage(Metropolix* m);
 #include "TimingUI.hpp"
 #include "PresetUI.hpp"
 #include "ChainUI.hpp"
+#include "PerformanceUI.hpp"
 
 struct Panel : widget::Widget {
     Metropolix* module = nullptr;
@@ -600,6 +601,7 @@ struct MetropolixWidget : ModuleWidget {
     Panel* panel;
     widget::Widget* editor;
     widget::Widget* modPanel;
+    PerformancePanel* performance;
     bool isExpanded = false;
 #ifdef METROPOLIX_QA
     int qaFrame = 0;
@@ -692,6 +694,9 @@ struct MetropolixWidget : ModuleWidget {
         cell(modPanel, module, Metropolix::OUTPUT_SOURCE_A, 20, 336, 212)->choices = Metropolix::outputSources();
         cell(modPanel, module, Metropolix::OUTPUT_SOURCE_B, 248, 336, 212)->choices = Metropolix::outputSources();
         modPanel->visible = false;
+        performance=new PerformancePanel(module);
+        performance->box.pos=Vec(HARDWARE_WIDTH,0);
+        performance->visible=false;addChild(performance);
     }
 
     void step() override {
@@ -709,23 +714,38 @@ struct MetropolixWidget : ModuleWidget {
                 else APP->scene->rack->setModulePosNearest(this, box.pos);
             }
         }
-        editor->visible = expanded && m && !m->modEditor.load();
-        modPanel->visible = expanded && m && m->modEditor.load();
+        bool performing=expanded && m && m->performanceEditor.load();
+        performance->setVisible(performing);
+        editor->visible = expanded && m && !performing && !m->modEditor.load();
+        modPanel->visible = expanded && m && !performing && m->modEditor.load();
         ModuleWidget::step();
 #ifdef METROPOLIX_QA
         qaStep();
 #endif
     }
+    void onHoverKey(const event::HoverKey& e) override {
+        auto* m=getModule<Metropolix>();
+        if(m && e.action==GLFW_PRESS && e.key==GLFW_KEY_P && (e.mods&RACK_MOD_MASK)==GLFW_MOD_SHIFT &&
+           !dynamic_cast<ui::TextField*>(APP->event->getSelectedWidget())) {
+            performance->disarm();
+            if(m->expanded.load() && m->performanceEditor.load())m->expanded.store(false);
+            else m->openDesktopView(2);
+            e.consume(this);return;
+        }
+        ModuleWidget::onHoverKey(e);
+    }
     void appendContextMenu(ui::Menu* menu) override {
         auto* m = getModule<Metropolix>();
         if (!m) return;
         menu->addChild(new ui::MenuSeparator);
+        menu->addChild(createCheckMenuItem("Desktop performance view","Shift+P",
+            [m]{return m->expanded.load() && m->performanceEditor.load();},[m]{if(m->expanded.load() && m->performanceEditor.load())m->expanded.store(false);else m->openDesktopView(2);}));
         appendMidiMenu(menu,m);appendMxMenu(menu,m);appendBackupMenu(menu,m);
         menu->addChild(createCheckMenuItem("Expanded stage editor", "",
-            [m] { return m->expanded.load() && !m->modEditor.load(); }, [m] { bool open=!m->expanded.load() || m->modEditor.load(); m->modEditor.store(false); m->uiMod.store(false); m->expanded.store(open); }));
+            [m] { return m->expanded.load() && !m->modEditor.load() && !m->performanceEditor.load(); }, [m] { bool open=!m->expanded.load() || m->modEditor.load() || m->performanceEditor.load();m->openDesktopView(0);m->expanded.store(open); }));
         menu->addChild(createMenuItem("Selected track settings", "", [m] { trackSettingsMenu(m); }));
         menu->addChild(createMenuItem("Selected stage settings", "", [m] { stageSettingsMenu(m, m->selectedStage.load()); }));
-        menu->addChild(createMenuItem("Open MOD lanes", "", [m] { m->expanded.store(true); m->modEditor.store(true); m->uiMod.store(true); }));
+        menu->addChild(createMenuItem("Open MOD lanes", "", [m] { m->openDesktopView(1); }));
         menu->addChild(createMenuItem("Selected MOD lane settings", "", [m] { modSettingsMenu(m, m->selectedLane.load()); }));
         menu->addChild(createMenuLabel("Assign A/B sources in MOD lanes. External clock = 1 pulse / 16th."));
         appendPresetMenu(menu, m);
