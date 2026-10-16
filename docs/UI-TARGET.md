@@ -71,3 +71,19 @@ effective CV-type hints and MX attachment during optional-editor resizing are
 documented in [Panel refinement](UI-FIDELITY.md). Current remaining work is in
 [Feature status](FEATURE-STATUS.md); exact material matching and hardware
 comparison are still separate human acceptance checks.
+
+## Current reference review — 2.69.0
+
+The earlier milestone paragraphs record their original scope. Panel proportions,
+control positions, labels and the independent wordmark were reviewed against
+the supplied photo and actual Rack captures. Static artwork is already cached
+in a framebuffer and includes fine horizontal grain. This remains vector
+artwork; photographic lighting and component materials are not exact pixels.
+
+The display now has independently measured masks/regions for the settings,
+performance, scale, chain, HOME, popup and stage views. See
+[current display evidence](UI-FIDELITY.md) for the precise comparison boundaries
+and [manual coverage](MANUAL-COVERAGE.md) for implemented workflows. Hover help,
+right-click choices, vertical/fine adjustment, numeric entry, grouped Undo and
+save/reopen are covered by actual Rack callbacks. Native operating-system
+mouse/focus and unusual zoom/DPI combinations still need human feedback.

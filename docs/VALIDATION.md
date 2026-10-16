@@ -1,4 +1,42 @@
-# Validation and fidelity status — 2.68.0
+# Validation and fidelity status — 2.69.0
+
+## Native stage diagrams and clear curve editing — 2.69.0
+
+Slide, Skip, CV gates and gated MOD lanes use the manual's circle/X diagrams,
+without extra stage numbers or edit arrows. Their action footer retains the
+Track:Stage or MOD:Stage identifier. Pitch/gate overrides, ratchets, probability
+and accumulation use the measured nine-pixel columns, per-stage inheritance,
+trigger/target marks, selection corners and playing-position underline. A
+maximum filled bar retains a contrasting edit arrow. Existing editing, ALT
+gestures, Encoder Confirm and Undo stay in place.
+
+Detailed CV/MOD curves now start beside a 37-pixel sidebar. Vertices follow the
+previous stage, Step transitions and the incoming stage/pulse ramp. A pulse
+ramp reaches its target at the first pulse boundary. The large edit arrow
+remains as described by manual pp105/138. The playing underline stays beside
+the sidebar. CV values use the observed bold face without a redundant V;
+MOD precision uses the real bold-font width and preserves destination units.
+The observed lowercase m completes Ramp/pRmp. Configured MIDI CC values appear
+compactly beside the turn helper and always come from the actual MIDI mapping.
+The CV Type footer follows its measured margin.
+
+Eleven independent complete native foreground masks match all 90,112 cells in
+actual Rack: five binary/output screens, five bar diagrams and the illuminated
+CV Type screen. Two further filtered curve images match 4248 coherent
+value, ramp-label, helper and footer cells; ambiguous filtered cells and their
+illustrative graph/MIDI values are excluded from that claim. Actual callbacks
+cover 112 binary button edits across both tracks/eight lanes with exact Undo,
+graph limits, playing markers, pulse/stage ramp endpoints and read-only render.
+The earlier full-screen, HOME, popup, font, ownership and pending checks remain
+passing. See [manual coverage](MANUAL-COVERAGE.md) for the wider test map.
+
+Column gains between unlabeled illustrated values are visual interpretations.
+The curve ordinate uses the model's real ±5V range; the manual's MOD example
+is not treated as a calibration oracle for its destination gain. MIDI digits
+use the existing compact caption companions, not a claimed complete native
+font. Unobserved glyphs, animation brightness and photographic materials still
+need hardware comparison. Sequencing, 787 parameter IDs, settings schema34,
+format11/522 musical snapshots and backup formats stay unchanged.
 
 ## Four HOME overviews and accurate base notes — 2.68.0
 
