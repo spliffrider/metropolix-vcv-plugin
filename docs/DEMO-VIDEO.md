@@ -1,5 +1,9 @@
 # Demonstration video
 
+The newer [Pulse Pressure performance](PULSE-PRESSURE.md) demonstrates the
+2.70.0 plugin with MX-driven drums, accumulation, ratchets, swing and native
+preset chaining. Its dedicated capture/edit commands are in that guide.
+
 [Download the 1080p MP4](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Demo-1080p.mp4).
 The 80-second showcase plays **Night Current / Variations** at 108 BPM,
 covering its 32-bar arrangement and return. Captions identify the independent

@@ -147,6 +147,13 @@ Version 2.3.0 refines the supplied hardware panel's lettering, components, marki
 
 ## Start here
 
+**[Watch Pulse Pressure (115 seconds, 1080p)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Metropolix-Lab-Pulse-Pressure.mp4)**
+is a 138 BPM performance with rolling bass, a shifting lead, five drum voices,
+an eight-bar breakdown and a full drop. The live panel, enlarged display,
+pitch traces and MX trigger indicators follow the actual Rack performance.
+Open the [playable patch](examples/Pulse-Pressure.vcv); see
+[routing, arrangement and recording instructions](docs/PULSE-PRESSURE.md).
+
 **[Watch Patches in Motion (72 seconds, 1080p)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Patches-in-Motion.mp4)**
 shows Metropolix driving complete synth and drum patches. Live pitch traces,
 gate indicators, scopes, and close-ups follow the recorded signals. Two

@@ -11,7 +11,7 @@
 struct RackAudioQa : Module {
     const bool video = std::getenv("METROPOLIX_VIDEO_QA") != nullptr;
     const int frames = (video && std::getenv("METROPOLIX_VIDEO_SECONDS") ?
-                        clamp(std::atoi(std::getenv("METROPOLIX_VIDEO_SECONDS")), 1, 80) :
+                        clamp(std::atoi(std::getenv("METROPOLIX_VIDEO_SECONDS")), 1, 180) :
                         std::getenv("METROPOLIX_VARIATIONS_QA") ? 80 :
                         std::getenv("METROPOLIX_MUSICAL_QA") ? 24 : 12) * 48000;
     std::vector<float> samples;

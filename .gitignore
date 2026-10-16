@@ -5,6 +5,7 @@
 /dist/
 /tmp/
 /checkpoints/
+/exports/
 /docs/RESUME.md
 plugin.dll
 plugin.so
