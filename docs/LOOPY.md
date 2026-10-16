@@ -1,5 +1,9 @@
 # Loopy and Stage Player — 2.34.0
 
+For direct mouse range selection, visible mutes and keyboard stage playing,
+open the optional [Desktop performance view](DESKTOP-PERFORMANCE.md) in 2.71.0
+or newer. The original panel and menu gestures below remain available.
+
 Reference: Metropolix 1.6 manual, pp.39–46 and 169. The panel keeps the hardware's
 ∞ button and eight stage buttons; desktop menus make two-boundary loops practical
 with one mouse. No physical-module comparison has been performed.

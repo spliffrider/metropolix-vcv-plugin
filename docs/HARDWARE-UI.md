@@ -1,5 +1,9 @@
 # Hardware panel and desktop interaction — 2.66.0
 
+**2.71.0:** [Desktop performance](DESKTOP-PERFORMANCE.md) adds an optional
+mouse/keyboard view alongside the original panel. Shift+P opens it while
+hovering over this module; click to arm keyboard playing.
+
 MOD ALT + TYPE opens the OLED CV TYPE page. Internal destinations fix its type; see [MOD types](MOD-TEST.md).
 
 Tiny CV drags preserve [raw Undo and normal click order](STAGE-CV.md); ALT editing uses the effective CV range when MIDI velocity forces Unipolar.
