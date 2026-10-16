@@ -11,6 +11,20 @@ the video soundtrack is recorded from the actual Rack patch.
 The [45-second sidechain companion](SIDECHAIN-DEMO.md) adds Bogaudio PRESSOR
 and compares the same groove with and without kick-driven ducking.
 
+### Just the opening groove
+
+[Download the opening loop](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Pulse-Pressure-Opening-Loop.vcv)
+to keep playing the original video's opening bass, kick, snare and closed hats.
+Chain playback and Total Pulses automatic resets are disabled, so it stays on
+that groove while you edit. The original stored presets and chain are retained.
+Select your output device in AUDIO; RUN is already enabled.
+
+For the later sidechain video's opening with bass and lead together, use
+[its opening loop](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Pulse-Pressure-Sidechain-Opening-Loop.vcv).
+PRESSOR remains at 1:1 with its existing zero-volt ratio CV, as at that video's
+start. Dependencies are the same as each full patch. Regenerate both files with
+`python scripts/create-opening-loops.py`.
+
 ## Play it
 
 Install Metropolix Lab **2.70.0 or newer**, VCV Free, Audible Instruments,
