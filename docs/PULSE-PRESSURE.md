@@ -8,6 +8,9 @@ tail, about 115 seconds in total. Every note, gate and drum trigger originates
 in Metropolix Lab. The preset chain performs the arrangement automatically;
 the video soundtrack is recorded from the actual Rack patch.
 
+The [45-second sidechain companion](SIDECHAIN-DEMO.md) adds Bogaudio PRESSOR
+and compares the same groove with and without kick-driven ducking.
+
 ## Play it
 
 Install Metropolix Lab **2.70.0 or newer**, VCV Free, Audible Instruments,

@@ -65,7 +65,7 @@ def note(volts):
 
 
 class Take:
-    def __init__(self, path):
+    def __init__(self, path, expected_duration=115):
         self.path = path
         with wave.open(str(path / 'two-track-demo.wav')) as audio:
             assert (audio.getframerate(), audio.getnchannels(), audio.getsampwidth()) == (48000, 2, 2)
@@ -76,7 +76,7 @@ class Take:
         assert max(np.diff(self.times)) < .6 and self.duration - self.times[-1] < .6
         self.signals = np.genfromtxt(path / 'signals.csv', delimiter=',', names=True)
         assert np.isfinite(self.signals.view(float)).all()
-        assert math.isclose(self.duration, 115), 'Capture the complete 115-second arrangement.'
+        assert math.isclose(self.duration, expected_duration), f'Capture the complete {expected_duration}-second arrangement.'
         self.shot_index = -1
 
     def shot(self, t):
@@ -260,7 +260,7 @@ def render_frame(take, t):
 def master_audio(take, output):
     audio = output.parent / 'Pulse-Pressure-master.wav'
     log = output.parent / 'audio-mastering.log'
-    base = 'highpass=f=25,afade=t=out:st=114.1:d=0.9'
+    base = f'highpass=f=25,afade=t=out:st={take.duration - .9:.3f}:d=0.9'
     analysis = subprocess.run([
         'ffmpeg', '-hide_banner', '-i', str(take.path / 'two-track-demo.wav'),
         '-af', base + ',loudnorm=I=-12:TP=-1:LRA=7:print_format=json', '-f', 'null', '-'
