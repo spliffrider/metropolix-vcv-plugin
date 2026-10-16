@@ -4,6 +4,7 @@ DISTRIBUTABLES += README.md examples res
 # Explicit public documentation list: local continuation notes stay local.
 DISTRIBUTABLES += docs/HARDWARE-UI.md docs/MOD-TEST.md docs/UI-TARGET.md
 DISTRIBUTABLES += docs/VALIDATION.md docs/DEVELOPMENT.md docs/TESTING.md docs/FEATURE-STATUS.md docs/MANUAL-COVERAGE.md
+DISTRIBUTABLES += docs/CHANGELOG.md docs/PULSE-PRESSURE.md docs/SIDECHAIN-DEMO.md
 DISTRIBUTABLES += docs/AUX-INPUTS.md docs/CTRL-KNOBS.md docs/PRESETS.md
 DISTRIBUTABLES += docs/PRESET-CHAINS.md
 DISTRIBUTABLES += docs/SWING.md

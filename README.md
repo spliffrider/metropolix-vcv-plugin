@@ -2,311 +2,144 @@
 
 [![Engine tests](https://github.com/spliffrider/metropolix-vcv-plugin/actions/workflows/engine-tests.yml/badge.svg)](https://github.com/spliffrider/metropolix-vcv-plugin/actions/workflows/engine-tests.yml)
 
-Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks. See the [manual coverage map](docs/MANUAL-COVERAGE.md) for implemented workflows and remaining reference gaps.
+An independent sequencer by **sensiburner**, inspired by Intellijel Metropolix:
+two note tracks, eight modulation lanes and an optional MX expander, with a
+hardware-layout panel and desktop editing. This is **not an official Intellijel
+product**. It outputs pitch, gates, modulation and MIDI; connect voice modules
+or load a demo patch to hear it.
 
-A playable, two-track sequencer based on the Metropolix 1.6.5 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.70.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+**Current release: [2.70.0 — public alpha](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.70.0).** Core sequencing and performance
+workflows are implemented. Hardware SysEx and the original factory preset bank
+are missing, and equivalence with a physical Metropolix has not been verified.
+The behavioral reference is the [firmware 1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf).
 
-**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-arm64.vcvplugin)**
+[Feature status](#feature-status) · [Download and install](#download-and-install) ·
+[Demos](#watch-or-play-a-demo) · [Report feedback](#report-a-bug-or-hardware-difference) ·
+[Release history](docs/CHANGELOG.md)
 
-**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.70.0)**
+## Feature status
 
-2.70.0 adds the firmware 1.6.5 [Mod Trigs outputs](docs/OUTPUT-ROUTING.md), [MX Mod Gate/Mod Trig and MIDI MX](docs/MX.md), including MIDI operation without an expander. The MX screen follows the new manual. Older patches and banks import; files saved in the new formats require 2.70.
+### Implemented in 2.70.0
 
-Try the [scale progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Scale-progression.vcv) to hear custom scales and roots move through C, Am, F and G.
+These features are available for testing. “Implemented” describes the software;
+the hardware-comparison and platform limits below still apply.
 
-Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Chain-performance.vcv) to watch the sequencer follow an arrangement.
+| Area | Available now |
+| --- | --- |
+| Two-track sequencing | Eight shared pitch/pulse-count/gate-type stages; independent length, offset, division, transpose, direction and all 21 play orders. [Track guide](docs/TRACK-OPTIONS.md) |
+| Groove and stage edits | Skip, probability, ratchets, gate stretching, pitch/gate overrides, independent Swing, Tempo/Analog/Acid slides and stage CV ramps/gates. [Stage controls](docs/HARDWARE-UI.md) |
+| Accumulators | Stage and Track modes, trigger choices, positive/negative limits, orders, polarities and reset/routing options. [Accumulator guide](docs/HARDWARE-UI.md#accumulator-modes) |
+| Scales | 49 factory scales/chords, 100 custom scales with roots, locks and shortcuts. [Scales](docs/SCALES.md) |
+| Modulation and performance | Eight MOD lanes, three AUX inputs, both CTRL knobs, 38 AUX/MOD destinations and 29 CTRL destinations; Loopy, Stage Player, latching, mutes, copy/paste and randomize/morph/restore. [Routing](docs/COMPLETE-ROUTING.md), [Loopy](docs/LOOPY.md) |
+| Presets and chains | 64 user presets, selective/queued recall, pickup, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain and plugin JSON backups. [Presets](docs/PRESETS.md), [chains](docs/PRESET-CHAINS.md) |
+| Clock, MIDI and MX | Internal/external clock and reset options; assignable A/B including CV Mod Trigs; MIDI notes/CC/clock/transport/control; nine MX modes and independent MIDI MX output. [Clock](docs/CLOCK-RESET.md), [MIDI](docs/MIDI.md), [MX](docs/MX.md) |
+| Rack interaction | Hover help, live adjustment readouts, click-and-drag editing, right-click menus, numeric entry, undo/redo, parameter automation and patch persistence. [Controls](docs/HARDWARE-UI.md) |
 
-2.58.0 brings [Backup and maintenance lists](docs/BACKUPS.md) into the compact display style, with mixed-case labels, inverted selection and separate status lines. Cancel-first confirmations, file scopes and saved formats stay unchanged.
+### Missing functions
 
-2.57.0 gives [Presets Setup](docs/PRESETS.md) a compact scrolling list in the manual's order, browse/edit gestures and selected-setting resets. Pending Init choices and all question marks now display correctly. Existing saved setting IDs, schema 34 and musical banks stay unchanged.
+- **Hardware SysEx preset/bank import and export:** not supported. JSON backups
+  belong to this plugin and cannot be exchanged with the physical module.
+- **The hardware's original factory preset bank:** not included. The supplied
+  musical demos are original patterns; saving and recalling your own presets works.
 
-2.56.0 brings the [track, MOD, Global, UI and MIDI menus](docs/UI-SETUP.md) to four compact mixed-case rows with whole-row browsing and value-only selection. Slider Octaves now shows its pending 1–4 choice when leaving Shared. Parameter IDs, settings schema 34 and musical banks stay unchanged.
+Hardware power, calibration, firmware updates and physical USB/MX wiring are
+outside the Rack workflow. Host MIDI ports and the virtual MX provide the
+software connections.
 
-2.55.0 gives [SETUP its compact hardware-style list](docs/UI-SETUP.md), with four mixed-case rows, inverted selection, direct settings, confirmed choices and selected-item long resets. Settings schema 34 migrates old menu positions; parameter IDs and musical banks stay unchanged. New Settings/All backups require 2.55.
+### Implemented, but still needs verification
 
-2.39.0 corrects [CTRL assignment editing](docs/CTRL-KNOBS.md): destination and track previews require encoder confirmation; long encoder clears the assignment with exact undo. Saved formats stay unchanged.
+- **Hardware behavior:** no physical module was available for comparison.
+  Timing, skip/accumulator combinations, live preset changes, modulation gains,
+  random behavior, slider thresholds and Analog/Acid slide calibration need
+  hardware-owner feedback. Visual resemblance does not establish equivalence.
+- **Conflicting references:** some 1.6.5 trigger details differ between the PDF
+  manual and firmware history. This build's choices are recorded in
+  [feature status](docs/FEATURE-STATUS.md#hardware-fidelity-and-reference-choices).
+- **Platforms and stability:** Windows and Linux have actual Rack display and
+  signal-path checks; both Mac architectures have native loading/engine tests,
+  with human Mac GUI/audio testing still open. Rack Free 2.6.6 is the tested
+  baseline. Rack Pro, other Rack/OS versions, unusual DPI/zoom settings and long
+  sessions with other plugins need broader testing. [Platform details](docs/PLATFORMS.md)
 
-2.38.0 adds [Slide/Skip pattern and Ratchet gestures](docs/STAGE-PATTERNS.md), with bulk editing, reset, direct menus, display feedback and exact undo. Saved formats stay unchanged.
+For detailed scope and test evidence, see [feature status](docs/FEATURE-STATUS.md),
+[manual coverage](docs/MANUAL-COVERAGE.md) and [validation](docs/VALIDATION.md).
+Please report unexpected behavior in an implemented feature as a possible bug.
 
-2.37.0 adds [SCALE copy/paste](docs/SCALES.md), with panel/keyboard Alt gestures, direct menus, an independent clipboard and paired undo. Saved formats stay unchanged.
+## Download and install
 
-2.36.0 adds [PROB/ACCUM paired resets and ALT gestures](docs/STAGE-PAIRS.md), with relative editing, uniform targets/triggers, confirmation and one-action undo. Saved formats remain unchanged.
+**GitHub download only: Metropolix Lab is not currently in the VCV Library.**
+It cannot yet be installed or updated through Rack's Library menu. Library
+distribution remains separate work; use the packages below for now.
 
-2.35.0 adds [LEN/DIV shortcuts and whole-screen resets](docs/TIMING-SHORTCUTS.md), with field-preserving holds, desktop menus and grouped undo. Existing saved formats stay unchanged.
+No compiler or GitHub account is needed. Download the **`.vcvplugin`** for your
+OS and the CPU architecture of your Rack application. GitHub's “Source code”
+ZIP/TAR downloads are for developers, not installation.
 
-2.34.0 adds [independent MOD group mute](docs/MOD-GROUP-MUTE.md), preserving each lane’s mute choice through group mute/unmute. New banks and settings require 2.34; older files still import.
-
-2.33.0 corrected [musical preset storage](docs/PRESET-STORAGE.md): Scale Lock and both Loopy settings now save/recall with each preset, including chains and MIDI program changes. Old banks still import; new format 10 banks require 2.33 or later.
-
-2.32.0 adds [eight global ORDER shortcuts](docs/ORDER-SHORTCUTS.md), held save/recall, paired long-encoder reset and desktop menus with undo. Existing parameter IDs and musical presets remain compatible.
-
-2.31.0 adds [production runtime stress checks](docs/RUNTIME-VALIDATION.md) on all four platforms: sample-rate changes, repeated restores, fresh instances and MX reconnects. Patch IDs and musical formats remain unchanged.
-
-2.30.0 adds [Factory Reset and Clear All Presets](docs/MAINTENANCE.md), with confirmation, one-step undo and safe patch reopening. All four platform packages remain available. The 770 parameter IDs and musical snapshot format stay fixed; older backups still import.
-
-2.27.0 refines [panel interaction and display](docs/UI-FIDELITY.md): pending drag readouts, destination-specific MOD units, long EXIT Sync, submenu back and MX attachment while resizing editors.
-
-2.26.0 adds [portable backups](docs/BACKUPS.md): three export scopes, validated imports and Rack undo. Signed CV and dormant values now survive serialization across editing modes.
-
-2.25.0 adds [MX expansion](docs/MX.md): eight gate/clock outputs, seven modes, confirmed assignments and a bass/lead/percussion demo.
-
-2.24.0 adds [MIDI](docs/MIDI.md): notes/velocity, track and MOD CCs, clock/transport, root and queued program changes, with a real MIDI-CV demo.
-
-2.23.0 adds [preset pickup](docs/PRESET-PICKUP.md): saved pitch/CTRL values, individual takeover, visible targets, exact undo and persistence.
-
-2.22.0 adds [UI setup and confirmation](docs/UI-SETUP.md), external input clock division, shared output delay, MOD assignment/menu gestures and corrected held selection resets.
-
-2.21.0 adds [editing workflows](docs/EDITING-WORKFLOWS.md): ALT+AUX randomize/morph/restore, held and menu copy/paste, custom Init presets and AUX long clear, with native undo.
-
-2.20.0 adds [clock/reset configuration and tuning](docs/CLOCK-RESET.md): explicit clock sources, stopped clock output, Reset/Run/Run-C inputs, per-track Global Reset, Bottom Pitch and tuner.
-
-2.19.0 completed **all 38 AUX/MOD destinations**, including hands-free Loopy, track reset, clock/pulse, slider and slide routing. See [Complete routing](docs/COMPLETE-ROUTING.md).
-
-2.18.0 added **CTRL Accum Dir and six AUX/MOD accumulator gates**, including pause, reverse, invert and targeted reset. See [Accumulator routing](docs/ACCUMULATOR-ROUTING.md).
-
-2.17.0 added **the ALT → TRK menu**, independent uniform pulse/gate sources,
-Rest Pitch Hold/Update, transpose −60…+60 and track initialization with undo.
-See [Track options](docs/TRACK-OPTIONS.md) and its changing performance demo.
-
-2.16.0 added **all A/B signal functions**, pending-choice confirmation, velocity,
-per-track slider range/direction and three CTRL destinations. Its demo patches
-velocity into the bass and an independent MOD clock into percussion. See the
-[output routing guide](docs/OUTPUT-ROUTING.md).
-
-2.15.0 added **global CLK output division `/1`–`/256` and pulse offset**,
-with the hardware ALT → CLK display, mouse editing, menus and paired reset.
-See the [clock output guide](docs/CLOCK-OUTPUT.md).
-
-2.14.0 added the **three stage-CV types and Step/sRamp/pRamp transitions**,
-with the hardware TYPE screen, whole-pattern ALT edits, gate inversion/rotation,
-stored-value undo and a filter performance demo. See the [stage CV guide](docs/STAGE-CV.md).
-
-2.13.0 added **Tempo, Analog and Acid slides**, independent track models,
-shortcuts, grouped reset and Analog stopped Stage Player. The new chained demo
-compares the three models across two voices. See the [slide guide](docs/SLIDES.md).
-
-2.12.0 added **all 49 factory scales/chords, 100 user scales, scale locks, eight
-shortcuts and Scale (User) routing** through MOD, AUX and CTRL. The chord demo
-uses stored notes and roots to move through C / Am / F / G. See the
-[scale guide](docs/SCALES.md).
-
-2.11.0 added **Loopy live loops, stopped Stage Player, latching and performance
-mutes**, with a manual-style display and mouse range menus. The original sequence
-keeps advancing underneath temporary loops. Global settings persist; held gestures
-clear on reopen. See the [Loopy guide](docs/LOOPY.md).
-
-2.10.0 adds **per-stage pitch and gate-length overrides** for both tracks,
-including slider Sync, ALT edits/clears, manual-style OLEDs, and one-step undo.
-The track GATE page now edits **Gate Scale** and includes a **Hold** endpoint.
-Overrides are stored in presets and chains; older patches keep their sound.
-See the [stage override guide](docs/STAGE-OVERRIDES.md).
-
-2.9.0 added **Swing** independently for both note tracks, from 50–78%, with a
-manual-style OLED, stage shortcuts, long-press reset, desktop editing and undo.
-Swing is also available as a direct CTRL destination and an AUX/MOD offset.
-Old patches and preset banks keep straight timing. The new demo alternates
-straight and swung phrases and starts stopped. See the [Swing guide](docs/SWING.md).
-
-2.8.0 adds **preset chaining**: 32 links, 1–64 repeats, per-link track/MOD
-mutes, eight saved chains, Quick Chain, an OLED list/follow view, desktop menus
-and undo. Hold SETUP to open it. The new 32-bar demo changes patterns and mute
-states automatically. See the [chain guide](docs/PRESET-CHAINS.md).
-
-2.7.1 refines the desktop controls following tester feedback: gentler sliders,
-live parameter readouts during drags, complete OLED descenders, and pitch-slider
-lights that follow Rack's Bloom setting. Sequencing and saved patch formats are
-unchanged. See [UI validation](docs/VALIDATION.md#ui-polish--271).
-
-2.7.0 adds **64 internal presets**, hardware-style **ALT → LOAD / SAVE** pages,
-selective recall, Queue/Total pulse boundaries, and Rack undo. Banks persist
-inside each saved Rack patch. Choose **Recall complete pattern** in the preset
-menu to include slider/switch positions. See the [preset guide](docs/PRESETS.md).
-The 2.8.0 chain workflow builds on these banks.
-
-2.6.0 activates **CTRL 1 and CTRL 2** with 23 destinations, independent track
-assignments, direct panel control and bipolar offsets, an OLED assignment page,
-hover help, menus, and Rack undo. Older patches keep both knobs unassigned.
-See the [CTRL guide](docs/CTRL-KNOBS.md) and try the
-[CTRL performance patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.6.0/CTRL-performance.vcv).
-
-2.5.0 added **Track accumulation** alongside the original Stage mode. Select a
-track, then **ALT → LIM → Mode**, or right-click **TRK 1/2 → Accumulator mode**.
-The LIM display also exposes limits, order, polarity, and reset. Old patches
-retain Stage mode and their existing parameter/cable IDs. This earlier release
-focuses on accumulation and skip interactions.
-See [accumulator operation and comparison](docs/HARDWARE-UI.md#accumulator-modes).
-
-2.4.0 made X/Y/Z patchable, with attenuverters, eight destinations, independent track assignments, live display meters, and desktop menus. See the [AUX guide](docs/AUX-INPUTS.md). The [feature assessment](docs/FEATURE-STATUS.md) distinguishes implemented behavior from unfinished hardware functions.
-
-2.4.1 replaces the standalone manufacturer logo with **sensiburner <3 intellijel**,
-using matching bold lowercase lettering and red accents. Rack identifies
-sensiburner as the creator. This is a visual/metadata update; musical behavior
-and demo patches are unchanged.
-
-Version 2.3.0 refines the supplied hardware panel's lettering, components, markings, and logo. Its 128 × 64 pixel display now includes all four HOME views and manual-based editing diagrams. Hold and drag upward to increase values; downward to decrease. Hover help, context menus, numeric entry, and Rack undo/redo work alongside the hardware layout. See **[docs/HARDWARE-UI.md](docs/HARDWARE-UI.md)** for operation and current limits. The exact visual target remains **[docs/UI-TARGET.md](docs/UI-TARGET.md)**; this revision is closer, with further visual and firmware details still to implement.
-
-## Start here
-
-**[Watch Pulse Pressure (115 seconds, 1080p)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Metropolix-Lab-Pulse-Pressure.mp4)**
-is a 138 BPM performance with rolling bass, a shifting lead, five drum voices,
-an eight-bar breakdown and a full drop. The live panel, enlarged display,
-pitch traces and MX trigger indicators follow the actual Rack performance.
-Open the [playable patch](examples/Pulse-Pressure.vcv); see
-[routing, arrangement and recording instructions](docs/PULSE-PRESSURE.md).
-
-The [sidechain A/B companion](docs/SIDECHAIN-DEMO.md) shows the same groove
-with kick-driven compression, PRESSOR's live meter and pre/post level traces.
-
-**[Watch Patches in Motion (72 seconds, 1080p)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Patches-in-Motion.mp4)**
-shows Metropolix driving complete synth and drum patches. Live pitch traces,
-gate indicators, scopes, and close-ups follow the recorded signals. Two
-contrasting performances use **Audible Instruments**, **Befaco**, and **VCV Free**:
-[Neon Transit](examples/Neon-Transit.vcv) (124 BPM) and
-[Broken Orbit](examples/Broken-Orbit.vcv) (100 BPM).
-See [patch routing and requirements](docs/PERFORMANCE-PATCHES.md).
-
-**[Watch the 80-second demonstration (1080p MP4)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Demo-1080p.mp4)**
-— actual Rack playback, with captions, display close-ups, and the MOD editor.
-The soundtrack uses the evolving performance below. [Capture and editing workflow](docs/DEMO-VIDEO.md).
-
-For the evolving performance, open **[Night Current / Variations](examples/Musical-variations.vcv)**.
-It uses the same voices at 108 BPM, with A natural minor quantization and
-Am–F–C–G root movement every two bars. The melody runs forward and backward
-at /2 against the bass at /4; its 54-tick cycle moves across bar lines.
-Passing-note shifts run on a separate three-bar cycle. The result develops
-across phrases instead of repeating the same one-bar melody.
-
-The 32-bar arrangement lasts about 71 seconds: bars 1–8 introduce the voices,
-9–12 lift the melody an octave, 13–16 return it, 17–20 drop the bass for a
-break, 21–24 bring bass and high melody back, and 25–32 settle down. Half-bar
-melody gaps, double ratchets, gate-length changes, and a brief slide into stage
-5 add variation throughout. The arrangement repeats, while the different
-melodic cycle lengths continue changing its details.
-
-**[Download the performance patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Musical-variations.vcv)**
-· **[Listen to the full 80-second preview](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Musical-variations-preview.wav)**.
-These are additional demo files for the existing 2.4.1 plugin; the plugin
-download itself has not changed. The preview has only short boundary fades.
-
-Select **MOD** to explore what each lane does:
-
-| Lane | Role | Destination |
+| Rack platform | Plugin download | Folder inside Rack's user folder |
 | --- | --- | --- |
-| 1 | Eight-bar filter swell | Output A → melody VCF |
-| 2 | Am/F/C/G movement, two bars per root | Pitch Pre, both tracks |
-| 3 | Three-bar passing-note pattern | Pitch Pre, Track 2 |
-| 4 | Register lifts in the 32-bar arrangement | Octave, Track 2 |
-| 5 | Double-note fills in alternate bars | Ratchet, Track 2 |
-| 6 | Shorter and longer articulation | Gate Length, Track 2 |
-| 7 | Half-bar breathing spaces | Mute, Track 2 |
-| 8 | Four-bar bass breakdown | Mute, Track 1 |
+| Windows x64 | [Windows package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-win-x64.vcvplugin) | `plugins-win-x64` |
+| Linux x64 | [Linux package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-lin-x64.vcvplugin) | `plugins-lin-x64` |
+| Intel Mac / Intel Rack under Rosetta | [Intel Mac package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-x64.vcvplugin) | `plugins-mac-x64` |
+| Native Apple Silicon Rack | [Apple Silicon package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-arm64.vcvplugin) | `plugins-mac-arm64` |
 
-The public patches start running after loading. Select your AUDIO device;
-press RESET to hear the arrangement from the start. Mute individual MOD lanes
-in the modulation editor to hear their contribution.
+1. In Rack, choose **Help → Open user folder** and keep that folder open.
+2. Save your patch and close Rack.
+3. Put the intact `.vcvplugin` in the matching folder above. **Do not extract it.**
+4. Restart Rack and search for **Metropolix Lab** or **MX** in the module browser.
 
-**Night Current** is the new musical demo: **108 BPM, A minor pentatonic**,
-with a repeating A1/E2 bass, a plucked answering melody, an eight-bar filter
-movement, and quiet stereo echoes. Open **[examples/Musical-demo.vcv](examples/Musical-demo.vcv)**
-and select your device in AUDIO. It uses only Metropolix Lab 2.4.1, VCV Free,
-and Core. This is an original composition, not a transcription or recreation
-of a hardware factory preset.
+Rack extracts and loads the package on startup, following the
+[official manual installation procedure](https://vcvrack.com/manual/Installing#installing-plugins-not-available-on-the-vcv-library).
+For a future GitHub update, repeat these steps with the newer package.
+[Release notes and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.70.0) ·
+[Installation help and test guide](docs/TESTING.md)
 
-Listen to the **[24-second Rack recording](examples/Musical-preview.wav)**.
-Only a 5 ms start fade and 150 ms end fade were added to the recording.
+## Watch or play a demo
 
-The bass repeats A–A–A–E on quarter notes. The melody plays
-A–A–A–E–A–G–E–C–D, followed by a rest, every bar. Both tracks share the pitch
-sliders; Track 1 loops stages 1–2 at /4, while Track 2 uses all eight at /1.
-MOD 1 slowly opens the melody filter through output A. The two delays follow
-CLK at three and five sixteenth-note intervals, so they follow tempo changes.
-There are no random notes, probability changes, or accumulating transpositions.
+| Demo | Video / patch | Other plugins required |
+| --- | --- | --- |
+| Simple scale progression | [Rack patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Scale-progression.vcv) | VCV Free and Rack Core |
+| Pulse Pressure — 138 BPM, bass, lead, drums, breakdown and drop | [115-second video](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Metropolix-Lab-Pulse-Pressure.mp4) · [Rack patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Pulse-Pressure.vcv) | VCV Free, Audible Instruments, Befaco, Valley |
+| Pulse Pressure — sidechain off/on comparison | [45-second video](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Metropolix-Lab-Pulse-Pressure-Sidechain.mp4) · [Rack patch](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Pulse-Pressure-Sidechain.vcv) | The Pulse Pressure plugins, plus Bogaudio |
 
-For listening adjustments, the two top-row VCA MIX modules control left and
-right output: channel 1 is bass, 2 is melody, and 3 is echo. Change channel 1
-equally on both mixers to keep the bass centered. Raise the second VCF's cutoff
-for a brighter melody, or lower channel 3 for less echo. Save your variations
-under a new name. The older examples remain available for feature testing.
-
-To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the intact file in the **plugin folder for your OS/CPU** listed in [Platform packages](docs/PLATFORMS.md), and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
-
-For a local development build, the package is `dist/MetropolixLab-2.70.0-win-x64.vcvplugin`. After building it, close Rack and run:
-
-```powershell
-.\scripts\install.ps1
-```
-
-This copies the package to this computer's Rack user plugin folder. On the next launch, search for **Metropolix Lab** in the module browser. For another computer, use Rack's **Help > Open user folder**, place the package in `plugins-win-x64` (Rack 2.4 or later), and restart Rack.
-
-Open **examples/Hardware-panel-demo.vcv** for the new panel with the accepted modulation demo's musical settings. The first Scope shows A stepping from -2 V to +2 V and B ramping from 0 V to +5 V. Other MOD lanes change track 1's octave, track 2's ratchets, and both tracks' gate length. The adjacent Scope monitors track 1 pitch and gate. See **[docs/MOD-TEST.md](docs/MOD-TEST.md)** for musical checks.
-
-The patch includes two synthesizer voices using only VCV Free and VCV Core: a triangle voice on the left and a slower sine voice on the right. It starts running, but its AUDIO module has no device selected. Select your output device there to hear it. The VCA levels are set to 32%. Metropolix Lab itself outputs pitch, gates, and modulation; the patched oscillators turn those signals into sound.
-
-**examples/Two-voice-demo.vcv** retains the earlier instrument patch without MOD routing. **examples/Hybrid-demo.vcv** is a simpler pitch/gate Scope patch. **examples/Modulation-preview.wav** and **examples/Two-voice-preview.wav** are 12-second recordings made inside Rack; probability can make subsequent runs differ.
-
-To try an example in a separate development profile:
-
-```powershell
-.\scripts\preview.ps1
-.\scripts\preview.ps1 -Example Two-voice-demo
-.\scripts\preview.ps1 -Example Hybrid-demo
-.\scripts\preview.ps1 -Example Aux-inputs-demo
-```
-
-Rack must be closed first because its Windows version allows one running instance. The preview profile lives in `tmp/rack-user`.
+Install a demo's dependencies, open its `.vcv` file, select your audio device in
+**AUDIO**, and enable **RUN** if stopped. Some patches start running on load.
+The demos use separate voice, drum and effect modules; Bogaudio PRESSOR supplies
+the sidechain compression. [Pulse Pressure routing](docs/PULSE-PRESSURE.md) ·
+[Sidechain routing](docs/SIDECHAIN-DEMO.md) · [More example patches](examples/)
 
 ## Playing and editing
 
-1. **RUN** starts or stops playback. **RESET** returns to the starting position and clears accumulated transpositions.
-2. Drag the pitch faders, **PULSE COUNT** switches (1–8), and **GATE TYPE** switches (Rest, Single, Multiple, Hold) vertically. Right-click for direct entry or named choices.
-3. Select **TRK 1** or **TRK 2**. Pitches, pulse counts, and gate types are shared; track settings and stage edits are independent. Right-click a track button for timing, ratchet, and accumulator settings.
-4. Click **EDIT**, choose the printed function on a stage button, then choose a stage. Drag the encoder, screen value, or held stage button to edit it. Slide/Skip stage clicks toggle the chosen stage. PITCH/GATE edit the independent overrides for that track.
-5. Right-click **EDIT** to open the stage grid. Numeric and toggle cells accept vertical dragging; a short click toggles ON/OFF. Right-click a stage button for its current value, function selection, and probability/accumulator trigger settings.
-6. Click **BPM**, **SCALE**, **ORDER**, **LEN**, **DIV**, **SLIDE**, or **GATE** for its display page. These value buttons also accept a held vertical drag. The encoder/display click switches fields where applicable. **EXIT** returns home.
-7. Click **MOD** for modulation. Right-click it to choose MOD 1–8, change lane settings/routing, or open the MOD grid. Each lane retains independent values, transitions, timing, destination, and mute.
-8. **ALT**, then **A** or **B**, selects the corresponding output assignment on the display. The optional MOD grid also exposes both output sources directly. A lane can drive an internal destination and a physical output simultaneously.
+- **RUN** starts/stops; **RESET** restarts the sequence and accumulators.
+- Drag sliders and value fields **up to increase, down to decrease**. Hover for
+  help or right-click for direct entry and named options.
+- Select **TRK 1**, **TRK 2** or **MOD** before editing that track/lane. Use
+  **EDIT** and a stage function for per-stage settings; **ALT** selects secondary
+  functions. Click the encoder/display to switch fields, then **EXIT** to return.
+- Right-click **EDIT/MOD** for optional stage/MOD grids. Save the Rack patch to
+  keep its patterns, internal presets and chains.
 
-9. Right-click an **AUX X/Y/Z assignment button** below its knob to choose a destination and target tracks. Drag the knob up/down to attenuvert. Click the button for the AUX display; encoder clicks switch destination/track fields. See the [AUX guide](docs/AUX-INPUTS.md), especially the gate-inversion behavior of Mute.
+[Panel and control guide](docs/HARDWARE-UI.md) · [CTRL knobs](docs/CTRL-KNOBS.md) ·
+[AUX inputs](docs/AUX-INPUTS.md) · [Setup](docs/UI-SETUP.md)
 
-Opening an optional grid changes the width from 34 HP to 66 HP. Rack finds an available position if that would overlap a neighbor. Closing returns it to 34 HP. View state and musical parameters are saved with the Rack patch. Existing parameter and port IDs are preserved as features append new controls. Earlier development patches migrate their reverse-order setting and shared accumulation limit and start with AUX unassigned.
+## Report a bug or hardware difference
 
-## Connections
+[Open a feedback issue](https://github.com/spliffrider/metropolix-vcv-plugin/issues/new?template=test-feedback.md).
+You do not need to own the hardware to report a problem. Check the feature
+status above, then include:
 
-| Port | Behavior |
-| --- | --- |
-| PITCH 1 / 2 | Quantized 1 V/oct pitch; 0 V is C4 |
-| X / Y / Z | Assignable mono CV/gate input; attenuverter per input; Track 1/2/Both targeting |
-| GATE 1 / 2 | 5 V gate for the corresponding track |
-| CLOCK IN | Automatically selects external clock; one edge is one sixteenth note |
-| RESET | Rising edge resets playback and accumulators; a 1 ms clock guard follows |
-| CLK OUT | 5 V / 1 ms master clock triggers, global division /1–/256 and offset 0–division−1 |
-| OUT A / OUT B | All sixteen routing functions; defaults A = Track 1 CV, B = Track 1 First Pulse; see [Output routing](docs/OUTPUT-ROUTING.md) |
+- Plugin version, Rack version and Free/Pro, OS/CPU, sample rate and zoom/DPI.
+- Steps to reproduce, what you expected and what happened.
+- A small `.vcv` patch; for crashes, attach Rack's `log.txt` if available.
+- For hardware differences, the firmware version, manual page or a recording
+  of the observed behavior, if you have them.
 
-With CLOCK IN connected, RUN arms playback and the next eligible clock edge begins the sequence. With no cable, the internal 0.1–400 BPM clock runs. Track clock division applies after the base clock. Stopping lowers gates and stage CV, while pitch holds. RUN starts a fresh sequence.
-
-MOD lanes advance one stage per divided base-clock pulse, independently of the note tracks' pulse counts. Bipolar lanes span -5 to +5 V, unipolar lanes span 0 to +5 V, and gate lanes output 0 or +5 V. A ramp travels from the previous voltage to the current stage's target across the whole stage. Muted lanes keep advancing but contribute no voltage or internal modulation. Stop silences all MOD outputs; reset restarts their traversal.
-
-The original twelve internal destinations are Octave, Pitch Pre, Pitch Post, Pitch Offset, Gate Length, Probability, Ratchets, Mute, Swing, Scale (User), Velocity and Track Out Swap. Version 2.18.0 also adds Accumulate, Accum Rev, Accum Invert, Accum Mode, Accum Polar and Accum Reset; see [the accumulator routing guide](docs/ACCUMULATOR-ROUTING.md). Version 2.19.0 completes the other twenty [hardware destinations](docs/COMPLETE-ROUTING.md). Modulation offsets the saved base settings. The selected track's panel settings remain unchanged, so removing or muting a route restores their effect. See the validation document for voltage scaling and inferred behavior.
-
-## Implemented
-
-- Two independent tracks, with length, offset, all 21 play orders and reverse direction, division 1–64, fixed pulse length 1–64 or Auto, transpose, gate length, and mute.
-- Pulse-count division 1–8; gate stretching; Multiply, Pulse, and Gated ratchet modes; ratchet counts 1–8.
-- Per-stage probability with Stage/Pulse targeting; skip; Tempo/Analog/Acid slides; Bipolar/Unipolar/Gate stage CV with Step/sRamp/pRamp transitions.
-- Stage-local or track-wide accumulation in scale degrees, with Stage/Pulse/Ratchet triggers, separate positive/negative limits, unipolar/bipolar ranges, Wrap/Pendulum/Random/Hold orders, and Manual/Auto reset.
-- All 49 factory scales/chords, 100 custom scales with stored roots, locking, eight Scale/Root shortcuts, and Scale (User) modulation; slider range 1–4 octaves.
-- Eight independent eight-stage MOD lanes, per-stage Step/Ramp, bipolar/unipolar/gate voltage, independent timing and play order, 38 internal destinations, track assignment, and assignable A/B outputs.
-- Three AUX CV/gate inputs, attenuverters, the same 38 destinations, per-input track assignments, live meters, and logical gate inversion.
-- Independent 50–78% Swing per note track, with CTRL control and AUX/MOD offsets, shortcuts, reset, and desktop editing.
-- Rack parameter automation, numeric entry, undo/redo, and patch/preset serialization.
-
-## What remains
-
-MIDI, MX expansion and portable JSON backups are available. Hardware SysEx interchange needs a verified packet specification. Final visual matching and physical hardware timing comparisons remain open. See [Feature status](docs/FEATURE-STATUS.md) and [MIDI behavior and manual ambiguities](docs/MIDI.md).
-
-The manual is the behavioral reference. No physical module was available for comparison. Slider quantization, Analog/Acid rate calibration, random-number sequences, and some combinations that the manual does not fully specify remain implementation choices. See **docs/VALIDATION.md** for tested examples, assumptions, and remaining uncertainty.
+Skip/accumulator interactions and preset chaining are implemented, so a
+repeatable problem there is useful bug feedback. Missing functions above are
+known feature gaps; hardware mismatches and uncertain behavior are also welcome.
 
 ## Build and test
+
+Developers can use the configured Windows toolchain:
 
 ```powershell
 .\scripts\setup-windows.ps1
@@ -314,50 +147,12 @@ The manual is the behavioral reference. No physical module was available for com
 .\scripts\test-rack.ps1
 .\scripts\test-production.ps1
 .\scripts\test-ui.ps1
-.\scripts\test-ui.ps1 -Aux
-.\scripts\test-ui.ps1 -Tracks
-.\scripts\test-ui.ps1 -TrackAudio
-.\scripts\test-ui.ps1 -Outputs
-.\scripts\test-ui.ps1 -OutputAudio
-.\scripts\test-ui.ps1 -StageCv
-.\scripts\test-ui.ps1 -CvAudio
-.\scripts\test-ui.ps1 -Slides
-.\scripts\test-ui.ps1 -SlideAudio
-.\scripts\test-ui.ps1 -Display
-.\scripts\test-ui.ps1 -Controls
-.\scripts\test-ui.ps1 -Workflows
-.\scripts\test-ui.ps1 -WorkflowsAudio
-.\scripts\test-ui.ps1 -Audio
-.\scripts\test-ui.ps1 -Modulation
-.\scripts\test-ui.ps1 -Hardware
-.\scripts\test-ui.ps1 -Musical
-.\scripts\test-ui.ps1 -Variations
 ```
 
-Regenerate the musical patch with `python scripts/create-musical-demo.py`.
-Add `--variations` to regenerate the evolving version. `-Variations` records
-80 seconds in Rack to cover the complete 32-bar arrangement and its return.
-The musical check records 24 seconds from the actual stereo mix in Rack at
-48 kHz, covering the eight-bar filter cycle, and checks signal levels,
-DC offset, and finite samples. These are technical checks; listening feedback
-is still needed to judge the composition and timbre.
-
-The UI test commands launch an isolated Rack test profile and close it automatically. They require Rack to be closed. They build a separate instrumented DLL; test hooks and the recorder are absent from the release plugin. The hardware test uses the default demo and records both synthesizer voices and A/B through real Rack cables. The display test checks navigation and captures 181 screen states in `tmp/display-qa`.
-
-Setup installs portable MSYS2/MinGW under `%LOCALAPPDATA%\MetropolixDev` and the Rack 2.3.0 SDK under `.tools/Rack-SDK`. It does not modify the system PATH. The SDK preserves Rack 2 ABI compatibility; execution has been checked against installed Rack 2.6.6. Linux and both Mac architectures use the official 2.6.6 SDK in the native package workflow; [Platform packages](docs/PLATFORMS.md) describes the tested environments.
-
-The engine uses fixed-size state and performs no allocation, file I/O, or UI work in `process()`. UI presentation state and meters are atomic. Musical edits use Rack parameter quantities.
-
-## Source and references
-
-- `src/Sequencer.hpp`, `PlayOrder.hpp`, `GateTiming.hpp`, `Accumulator.hpp`, `Modulation.hpp`: independent musical engine.
-- `src/Metropolix.hpp`: Rack parameters, timing adapters, ports, and persistence.
-- `src/Metropolix.cpp`, `HardwareUI.hpp`, `HardwareLayout.hpp`: hardware artwork, interaction, and optional editors.
-- `src/HardwareDisplay.hpp`, `OledCanvas.hpp`: native-pixel screen views, diagrams, and lettering. `res/README.txt` records artwork/font provenance.
-- `tests/`: musical, manual-example, host integration, editor, and audio checks.
-- [VCV Rack manual](https://vcvrack.com/manual/), read excluding Licensing as requested.
-- [Metropolix manual 1.6, 2025-09-24](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf), cached locally in `reference/`.
-
-For Loopy changes, run `scripts/test-ui.ps1 -Loopy` and
-`scripts/test-ui.ps1 -LoopyAudio` with Rack closed. Reports and captures go to
-`tmp/loopy-ui-qa` and `tmp/loopy-audio-qa`.
+Application tests use isolated profiles and require Rack to be closed.
+See [development and platform builds](docs/DEVELOPMENT.md), the
+[manual-to-test map](docs/MANUAL-COVERAGE.md) and [validation](docs/VALIDATION.md)
+for targeted checks and evidence.
+[Source code](https://github.com/spliffrider/metropolix-vcv-plugin/tree/main/src) ·
+[Tests](https://github.com/spliffrider/metropolix-vcv-plugin/tree/main/tests) ·
+[Release history](docs/CHANGELOG.md) · [Artwork/font provenance](res/README.txt)
