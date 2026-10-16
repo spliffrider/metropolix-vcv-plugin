@@ -6,6 +6,10 @@ implemented features, missing functions and verification limits, use the
 Earlier milestones are recorded in [development history](DEVELOPMENT.md#imported-milestones).
 Download packages from [GitHub Releases](https://github.com/spliffrider/metropolix-vcv-plugin/releases).
 
+## 2.71.1
+
+Renames the panel title to **Metropolism**, keeping its existing typography and layout. The Rack browser name and internal identifiers remain unchanged, so existing patches continue to load.
+
 ## 2.71.0
 
 Adds an optional [Desktop performance view](DESKTOP-PERFORMANCE.md): held number-row/numpad stage keys, two-boundary keyboard latching, mouse range drags, visible track/MOD mutes, transport and live pitch/gate/accumulator feedback. Keyboard control is explicitly armed and releases temporary inputs on focus/view changes. The view is saved, but input ownership and holds never are. Hardware panel, parameter/port IDs and musical preset formats remain unchanged.

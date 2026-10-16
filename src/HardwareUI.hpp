@@ -616,7 +616,7 @@ struct HardwarePanel : widget::Widget {
         auto bold=APP->window->loadFont(asset::plugin(pluginInstance,"res/Roboto-Bold.ttf"));
         if(bold) nvgFontFaceId(vg,bold->handle);
         auto label=[&](float x,float y,const std::string& s,float size=7.3f) { text(vg,x,y,s,size*1.2f,ink(),NVG_ALIGN_CENTER|NVG_ALIGN_MIDDLE); };
-        label(255,10,"Metropolix",15.5f);
+        label(255,10,"Metropolism",15.5f);
         for(float x:{22.f,488.f}) for(float y:{9.f,371.f}) rect(vg,x-9,y-3.8f,18,7.6f,nvgRGB(8,9,8),4);
         label(171,26,"TRK 1",8.2f); label(208,26,"TRK 2",8.2f);
         const float px[]={24,61,98,135.5f,171,208};
