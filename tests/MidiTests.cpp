@@ -26,5 +26,6 @@ int main(){
         check(std::abs(pulses-bpm*4)<=1);int before=pulses;for(int f=0;f<rate;++f)clock.process(1./rate,false,false,15./bpm,false,out);check(pulses==before);
     }
     {MidiClockOutput clock;messages.clear();for(int f=0;f<6000;++f)clock.process(1./48000,f==0,true,.125,true,emit);check(messages.size()==6);for(int f=0;f<12000;++f)clock.process(1./48000,false,true,.125,true,emit);check(messages.size()==6);}
-    std::cout<<"PASS: MIDI channel/note lifecycle, CC range, clock phase and rates ("<<checks<<" assertions)\n";
+    #include "MidiMxTests.hpp"
+    std::cout<<"PASS: MIDI channel/note lifecycle, MX notes/CC cleanup, CC range, clock phase and rates ("<<checks<<" assertions)\n";
 }

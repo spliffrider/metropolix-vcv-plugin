@@ -1,5 +1,5 @@
 using M=Metropolix;
-static_assert(M::NUM_PARAMS==787 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==11,"Stage pattern gestures add no saved fields");
+static_assert(M::FORMAT34_NUM_PARAMS==787 && M::NUM_PARAMS==789 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==12,"Stage pattern gestures add no saved fields");
 if(std::getenv("METROPOLIX_STAGEPATTERN_REOPEN_QA")) {
     if(qaFrame==6) {
         bool values=true;for(int s=0;s<8;++s)values &= m->integer(M::stageParam(1,s,M::RATCHETS))==s+1;

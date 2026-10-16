@@ -1,6 +1,6 @@
-constexpr int MidiSetupCount=6,ModMenuCount=4;
-const char* midiSetupName(int n){const char* names[]={"MIDI Clock Out","MIDI Transport","MIDI Root Ch","MIDI PC Ch","Note at 0V","Backup files…"};return names[metro::clamp(n,0,MidiSetupCount-1)];}
-int midiSetupParam(Metropolix* m,int item=-1){const int ids[]={Metropolix::MIDI_CLOCK_OUT,Metropolix::MIDI_TRANSPORT,Metropolix::MIDI_ROOT_CHANNEL,Metropolix::MIDI_PC_CHANNEL,Metropolix::MIDI_ZERO_NOTE};int n=metro::clamp(item<0?m->midiSetupCursor.load():item,0,MidiSetupCount-1);return n==5?-1:ids[n];}
+constexpr int MidiSetupCount=8,ModMenuCount=4;
+const char* midiSetupName(int n){const char* names[]={"MIDI Clock Out","MIDI Transport","MIDI Root Ch","MIDI PC Ch","MIDI MX Ch","MIDI MX Output","Note at 0V","Backup files…"};return names[metro::clamp(n,0,MidiSetupCount-1)];}
+int midiSetupParam(Metropolix* m,int item=-1){const int ids[]={Metropolix::MIDI_CLOCK_OUT,Metropolix::MIDI_TRANSPORT,Metropolix::MIDI_ROOT_CHANNEL,Metropolix::MIDI_PC_CHANNEL,Metropolix::MIDI_MX_CHANNEL,Metropolix::MIDI_MX_OUTPUT,Metropolix::MIDI_ZERO_NOTE};int n=metro::clamp(item<0?m->midiSetupCursor.load():item,0,MidiSetupCount-1);return n==7?-1:ids[n];}
 const char* modMenuName(int n){const char* names[]={"MIDI Channel","MIDI Mod to CC","Init Lane Defaults","Init All Lanes"};return names[metro::clamp(n,0,ModMenuCount-1)];}
 int modMenuParam(Metropolix* m,int item=-1){int n=item<0?m->modMenuCursor.load():item;return n<2?Metropolix::midiModParam(m->selectedLane.load(),n):-1;}
 void openMidiSetup(Metropolix* m){if(!m)return;m->cancelDraft();m->uiPage.store(Metropolix::MIDI_SETUP_PAGE);m->uiField.store(0);m->uiAlt.store(false);}

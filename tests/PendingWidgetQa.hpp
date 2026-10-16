@@ -13,6 +13,9 @@ if(qaFrame==4){
 #include "ShortPressHistoryWidgetQa.hpp"
 }
 if(qaFrame==5){
+{
+#include "Mx165WidgetQa.hpp"
+}
 #include "MicroCvHistoryWidgetQa.hpp"
 {
 #include "RawValueHistoryWidgetQa.hpp"

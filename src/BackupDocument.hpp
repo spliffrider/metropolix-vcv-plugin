@@ -13,11 +13,11 @@ inline bool integer(json_t* j,json_int_t lo,json_int_t hi){return json_is_intege
 struct StateField {const char* name;int low,high;bool boolean;};
 inline const std::vector<StateField>& stateFields(){
     static const std::vector<StateField> fields={
-        {"schemaVersion",29,34,false},{"midiSetupCursor",0,5,false},{"backupCursor",0,3,false},
+        {"schemaVersion",29,35,false},{"midiSetupCursor",0,7,false},{"backupCursor",0,3,false},
         {"backupPresetCursor",0,9,false},
         {"factoryCursor",0,1,false},
         {"uiSetupCursor",0,7,false},{"modMenuCursor",0,3,false},{"presetBank",0,7,false},
-        {"selectedCtrl",0,1,false},{"trackMenuCursor",0,15,false},{"setupCursor",0,16,false},{"setupDirectChild",0,1,true},
+        {"selectedCtrl",0,1,false},{"trackMenuCursor",0,15,false},{"setupCursor",0,18,false},{"setupDirectChild",0,1,true},
         {"globalCursor",0,5,false},{"selectedAux",0,2,false},{"uiHome",0,3,false},
         {"uiStageDetail",0,1,true},{"uiPage",0,35,false},{"uiField",0,7,false},
         {"uiMod",0,1,true},{"uiEdit",0,1,true},{"uiChooseFunction",0,1,true},
@@ -25,6 +25,7 @@ inline const std::vector<StateField>& stateFields(){
     };return fields;
 }
 inline bool value(Metropolix* m,int id,json_t* j){if(!json_is_number(j))return false;double v=json_number_value(j);auto* q=m->paramQuantities[id];return std::isfinite(v) && v>=q->minValue && v<=q->maxValue;}
+inline bool presetValue(Metropolix* m,int id,json_t* j,int format){return value(m,id,j) && (format>=12 || (id!=Metropolix::OUTPUT_SOURCE_A && id!=Metropolix::OUTPUT_SOURCE_B) || json_number_value(j)<=37);}
 inline int snapshotSize(int format){return Metropolix::presetSize(format);}
 inline bool chain(json_t* links){if(!json_is_array(links) || json_array_size(links)>32)return false;for(size_t i=0;i<json_array_size(links);++i){auto* link=json_array_get(links,i);if(!json_is_object(link) || !integer(json_object_get(link,"slot"),0,63) || !integer(json_object_get(link,"repeats"),1,64) || !integer(json_object_get(link,"mutes"),0,7))return false;}return true;}
 inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& error){
@@ -53,23 +54,24 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
             int slot=int(json_integer_value(id));if(seen[slot] || (!filled && slot/8!=selectedBank))return fail("Duplicate or foreign preset slot.");seen[slot]=true;
             if(json_is_null(values)){if(filled)return fail("Filled selections cannot clear a slot.");continue;}
             if(!json_is_array(values) || json_array_size(values)!=size_t(count))return fail("Invalid selected preset size.");
-            for(int n=0;n<count;++n)if(!value(m,Metropolix::presetParam(n),json_array_get(values,n)))return fail("Invalid selected preset value.");
+            for(int n=0;n<count;++n)if(!presetValue(m,Metropolix::presetParam(n),json_array_get(values,n),int(json_integer_value(json_object_get(bank,"presetFormat")))))return fail("Invalid selected preset value.");
         }
         error.clear();return true;
     }
     if(scope!=Presets){
-        auto* state=json_object_get(document,"state");if(!json_is_object(state) || !integer(json_object_get(state,"schemaVersion"),29,34))return fail("Unsupported settings version.");
+        auto* state=json_object_get(document,"state");if(!json_is_object(state) || !integer(json_object_get(state,"schemaVersion"),29,35))return fail("Unsupported settings version.");
         int schema=int(json_integer_value(json_object_get(state,"schemaVersion")));
-        int expected=schema<32?Metropolix::FORMAT31_NUM_PARAMS:schema==32?Metropolix::FORMAT32_NUM_PARAMS:Metropolix::NUM_PARAMS;
+        int expected=schema<32?Metropolix::FORMAT31_NUM_PARAMS:schema==32?Metropolix::FORMAT32_NUM_PARAMS:schema<35?Metropolix::FORMAT34_NUM_PARAMS:Metropolix::NUM_PARAMS;
         auto* parameters=json_object_get(document,"params");if(!json_is_array(parameters) || json_array_size(parameters)!=size_t(expected))return fail("Incomplete parameter settings.");
         std::array<bool,Metropolix::NUM_PARAMS> seen{};
-        for(size_t i=0;i<json_array_size(parameters);++i){auto* p=json_array_get(parameters,i);auto* id=json_object_get(p,"id");if(!integer(id,0,expected-1))return fail("Invalid parameter ID.");int n=int(json_integer_value(id));if(seen[n] || !value(m,n,json_object_get(p,"value")))return fail("Duplicate or invalid parameter value.");seen[n]=true;}
+        for(size_t i=0;i<json_array_size(parameters);++i){auto* p=json_array_get(parameters,i);auto* id=json_object_get(p,"id");if(!integer(id,0,expected-1))return fail("Invalid parameter ID.");int n=int(json_integer_value(id));auto* v=json_object_get(p,"value");if(seen[n] || !value(m,n,v))return fail("Duplicate or invalid parameter value.");if(schema<35 && ((n==Metropolix::MX_MODE && json_number_value(v)>6) || ((n==Metropolix::OUTPUT_SOURCE_A || n==Metropolix::OUTPUT_SOURCE_B) && json_number_value(v)>37)))return fail("Invalid legacy output choice.");seen[n]=true;}
         if(json_object_size(state)!=stateFields().size()+1-(schema<30?1:0)-(schema<31?1:0)-(schema<34?1:0))return fail("Unexpected or missing settings fields.");
         for(const auto& field:stateFields()){
             if((schema<30 && std::strcmp(field.name,"backupPresetCursor")==0) || (schema<31 && std::strcmp(field.name,"factoryCursor")==0) || (schema<34 && std::strcmp(field.name,"setupDirectChild")==0))continue;
             auto* v=json_object_get(state,field.name);if(field.boolean?!json_is_boolean(v):!integer(v,field.low,field.high))return fail("Invalid settings state.");
         }
         if((schema<34 && json_integer_value(json_object_get(state,"setupCursor"))>(schema<31?6:7)) || json_integer_value(json_object_get(state,"uiPage"))>(schema<30?32:schema<31?33:35))return fail("Invalid legacy settings page.");
+        if(schema<35 && (json_integer_value(json_object_get(state,"midiSetupCursor"))>5 || (schema==34 && json_integer_value(json_object_get(state,"setupCursor"))>16)))return fail("Invalid legacy MIDI/settings cursor.");
         {
             auto* v=json_object_get(state,"pickup");
                 if(!json_is_array(v) || json_array_size(v)!=10)return fail("Invalid pickup state.");
@@ -79,7 +81,7 @@ inline bool validate(Metropolix* m,json_t* document,Scope& scope,std::string& er
     if(scope!=Settings){
         auto* bank=json_object_get(document,"bank");if(!json_is_object(bank) || !integer(json_object_get(bank,"presetFormat"),1,Metropolix::PRESET_FORMAT))return fail("Unsupported preset format.");
         auto* slots=json_object_get(bank,"presets");int count=snapshotSize(int(json_integer_value(json_object_get(bank,"presetFormat"))));if(!json_is_array(slots) || json_array_size(slots)!=64)return fail("A bank must contain 64 slots.");
-        for(int slot=0;slot<64;++slot){auto* values=json_array_get(slots,slot);if(json_is_null(values))continue;if(!json_is_array(values) || json_array_size(values)!=size_t(count))return fail("Invalid preset size.");for(int i=0;i<count;++i)if(!value(m,Metropolix::presetParam(i),json_array_get(values,i)))return fail("Invalid preset value.");}
+        for(int slot=0;slot<64;++slot){auto* values=json_array_get(slots,slot);if(json_is_null(values))continue;if(!json_is_array(values) || json_array_size(values)!=size_t(count))return fail("Invalid preset size.");for(int i=0;i<count;++i)if(!presetValue(m,Metropolix::presetParam(i),json_array_get(values,i),int(json_integer_value(json_object_get(bank,"presetFormat")))))return fail("Invalid preset value.");}
         if(json_object_size(bank)!=4)return fail("Unexpected bank fields.");
         if(!integer(json_object_get(bank,"chainFormat"),1,1))return fail("Unsupported chain format.");
         auto* chains=json_object_get(bank,"chains");auto* saved=json_object_get(chains,"saved");

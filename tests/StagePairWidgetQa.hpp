@@ -1,5 +1,5 @@
 using M=Metropolix;
-static_assert(M::NUM_PARAMS==787 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==11,"Stage gestures add no saved fields");
+static_assert(M::FORMAT34_NUM_PARAMS==787 && M::NUM_PARAMS==789 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==12,"Stage gestures add no saved fields");
 if(std::getenv("METROPOLIX_STAGEPAIR_REOPEN_QA")) {
     if(qaFrame==6) {
         check(stagePairPage(m) && m->selectedTrack.load()==1 && m->selectedRow.load()==M::ACCUMULATION && m->selectedStage.load()==3 && !m->uiAlt.load(),"Rack reopen retains selected stage-pair screen and clears transient ALT mode");

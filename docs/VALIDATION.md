@@ -1,4 +1,21 @@
-# Validation and fidelity status — 2.69.0
+# Validation and fidelity status — 2.70.0
+
+## Firmware 1.6.5 additions — 2.70.0
+
+Adds A/B Mod Trigs, MX Mod Gate/Mod Trig and MIDI MX channel/message selection.
+The latter works without a physical expander. Two global parameters append
+at 787/788; old parameter/cable identities and all 522 musical tuple positions
+remain fixed. Schema 35/format 12 protect new globals and A/B route semantics.
+Old settings and banks import with the new bus Off. See [file compatibility](BACKUPS.md).
+
+New portable suites cover rising-edge 5 ms conversion, eight lane routing and
+CC/note lifecycle at 44.1/48/96 kHz. Native Rack tests exercise actual A/B jacks,
+expander independent MIDI with stage value levels, channel/type cleanup, panic and
+legacy schema 34 navigation. The full MX default OLED comparison uses 8192
+independent native cells; encoder/display tests cover all 9 modes and all 16
+channels, mandatory confirmation, cancellation, direct CC/Note menus and exact
+Undo/Redo. These tests do not verify an undocumented physical threshold or
+MIDI conversion against hardware.
 
 ## Native stage diagrams and clear curve editing — 2.69.0
 

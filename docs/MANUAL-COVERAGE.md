@@ -1,13 +1,18 @@
-# Manual workflow coverage — firmware 1.6 / plugin 2.69.0
+# Manual workflow coverage — firmware 1.6.5 / plugin 2.70.0
 
 Reference: [Metropolix firmware 1.6 manual, 2025-09-24](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
 Page numbers below are printed page numbers. This is a map of implemented
 software workflows and their test entry points, not a hardware equivalence
 score. The table identifies implemented scope and representative tests; it does not claim that every hardware edge case has an independent oracle.
 
-This build targets the supplied 1.6 manual. The newer [1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf)
-adds A/B Mod Trigs, MX Mod Gate/Mod Trig and MIDI MX channel/message settings.
-Those additions are the next implementation pass and are not included in 2.69.0.
+The table below retains the supplied1.6 manual's printed page numbers for its
+existing workflows. This build also implements the newer [1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf):
+A/B Mod Trigs (p117), MX Mod Gate/Mod Trig (p124) and independent MIDI MX channel
+and CC/Note output (pp125/182–183). [Firmware165RackTests.hpp](../tests/Firmware165RackTests.hpp),
+[Mx165WidgetQa.hpp](../tests/Mx165WidgetQa.hpp), [OutputTriggerTests.hpp](../tests/OutputTriggerTests.hpp),
+[MxModGateTests.hpp](../tests/MxModGateTests.hpp) and [MidiMxTests.hpp](../tests/MidiMxTests.hpp)
+cover the new bindings, native image, controls, MIDI lifecycle and migrations.
+See [MX](MX.md), [MIDI](MIDI.md) and [routing](OUTPUT-ROUTING.md).
 
 Native tests run through `scripts/test-rack.ps1`; portable engine suites run
 through `scripts/build.ps1 -Test` or the 25 engine CI jobs. Windows application
@@ -40,9 +45,9 @@ listed here does not imply a separate Linux GUI run for that group.
 | Probability/accumulation stages, pp.98–102 | Stage/Pulse probability, three accumulation triggers, paired resets and ALT editing | [AccumulatorTests.cpp](../tests/AccumulatorTests.cpp), [StagePairWidgetQa.hpp](../tests/StagePairWidgetQa.hpp), [BarStageWidgetQa.hpp](../tests/BarStageWidgetQa.hpp); StagePair, Accumulator, Pending | [Stage pairs](STAGE-PAIRS.md) |
 | Stage CV/TYPE, pp.103–106/136 | Bipolar/unipolar/gate values, Step/sRamp/pRamp, velocity source and gate-pattern editing | [StageCvTests.cpp](../tests/StageCvTests.cpp), [StageCvRackTests.hpp](../tests/StageCvRackTests.hpp), [CurveStageWidgetQa.hpp](../tests/CurveStageWidgetQa.hpp), [BinaryStageWidgetQa.hpp](../tests/BinaryStageWidgetQa.hpp); StageCv, CvAudio, Pending | [Stage CV](STAGE-CV.md) |
 | LOAD/SAVE and storage scope, pp.107–114/169–170 | Sixty-four presets, global/musical scope, queue timing, physical pickup, Filled/Bank8/All clearing and custom Init | [PresetRackTests.hpp](../tests/PresetRackTests.hpp), [PresetStorageRackTests.hpp](../tests/PresetStorageRackTests.hpp), [PickupRackTests.hpp](../tests/PickupRackTests.hpp); Presets, PresetAudio, Storage, Pickup, Backup | [Presets](PRESETS.md), [Storage](PRESET-STORAGE.md) |
-| A/B, pp.115–119 | Sixteen source families / 38 packed choices, assignment, mandatory previews and external-edit conflicts | [OutputRoutingTests.cpp](../tests/OutputRoutingTests.cpp), [OutputRoutingRackTests.hpp](../tests/OutputRoutingRackTests.hpp), [OutputPreviewWidgetQa.hpp](../tests/OutputPreviewWidgetQa.hpp); Outputs, OutputAudio, OutputArrangement | [Outputs](OUTPUT-ROUTING.md) |
+| A/B, pp.115–119 | Seventeen source families / 40 packed choices, assignment, mandatory previews and external-edit conflicts | [OutputRoutingTests.cpp](../tests/OutputRoutingTests.cpp), [OutputRoutingRackTests.hpp](../tests/OutputRoutingRackTests.hpp), [OutputPreviewWidgetQa.hpp](../tests/OutputPreviewWidgetQa.hpp); Outputs, OutputAudio, OutputArrangement | [Outputs](OUTPUT-ROUTING.md) |
 | CLK, pp.120–121 | Output division/offset, running/always scope and reset | [ClockOutputTests.cpp](../tests/ClockOutputTests.cpp), [ClockOutputRackTests.hpp](../tests/ClockOutputRackTests.hpp); Clock, ClockAudio | [Clock out](CLOCK-OUTPUT.md) |
-| MX, pp.122–125 | Four HP software expander, seven modes, eight software output jacks and reciprocal links | [MxTests.cpp](../tests/MxTests.cpp), [MxRackTests.hpp](../tests/MxRackTests.hpp); Mx, MxAudio, Fidelity | [MX](MX.md) |
+| MX, pp.122–125 | Four HP software expander, nine modes and independent MIDI MX, eight software output jacks and reciprocal links | [MxTests.cpp](../tests/MxTests.cpp), [MxRackTests.hpp](../tests/MxRackTests.hpp); Mx, MxAudio, Fidelity | [MX](MX.md) |
 | LIM/accumulator options, pp.126–135 | Stage/Track accumulation, limits, four orders, polarity, Auto/Manual reset and routed changes | [AccumulatorTests.cpp](../tests/AccumulatorTests.cpp), [AccumulatorRoutingRackTests.hpp](../tests/AccumulatorRoutingRackTests.hpp); AccumRouting, AccumAudio, Display | [Accumulator routing](ACCUMULATOR-ROUTING.md) |
 | MOD lanes, pp.137–145 | Eight lanes, independent traversal/timing, Step/Ramp/gates, internal/output assignments and destination units | [ModulationTests.cpp](../tests/ModulationTests.cpp), [ExtendedRoutingRackTests.hpp](../tests/ExtendedRoutingRackTests.hpp), [FidelityWidgetQa.hpp](../tests/FidelityWidgetQa.hpp); Modulation, Fidelity, Group | [Routing](COMPLETE-ROUTING.md), [Display](UI-FIDELITY.md) |
 | CTRL, pp.146–153 | Twenty-nine destinations plus None, direct/offset semantics, preview/confirmation, clear and active ownership takeover | [ControlTests.cpp](../tests/ControlTests.cpp), [RackIntegrationTests.cpp](../tests/RackIntegrationTests.cpp), [CtrlEditorWidgetQa.hpp](../tests/CtrlEditorWidgetQa.hpp), [LiveCtrlWidgetQa.hpp](../tests/LiveCtrlWidgetQa.hpp); Controls, CtrlEditor | [CTRL](CTRL-KNOBS.md) |

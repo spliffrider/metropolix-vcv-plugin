@@ -1,5 +1,5 @@
 using M=Metropolix;
-static_assert(M::NUM_PARAMS==787 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==11,"Scale clipboard adds no saved fields");
+static_assert(M::FORMAT34_NUM_PARAMS==787 && M::NUM_PARAMS==789 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==12,"Scale clipboard adds no saved fields");
 if(std::getenv("METROPOLIX_SCALECOPY_REOPEN_QA")) {
     if(qaFrame==6) {
         check(m->integer(M::SCALE)==148 && m->integer(M::userScaleParam(99))==0x91 && m->integer(M::userScaleParam(99,true))==9,"Rack reopen retains pasted notes/root in final user slot");

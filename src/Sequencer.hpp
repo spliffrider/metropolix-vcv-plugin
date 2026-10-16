@@ -155,6 +155,8 @@ public:
     Modulation modulation;
     ControlRoutes controls;
     std::array<float, 2> aux{};
+    std::array<GateTrigger,2> cvTriggers;
+    std::array<float,2> cvTriggerVoltage{};
     bool running = false;
     bool resumeOnRun = false;
     unsigned chainMutes = 0;
@@ -203,6 +205,7 @@ public:
             case OutSlider: return sliderPosition(t,state.stage,false)*5.f;
             case OutSliderRange: return sliderPosition(t,state.stage)*sliderOctaves(t);
             case OutVelocity: return velocity(t);
+            case OutModTrigs: return cvTriggerVoltage[t];
             default: return 0;
         }
     }
@@ -233,6 +236,7 @@ public:
     }
 
     void resetTrackOnly(int t) {
+        cvTriggers[t].clear();cvTriggerVoltage[t]=0;
         float pitch=tracks[t].pitch;uint64_t serial=tracks[t].stageSerial;tracks[t]=TrackState();tracks[t].stageSerial=serial;tracks[t].pitch=tracks[t].targetPitch=pitch;
         tracks[t].outputEvents.pulses[TrackOutputEvents::First].fire();tracks[t].outputEvents.firstDue=false;
         loopTracks[t]=playerTracks[t]=tracks[t];loopPlaying[t]=playerPlaying[t]=false;loopMasks[t]=playerMasks[t]=0;loopCounts[t]=0;
@@ -244,6 +248,7 @@ public:
         if(!manual){pendingAccumReset.fill(false);accumResetHigh.fill(false);trackResetHigh.fill(false);}
         for (int t=0;t<2;++t) {
             if(manual && !settings.tracks[t].globalReset && !(manualResetForce & (1u<<t)))continue;
+            cvTriggers[t].clear();cvTriggerVoltage[t]=0;
             pendingAccumReset[t]=false;
             auto& state=tracks[t];
             // CV pitch holds on reset until the next played note.
@@ -394,6 +399,10 @@ public:
         for(auto& state:tracks)state.outputEvents.render(dt);
         for(auto& state:loopTracks)state.outputEvents.render(dt);
         for(auto& state:playerTracks)state.outputEvents.render(dt);
+        for(int t=0;t<2;++t){
+            if((running || playerPlaying[t]) && !muted(t))cvTriggerVoltage[t]=cvTriggers[t].process(sounding(t).cv,dt);
+            else{cvTriggers[t].clear();cvTriggerVoltage[t]=0;}
+        }
         for (int output = 0; output < 2; ++output) {
             aux[output] = outputVoltage(settings.outputSources[output]);
         }

@@ -2,23 +2,24 @@
 #include <algorithm>
 #include <array>
 #include <string>
+#include "GateTrigger.hpp"
 
 namespace metro {
 enum OutputKind { OutCtrl1Bipolar, OutCtrl1Unipolar, OutCtrl2Bipolar, OutCtrl2Unipolar,
     OutTrackCv, OutFirstPulse, OutLastPulse, OutModClock, OutModCv, OutNewStage,
-    OutReset, OutRoot, OutRun, OutSlider, OutSliderRange, OutVelocity, OutputKindCount };
-constexpr int OutputSourceCount=38;
+    OutReset, OutRoot, OutRun, OutSlider, OutSliderRange, OutVelocity, OutModTrigs, OutputKindCount };
+constexpr int OutputSourceCount=40;
 inline const char* outputKindName(int kind) {
     const char* names[]={"Ctrl 1 ±","Ctrl 1 +","Ctrl 2 ±","Ctrl 2 +","CV","First Pulse","Last Pulse",
-        "MOD Clock","Mod","New Stage","Reset","Root","Run","Slider (0-5V)","Slider (Range)","Velocity"};
+        "MOD Clock","Mod","New Stage","Reset","Root","Run","Slider (0-5V)","Slider (Range)","Velocity","Mod Trigs"};
     return names[std::max(0,std::min(kind,int(OutputKindCount)-1))];
 }
 inline bool outputIsMod(int kind) {return kind==OutModClock || kind==OutModCv;}
-inline bool outputIsTrack(int kind) {return kind==OutTrackCv || kind==OutFirstPulse || kind==OutLastPulse || kind==OutNewStage || kind==OutRoot || kind==OutSlider || kind==OutSliderRange || kind==OutVelocity;}
+inline bool outputIsTrack(int kind) {return kind==OutTrackCv || kind==OutFirstPulse || kind==OutLastPulse || kind==OutNewStage || kind==OutRoot || kind==OutSlider || kind==OutSliderRange || kind==OutVelocity || kind==OutModTrigs;}
 inline int outputTargetCount(int kind) {return outputIsMod(kind)?8:outputIsTrack(kind)?2:0;}
 // Legacy sources 0/1=track CV and 2..9=MOD voltage remain unchanged in patches.
 inline int outputSource(int kind,int target=0) {
-    const int bases[]={10,11,12,13,0,14,16,18,2,26,28,29,31,32,34,36};
+    const int bases[]={10,11,12,13,0,14,16,18,2,26,28,29,31,32,34,36,38};
     kind=std::max(0,std::min(kind,int(OutputKindCount)-1));
     return bases[kind]+std::max(0,std::min(target,std::max(0,outputTargetCount(kind)-1)));
 }

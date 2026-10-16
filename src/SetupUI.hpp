@@ -1,6 +1,6 @@
 constexpr int SetupMenuCount=Metropolix::SetupItemCount, GlobalMenuCount=6, UiSetupCount=8;
-const char* setupMenuName(int n){const char* names[]={"Clock","Clock Mode","Run Btn","Reset Input","Bottom Pitch","Tuner...","Total Pulses","Init Preset...","Preset Chains...","MIDI Clock Out","MIDI Transport","MIDI Root Ch","MIDI PC Ch","Backup Files...","Presets Setup...","UI Setup...","Version / Factory"};return names[metro::clamp(n,0,SetupMenuCount-1)];}
-int setupMenuParam(Metropolix* m,int item=-1){if(!m)return -1;const int ids[]={Metropolix::CLOCK_SOURCE,Metropolix::CLOCK_RUNNING_ONLY,Metropolix::RUN_MODE,Metropolix::RESET_INPUT_MODE,Metropolix::BOTTOM_PITCH,-1,Metropolix::TOTAL_PULSES,-1,-1,Metropolix::MIDI_CLOCK_OUT,Metropolix::MIDI_TRANSPORT,Metropolix::MIDI_ROOT_CHANNEL,Metropolix::MIDI_PC_CHANNEL,-1,-1,-1,-1};return ids[metro::clamp(item<0?m->setupCursor.load():item,0,SetupMenuCount-1)];}
+const char* setupMenuName(int n){const char* names[]={"Clock","Clock Mode","Run Btn","Reset Input","Bottom Pitch","Tuner...","Total Pulses","Init Preset...","Preset Chains...","MIDI Clock Out","MIDI Transport","MIDI Root Ch","MIDI PC Ch","MIDI MX Ch","MIDI MX Output","Backup Files...","Presets Setup...","UI Setup...","Version / Factory"};return names[metro::clamp(n,0,SetupMenuCount-1)];}
+int setupMenuParam(Metropolix* m,int item=-1){if(!m)return -1;const int ids[]={Metropolix::CLOCK_SOURCE,Metropolix::CLOCK_RUNNING_ONLY,Metropolix::RUN_MODE,Metropolix::RESET_INPUT_MODE,Metropolix::BOTTOM_PITCH,-1,Metropolix::TOTAL_PULSES,-1,-1,Metropolix::MIDI_CLOCK_OUT,Metropolix::MIDI_TRANSPORT,Metropolix::MIDI_ROOT_CHANNEL,Metropolix::MIDI_PC_CHANNEL,Metropolix::MIDI_MX_CHANNEL,Metropolix::MIDI_MX_OUTPUT,-1,-1,-1,-1};return ids[metro::clamp(item<0?m->setupCursor.load():item,0,SetupMenuCount-1)];}
 std::string setupMenuValue(Metropolix* m,int id){
     if(!m || id<0)return {};
     int value=int(std::round(m->uiValue(id)));std::string text;
@@ -10,7 +10,7 @@ std::string setupMenuValue(Metropolix* m,int id){
     else if(id==Metropolix::RESET_INPUT_MODE){const char* names[]={"Reset","Run","Run-C"};text=names[metro::clamp(value,0,2)];}
     else if(id==Metropolix::RUN_ON_BOOT){const char* names[]={"Off","On","Patch"};text=names[metro::clamp(value,0,2)];}
     else if(id==Metropolix::CV_OUT_DELAY)text=std::to_string(value)+" ms";
-    else if(id==Metropolix::TOTAL_PULSES || id==Metropolix::MIDI_ROOT_CHANNEL || id==Metropolix::MIDI_PC_CHANNEL)text=value?std::to_string(value):"--";
+    else if(id==Metropolix::TOTAL_PULSES || id==Metropolix::MIDI_ROOT_CHANNEL || id==Metropolix::MIDI_PC_CHANNEL || id==Metropolix::MIDI_MX_CHANNEL)text=value?std::to_string(value):"--";
     else text=previewDisplayString(m,id);
     if(m->uiDraftParam==id && text.find('?')==std::string::npos)text+=" ?";
     return text;
@@ -18,7 +18,7 @@ std::string setupMenuValue(Metropolix* m,int id){
 // Nonselectable category rows join the four-line list when it scrolls.
 int setupDisplayRow(int item){return item+(item>=Metropolix::SetupPulses)+(item>=Metropolix::SetupMidiClock)+(item>=Metropolix::SetupPresets);}
 int setupDisplayItem(int row){for(int item=0;item<SetupMenuCount;++item)if(setupDisplayRow(item)==row)return item;return -1;}
-const char* setupCategoryName(int row){return row==6?"PRESET":row==10?"MIDI":row==16?"ADVANCED":"";}
+const char* setupCategoryName(int row){return row==6?"PRESET":row==10?"MIDI":row==18?"ADVANCED":"";}
 std::string setupHelp(Metropolix* m){
     if(!m || m->uiPage.load()!=Metropolix::SETUP_PAGE)return {};
     std::string text=setupMenuName(m->setupCursor.load());int id=setupMenuParam(m);

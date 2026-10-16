@@ -4,25 +4,25 @@
 
 Public source repository: **[spliffrider/metropolix-vcv-plugin](https://github.com/spliffrider/metropolix-vcv-plugin)**. See **[Development and version control](docs/DEVELOPMENT.md)** for branches, imported release tags, and automated checks. See the [manual coverage map](docs/MANUAL-COVERAGE.md) for implemented workflows and remaining reference gaps.
 
-A playable, two-track sequencer based on the Metropolix 1.6 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.69.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
+A playable, two-track sequencer based on the Metropolix 1.6.5 manual, with eight independent modulation lanes, three AUX inputs, a hardware-layout main panel, and optional stage and modulation editors. Version **2.70.0 — public alpha**, with packages for **Windows x64, Linux x64, Intel Mac and Apple Silicon**. Rack 2.6.6 is the validation baseline; see [platform coverage](docs/PLATFORMS.md). This is an independent implementation in progress, not an official Intellijel product or a complete reproduction of its firmware.
 
-**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/MetropolixLab-2.69.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/MetropolixLab-2.69.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/MetropolixLab-2.69.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/MetropolixLab-2.69.0-mac-arm64.vcvplugin)**
+**[Windows x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-win-x64.vcvplugin)** · **[Linux x64](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-lin-x64.vcvplugin)** · **[Intel Mac](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-x64.vcvplugin)** · **[Apple Silicon](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MetropolixLab-2.70.0-mac-arm64.vcvplugin)**
 
-**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.69.0)**
+**[Install and test](docs/TESTING.md)** · **[MX percussion demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/MX-performance.vcv)** · **[Release notes](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.70.0)**
 
-2.69.0 refines the [stage editing display](docs/UI-FIDELITY.md): native binary circles, pitch/gate bars, stacked ratchets, probability/accumulator indicators, clearer CV/MOD curves and CV Type. Existing controls, sequencing and saved formats stay unchanged.
+2.70.0 adds the firmware 1.6.5 [Mod Trigs outputs](docs/OUTPUT-ROUTING.md), [MX Mod Gate/Mod Trig and MIDI MX](docs/MX.md), including MIDI operation without an expander. The MX screen follows the new manual. Older patches and banks import; files saved in the new formats require 2.70.
 
-Try the [scale progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/Scale-progression.vcv) to hear custom scales and roots move through C, Am, F and G.
+Try the [scale progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Scale-progression.vcv) to hear custom scales and roots move through C, Am, F and G.
 
-Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.69.0/Chain-performance.vcv) to watch the sequencer follow an arrangement.
+Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Chain-performance.vcv) to watch the sequencer follow an arrangement.
 
 2.58.0 brings [Backup and maintenance lists](docs/BACKUPS.md) into the compact display style, with mixed-case labels, inverted selection and separate status lines. Cancel-first confirmations, file scopes and saved formats stay unchanged.
 
-2.57.0 gives [Presets Setup](docs/PRESETS.md) a compact scrolling list in the manual's order, browse/edit gestures and selected-setting resets. Pending Init choices and all question marks now display correctly. Existing saved setting IDs, schema34 and musical banks stay unchanged.
+2.57.0 gives [Presets Setup](docs/PRESETS.md) a compact scrolling list in the manual's order, browse/edit gestures and selected-setting resets. Pending Init choices and all question marks now display correctly. Existing saved setting IDs, schema 34 and musical banks stay unchanged.
 
-2.56.0 brings the [track, MOD, Global, UI and MIDI menus](docs/UI-SETUP.md) to four compact mixed-case rows with whole-row browsing and value-only selection. Slider Octaves now shows its pending 1–4 choice when leaving Shared. Parameter IDs, settings schema34 and musical banks stay unchanged.
+2.56.0 brings the [track, MOD, Global, UI and MIDI menus](docs/UI-SETUP.md) to four compact mixed-case rows with whole-row browsing and value-only selection. Slider Octaves now shows its pending 1–4 choice when leaving Shared. Parameter IDs, settings schema 34 and musical banks stay unchanged.
 
-2.55.0 gives [SETUP its compact hardware-style list](docs/UI-SETUP.md), with four mixed-case rows, inverted selection, direct settings, confirmed choices and selected-item long resets. Settings schema34 migrates old menu positions; parameter IDs and musical banks stay unchanged. New Settings/All backups require 2.55.
+2.55.0 gives [SETUP its compact hardware-style list](docs/UI-SETUP.md), with four mixed-case rows, inverted selection, direct settings, confirmed choices and selected-item long resets. Settings schema 34 migrates old menu positions; parameter IDs and musical banks stay unchanged. New Settings/All backups require 2.55.
 
 2.39.0 corrects [CTRL assignment editing](docs/CTRL-KNOBS.md): destination and track previews require encoder confirmation; long encoder clears the assignment with exact undo. Saved formats stay unchanged.
 
@@ -36,7 +36,7 @@ Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-p
 
 2.34.0 adds [independent MOD group mute](docs/MOD-GROUP-MUTE.md), preserving each lane’s mute choice through group mute/unmute. New banks and settings require 2.34; older files still import.
 
-2.33.0 corrected [musical preset storage](docs/PRESET-STORAGE.md): Scale Lock and both Loopy settings now save/recall with each preset, including chains and MIDI program changes. Old banks still import; new format10 banks require 2.33 or later.
+2.33.0 corrected [musical preset storage](docs/PRESET-STORAGE.md): Scale Lock and both Loopy settings now save/recall with each preset, including chains and MIDI program changes. Old banks still import; new format 10 banks require 2.33 or later.
 
 2.32.0 adds [eight global ORDER shortcuts](docs/ORDER-SHORTCUTS.md), held save/recall, paired long-encoder reset and desktop menus with undo. Existing parameter IDs and musical presets remain compatible.
 
@@ -220,7 +220,7 @@ under a new name. The older examples remain available for feature testing.
 
 To try the plugin, download the `.vcvplugin` asset using the link above; no compiler or source checkout is required. In Rack choose **Help → Open user folder**, save/close Rack, place the intact file in the **plugin folder for your OS/CPU** listed in [Platform packages](docs/PLATFORMS.md), and restart. Search for **Metropolix Lab**. See the [tester guide](docs/TESTING.md) for the demo and feedback instructions.
 
-For a local development build, the package is `dist/MetropolixLab-2.69.0-win-x64.vcvplugin`. After building it, close Rack and run:
+For a local development build, the package is `dist/MetropolixLab-2.70.0-win-x64.vcvplugin`. After building it, close Rack and run:
 
 ```powershell
 .\scripts\install.ps1

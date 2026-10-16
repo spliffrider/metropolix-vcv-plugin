@@ -22,5 +22,6 @@ int main(){using namespace metro;
     // Stage taps hold through multi-pulse rests and zero gate probability.
     {Sequencer seq;seq.settings.tracks[0].length=2;seq.settings.stages[0].pulses=3;seq.settings.stages[0].gate=Rest;seq.settings.tracks[0].stages[0].probability=0;
         MxLogic x;for(int pulse=0;pulse<3;++pulse){seq.process(.01,true,true,true,false);auto v=x.process(.01,MxStageNum,seq.masterTick,seq.masterPeriod,true,false,true,true,{},seq.sounding(0).stage,true,seq.trackMuted(0),-1,false,false);check(v[0]==5 && seq.sounding(0).gate==0);}}
-    std::cout<<"PASS: MX seven modes, dividers, offsets, multiplied clocks, probabilities, stage gates ("<<checks<<" assertions)\n";
+    #include "MxModGateTests.hpp"
+    std::cout<<"PASS: MX nine modes, dividers, offsets, multiplied clocks, probabilities, stage gates and MOD triggers ("<<checks<<" assertions)\n";
 }
