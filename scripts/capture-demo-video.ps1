@@ -1,5 +1,5 @@
-param([ValidateRange(1,80)][int]$Seconds = 80,
-      [ValidateSet('Musical-variations','Neon-Transit','Broken-Orbit')][string]$Example = 'Musical-variations',
+param([ValidateRange(1,180)][int]$Seconds = 80,
+      [ValidateSet('Musical-variations','Neon-Transit','Broken-Orbit','Pulse-Pressure')][string]$Example = 'Musical-variations',
       [string]$RackPath = 'C:\Program Files\VCV\Rack2Free\Rack.exe')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -53,6 +53,7 @@ try {
     if ($performance) {
         # Record actual pitch/gate voltages and voice peaks for explanatory overlays.
         $taps = @(@(1,0),@(1,1),@(1,2),@(1,3),@(1,5),@(1,6),@(1,4),@(3,0),@(6,0),@(23,0))
+        if ($Example -eq 'Pulse-Pressure') { $taps = @(@(1,0),@(1,1),@(1,2),@(1,3),@(2,0),@(2,1),@(2,2),@(4,2),@(7,2),@(23,0)) }
         for ($t = 0; $t -lt $taps.Count; $t++) {
             $patch.cables += @{id=(102+$t);outputModuleId=$taps[$t][0];outputId=$taps[$t][1];inputModuleId=100;inputId=(2+$t);color='#777777'}
         }
@@ -61,6 +62,7 @@ try {
         $settings.cableOpacity = 0.3
         $settings | ConvertTo-Json | Set-Content (Join-Path $profile 'settings.json') -Encoding utf8NoBOM
     }
+    if ($Example -eq 'Pulse-Pressure') { $env:METROPOLIX_CLUB_VIDEO = '1' }
     $patchFile = Join-Path $output 'capture.vcv'
     $patch | ConvertTo-Json -Depth 30 | Set-Content $patchFile -Encoding utf8NoBOM
     @{example=$Example; seconds=$Seconds; performance=$performance} | ConvertTo-Json | Set-Content (Join-Path $output 'take.json') -Encoding utf8NoBOM
@@ -85,6 +87,6 @@ try {
     $output | Set-Content 'tmp\latest-video-capture.txt' -Encoding utf8NoBOM
     Write-Output "Completed capture: $output"
 } finally {
-    Remove-Item Env:METROPOLIX_QA_DIR, Env:METROPOLIX_VIDEO_QA, Env:METROPOLIX_VIDEO_SECONDS, Env:METROPOLIX_PERFORMANCE_VIDEO -ErrorAction SilentlyContinue
+    Remove-Item Env:METROPOLIX_QA_DIR, Env:METROPOLIX_VIDEO_QA, Env:METROPOLIX_VIDEO_SECONDS, Env:METROPOLIX_PERFORMANCE_VIDEO, Env:METROPOLIX_CLUB_VIDEO -ErrorAction SilentlyContinue
     Pop-Location
 }

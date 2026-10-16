@@ -12,7 +12,8 @@ void MetropolixWidget::videoStep() {
     int sample = metrovideo::samples.load(std::memory_order_acquire);
     double seconds = sample / 48000.0;
     // screenshot() reads the front buffer: it contains the previous UI step.
-    if (previousSample - lastCaptured >= 2400 || shot == 0) {
+    bool club=std::getenv("METROPOLIX_CLUB_VIDEO")!=nullptr;
+    if (previousSample - lastCaptured >= (club?1600:2400) || shot == 0) {
         std::string file = string::f("frame-%05d.png", shot++);
         metroqa::screenshot(std::string(directory) + "/" + file);
         timeline << file << ',' << previousSample / 48000.0 << ',' << previousWide << '\n';
@@ -28,6 +29,17 @@ void MetropolixWidget::videoStep() {
         m->uiHome.store(1);
         m->uiMod.store(false);
         m->expanded.store(false);
+        if(club){
+            double bar=seconds*138./240.;int section=int(bar/8.);
+            m->uiField.store(0);m->uiAlt.store(false);m->selectedTrack.store(section==2 || section==3?1:0);
+            if(section==1)m->uiHome.store(0);
+            if(section==2){m->uiPage.store(Metropolix::ACCUM_PAGE);m->selectedRow.store(Metropolix::ACCUMULATION);}
+            if(section==3){m->uiPage.store(Metropolix::STAGE_PAGE);m->selectedRow.store(Metropolix::RATCHETS);}
+            if(section==4){m->uiMod.store(true);m->selectedLane.store(5);m->uiPage.store(Metropolix::STAGE_PAGE);}
+            if(section==5)m->uiPage.store(Metropolix::MX_SETUP_PAGE);
+            if(section==6){m->uiPage.store(Metropolix::CHAIN_PAGE);m->chainCursor.store(1);}
+            if(section>=7)m->uiHome.store(1);
+        }
         if (qaFrame == 30) APP->scene->rackScroll->setZoom(1.f);
         APP->scene->rackScroll->setGridOffset(Vec(-1.f, -.05f));
         previousSample = sample;
