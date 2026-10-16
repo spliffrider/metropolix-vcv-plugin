@@ -116,6 +116,11 @@ bipolar/unipolar mapping.
 
 ## Example and verification
 
+For hands-on control of the Pulse Pressure opening, see the
+[Axiom Pro starting layout](AXIOM-PRO.md). It adds Core MIDI-Map assignments
+for the factory GM faders and encoders; physical-controller setup and response
+tuning are still pending.
+
 Open `examples/MIDI-performance.vcv`, select an AUDIO device and press RUN.
 Both voices receive pitch/gate exclusively through Rack Loopback 16 and two
 Core MIDI-CV modules on channels 1/2. The patch starts stopped and has no
