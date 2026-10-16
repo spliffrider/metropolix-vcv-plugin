@@ -1,5 +1,14 @@
 # UI setup, confirmation and external clock input — 2.63.0
 
+## MIDI MX settings — 2.70.0
+
+Primary SETUP now includes MIDI MX Ch and MIDI MX Output after MIDI PC Ch.
+The channel is Off or 1–16; the output is CC or Note. They configure the same
+independent MIDI bus as ALT → stage 6 → ALT on the MX screen and the desktop
+MIDI Setup menu. The new global values stay outside musical presets. Old
+menu positions migrate to their original named setting. [MIDI](MIDI.md) and
+[MX](MX.md) explain operation; [Backups](BACKUPS.md) covers the new file versions.
+
 ## Native menu layout and complete descenders — 2.65.0
 
 Track, primary SETUP, MOD, Global, UI, MIDI and Presets Setup menus use the

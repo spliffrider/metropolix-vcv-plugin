@@ -1,5 +1,5 @@
 using M=Metropolix;
-static_assert(M::NUM_PARAMS==787 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==11,"CTRL editor adds no saved fields");
+static_assert(M::FORMAT34_NUM_PARAMS==787 && M::NUM_PARAMS==789 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==12,"CTRL editor adds no saved fields");
 if(std::getenv("METROPOLIX_CTRLEDITOR_REOPEN_QA")) {
     if(qaFrame==6) {
         check(m->selectedCtrl.load()==1 && m->uiPage.load()==M::CTRL_PAGE && m->uiField.load()==1,"Rack reopen retains selected CTRL and assignment field");

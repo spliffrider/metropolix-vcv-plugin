@@ -1,7 +1,7 @@
 #include "../src/BackupRestore.hpp"
 void modGroupRackTests() {
     using M=Metropolix;using namespace metrobackup;
-    static_assert(M::MOD_GROUP_MUTE==786 && M::NUM_PARAMS==787 && M::FORMAT10_PARAMS==521 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==11,"group mute appends one parameter and one snapshot value");
+    static_assert(M::MOD_GROUP_MUTE==786 && M::FORMAT34_NUM_PARAMS==787 && M::NUM_PARAMS==789 && M::FORMAT10_PARAMS==521 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==12,"group mute appends one parameter and one snapshot value");
     rack::plugin::Plugin plugin;plugin.slug="MetropolixLab";plugin.version="2.34.0";modelMetropolix->plugin=&plugin;modelMetropolix->slug="Metropolix";plugin.models.push_back(modelMetropolix);rack::plugin::plugins.push_back(&plugin);
     auto m=std::unique_ptr<M>(new M),other=std::unique_ptr<M>(new M);m->model=other->model=modelMetropolix;m->id=837;other->id=838;
     Module::ProcessArgs args{};args.sampleRate=48000;args.sampleTime=1.f/48000;

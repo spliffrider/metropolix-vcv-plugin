@@ -1,5 +1,5 @@
 using M=Metropolix;
-static_assert(M::NUM_PARAMS==787 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==11,"output previews add no saved fields");
+static_assert(M::FORMAT34_NUM_PARAMS==787 && M::NUM_PARAMS==789 && M::SNAPSHOT_PARAMS==522 && M::PRESET_FORMAT==12,"output previews add no saved fields");
 APP->engine->bypassModule(m,true);
 auto raw=[&]{std::vector<float> values;for(auto& p:m->params)values.push_back(p.getValue());return values;};
 auto original=raw();m->params[M::RUN].setValue(0);

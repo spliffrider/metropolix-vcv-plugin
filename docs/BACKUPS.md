@@ -1,5 +1,17 @@
 # Portable backups — 2.58.0
 
+## Current file compatibility — 2.70.0
+
+New All/Settings backups require **2.70.0**: settings schema 35 contains789
+parameters, appending MIDI MX Ch and MIDI MX Output after the frozen 787-ID
+prefix. Old schema 34 SETUP/MIDI positions migrate to their same named setting;
+new MIDI MX defaults to disabled CC. New Presets-only, Filled and Bank exports
+also require **2.70.0** for musical format 12. The tuple still has 522 values and
+all positions stay fixed; the version protects the new A/B routes38/39 from
+being misread by older builds. Formats1–11 and supported settings schemas29–34
+continue to import. Older format 9 example backups remain intentional migration
+fixtures. Preserve an older patch copy if you need to return to an older plugin.
+
 Open **SETUP → Backup Files**, or use the module's right-click menu. The
 desktop MIDI Setup shortcut also retains its Backup files entry.
 Drag the encoder or display up/down to select an action. Click the encoder to
@@ -9,7 +21,7 @@ submenu; EXIT returns to Backup files. Right-click offers the same choices.
 | Action | Saved contents |
 | --- | --- |
 | Export All | Current settings/state, all 64 preset slots, the working chain and eight saved chains |
-| Export Settings | All 787 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
+| Export Settings | All789 parameter settings, custom scales/shortcuts, global preferences, MIDI assignments, MX assignments, panel pickup targets and screen selection |
 | Export Presets → All Presets | All 64 slots, including empty slots, the working chain and eight saved chains |
 | Export Presets → Filled Presets | Only occupied slots, keeping their original bank/slot addresses; no chains or live settings |
 | Export Presets → Bank 1–8 | Exactly eight slots in the selected bank, including explicit empty slots; no chains or live settings |
@@ -70,7 +82,7 @@ to the SETUP or desktop MIDI parent from which it was opened.
 
 These are this plugin's JSON files. The hardware manual's MIDI SysEx options
 are a reference for scope; hardware SysEx interchange is not implemented here.
-The display change does not alter schema34, 787 parameter IDs, format11/522
+The display change does not alter schema 34, 787 parameter IDs, format 11/522
 musical snapshots, backup validation, file scope or Undo/Redo.
 
 ## Selective file format and compatibility
@@ -79,28 +91,17 @@ Format 2 contains exactly `type`, `format`, `scope`, `selection` and `bank`.
 `scope` is `presets`. `selection` is either `{"kind":"filled"}` or
 `{"kind":"bank","bank":8}` (public bank numbers 1–8). `bank` contains
 `presetFormat: 11` and a `slots` array. Each entry has an absolute `slot` index
-0–63 and `values`, the 522-value musical snapshot. Legacy format9/518 files
+0–63 and `values`, the 522-value musical snapshot. Legacy format 9/518 files
 gain Unlocked/Auto/Current Track for the three lock/Loopy fields; formats9–10
 gain group mute Off. Individual lane masks remain unchanged. A Bank entry may
 use `null` for an empty slot; Filled entries must contain a snapshot.
 Duplicate IDs, foreign bank IDs, missing bank slots, wrong snapshot sizes and
 out-of-range values are rejected before import. The files contain no chains.
 
-Use **2.55.0 or later** for new **All** or **Settings** backups: schema34
-stores the expanded SETUP cursor and its direct child parent. **Presets-only**,
-**Filled** and **Bank** files still need **2.34.0 or later** for format11 musical
-banks. Older format9–10
-selective files still import. See [Preset storage](PRESET-STORAGE.md) and
-[MOD group mute](MOD-GROUP-MUTE.md). Existing 2.26–2.29 All/Settings/All Presets backups
-continue to import, including settings schemas29–31 with 770 parameters.
-Schema32 settings retain their released 786-parameter count; schema33
-added the independent group mute, for 787. Schema34 retains these IDs and migrates old SETUP positions without
-changing musical values. Schemas29–31 initialize missing ORDER
-shortcuts to defaults, and schemas29–32 initialize missing group mute Off while
-preserving individual lane masks. The first 521 musical snapshot positions and
-all earlier parameter IDs remain fixed. Format10 added Scale Lock and both
-Loopy settings; format11 appends group mute. Formats1–10 full banks and
-formats9–10 selective files still import. The
+Historical schema 32 settings have 786 parameters and schema 33/34 have 787.
+Schemas29–31 initialize missing ORDER shortcuts; schemas29–32 initialize group
+mute Off while preserving individual masks. Format 10 added Scale Lock/Loopy;
+format 11 added group mute. Current compatibility is described above. The
 [example Bank 8 backup](../examples/Backup-bank-8.json) intentionally replaces
 Bank 8 with three occupied slots and five empty slots; try it in a spare patch.
 

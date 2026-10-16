@@ -118,6 +118,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
         appendWorkflowMenu(menu,m);appendModWorkflowMenu(menu,m);
         if(outputPage(m))appendOutputMenu(menu,m);
         if(m && m->uiPage.load()==Metropolix::CLOCK_OUT_PAGE)appendClockMenu(menu,m);
+        if(m && m->uiPage.load()==Metropolix::MX_SETUP_PAGE)appendMxMenu(menu,m);
         if(m && (m->uiPage.load()==Metropolix::SETUP_PAGE || m->uiPage.load()==Metropolix::GLOBAL_SETUP_PAGE || m->uiPage.load()==Metropolix::UI_SETUP_PAGE || m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE || m->uiPage.load()==Metropolix::TUNER_PAGE))appendGlobalMenu(menu,m);
         overrideMenu(menu,m);
         if(cvPage(m) || (m && m->uiPage.load()==Metropolix::CV_TYPE_PAGE))appendCvMenu(menu,m);
@@ -183,10 +184,10 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     };
     encoder->confirmationCapable=true;encoder->navigationMode=display->navigationMode;encoder->navigationTurn=display->navigationTurn;
     for(auto* c:{static_cast<HardwareControl*>(display),encoder}) {
-        c->detailHelp=[m]{if(m && m->uiMod.load() && m->uiPage.load()==Metropolix::CV_TYPE_PAGE)return m->getParamQuantity(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_TYPE))->getDescription();return presetSetupPage(m)?presetSetupHelp(m):m && m->uiPage.load()==Metropolix::SETUP_PAGE?setupHelp(m):factoryPage(m)?factoryHelp(m):backupHelp(m);};
+        c->detailHelp=[m]{if(m && m->uiMod.load() && m->uiPage.load()==Metropolix::CV_TYPE_PAGE)return m->getParamQuantity(Metropolix::modParam(m->selectedLane.load(),Metropolix::MOD_TYPE))->getDescription();if(m && m->uiPage.load()==Metropolix::MX_SETUP_PAGE)return mxHelp(m);return presetSetupPage(m)?presetSetupHelp(m):m && m->uiPage.load()==Metropolix::SETUP_PAGE?setupHelp(m):factoryPage(m)?factoryHelp(m):backupHelp(m);};
         c->groupedParams=[m] {
             if(presetSetupPage(m))return std::vector<int>{presetSetupParam(m)};
-            if(m && m->uiPage.load()==Metropolix::MX_SETUP_PAGE)return std::vector<int>{Metropolix::MX_MODE,Metropolix::MX_TRACK,Metropolix::MX_LANE};
+            if(m && m->uiPage.load()==Metropolix::MX_SETUP_PAGE)return std::vector<int>{Metropolix::MX_MODE,Metropolix::MX_TRACK,Metropolix::MX_LANE,Metropolix::MIDI_MX_CHANNEL};
             if(m && m->uiPage.load()==Metropolix::SETUP_PAGE && setupMenuParam(m)>=0)return std::vector<int>{setupMenuParam(m)};
             if(m && m->uiPage.load()==Metropolix::UI_SETUP_PAGE)return std::vector<int>{uiSetupParam(m)};
             if(m && m->uiPage.load()==Metropolix::MIDI_SETUP_PAGE && midiSetupParam(m)>=0)return std::vector<int>{midiSetupParam(m)};
@@ -369,7 +370,7 @@ void MetropolixWidget::buildHardware(Metropolix* m) {
     scale->groupedParams=[m] {if(m && m->scaleCopyGesture){if(!metro::userScale(m->integer(Metropolix::SCALE)))return std::vector<int>{};int slot=m->integer(Metropolix::SCALE)-metro::FactoryScaleCount;return std::vector<int>{Metropolix::userScaleParam(slot),Metropolix::userScaleParam(slot,true)};}std::vector<int> ids={Metropolix::SCALE,Metropolix::ROOT,Metropolix::SCALE_LOCK};for(int s=0;s<8;++s)for(bool root:{false,true})ids.push_back(Metropolix::scaleShortcutParam(s,root));for(int s=0;s<100;++s)ids.push_back(Metropolix::userScaleParam(s,true));return ids;};
     auto* alt=control("ALT",208.2f,306,16,HardwareControl::DARK_BUTTON);
     alt->help="Toggle secondary stage-button actions: internal preset LOAD/SAVE, A/B assignment, and lane/accumulator settings. Rack file presets remain in the module's right-click menu.";
-    alt->action=[m] { if(m) { m->cancelDraft();if(m->uiPage.load()==Metropolix::SCALE_PAGE)m->uiField.store(1-m->uiField.load());else {if(!m->uiAlt.load())captureWorkflowBaseline(m);m->uiAlt.store(!m->uiAlt.load());} } }; alt->active=[m] { return m && m->uiAlt.load(); };
+    alt->action=[m] { if(m) { m->cancelDraft();if(m->uiPage.load()==Metropolix::MX_SETUP_PAGE){m->uiAlt.store(false);m->uiField.store(m->uiField.load()==2?0:2);}else if(m->uiPage.load()==Metropolix::SCALE_PAGE)m->uiField.store(1-m->uiField.load());else {if(!m->uiAlt.load())captureWorkflowBaseline(m);m->uiAlt.store(!m->uiAlt.load());} } }; alt->active=[m] { return m && (m->uiAlt.load() || (m->uiPage.load()==Metropolix::MX_SETUP_PAGE && m->uiField.load()==2)); };
     auto scaleModifier=[m,alt,scale]{return m && (m->uiAlt.load() || alt->dragging || ((scale->pressMods | APP->window->getMods()) & GLFW_MOD_ALT));};
     scale->binding=[m,scaleModifier]{return m && (m->scaleCopyGesture || scaleModifier())?-1:Metropolix::SCALE;};
     scale->navigationMode=[m,scaleModifier]{return m && !m->scaleCopyGesture && !scaleModifier();};

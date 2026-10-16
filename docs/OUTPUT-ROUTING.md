@@ -1,4 +1,4 @@
-# A/B output routing — 2.43.0
+# A/B output routing — 2.70.0
 
 ALT → A or B opens the two-field routing screen (manual pp.115–119).
 Drag the encoder or display up/down to choose a function or track/lane.
@@ -34,6 +34,7 @@ direct desktop actions. The transient preview and its origin are never saved.
 | Slider (0–5V) | Current stage's physical pitch-slider position × 5 V | Track 1/2 |
 | Slider (Range) | Slider position × the track's octave range, with its direction | Track 1/2 |
 | Velocity | Selected track velocity, clamped to 0…5 V after offsets | Track 1/2 |
+| Mod Trigs |5 ms trigger derived from track CV, independent of note gates | Track 1/2 |
 
 The original CV/MOD assignment IDs and all cable endpoints remain fixed. Older
 patches keep their A/B functions, including B = Track 2 CV when that was saved.
@@ -92,3 +93,17 @@ Reset and MOD Clock descriptions. This implementation treats Reset as global
 and lets MOD Clock select eight lanes. Pulse width, live-edit event treatment,
 Loopy routing and root-offset scope are documented interpretations requiring
 hardware-owner feedback. No physical module comparison has been made.
+
+## Mod Trigs — firmware 1.6.5
+
+Select Mod Trigs and Track1/2 through the A/B screen or native menu. Rising CV
+at the existing 1.5V gate threshold emits a full 5 ms pulse, including for a short
+input. A held high CV does not create repeated pulses. Track swap follows the
+source track; mute/stop clear the pulse. The stopped Stage Player can produce
+it from its frozen CV. Note Rest/probability do not suppress a CV-derived
+trigger. Trigger width is specified by the new manual p117; threshold, edge
+and cancellation policy remain software interpretations.
+
+The two new packed sources append at 38/39 after the unchanged 0–37 mapping.
+Format 12 banks keep the same 522 value positions, but require 2.70 to distinguish
+the new choices safely. Older banks and Rack patches retain their routes.

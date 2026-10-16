@@ -6,6 +6,7 @@ bool requiresConfirmation(Metropolix* m,int id){
     if(binaryStagePage(m) && m->uiAlt.load())return false;
     if(m->uiPage.load()==Metropolix::SETUP_PAGE && m->uiField.load() && id==setupMenuParam(m,-1))return true;
     if(id>=Metropolix::MX_MODE && id<=Metropolix::MX_LANE)return true;
+    if(m->uiPage.load()==Metropolix::MX_SETUP_PAGE && id==Metropolix::MIDI_MX_CHANNEL)return true;
     for(int input=0;input<3;++input)if(id==Metropolix::auxParam(input,Metropolix::AUX_DESTINATION) || id==Metropolix::auxParam(input,Metropolix::AUX_ASSIGNMENT))return true;
     for(int knob=0;knob<2;++knob)if(id==Metropolix::ctrlParam(knob,Metropolix::CTRL_DESTINATION) || id==Metropolix::ctrlParam(knob,Metropolix::CTRL_ASSIGNMENT))return true;
     for(int lane=0;lane<8;++lane)if(id==Metropolix::modParam(lane,Metropolix::MOD_DESTINATION) || id==Metropolix::modParam(lane,Metropolix::MOD_ASSIGNMENT))return true;

@@ -12,7 +12,7 @@ edit sequence, not the sequencer's separate random musical choices.
 
 The host checks:
 
-- Both public factories and the 787 parameters (the established 770 plus sixteen ORDER shortcut values and independent MOD group mute), seven main outputs
+- Both public factories and the789 parameters (the established770 plus sixteen ORDER shortcut values, independent MOD group mute and two MIDI MX settings), seven main outputs
   and eight MX outputs.
 - Default main gates and linked MX actually reaching 5 V.
 - 56,664 parameter writes: repeated minimum, maximum and seeded interior

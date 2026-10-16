@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <array>
 
 namespace metro {
 inline int midiValue(float v) {return std::max(0,std::min(127,int(std::lround(v*127.f))));}
@@ -32,6 +33,38 @@ struct MidiVoice {
         bool began=ch>0 && gate && (start || change);
         note=ch>0 && gate?key:-1;channel=ch;high=gate;event=serial;
         return began;
+    }
+};
+
+// One shared MX bus, independent of a physical expander. CC102..109 or notes
+// 35..42 carry its eight gates. The caller supplies each gate's MIDI value;
+// modulation modes can therefore use the programmed stage's velocity/value.
+struct MidiMxOutput {
+    int channel=0,kind=0,mode=-1;
+    std::array<MidiVoice,8> voices;
+    std::array<int,8> lastCC{{-1,-1,-1,-1,-1,-1,-1,-1}};
+    std::array<bool,8> previous{},suppressed{};
+    std::array<uint64_t,8> events{};
+    template<class Emit> void silence(Emit emit,bool suppressHeld=false){
+        for(auto& voice:voices)voice.silence(emit);
+        if(channel && !kind)for(int lane=0;lane<8;++lane)if(lastCC[lane]>0)emit(0xb0+channel-1,102+lane,0,3);
+        lastCC.fill(-1);if(suppressHeld)suppressed=previous;
+    }
+    void suppressHeld(){suppressed=previous;}
+    // Release through silence() before discarding a host/runtime receipt.
+    void reset(){voices.fill(MidiVoice{});channel=kind=0;mode=-1;lastCC.fill(-1);previous.fill(false);suppressed.fill(false);events.fill(0);}
+    template<class Emit> void process(int requestedChannel,int requestedKind,int requestedMode,const std::array<float,8>& gates,const std::array<int,8>& levels,Emit emit){
+        requestedChannel=std::max(0,std::min(16,requestedChannel));requestedKind=std::max(0,std::min(1,requestedKind));
+        if(channel!=requestedChannel || kind!=requestedKind || mode!=requestedMode){silence(emit);channel=requestedChannel;kind=requestedKind;mode=requestedMode;previous.fill(false);suppressed.fill(false);}
+        if(!channel){previous.fill(false);return;}
+        for(int lane=0;lane<8;++lane){
+            bool high=std::isfinite(gates[lane]) && gates[lane]>=1.5f;
+            if(!high)suppressed[lane]=false;
+            if(high && !previous[lane])++events[lane];
+            previous[lane]=high;bool active=high && !suppressed[lane];int value=std::max(0,std::min(127,levels[lane]));
+            if(kind)voices[lane].process(active,35+lane,channel,value,events[lane],false,emit);
+            else{int next=active?value:0;if(next!=lastCC[lane]){emit(0xb0+channel-1,102+lane,next,3);lastCC[lane]=next;}}
+        }
     }
 };
 

@@ -7,9 +7,11 @@ void near(float v,float expected,const char* message){require(std::abs(v-expecte
 void tick(metro::Sequencer& s){s.process(.002,true,true,true,false);}
 int main(){
     using namespace metro;
-    bool covered[38]={};
+    bool covered[OutputSourceCount]={};
+    const int legacyBases[]={10,11,12,13,0,14,16,18,2,26,28,29,31,32,34,36};
     for(int kind=0;kind<OutputKindCount;++kind)for(int target=0;target<std::max(1,outputTargetCount(kind));++target){
-        int source=outputSource(kind,target);require(source>=0 && source<38 && !covered[source],"all function/assignment pairs have unique stable IDs");covered[source]=true;
+        int source=outputSource(kind,target);require(source>=0 && source<OutputSourceCount && !covered[source],"all function/assignment pairs have unique stable IDs");covered[source]=true;
+        if(kind<16)require(source==legacyBases[kind]+target,"all38 legacy packed output IDs remain frozen");
         auto decoded=outputSelection(source);require(decoded.kind==kind && decoded.target==target,"all source IDs round-trip");
     }
     for(bool yes:covered)require(yes,"every stored source ID has a function");
@@ -82,5 +84,6 @@ int main(){
             if(s.loopy.stages)near(s.outputVoltage(outputSource(OutNewStage)),(p-3)%2==0?5:0,"Loopy New Stage follows the audible foreground");
         }
     }
+    #include "OutputTriggerTests.hpp"
     std::cout<<"PASS: OutputRoutingTests "<<checks<<" checks\n";
 }

@@ -43,6 +43,7 @@ void require(bool value, const char* message) {
 #include "PresetStorageRackTests.hpp"
 #include "ModGroupRackTests.hpp"
 #include "ModTypeRackTests.hpp"
+#include "Firmware165RackTests.hpp"
 rack::Model nativeMetroModel,nativeMxModel;
 rack::Model* modelMetropolix=&nativeMetroModel;
 rack::Model* modelMX=&nativeMxModel;
@@ -326,6 +327,7 @@ int main() {
     pickupRackTests();
     midiRackTests();
     mxRackTests();
+    firmware165RackTests();
     backupRackTests();
     selectiveBackupRackTests();
     factoryRackTests();

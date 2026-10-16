@@ -172,6 +172,7 @@ struct HardwareDisplay : HardwareControl {
     #include "HardwareScaleDisplay.hpp"
     #include "HardwareStageGraphs.hpp"
     #include "HardwareStageCurves.hpp"
+    #include "HardwareMxDisplay.hpp"
     void stage(OledCanvas& c) const {
         auto* m=metroModule;if(!m)return;
         int t=m->selectedTrack.load(),s=m->selectedStage.load(),l=m->selectedLane.load(),row=m->selectedRow.load();
@@ -428,10 +429,7 @@ struct HardwareDisplay : HardwareControl {
             c.text(1,14,action?"KEEP LIVE SETTINGS":"KEEP 64 PRESETS");
             for(int n=0;n<2;++n)listRow(c,n+2,n?"Apply":"Cancel","",n==choice,false,true);return c;
         } else if(page==Metropolix::MX_SETUP_PAGE){
-            int mode=integer(Metropolix::MX_MODE),assign=m?mxAssignment(m):-1;
-            field(c,0,"MX - EXPANDER",m?previewDisplayString(m,Metropolix::MX_MODE):"Transport A",!f,128,1);c.right(126,2,"GATE");
-            field(c,28,"MX ASSIGN",assign<0?(mode==metro::MxModClocks?"All MOD > MX":"Global/All > MX"):previewDisplayString(m,assign)+" > MX",f && assign>=0,128,1,assign<0?0:1);
-            c.text(1,56,m && m->mxConnected.load()?"MX CONNECTED":"PLACE MX AT RIGHT");return c;
+            mxScreen(c);return c;
         } else if(page==Metropolix::SETUP_PAGE){
             int cursor=m?m->setupCursor.load():0,selected=setupDisplayRow(cursor);
             int start=metro::clamp(selected-1,0,setupDisplayRow(SetupMenuCount-1)-3);

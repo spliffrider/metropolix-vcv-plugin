@@ -184,7 +184,7 @@ struct Metropolix : Module {
         CLOCK_SOURCE=FORMAT19_NUM_PARAMS, CLOCK_RUNNING_ONLY, RESET_INPUT_MODE, TRACK_GLOBAL_RESET_1, TRACK_GLOBAL_RESET_2, BOTTOM_PITCH, TUNER_OCTAVE, TUNER_GATE, FORMAT20_NUM_PARAMS, INIT_PRESET=FORMAT20_NUM_PARAMS, FORMAT21_NUM_PARAMS, ENC_CONFIRM=FORMAT21_NUM_PARAMS, SHOW_POSITION, BUTTON_LEVEL, SLIDER_LEVEL, SCREEN_LEVEL, CV_OUT_DELAY, EXT_CLOCK_DIV, RUN_ON_BOOT, FORMAT22_NUM_PARAMS,
         MIDI_TRACK=FORMAT22_NUM_PARAMS, MIDI_TRACK_STRIDE=5,
         MIDI_MOD=MIDI_TRACK+2*MIDI_TRACK_STRIDE, MIDI_MOD_STRIDE=2,
-        MIDI_CLOCK_OUT=MIDI_MOD+8*MIDI_MOD_STRIDE, MIDI_TRANSPORT, MIDI_ROOT_CHANNEL, MIDI_PC_CHANNEL, MIDI_ZERO_NOTE, FORMAT24_NUM_PARAMS, MX_MODE=FORMAT24_NUM_PARAMS, MX_TRACK, MX_LANE, FORMAT31_NUM_PARAMS, ORDER_SHORTCUTS=FORMAT31_NUM_PARAMS, FORMAT32_NUM_PARAMS=ORDER_SHORTCUTS+16, MOD_GROUP_MUTE=FORMAT32_NUM_PARAMS, NUM_PARAMS
+        MIDI_CLOCK_OUT=MIDI_MOD+8*MIDI_MOD_STRIDE, MIDI_TRANSPORT, MIDI_ROOT_CHANNEL, MIDI_PC_CHANNEL, MIDI_ZERO_NOTE, FORMAT24_NUM_PARAMS, MX_MODE=FORMAT24_NUM_PARAMS, MX_TRACK, MX_LANE, FORMAT31_NUM_PARAMS, ORDER_SHORTCUTS=FORMAT31_NUM_PARAMS, FORMAT32_NUM_PARAMS=ORDER_SHORTCUTS+16, MOD_GROUP_MUTE=FORMAT32_NUM_PARAMS, FORMAT34_NUM_PARAMS, MIDI_MX_CHANNEL=FORMAT34_NUM_PARAMS, MIDI_MX_OUTPUT, NUM_PARAMS
     };
     enum TrackParams { LENGTH, OFFSET, DIVISION, ORDER, TRANSPOSE, GATE_LENGTH, SLIDE_TIME, ACCUM_LIMIT, MUTE };
     enum StageParams { RATCHETS, PROBABILITY, ACCUMULATION, SLIDE, SKIP, CV, PITCH_OVERRIDE, GATE_OVERRIDE };
@@ -324,7 +324,7 @@ struct Metropolix : Module {
     // existing Rack parameters. No engine parameter IDs change here.
     enum SetupItem { SetupClock, SetupClockMode, SetupRun, SetupReset, SetupBottom,
         SetupTuner, SetupPulses, SetupInit, SetupChains, SetupMidiClock,
-        SetupMidiTransport, SetupMidiRoot, SetupMidiPc, SetupBackup,
+        SetupMidiTransport, SetupMidiRoot, SetupMidiPc, SetupMidiMxChannel, SetupMidiMxOutput, SetupBackup,
         SetupPresets, SetupUi, SetupVersion, SetupItemCount };
     enum UiPage { HOME, BPM_PAGE, SCALE_PAGE, ORDER_PAGE, LENGTH_PAGE, DIV_PAGE,
         SLIDE_PAGE, GATE_PAGE, STAGE_PAGE, A_PAGE, B_PAGE, SETUP_PAGE, UNAVAILABLE_PAGE, AUX_PAGE, ACCUM_PAGE, CTRL_PAGE,
@@ -588,7 +588,7 @@ struct Metropolix : Module {
         configParam(EXT_CLOCK_DIV,1,256,1,"External clock input division");
         configSwitch(RUN_ON_BOOT,0,2,2,"Run on boot",{"Off","On","Recall Rack patch"});
         configureMidi();
-        configSwitch(MX_MODE,0,6,0,"MX expander mode",{"Transport A","Transport B","Transport C","Prob Clocks","Mod Clocks","Stage Num","Mod Stage Num"});
+        configSwitch(MX_MODE,0,8,0,"MX expander mode",{"Transport A","Transport B","Transport C","Prob Clocks","Mod Clocks","Stage Num","Mod Stage Num","Mod Gate","Mod Trig"});
         configSwitch(MX_TRACK,0,1,0,"MX track",{"TRK 1","TRK 2"});
         configSwitch(MX_LANE,0,7,0,"MX MOD lane",{"MOD 1","MOD 2","MOD 3","MOD 4","MOD 5","MOD 6","MOD 7","MOD 8"});
         // Convenient software defaults; the manual does not list factory pairs.
@@ -803,13 +803,24 @@ struct Metropolix : Module {
     }
 
     void processMx(const ProcessArgs& args,bool update){
-        int track=metro::clamp(integer(MX_TRACK),0,1);if(sequencer.swapped())track=1-track;int lane=metro::clamp(integer(MX_LANE),0,7);
+        int track=metro::clamp(integer(MX_TRACK),0,1);if(sequencer.swapped())track=1-track;int lane=metro::clamp(integer(MX_LANE),0,7),mode=metro::clamp(integer(MX_MODE),0,int(metro::MxModeCount)-1);
         bool reset=mxResetSerial!=sequencer.resetSerial;mxResetSerial=sequencer.resetSerial;
-        auto signals=mx.process(args.sampleTime,integer(MX_MODE),sequencer.masterTick,sequencer.masterPeriod,
+        auto signals=mx.process(args.sampleTime,mode,sequencer.masterTick,sequencer.masterPeriod,
             sequencer.running || !sequencer.settings.clockRunningOnly,reset,sequencer.running,
             sequencer.running || !sequencer.settings.resetRunningOnly,sequencer.modulation.clocks,
             sequencer.sounding(track).stage,sequencer.running || sequencer.playerPlaying[track],sequencer.trackMuted(track),
-            sequencer.modulation.lanes[lane].stage,sequencer.running,sequencer.settings.modLanes[lane].mute);
+            sequencer.modulation.lanes[lane].stage,sequencer.running,sequencer.settings.modLanes[lane].mute,sequencer.modulation.outputs);
+        int channel=integer(MIDI_MX_CHANNEL);bool modLevels=mode==metro::MxModGate || mode==metro::MxModTrig;
+        if(!modLevels && mode!=midiMxOutput.mode)midiMxLevels.fill(127);
+        // Programmed stage values change on a master tick, control update or
+        // bus rebind. Avoid converting all eight targets on every audio sample.
+        if(channel && modLevels && (update || sequencer.masterTick || channel!=midiMxOutput.channel || mode!=midiMxOutput.mode))for(int l=0;l<8;++l){
+            int stage=sequencer.modulation.lanes[l].stage;const auto& config=sequencer.settings.modLanes[l];auto type=metro::effectiveModType(config.type,config.destination);
+            float target=stage>=0 && stage<8?config.values[stage]:0.f;
+            if(type==metro::ModGate)target=target>=1.5f?5.f:0.f;else target=metro::modClamp(target,type==metro::ModUnipolar?0.f:-5.f,5.f);
+            midiMxLevels[l]=metro::midiVoltage(target,type==metro::ModBipolar);
+        }
+        midiMxOutput.process(channel,integer(MIDI_MX_OUTPUT),mode,signals,midiMxLevels,[this](int s,int a,int b,int n){emitMidi(s,a,b,n);});
         auto* child=rightExpander.module;bool connected=child && child->leftExpander.module==this && modelMX && child->model==modelMX && child->leftExpander.producerMessage;
         if(connected){auto* message=static_cast<metro::MxMessage*>(child->leftExpander.producerMessage);message->signature=metro::MxMessage::Signature;message->sourceId=id;message->output=signals;message->delay=params[CV_OUT_DELAY].getValue();message->level=params[BUTTON_LEVEL].getValue()*.25f;child->leftExpander.requestMessageFlip();}
         if(update)mxConnected.store(connected,std::memory_order_relaxed);
@@ -851,7 +862,7 @@ struct Metropolix : Module {
         json_t* root = json_object();
         json_object_set_new(root,"midiInput",midiInput.toJson());json_object_set_new(root,"midiOutput",midiOutput.toJson());json_object_set_new(root,"midiSetupCursor",json_integer(midiSetupCursor.load()));
         json_object_set_new(root,"uiSetupCursor",json_integer(uiSetupCursor.load()));json_object_set_new(root,"modMenuCursor",json_integer(modMenuCursor.load()));
-        json_object_set_new(root, "schemaVersion", json_integer(34));
+        json_object_set_new(root, "schemaVersion", json_integer(35));
         json_object_set_new(root,"backupCursor",json_integer(backupCursor.load()));
         json_object_set_new(root,"backupPresetCursor",json_integer(backupPresetCursor.load()));
         json_object_set_new(root,"factoryCursor",json_integer(factoryCursor.load()));
@@ -892,15 +903,18 @@ struct Metropolix : Module {
         presetSetupEditing.store(false);tunerActive.store(false);heldTrackReset.store(0);clearWorkflows();cancelDraft();externalDivider.reset();
         uiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"uiSetupCursor"))),0,7));
         int schema=int(json_integer_value(json_object_get(root,"schemaVersion")));
-        midiSetupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"midiSetupCursor"))),0,5));
+        auto cursorValue=[root](const char* key,int high){return int(std::max<json_int_t>(0,std::min<json_int_t>(high,json_integer_value(json_object_get(root,key)))));};
+        int midiCursor=cursorValue("midiSetupCursor",schema<35?5:7);if(schema<35 && midiCursor>=4)midiCursor+=2;
+        midiSetupCursor.store(metro::clamp(midiCursor,0,7));
         backupCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"backupCursor"))),0,3));
         backupPresetCursor.store(schema<30?0:metro::clamp(int(json_integer_value(json_object_get(root,"backupPresetCursor"))),0,9));
         factoryCursor.store(schema<31?0:metro::clamp(int(json_integer_value(json_object_get(root,"factoryCursor"))),0,1));factoryConfirmCursor=0;factoryNoticeUntil=0;
-        modMenuCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"modMenuCursor")))+(schema<27?2:0),0,3));
-        int cursor=int(json_integer_value(json_object_get(root,"trackMenuCursor")));if(schema<23 && cursor>=8)++cursor;
+        modMenuCursor.store(metro::clamp(cursorValue("modMenuCursor",3)+(schema<27?2:0),0,3));
+        int cursor=cursorValue("trackMenuCursor",15);if(schema<23 && cursor>=8)++cursor;
         if(schema<27 && cursor>=10)cursor+=5;
-        trackMenuCursor.store(metro::clamp(cursor,0,15));int savedSetup=int(json_integer_value(json_object_get(root,"setupCursor")));
+        trackMenuCursor.store(metro::clamp(cursor,0,15));int savedSetup=cursorValue("setupCursor",schema<34?7:schema<35?16:18);
         if(schema<34){const int legacy[]={SetupClock,SetupPresets,SetupChains,SetupClock,SetupInit,SetupUi,SetupMidiClock,SetupVersion};savedSetup=legacy[metro::clamp(savedSetup,0,schema<31?6:7)];}
+        else if(schema<35 && savedSetup>=13)savedSetup+=2;
         setupCursor.store(metro::clamp(savedSetup,0,SetupItemCount-1));setupDirectChild.store(schema>=34 && json_is_true(json_object_get(root,"setupDirectChild")));globalCursor.store(metro::clamp(int(json_integer_value(json_object_get(root,"globalCursor"))),0,5));
         if(schema<25)for(int id=ENC_CONFIRM;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(!json_is_true(json_object_get(root,"preserveTransportState")) && integer(RUN_ON_BOOT)<2)params[RUN].setValue(float(integer(RUN_ON_BOOT)));
@@ -980,6 +994,7 @@ struct Metropolix : Module {
         if(schema<28)for(int id=MX_MODE;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(schema<32)for(int id=ORDER_SHORTCUTS;id<FORMAT32_NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(schema<33)params[MOD_GROUP_MUTE].setValue(0);
+        if(schema<35)for(int id=MIDI_MX_CHANNEL;id<NUM_PARAMS;++id)params[id].setValue(paramQuantities[id]->defaultValue);
         if(schema<26){if(integer(LOAD_PITCH)==1)params[LOAD_PITCH].setValue(PitchJump);if(integer(LOAD_CTRL)==2)params[LOAD_CTRL].setValue(CtrlJump);clearPickup();}else pickupFromJson(root);
         sequencer.reset();
         readSettings();

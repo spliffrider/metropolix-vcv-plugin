@@ -10,7 +10,7 @@ if(qaFrame==6){
 #include "BackupListWidgetQa.hpp"
 }
     m->params[M::RUN].setValue(0);m->params[M::RUN_ON_BOOT].setValue(2);openMidiSetup(m);m->midiSetupCursor.store(0);drag(find("Encoder"),-3000);
-    check(m->midiSetupCursor.load()==5 && screenParam(m)<0,"MIDI Setup appends backup entry without a numeric parameter");
+    check(m->midiSetupCursor.load()==7 && screenParam(m)<0,"MIDI Setup appends backup entry without a numeric parameter");
     auto* encoder=dynamic_cast<HardwareControl*>(find("Encoder"));check(!encoder->longEnabled() && encoder->groupedParams().empty(),"backup entry cannot reset an invalid parameter on a long hold");
     click(find("Encoder"));check(m->uiPage.load()==M::BACKUP_PAGE && screenParam(m)<0,"MIDI entry opens backup page");
     drag(find("Metropolix display"),-3000);check(m->backupCursor.load()==3,"display drag selects import and clamps");drag(find("Encoder"),3000);check(m->backupCursor.load()==0,"encoder drag browses back to Export All");

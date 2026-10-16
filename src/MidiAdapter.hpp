@@ -3,6 +3,8 @@ MetropolixMidiInput midiInput;MetropolixMidiOutput midiOutput;
 midi::Message midiInputMessage;std::array<midi::Message,3> midiOutputMessages;
 metro::MidiClockInput midiClockInput;metro::MidiClockOutput midiClockOutput;
 std::array<metro::MidiVoice,2> midiVoices;
+metro::MidiMxOutput midiMxOutput;
+std::array<int,8> midiMxLevels{{127,127,127,127,127,127,127,127}};
 std::array<int,2> midiLastStage{{-1,-1}};std::array<uint64_t,2> midiEvents{};
 std::array<uint64_t,2> midiLastSerial{{UINT64_MAX,UINT64_MAX}};
 std::array<int,6> midiTrackLastCC;std::array<int,8> midiModLastCC;
@@ -34,6 +36,8 @@ void configureMidi(){
     configSwitch(MIDI_ROOT_CHANNEL,0,16,0,"MIDI root channel",midiChannels());
     configSwitch(MIDI_PC_CHANNEL,0,16,0,"MIDI program-change channel",midiChannels());
     configParam(MIDI_ZERO_NOTE,0,127,60,"MIDI note at 0 V")->snapEnabled=true;
+    configSwitch(MIDI_MX_CHANNEL,0,16,0,"MIDI MX channel",midiChannels());
+    configSwitch(MIDI_MX_OUTPUT,0,1,0,"MIDI MX output",{"CC","Note"});
     midiTrackLastCC.fill(-1);midiModLastCC.fill(-1);
 }
 void emitMidi(int status,int a,int b,int size){
@@ -44,11 +48,11 @@ void emitMidi(int status,int a,int b,int size){
     if(status<0xf0)midiOutput.usedChannels.fetch_or(1u<<(status&15),std::memory_order_relaxed);
     midiOutput.sendMessage(midiOutputMessage);
 }
-void midiPanic(){for(auto& voice:midiVoices)voice.silence([this](int s,int a,int b,int n){emitMidi(s,a,b,n);});midiTrackLastCC.fill(-1);midiModLastCC.fill(-1);midiLastStage.fill(-1);midiLastSerial.fill(UINT64_MAX);}
-void resetMidiRuntime(){midiPanic();midiHeldSuppressed.fill(false);midiPanicRequest.store(false);midiClockInput.align();midiClockOutput.align();midiWasRun=false;midiResume=false;midiEverStarted=false;midiPreviousSource=-1;midiPCRequest=-1;midiParametersSeen=false;midiCCAge=0;while(midiInput.tryPop(&midiInputMessage,INT64_MAX)){} }
+void midiPanic(){auto emit=[this](int s,int a,int b,int n){emitMidi(s,a,b,n);};for(auto& voice:midiVoices)voice.silence(emit);midiMxOutput.silence(emit);midiTrackLastCC.fill(-1);midiModLastCC.fill(-1);midiLastStage.fill(-1);midiLastSerial.fill(UINT64_MAX);}
+void resetMidiRuntime(){midiPanic();midiMxOutput.reset();midiHeldSuppressed.fill(false);midiPanicRequest.store(false);midiClockInput.align();midiClockOutput.align();midiWasRun=false;midiResume=false;midiEverStarted=false;midiPreviousSource=-1;midiPCRequest=-1;midiParametersSeen=false;midiCCAge=0;while(midiInput.tryPop(&midiInputMessage,INT64_MAX)){} }
 void processMidiInput(const ProcessArgs& args){
     midiFrame=args.frame;midiInputReset=false;midiReceivedClock=0;midiPCRequest=-1;
-    if(midiPanicRequest.exchange(false)){midiPanic();midiHeldSuppressed.fill(true);}
+    if(midiPanicRequest.exchange(false)){midiPanic();midiHeldSuppressed.fill(true);midiMxOutput.suppressHeld();}
     if(midiPreviousSource!=integer(CLOCK_SOURCE)){midiClockInput.align();midiClockOutput.align();externalDivider.reset();sequencer.resetExternalTiming();meterClockSeen=false;meterClockElapsed=0;midiPanic();midiResume=false;midiPreviousSource=integer(CLOCK_SOURCE);}
     while(midiBankUpdates.pop(midiAudioBankUpdate))midiPresetBank[midiAudioBankUpdate.slot]=midiAudioBankUpdate.snapshot;
     // Bound host work per audio frame; retain the rest in Rack's input queue.

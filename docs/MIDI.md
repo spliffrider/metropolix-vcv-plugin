@@ -1,4 +1,4 @@
-# MIDI — 2.24.0 alpha
+# MIDI — 2.70.0 alpha
 
 Right-click the module for **MIDI input device** and **MIDI output device**.
 These use [Rack's MIDI ports](https://github.com/VCVRack/Rack/blob/v2/include/midi.hpp).
@@ -11,6 +11,30 @@ SETUP → Global Setup → Clock Src includes MIDI. Its BPM screen shows receive
 tempo and 24 PPQN; it does not edit the analog clock input divider.
 Encoder/display drags, native value menus, undo and long-press defaults are
 available for the MIDI parameters, as on other settings screens.
+
+## MIDI MX output — firmware 1.6.5
+
+This independent eight output MIDI bus works **without the physical MX module**.
+Choose a Rack MIDI output device, then SETUP → MIDI MX Ch (Off or1–16) and
+MIDI MX Output (CC or Note). The same channel is available on the MX screen:
+ALT → stage 6, ALT again, drag up/down, then click the encoder to confirm.
+Right-click the encoder/display for direct channel and CC/Note choices.
+The MIDI Setup menu also exposes both settings. Both are global and remain
+unchanged when a musical preset loads. New modules and older imported patches
+default this bus to Off and CC.
+
+The nine MX modes drive controllers 102–109 or notes 35–42. Transport/stage/clock
+modes use 127 while high and0 while low. Mod Gate/Mod Trig use the lane's
+programmed current stage value for the MIDI value or note velocity, including
+while its audible voltage ramps. The existing voltage conversion applies:
+−5…+5V →0…127 for bipolar,0…5V →0…127 for unipolar/gate. Mode, channel or
+message-kind changes release the old bus before opening the new one. CCs send
+only changed values; held notes do not repeatedly retrigger. Zero velocity
+stays silent. Release MIDI notes suppresses held gates until a fresh edge.
+
+Manual 1.6.5 pp125/182–183 specify the bus, channels, controller/note numbers and
+stage-value source. Voltage conversion, threshold and held-note policy remain
+explicit software interpretations pending a hardware comparison. See [MX](MX.md).
 
 ## Notes, velocity and CC
 

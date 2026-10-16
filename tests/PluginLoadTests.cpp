@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
         else if (model->slug == "MX") mx = std::move(module);
         else require(false, "only public production model slugs");
     }
-    require(main && mx && main->params.size() == 787 && main->outputs.size() == 7 && mx->outputs.size() == 8, "production parameter/port identities");
+    require(main && mx && main->params.size() == 789 && main->outputs.size() == 7 && mx->outputs.size() == 8, "production parameter/port identities");
     main->id = 901; mx->id = 902;
     Soak soak(*main, *mx); soak.rate(48000); soak.link(true);
     main->params[soak.run].setValue(1);

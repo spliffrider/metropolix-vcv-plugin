@@ -1,6 +1,7 @@
 // Members of Metropolix. Banks are accessed by UI/serialization only. The audio
 // thread receives a fixed-size copy and owns the pending load and pulse clocks.
 // Format11 appends independent All MOD mute after the frozen format10 prefix.
+// Format12 retains all522 fields and admits the new Mod Trigs output sources.
 // Preset preferences, RUN_MODE and CLK settings remain global.
 static constexpr int FORMAT3_PARAMS = TOTAL_PULSES + 1 + LOOPY_PULSES - SWING_1;
 static constexpr int FORMAT4_PARAMS = FORMAT3_PARAMS + 2;
@@ -12,10 +13,10 @@ static constexpr int FORMAT9_PARAMS = FORMAT8_PARAMS + MIDI_CLOCK_OUT-MIDI_TRACK
 // The manual's p.169 preset column includes Scale Lock and both Loopy settings.
 // Append them after every frozen format9 index; custom definitions stay global.
 static constexpr int FORMAT10_PARAMS = FORMAT9_PARAMS + 3;
-static constexpr int PRESET_FORMAT = 11;
+static constexpr int PRESET_FORMAT = 12;
 static constexpr int SNAPSHOT_PARAMS = FORMAT10_PARAMS + 1;
 static int presetSize(int format) {
-    const int counts[]={0,TOTAL_PULSES+1,TOTAL_PULSES+3,FORMAT3_PARAMS,FORMAT4_PARAMS,FORMAT5_PARAMS,FORMAT6_PARAMS,FORMAT7_PARAMS,FORMAT8_PARAMS,FORMAT9_PARAMS,FORMAT10_PARAMS,SNAPSHOT_PARAMS};
+    const int counts[]={0,TOTAL_PULSES+1,TOTAL_PULSES+3,FORMAT3_PARAMS,FORMAT4_PARAMS,FORMAT5_PARAMS,FORMAT6_PARAMS,FORMAT7_PARAMS,FORMAT8_PARAMS,FORMAT9_PARAMS,FORMAT10_PARAMS,SNAPSHOT_PARAMS,SNAPSHOT_PARAMS};
     return format>=1 && format<=PRESET_FORMAT?counts[format]:0;
 }
 static int presetParam(int index) { return index <= TOTAL_PULSES ? index : index<FORMAT3_PARAMS?SWING_1 + index - TOTAL_PULSES - 1:index<FORMAT5_PARAMS?SLIDE_TYPE_1+index-FORMAT3_PARAMS:index<FORMAT6_PARAMS?OUTPUT_TRACK_OPTIONS+index-FORMAT5_PARAMS:index<FORMAT7_PARAMS?TRACK_BEHAVIOR+index-FORMAT6_PARAMS:index<FORMAT8_PARAMS?TRACK_GLOBAL_RESET_1+index-FORMAT7_PARAMS:index<FORMAT9_PARAMS?MIDI_TRACK+index-FORMAT8_PARAMS:index==FORMAT9_PARAMS?SCALE_LOCK:index==FORMAT9_PARAMS+1?LOOPY_PULSES:index==FORMAT9_PARAMS+2?LOOPY_TARGET:MOD_GROUP_MUTE; }
@@ -249,7 +250,9 @@ void presetsFromJson(json_t* root) {
             for (int i = 0; i < count; ++i) {
                 json_t* value = json_array_get(values, i);
                 if (!json_is_number(value)) { s.occupied = false; break; }
-                s.values[i] = sanitizePresetValue(presetParam(i), json_number_value(value));
+                int id=presetParam(i);double raw=json_number_value(value);
+                if(format<12 && std::isfinite(raw) && (id==OUTPUT_SOURCE_A || id==OUTPUT_SOURCE_B))raw=std::min(raw,37.);
+                s.values[i] = sanitizePresetValue(id,raw);
             }
             if (s.occupied) presetBank[slot] = s;
         }

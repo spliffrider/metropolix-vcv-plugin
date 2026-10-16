@@ -1,9 +1,10 @@
-# Feature status — 2.69.0 public alpha
+# Feature status — 2.70.0 public alpha
 
 Assessment date: 2026-10-16. The reference is the
-[Metropolix firmware 1.6 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6_2025.09.24.pdf).
+[Metropolix firmware 1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf).
 This implementation has not been compared with a physical module.
 
+2.70.0 adds the firmware 1.6.5 [Mod Trigs outputs](OUTPUT-ROUTING.md), [MX Mod Gate/Mod Trig and MIDI MX](MX.md), including MIDI operation without an expander. The MX screen follows the new manual. Older patches and banks import; files saved in the new formats require 2.70.
 2.69.0 refines the [stage editing display](UI-FIDELITY.md): native binary circles, pitch/gate bars, stacked ratchets, probability/accumulator indicators, clearer CV/MOD curves and CV Type. Existing controls, sequencing and saved formats stay unchanged.
 2.68.0 refines all four [HOME views](UI-FIDELITY.md), fixes fixed-Bottom-Pitch note names, adds pitch-override dots and the Pre degree cue, and shows remembered panel values and live CV/MOD gauges in the measured layout. Sequencing and saved formats stay unchanged.
 2.67.0 adds the [physical pitch-slider popup](UI-FIDELITY.md) and fixes complete Undo for recalled pitch/CTRL value actions. The popup preserves the underlying page and consumes its first dismissal gesture. Saved formats stay unchanged.
@@ -18,7 +19,7 @@ This implementation has not been compared with a physical module.
 2.58.0 refines [Backup and maintenance lists](BACKUPS.md), preserving file scopes, Cancel-first confirmation and saved formats.
 2.57.0 refines [Presets Setup](PRESETS.md), including manual order, browse/edit selection, pending readouts and preserved saved logical setting IDs.
 2.56.0 refines [track/MOD/Global/UI/MIDI lists](UI-SETUP.md), their selection/readouts and the Shared octave preview without changing saved formats.
-2.55.0 adds the [compact primary SETUP list](UI-SETUP.md), with deliberate settings-schema34 migration and preserved native shortcuts.
+2.55.0 adds the [compact primary SETUP list](UI-SETUP.md), with deliberate settings-schema 34 migration and preserved native shortcuts.
 2.54.0 corrects [MOD lane navigation on ORDER/LEN/DIV](MOD-TEST.md), preserving stage voltages/gates, active fields and pending-edit isolation.
 2.53.0 corrects [native-style value actions and Undo](UI-SETUP.md), including dormant values, menu binding and locked preferences.
 2.52.0 corrects the [locked MOD type grid menu](MOD-TEST.md), preserving unrelated accumulator settings and keeping its lane settings bound to the clicked lane.
@@ -87,12 +88,12 @@ configuration, preset workflows, and external interfaces.
 | Accumulators | Stage-local and track-wide accumulation, four orders, both polarities, separate limits, three triggers, Manual/Auto reset; pause/reverse/invert/mode/polarity/targeted reset routing | Hardware comparison of mixed sources and live changes |
 | Pitch/scales | 49 factory scales/chords, 100 user scales with roots, scale locks, eight shortcuts, per-track Scale (User) routing, Bottom Pitch, tuner, transpose/range and pitch pre/post/offset modulation | Hardware comparison of modulation thresholds and mixed routes |
 | MOD lanes | All eight lanes, Step/Ramp, bipolar/unipolar/gate voltage, independent traversal/timing, individual mute and a separate group mute; all 38 hardware destinations; gate On/Off readouts and global scope | Hardware comparisons of modulation gains and live edits |
-| A/B and performance routing | All 16 A/B function types; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
+| A/B and performance routing | All 17 A/B function types, including 5 ms CV Mod Trigs; track/lane assignment, confirmation, velocity, slider range/direction; AUX X/Y/Z with all 38 destinations; all 29 CTRL destinations | Hardware comparisons |
 | Performance gestures | Run/reset, track/lane selection, mutes, tap tempo, Loopy, Stage Player, latching, Loopy routing, ALT Slide/Skip pattern, Ratchet and PROB/ACCUM edits and resets, ALT randomize/morph/restore and stage/track/lane copy/paste | Hardware comparisons of copy/paste and randomization |
 | Display and desktop editing | Four HOME views, current edit diagrams, hover/pending help, destination units, context menus, vertical dragging, numeric entry, undo, submenu back, long EXIT Sync and optional grids with adjacent MX | Unobserved glyphs/animation phases, full hardware behavior and photographic material comparisons |
-| Saving and integration | Rack persistence, parameter automation, 64 internal presets with Scale Lock and Loopy settings, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, seven MX expander modes, scoped JSON backups | Hardware SysEx interchange |
+| Saving and integration | Rack persistence, parameter automation, 64 internal presets with Scale Lock and Loopy settings, queued loads, Total Pulses, 32-link chains, repeats/mutes, eight saved chains, Quick Chain, custom Init, pitch/CTRL Thru pickup, MIDI notes/CCs/clock/transport/root/program change, nine MX expander modes and independent MIDI MX CC/Note output, scoped JSON backups | Hardware SysEx interchange |
 
-The current 787 parameters include repeated stage/lane controls; that number is
+The current 789 parameters include repeated stage/lane controls; that number is
 not a count of distinct hardware features. Implemented behavior can still
 differ in edge cases or where the manual leaves details unspecified. See
 [validation and known interpretations](VALIDATION.md), and the [manual coverage map](MANUAL-COVERAGE.md).
