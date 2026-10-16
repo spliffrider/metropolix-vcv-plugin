@@ -154,6 +154,9 @@ pitch traces and MX trigger indicators follow the actual Rack performance.
 Open the [playable patch](examples/Pulse-Pressure.vcv); see
 [routing, arrangement and recording instructions](docs/PULSE-PRESSURE.md).
 
+The [sidechain A/B companion](docs/SIDECHAIN-DEMO.md) shows the same groove
+with kick-driven compression, PRESSOR's live meter and pre/post level traces.
+
 **[Watch Patches in Motion (72 seconds, 1080p)](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.4.1/Metropolix-Lab-Patches-in-Motion.mp4)**
 shows Metropolix driving complete synth and drum patches. Live pitch traces,
 gate indicators, scopes, and close-ups follow the recorded signals. Two
