@@ -4,72 +4,8 @@ Assessment date: 2026-10-16. The reference is the
 [Metropolix firmware 1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf).
 This implementation has not been compared with a physical module.
 
-2.70.0 adds the firmware 1.6.5 [Mod Trigs outputs](OUTPUT-ROUTING.md), [MX Mod Gate/Mod Trig and MIDI MX](MX.md), including MIDI operation without an expander. The MX screen follows the new manual. Older patches and banks import; files saved in the new formats require 2.70.
-2.69.0 refines the [stage editing display](UI-FIDELITY.md): native binary circles, pitch/gate bars, stacked ratchets, probability/accumulator indicators, clearer CV/MOD curves and CV Type. Existing controls, sequencing and saved formats stay unchanged.
-2.68.0 refines all four [HOME views](UI-FIDELITY.md), fixes fixed-Bottom-Pitch note names, adds pitch-override dots and the Pre degree cue, and shows remembered panel values and live CV/MOD gauges in the measured layout. Sequencing and saved formats stay unchanged.
-2.67.0 adds the [physical pitch-slider popup](UI-FIDELITY.md) and fixes complete Undo for recalled pitch/CTRL value actions. The popup preserves the underlying page and consumes its first dismissal gesture. Saved formats stay unchanged.
-2.66.0 refines the [performance fields, gauges and action footer](UI-FIDELITY.md), preserving editing and saved formats.
-2.65.0 refines the [settings menu layout](UI-SETUP.md), with native spacing and margins, complete bottom-row descenders and correct right alignment.
-2.64.0 refines the [CTRL ownership symbols and LIM captions](UI-FIDELITY.md), preserving existing editing and saved formats.
-2.63.0 refines the [scale display and editor](SCALES.md), and confirmed browsing now follows the same hardware bank order as immediate browsing.
-2.62.0 refines the [chain display](PRESET-CHAINS.md), with native-reference rows, selections, mutes and Quick Chain repeat feedback.
-2.61.0 refines [performance values and encoder cues](UI-FIDELITY.md), with reference-based bold/large lettering and pending tempo feedback.
-2.60.0 refines [menu lettering](UI-FIDELITY.md), with proportional glyphs based on native OLED images and complete pending/descender rendering.
-2.59.0 refines the [accumulator/LIM display](HARDWARE-UI.md), following its three-row reference while retaining field cycling, CTRL locks and saved formats.
-2.58.0 refines [Backup and maintenance lists](BACKUPS.md), preserving file scopes, Cancel-first confirmation and saved formats.
-2.57.0 refines [Presets Setup](PRESETS.md), including manual order, browse/edit selection, pending readouts and preserved saved logical setting IDs.
-2.56.0 refines [track/MOD/Global/UI/MIDI lists](UI-SETUP.md), their selection/readouts and the Shared octave preview without changing saved formats.
-2.55.0 adds the [compact primary SETUP list](UI-SETUP.md), with deliberate settings-schema 34 migration and preserved native shortcuts.
-2.54.0 corrects [MOD lane navigation on ORDER/LEN/DIV](MOD-TEST.md), preserving stage voltages/gates, active fields and pending-edit isolation.
-2.53.0 corrects [native-style value actions and Undo](UI-SETUP.md), including dormant values, menu binding and locked preferences.
-2.52.0 corrects the [locked MOD type grid menu](MOD-TEST.md), preserving unrelated accumulator settings and keeping its lane settings bound to the clicked lane.
-2.51.0 protects [paired-page drag Undo](UI-SETUP.md), preserving independent changes to adjacent fields while retaining whole-page long resets.
-2.50.0 corrects [MOD effective CV types and OLED TYPE editing](MOD-TEST.md), with destination-controlled ranges, ramps, gates and MIDI while preserving saved preferences.
-2.49.0 protects [dependent value edits and confirmation](UI-SETUP.md), preserving raw Undo across type changes and consuming obsolete held previews.
-2.48.0 extends [raw drag Undo](UI-SETUP.md) to MOD voltage and masked clock offsets, and corrects effective ALT MOD offsets.
-2.47.0 corrects [tiny CV drag history and the effective ALT range](STAGE-CV.md), preserving dormant raw values, normal clicks and confirmation.
-2.46.0 corrects [stationary-click history](UI-SETUP.md), preserving external values and genuine toggle/menu actions while retaining small continuous drags.
-2.45.0 corrects [long-press reset history](UI-SETUP.md), with an immediate single-action receipt, current raw/scope capture and consumed movement/release.
-2.44.0 protects [live CTRL ownership during held edits](CTRL-KNOBS.md), including encoder/OLED/grid cancellation, fresh-drag recovery and preserved partial resets.
-2.43.0 protects [A/B previews against external source edits](OUTPUT-ROUTING.md), preserving valid confirmation, menus and undo.
-2.42.0 corrects [chain insertion/clear/deletion history](PRESET-CHAINS.md), preserving single-action bank and repeat drags.
-2.41.0 corrects [pending-edit conflicts and preview-drag history](UI-SETUP.md), including bulk stage edits and native menus.
-2.40.0 refines [user-scale editor entry/exit](SCALES.md), including Root guards, explicit desktop entry and cancellation.
-2.39.0 corrects [CTRL assignment confirmation and long clear](CTRL-KNOBS.md), preserving live performance knobs and exact undo.
-2.38.0 adds [Slide/Skip pattern and Ratchet gestures](STAGE-PATTERNS.md), including bulk editing/reset, display feedback and exact undo.
-2.37.0 adds [SCALE copy/paste](SCALES.md), including user roots, panel/keyboard Alt and paired undo.
-2.36.0 adds [PROB/ACCUM paired and ALT gestures](STAGE-PAIRS.md), reset, confirmation and exact undo.
-2.35.0 adds [LEN/DIV shortcuts](TIMING-SHORTCUTS.md), field-preserving holds and whole-screen encoder resets.
-2.34.0 adds [independent MOD group mute](MOD-GROUP-MUTE.md), preserving individual lane choices and stored group state.
-2.33.0 corrects [Scale Lock and Loopy preset storage](PRESET-STORAGE.md), with legacy full/selective bank migration.
-2.32.0 adds [global ORDER shortcuts](ORDER-SHORTCUTS.md), paired reset, held gestures and desktop undo.
-2.31.0 adds [actual production runtime stress coverage](RUNTIME-VALIDATION.md) on all four platforms.
-2.30.0 adds [confirmed maintenance reset/clear](MAINTENANCE.md), bank preservation, native undo and disarmed reopen.
-2.29.0 adds [selective Filled and bank backups](BACKUPS.md), preserving unrelated slots/chains with native undo.
-2.28.0 adds [Linux and both Mac packages with native host tests](PLATFORMS.md), plus actual Linux Rack rendering/control/audio checks.
-2.27.0 refines [panel interaction, MOD display units and EXIT/MX workflows](UI-FIDELITY.md).
-2.26.0 adds [portable backups](BACKUPS.md), scoped restore and native undo.
-2.25.0 adds [MX gates/clocks and stage assignments](MX.md), including Loopy Stage Player, swap and mute.
-2.24.0 adds [MIDI notes/CCs, clock/transport and incoming control](MIDI.md).
-2.23.0 adds [preset pickup](PRESET-PICKUP.md), with physical/sounding state, native undo and persistence.
-2.22.0 adds [UI setup, pending confirmation, input clock division and output delay](UI-SETUP.md).
-2.21.0 adds [editing workflows, custom Init and copy/paste](EDITING-WORKFLOWS.md).
-2.20.0 adds [clock/reset configuration, protected tracks, Bottom Pitch and tuner](CLOCK-RESET.md).
-2.19.0 completed all 38 AUX/MOD destinations, including Loopy and targeted reset; see [Complete routing](COMPLETE-ROUTING.md).
-2.18.0 added all 29 CTRL destinations and six accumulator AUX/MOD routes; see [Accumulator routing](ACCUMULATOR-ROUTING.md).
-2.17.0 added ALT → TRK, pulse/gate sources, Rest Pitch, full transpose and track initialization; see [Track options](TRACK-OPTIONS.md).
-2.16.0 added all A/B functions, velocity, per-track slider range/direction, three CTRL and two AUX/MOD destinations; see [Output routing](OUTPUT-ROUTING.md).
-2.15.0 added global clock output division and offset; see the [clock guide](CLOCK-OUTPUT.md).
-2.14.0 added full Bipolar/Unipolar/Gate stage CV, Step/sRamp/pRamp transitions and ALT pattern workflows; see the [CV guide](STAGE-CV.md).
-2.13.0 added independent Tempo/Analog/Acid slides, shortcuts, reset and Analog Stage Player; see the [slide guide](SLIDES.md).
-2.12.0 added the 49 factory scales/chords, 100 user scales, locks, shortcuts and Scale (User) routing; see the [scale guide](SCALES.md).
-2.11.0 added Loopy, Stage Player, latching and performance mutes; see the [Loopy guide](LOOPY.md).
-2.10.0 added per-stage pitch/gate overrides, Gate Scale and the track gate Hold endpoint; see the [override guide](STAGE-OVERRIDES.md).
-2.9.0 added per-track Swing, a CTRL destination and AUX/MOD offsets; see the [Swing guide](SWING.md).
-2.8.0 added 32-link preset chains, repeats, per-link mutes and eight saved chains.
-2.7.0 added 64 internal presets, selective recall, queued loading and Total Pulses.
-2.6.0 added both CTRL performance knobs with 23 supported destinations.
-2.5.0 added Stage/Track accumulator mode and a LIM options display.
+Release-by-release notes have moved to the [changelog](CHANGELOG.md).
+
 The feature table below is the current assessment. Earlier percentage estimates
 predate several major features and should not be used to judge this build.
 Physical installation, calibration and firmware-update procedures are outside
@@ -97,6 +33,39 @@ The current 789 parameters include repeated stage/lane controls; that number is
 not a count of distinct hardware features. Implemented behavior can still
 differ in edge cases or where the manual leaves details unspecified. See
 [validation and known interpretations](VALIDATION.md), and the [manual coverage map](MANUAL-COVERAGE.md).
+
+## Missing or outside the Rack workflow
+
+- **Hardware SysEx interchange is not implemented.** Plugin JSON backups cannot
+  be loaded into the physical module, and hardware SysEx banks cannot be imported.
+- **The original hardware factory preset bank is not included.** Supplied demo
+  patterns are original; 64 user slots and the preset/chaining workflows work.
+- **VCV Library distribution is not available.** Install the GitHub packages
+  manually using the [quick start](../README.md#download-and-install).
+- Physical power, calibration, firmware flashing and USB/expander wiring are
+  hardware procedures. Rack uses host MIDI ports and an adjacent virtual MX.
+
+## Hardware fidelity and reference choices
+
+No physical Metropolix was available for comparison. Implemented features can
+still differ in timing, skip/accumulator interactions, live preset transitions,
+modulation gains, random sequences, slider thresholds and Analog/Acid slew rates.
+The panel/display follows the references, with unobserved details still inferred.
+These are verification limits, not a list of absent controls.
+
+The firmware 1.6.5 references also conflict. The
+[PDF manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf)
+describes 5 ms Mod Trigs and A/B Track CV assignment; the
+[official firmware history](https://github.com/intellijel/firmware/blob/master/docs/Metropolix.html)
+describes 10 ms triggers and A/B MOD-lane assignment, plus changed stopped
+Stage Num behavior. Version 2.70.0 follows the PDF-based trigger/routing
+implementation and retains the documented stopped Stage Player behavior.
+Hardware-owner comparisons are needed to resolve these differences. See
+[A/B routing](OUTPUT-ROUTING.md#mod-trigs--firmware-165), [MX](MX.md) and
+[MIDI interpretations](MIDI.md#clock-transport-and-incoming-control).
+
+The project does not use a percentage-complete score: implemented functions,
+hardware equivalence and platform stability are separate questions.
 
 ## Readiness for feedback
 

@@ -4,53 +4,10 @@ This is an independent VCV Rack sequencer in development, not an official
 Intellijel product. Feedback on playability, confusing controls, and bugs is
 welcome. See Known limitations for remaining fidelity checks.
 
-2.70.0 adds the firmware 1.6.5 [Mod Trigs outputs](OUTPUT-ROUTING.md), [MX Mod Gate/Mod Trig and MIDI MX](MX.md), including MIDI operation without an expander. The MX screen follows the new manual. Older patches and banks import; files saved in the new formats require 2.70.
-
-Try the [scale progression demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Scale-progression.vcv) to hear custom scales and roots move through C, Am, F and G.
-
-Try the [chain performance demo](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.70.0/Chain-performance.vcv) to watch the sequencer follow an arrangement.
-
-2.58.0 brings [Backup and maintenance lists](BACKUPS.md) into the compact display style, with mixed-case labels, inverted selection and separate status lines. Cancel-first confirmations, file scopes and saved formats stay unchanged.
-
-2.57.0 gives [Presets Setup](PRESETS.md) a compact scrolling list in the manual's order, browse/edit gestures and selected-setting resets. Pending Init choices and all question marks now display correctly. Existing saved setting IDs, schema 34 and musical banks stay unchanged.
-
-2.56.0 brings the [track, MOD, Global, UI and MIDI menus](UI-SETUP.md) to four compact mixed-case rows with whole-row browsing and value-only selection. Slider Octaves now shows its pending 1–4 choice when leaving Shared. Parameter IDs, settings schema 34 and musical banks stay unchanged.
-
-2.55.0 gives [SETUP its compact hardware-style list](UI-SETUP.md), with four mixed-case rows, inverted selection, direct settings, confirmed choices and selected-item long resets. Settings schema 34 migrates old menu positions; parameter IDs and musical banks stay unchanged. New Settings/All backups require 2.55.
-
-2.39.0 corrects [CTRL assignment editing](CTRL-KNOBS.md). Open a black CTRL assignment button, drag destination or target, and check that it previews until you press the encoder. Press again to switch fields. Hold the encoder to clear the assignment, then try Undo/Redo. White performance knobs remain live; right-click choices apply directly.
-
-2.38.0 adds [Slide/Skip pattern and Ratchet gestures](STAGE-PATTERNS.md), with bulk editing, reset, direct menus, display feedback and exact undo. Saved formats stay unchanged.
-
-2.37.0 adds [SCALE copy/paste](SCALES.md), with panel/keyboard Alt gestures, direct menus, an independent clipboard and paired undo. Saved formats stay unchanged.
-
-2.36.0 adds [PROB/ACCUM paired resets and ALT gestures](STAGE-PAIRS.md), with relative editing, uniform targets/triggers, confirmation and one-action undo. Saved formats remain unchanged.
-
-2.35.0 adds [LEN/DIV shortcuts and whole-screen resets](TIMING-SHORTCUTS.md), with field-preserving holds, desktop menus and grouped undo. Existing saved formats stay unchanged.
-
-2.34.0 adds [independent MOD group mute](MOD-GROUP-MUTE.md). Hold Loopy + MOD, or use the right-click menu; your individual lane mutes survive group mute/unmute. New musical and settings backups require 2.34; older files still import.
-
-2.33.0 corrected [preset storage](PRESET-STORAGE.md). Save a locked scale and Loopy settings, change them, then recall the preset and try Undo/Redo. New musical banks require 2.33 or later; old banks still import.
-
-2.32.0 adds [ORDER shortcuts](ORDER-SHORTCUTS.md): hold ORDER + a stage button to recall, or hold the stage button longer to save its order/direction pair. Right-click offers the same actions.
-
-2.31.0 adds [production runtime stress checks](RUNTIME-VALIDATION.md). The controls and saved-patch formats remain unchanged.
-
-2.30.0 adds [maintenance controls](MAINTENANCE.md), with Cancel-first confirmation, exact undo and safe reopening.
-
-2.29.0 adds [Filled and single-bank backups](BACKUPS.md). Filled merges occupied slots; Bank replaces only its eight slots, including empties. Both preserve unrelated presets and chains, and support Undo. Use a spare patch for imports.
-
-2.28.0 adds [Linux and Mac packages](PLATFORMS.md), native loading tests and actual Linux Rack display/audio coverage.
-
-2.27.0 refines [panel interaction and display](UI-FIDELITY.md): pending readouts, MOD units, long EXIT Sync and attached MX resizing.
-
-2.26.0 adds [portable backups](BACKUPS.md) for settings, all 64 presets and chains, with undoable restore.
-
-2.25.0 adds [MX expansion](MX.md), including eight clock/stage outputs and seven modes.
-
-2.23.0 adds [preset pickup](PRESET-PICKUP.md), keeping physical controls in place until they reach their recalled sounding values.
-
-2.22.0 adds [UI setup and confirmation](UI-SETUP.md), input clock division and common CV/gate output delay.
+For the short current feature list, missing functions and verification limits,
+start with [README feature status](../README.md#feature-status). Version history
+is in the [changelog](CHANGELOG.md). Metropolix Lab is currently distributed
+through GitHub, with manual installation below; it is not in the VCV Library.
 
 ## Try the new firmware 1.6.5 features
 
@@ -249,26 +206,30 @@ See the [controls guide](STAGE-OVERRIDES.md); hardware comparisons are welcome.
 
 ## Known limitations
 
-**Currently incomplete:** undocumented hardware SysEx interchange. Portable JSON
-backups, setup preferences, encoder confirmation, pickup,
-MIDI, all seven MX modes, all 38 AUX/MOD and 29 CTRL destinations are implemented.
+**Missing:** hardware SysEx import/export and the original hardware factory
+preset bank. Plugin JSON backups and the supplied original demo patterns are
+separate from hardware files. Presets/chains, MIDI, all nine MX modes, all 38
+AUX/MOD destinations and all 29 CTRL destinations are implemented.
 
-External analog input division is adjustable /1–/256. MIDI clocks use 24 PPQN.
-Some internal MOD gains are implementation choices pending hardware comparison. The front panel
-is not a promise that every printed function is implemented.
+No physical hardware comparison has been performed. Some timing, route gains,
+random behavior and live-edit interactions remain interpretations. Firmware
+1.6.5 trigger references conflict; see the
+[current reference choices](FEATURE-STATUS.md#hardware-fidelity-and-reference-choices).
 
-No physical hardware comparison or broad multi-computer stability test has been
-performed. Native mouse/focus behavior needs tester feedback in addition to the
-passing automated widget checks. See the
-[feature assessment](https://github.com/spliffrider/metropolix-vcv-plugin/blob/main/docs/FEATURE-STATUS.md)
-and [validation record](https://github.com/spliffrider/metropolix-vcv-plugin/blob/main/docs/VALIDATION.md).
+Windows/Linux have actual Rack callback, display and signal-path checks. Mac
+GUI/audio human playtests, Rack Pro/other Rack versions, unusual DPI settings,
+long sessions and cross-plugin behavior still need feedback. See
+[platform coverage](PLATFORMS.md), [feature status](FEATURE-STATUS.md) and
+[validation](VALIDATION.md). An implemented feature behaving unexpectedly is
+still a possible bug; please report a reproducible example.
 
 ## Send feedback
 
 [Open a tester feedback issue](https://github.com/spliffrider/metropolix-vcv-plugin/issues/new?template=test-feedback.md)
 or send the same information to the person who shared this build:
 
-- Plugin version, Rack version, Windows version, zoom/display scaling, and sample rate.
+- Plugin version, Rack version and Free/Pro, OS/version and CPU architecture,
+  zoom/display scaling, and sample rate.
 - What you tried, what you expected, and what happened instead.
 - The smallest reproducible sequence of actions and whether it happens every time.
 - A minimal patch, screenshot, or short video when helpful. For a crash, the
