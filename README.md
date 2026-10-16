@@ -8,7 +8,7 @@ hardware-layout panel and desktop editing. This is **not an official Intellijel
 product**. Its panel is titled **Metropolism**. It outputs pitch, gates,
 modulation and MIDI; connect voice modules or load a demo patch to hear it.
 
-**Current release: [2.71.1 — public alpha](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.71.1).** Core sequencing and performance
+**Current release: [2.71.2 — public alpha](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.71.2).** Core sequencing and performance
 workflows are implemented. Hardware SysEx and the original factory preset bank
 are missing, and equivalence with a physical Metropolix has not been verified.
 The behavioral reference is the [firmware 1.6.5 manual](https://intellijel.com/downloads/manuals/metropolix_manual_v1.6.5_2026.09.16.pdf).
@@ -19,7 +19,7 @@ The behavioral reference is the [firmware 1.6.5 manual](https://intellijel.com/d
 
 ## Feature status
 
-### Implemented in 2.71.1
+### Implemented in 2.71.2
 
 These features are available for testing. “Implemented” describes the software;
 the hardware-comparison and platform limits below still apply.
@@ -77,10 +77,10 @@ ZIP/TAR downloads are for developers, not installation.
 
 | Rack platform | Plugin download | Folder inside Rack's user folder |
 | --- | --- | --- |
-| Windows x64 | [Windows package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.1/MetropolixLab-2.71.1-win-x64.vcvplugin) | `plugins-win-x64` |
-| Linux x64 | [Linux package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.1/MetropolixLab-2.71.1-lin-x64.vcvplugin) | `plugins-lin-x64` |
-| Intel Mac / Intel Rack under Rosetta | [Intel Mac package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.1/MetropolixLab-2.71.1-mac-x64.vcvplugin) | `plugins-mac-x64` |
-| Native Apple Silicon Rack | [Apple Silicon package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.1/MetropolixLab-2.71.1-mac-arm64.vcvplugin) | `plugins-mac-arm64` |
+| Windows x64 | [Windows package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.2/MetropolixLab-2.71.2-win-x64.vcvplugin) | `plugins-win-x64` |
+| Linux x64 | [Linux package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.2/MetropolixLab-2.71.2-lin-x64.vcvplugin) | `plugins-lin-x64` |
+| Intel Mac / Intel Rack under Rosetta | [Intel Mac package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.2/MetropolixLab-2.71.2-mac-x64.vcvplugin) | `plugins-mac-x64` |
+| Native Apple Silicon Rack | [Apple Silicon package](https://github.com/spliffrider/metropolix-vcv-plugin/releases/download/v2.71.2/MetropolixLab-2.71.2-mac-arm64.vcvplugin) | `plugins-mac-arm64` |
 
 1. In Rack, choose **Help → Open user folder** and keep that folder open.
 2. Save your patch and close Rack.
@@ -90,7 +90,7 @@ ZIP/TAR downloads are for developers, not installation.
 Rack extracts and loads the package on startup, following the
 [official manual installation procedure](https://vcvrack.com/manual/Installing#installing-plugins-not-available-on-the-vcv-library).
 For a future GitHub update, repeat these steps with the newer package.
-[Release notes and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.71.1) ·
+[Release notes and checksums](https://github.com/spliffrider/metropolix-vcv-plugin/releases/tag/v2.71.2) ·
 [Installation help and test guide](docs/TESTING.md)
 
 ## Watch or play a demo

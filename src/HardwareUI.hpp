@@ -678,12 +678,6 @@ struct HardwarePanel : widget::Widget {
         }
         for(float x=215;x<237;x+=2)disc(vg,x,340,.4f,ink());
         stroke(vg,244,340,494,340,ink(),.65f);
-        auto logo=APP->window->loadSvg(asset::plugin(pluginInstance,"res/sensiburner-intellijel.svg"));
-        if(logo) {
-            float scale=13.8f/logo->getSize().y;
-            nvgSave(vg);nvgTranslate(vg,(HARDWARE_WIDTH-logo->getSize().x*scale)/2,363.5f);nvgScale(vg,scale,scale);
-            logo->draw(vg);nvgRestore(vg);
-        }
         for(float y:{138.f,324.f}) {
             metalDisc(vg,475,y,4.6f,nvgRGB(228,226,213),nvgRGB(93,91,85));
             nvgBeginPath(vg);

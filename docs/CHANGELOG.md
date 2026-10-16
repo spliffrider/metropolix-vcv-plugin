@@ -6,6 +6,10 @@ implemented features, missing functions and verification limits, use the
 Earlier milestones are recorded in [development history](DEVELOPMENT.md#imported-milestones).
 Download packages from [GitHub Releases](https://github.com/spliffrider/metropolix-vcv-plugin/releases).
 
+## 2.71.2
+
+Leaves the bottom panel credit area blank, removing the “sensiburner <3 intellijel” wordmark. The **Metropolism** title and all controls remain in place.
+
 ## 2.71.1
 
 Renames the panel title to **Metropolism**, keeping its existing typography and layout. The Rack browser name and internal identifiers remain unchanged, so existing patches continue to load.
