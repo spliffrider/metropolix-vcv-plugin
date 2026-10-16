@@ -65,23 +65,14 @@ struct HardwareDisplay : HardwareControl {
     }
     std::string modValueLabel(const OledCanvas& c,int lane,float volts) const {
         auto destination=static_cast<metro::ModDestination>(integer(Metropolix::modParam(lane,Metropolix::MOD_DESTINATION)));
-        std::string shown=metro::modDisplayText(volts,destination);if(c.width(shown)<=40)return shown;
         auto spec=metro::modDisplay(destination);std::string unit=spec.unit;
-        if(unit==" pulses")unit="pl";else if(unit==" stages")unit="stg";else if(unit==" scales")unit="scl";else if(unit==" orders")unit="ord";else if(unit==" ratch")unit="rt";else unit.erase(std::remove(unit.begin(),unit.end(),' '),unit.end());
-        float value=metro::modDisplayValue(volts,destination);if(std::abs(value)<.000001f)value=0;
-        for(int precision=spec.decimals;precision>=0;--precision){char buffer[64];std::snprintf(buffer,sizeof(buffer),"%+.*f%s",precision,double(value),unit.c_str());shown=buffer;if(c.width(shown)<=40)break;}
+        if(unit==" V")unit.clear();
+        else if(unit==" pulses")unit="pl";else if(unit==" stages")unit="stg";else if(unit==" scales")unit="scl";else if(unit==" orders")unit="ord";else if(unit==" ratch")unit="rt";else unit.erase(std::remove(unit.begin(),unit.end(),' '),unit.end());
+        float value=metro::modDisplayValue(volts,destination);if(std::abs(value)<.000001f)value=0;std::string shown;
+        for(int precision=spec.decimals;precision>=0;--precision){char buffer[64];std::snprintf(buffer,sizeof(buffer),"%+.*f%s",precision,double(value),unit.c_str());shown=buffer;if(c.valueWidth(shown)<=37)break;}
         return shown;
     }
-    void actionFooter(OledCanvas& c,const std::string& left,std::string right,bool wave,int edge,const std::string& suffix={}) const {
-        int waveX=edge-8-(suffix.empty()?0:c.captionWidth(suffix)+1),textEdge=wave?waveX-6:edge;
-        if(!wave)right+=suffix;
-        right=OledCanvas::glyphText(right);
-        while(c.captionWidth(left)+c.captionWidth(right)+10>textEdge && !right.empty())right.pop_back();
-        int rightX=textEdge-c.captionWidth(right);
-        c.captionText(2,56,left);c.captionText(rightX,56,right);
-        for(int x=2+c.captionWidth(left)+7;x<=rightX-4;x+=4)c.dot(x,58);
-        if(wave){const uint16_t rows[]={120,72,72,72,79};c.bitmap(waveX,56,7,5,rows);if(!suffix.empty())c.captionRight(edge,56,suffix);}
-    }
+    #include "HardwareActionDisplay.hpp"
     void footer(OledCanvas& c,bool detailed=false) const {
         auto* m=metroModule;
         if(pendingConfirmation(m)){c.fill(0,54,128,10,0);c.text(1,56,"? PRESS ENCODER");return;}
@@ -106,7 +97,16 @@ struct HardwareDisplay : HardwareControl {
             (m->uiMod.load()?m->effectiveModType(m->selectedLane.load())==metro::ModGate:m->selectedRow.load()==Metropolix::SLIDE || m->selectedRow.load()==Metropolix::SKIP);
         bool assignment=page==Metropolix::A_PAGE || page==Metropolix::B_PAGE || page==Metropolix::AUX_PAGE || page==Metropolix::CTRL_PAGE || page==Metropolix::MOD_ASSIGN_PAGE;
         int edge=assignment || (page==Metropolix::HOME && (!m || !m->uiMod.load())) || page==Metropolix::LOOPY_PAGE || (page==Metropolix::SCALE_PAGE && !wave)?126:127;
-        actionFooter(c,left,right,wave,edge,suffix);
+        bool compactStageMod=m && page==Metropolix::STAGE_PAGE && m->uiMod.load();
+        if(m && page==Metropolix::STAGE_PAGE && m->uiMod.load() && m->effectiveModType(m->selectedLane.load())!=metro::ModGate)edge=128;
+        // The native Skip indicator reaches the right edge; Slide leaves its
+        // measured margin (manual pp87–88). Other action templates retain it.
+        if(m && page==Metropolix::STAGE_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::SKIP && wave)edge=129;
+        if(m && page==Metropolix::CV_TYPE_PAGE && !m->uiMod.load())edge=125;
+        bool accumulation=m && page==Metropolix::STAGE_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::ACCUMULATION && right!="EDIT ALL / ALT";
+        if(m && page==Metropolix::STAGE_PAGE && !m->uiMod.load() && m->selectedRow.load()==Metropolix::PROBABILITY && right!="EDIT ALL / ALT")edge=128;
+        bool curve=compactStageMod && m->effectiveModType(m->selectedLane.load())!=metro::ModGate;
+        actionFooter(c,left,right,wave,edge,suffix,compactStageMod,accumulation,curve);
     }
     void pages(OledCanvas& c,int selected) const {
         for(int i=0;i<4;++i)for(int x=3+i*32;x<28+i*32;++x)if(i==selected || (x-3-i*32)%3==0)c.dot(x,1);
@@ -170,85 +170,38 @@ struct HardwareDisplay : HardwareControl {
     }
     #include "HardwareHomeDisplay.hpp"
     #include "HardwareScaleDisplay.hpp"
+    #include "HardwareStageGraphs.hpp"
+    #include "HardwareStageCurves.hpp"
     void stage(OledCanvas& c) const {
         auto* m=metroModule;if(!m)return;
         int t=m->selectedTrack.load(),s=m->selectedStage.load(),l=m->selectedLane.load(),row=m->selectedRow.load();
         bool mod=m->uiMod.load(),detail=m->uiStageDetail.load();
         auto id=[&](int stage){return mod?Metropolix::modParam(l,Metropolix::MOD_VALUE+stage):Metropolix::stageParam(t,stage,row);};
         bool gates=(mod && m->effectiveModType(l)==metro::ModGate) || (!mod && row==Metropolix::CV && cvGate(m));
+        bool binary=(!mod && (row==Metropolix::SLIDE || row==Metropolix::SKIP)) || gates;
         if(!mod && row>=Metropolix::PITCH_OVERRIDE) {
-            bool pitch=row==Metropolix::PITCH_OVERRIDE;
-            int selected=integer(id(s),-1);
-            std::string label=selected<0?"--":pitch?previewDisplayString(m,id(s)):selected==0?"Rest":string::f("%d%%",selected);
-            if(pitch && pendingConfirmation(m) && label.size()>2 && label.substr(label.size()-2)==" ?")label.resize(label.size()-2);
-            c.valueFit(2,11,36,label,false,true);c.corners(0,0,40,28);c.turnHint(3,18,requiresConfirmation(m,id(s)),pendingConfirmation(m));
-            if(pitch){c.valueFit(2,37,40,"Sync",false,true);c.pressHint(3,43);}
+            stageOverrideGraph(c,t,s,row);
+        } else if(binary) {
+            const uint16_t circle[]={248,260,514,1025,1025,1025,1025,1025,514,260,248};
+            const uint16_t solid[]={248,508,1022,2047,2047,2047,2047,2047,1022,508,248};
+            const uint16_t cross[]={257,130,68,40,16,40,68,130,257};
             for(int i=0;i<8;++i) {
-                int x=44+i*10,v=integer(id(i),-1),h=pitch?int(std::max(0,v)*.7f):int(std::max(0,v)*.42f);
-                bool active=i==s;
-                if(v<0)c.box(x,47,8,3);
-                else if(!pitch && v==0)c.box(x,47,8,3),c.fill(x,48,8,2);
-                else {h=std::max(2,h);c.box(x,48-h,8,h);if(active)c.fill(x,48-h,8,h);}
-                if(active)c.arrow(x+4,1);
-            }
-        } else if((!mod && (row==Metropolix::SLIDE || row==Metropolix::SKIP)) || gates) {
-            for(int i=0;i<8;++i) {
-                int x=8+i*16;bool on=value(id(i))>=(gates?1.5f:.5f);
-                if(!mod && row==Metropolix::SKIP) { if(on){c.line(x-4,21,x+4,29);c.line(x+4,21,x-4,29);}else c.box(x-4,21,9,9); }
-                else c.circle(x,25,5,on);
-                if(mod || row!=Metropolix::CV)c.text(x-2,39,std::to_string(i+1));
-                if(detail && s==i && (mod || row!=Metropolix::CV))c.arrow(x,13);
+                bool on=value(id(i))>=(gates?1.5f:.5f);
+                if(!mod && row==Metropolix::SKIP && on)c.bitmap(3+i*16,22,9,9,cross);
+                else c.bitmap(2+i*16,21,11,11,on && (mod || row!=Metropolix::SKIP)?solid:circle);
             }
         } else if(mod || row==Metropolix::CV) {
-            for(int x=0;x<128;x+=3)c.dot(x,27);
-            auto cv=[&](int stage){return metro::trackCvVoltage(value(id(stage)),m->effectiveCvType(t));};
-            int previous=mod?27:27-static_cast<int>(cv(7)*4.4f);
-            for(int i=0;i<8;++i) {
-                float v=mod?m->effectiveModVoltage(l,value(id(i))):cv(i);
-                int x=7+i*16,y=27-static_cast<int>(v*4.4f);
-                int ramp=mod?integer(Metropolix::modParam(l,Metropolix::MOD_RAMP+i)):integer(Metropolix::cvRampParam(t,i));
-                if(ramp) {
-                    int end=x;
-                    if(!mod && ramp==metro::CvPulseRamp)end=x-16+std::max(2,16/std::max(1,integer(Metropolix::PULSES+i,1)));
-                    c.line(x-16,previous,end,y);if(end<x)c.line(end,y,x,y);
-                }
-                else {c.line(x-16,previous,x-16,y);c.line(x-16,y,x,y);}
-                if((detail && i==s) || m->uiAlt.load())c.box(x-2,y-2,5,5);
-                if(detail && i==s)c.arrow(x,48,false);
-                previous=y;
-            }
-            if(detail) {
-                c.fill(0,0,43,43,0);c.valueFit(2,11,39,mod?modValueLabel(c,l,m->effectiveModVoltage(l,value(id(s)))):string::f("%+.2fV",cv(s)),false,true);c.corners(0,0,43,28);c.turnHint(3,18,requiresConfirmation(m,id(s)),pendingConfirmation(m));
-                int ramp=mod?integer(Metropolix::modParam(l,Metropolix::MOD_RAMP+s)):integer(Metropolix::cvRampParam(t,s));
-                const char* ramps[]={"Step","sRmp","pRmp"};c.valueFit(2,37,40,mod?(ramp?"Ramp":"Step"):ramps[metro::clamp(ramp,0,2)],false,true);
-                c.pressHint(3,43,mod?2:3);
-            }
+            stageCurveGraph(c,t,s,l,mod,detail);
         } else {
-            bool accum=row==Metropolix::ACCUMULATION,prob=row==Metropolix::PROBABILITY;
-            if(detail) {
-                c.valueFit(2,11,36,prob?string::f("%d%%",integer(id(s))):accum?string::f("%d°",integer(id(s))):std::to_string(integer(id(s))),false,true);
-                c.corners(0,0,40,28);c.turnHint(3,18,requiresConfirmation(m,id(s)),pendingConfirmation(m));
-                if(prob || accum){int trigger=integer(Metropolix::stageOption(t,s,prob?Metropolix::PROB_TARGET:Metropolix::ACCUM_TRIGGER));c.valueFit(2,37,40,trigger==0?"Stage":trigger==1?"Pulse":"Ratch",false,true);c.pressHint(3,43,prob?2:3);}
-            }
-            for(int i=0;i<8;++i) {
-                int x=44+i*10;bool selected=detail && (m->uiAlt.load() || i==s);int n=integer(id(i));
-                if(row==Metropolix::RATCHETS){for(int j=0;j<n;++j){c.box(x,46-j*5,8,3);if(selected)c.fill(x,46-j*5,8,3);}}
-                if(prob){int h=static_cast<int>(n*.42f);if(h>0){c.box(x,48-h,8,h);if(selected)c.fill(x,48-h,8,h);}c.fill(x,50,8,2);if(integer(Metropolix::stageOption(t,i,Metropolix::PROB_TARGET)))c.fill(x+3,50,2,2,0);}
-                if(accum){int h=static_cast<int>(std::abs(n)*.7f);int y=n>=0?27-h:27;c.dot(x+4,27);if(h){c.box(x,y,8,h);if(selected)c.fill(x,y,8,h);}}
-                if(selected)c.arrow(x+4,1);
-            }
+            stageValueGraph(c,t,s,row,detail);
         }
         int playing=mod?m->modStage[l].load():m->playStage[t].load();
         if(playing>=0 && integer(Metropolix::SHOW_POSITION,1)) {
             bool narrow=!mod && row!=Metropolix::SLIDE && row!=Metropolix::SKIP && row!=Metropolix::CV;
-            int x=narrow?44+playing*10:2+playing*16;c.line(x,53,x+(narrow?7:10),53);
+            bool curve=!binary && (mod || row==Metropolix::CV);int x=curve && detail?40+playing*11:narrow?42+playing*11:2+playing*16;c.line(x,53,x+(curve && detail?7:narrow?8:10),53);
         }
         if(pendingConfirmation(m))c.text(32,19,"?");
-        if(detail && (mod || row==Metropolix::CV)){
-            int cc=integer(mod?Metropolix::midiModParam(l,Metropolix::MIDI_MOD_CC):Metropolix::midiTrackParam(t,Metropolix::MIDI_CV_CC));
-            if(cc>0){float voltage=mod?m->effectiveModVoltage(l,value(id(s))):metro::trackCvVoltage(value(id(s)),m->effectiveCvType(t));bool bipolar=mod?(m->effectiveModType(l)==metro::ModBipolar):m->effectiveCvType(t)==metro::BipolarCv;c.text(1,48,string::f("CC %d:%d",cc-1,metro::midiVoltage(voltage,bipolar)));}
-        }
-        footer(c,detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
+        footer(c,binary || detail || (!mod && row>=Metropolix::PITCH_OVERRIDE));
     }
     #include "HardwarePitchDisplay.hpp"
     OledCanvas render() const {
