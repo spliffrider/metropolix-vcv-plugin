@@ -24,7 +24,7 @@ void stageOverrideGraph(OledCanvas& c,int track,int selected,int row) const {
         if(n<0){for(int dx=0;dx<9;dx+=2)c.dot(x+dx,50);}
         else if(!pitch && n==0){c.line(x,50,x+8,50);c.line(x,49,x,51);c.line(x+8,49,x+8,51);}
         else {
-            int top=pitch?int((60-metro::clamp(n,0,60))*51.f/61.f):51-std::max(1,int(metro::clamp(n,1,100)*51.f/100.f));
+            int top=pitch?(60-metro::clamp(n,0,60))*51/61:51-std::max(1,metro::clamp(n,1,100)*51/100);
             int height=51-top;c.box(x,top,9,height);if(active)c.fill(x,top,9,height);
         }
         if(active)stageSelectionArrow(c,x+4,1);
@@ -41,11 +41,11 @@ void stageValueGraph(OledCanvas& c,int track,int selected,int row,bool detail) c
         int x=42+stage*11,n=integer(id(stage));bool active=detail && (m->uiAlt.load() || stage==selected);
         if(row==Metropolix::RATCHETS)for(int step=0;step<metro::clamp(n,1,8);++step){c.box(x,47-step*6,9,4);if(active)c.fill(x,47-step*6,9,4);}
         if(prob) {
-            int height=std::max(3,int(metro::clamp(n,0,100)*46.f/100.f));c.box(x,46-height,9,height);if(active)c.fill(x,46-height,9,height);
+            int height=std::max(3,metro::clamp(n,0,100)*46/100);c.box(x,46-height,9,height);if(active)c.fill(x,46-height,9,height);
             c.fill(x,48,9,3);if(integer(Metropolix::stageOption(track,stage,Metropolix::PROB_TARGET)))c.fill(x+4,48,1,3,0);
         }
         if(accum) {
-            int height=int(std::abs(metro::clamp(n,-28,28))*22.f/28.f),y=n>=0?22-height:29;
+            int height=std::abs(metro::clamp(n,-28,28))*22/28,y=n>=0?22-height:29;
             if(height){c.box(x,y,9,height);if(active)c.fill(x,y,9,height);}
             int trigger=metro::clamp(integer(Metropolix::stageOption(track,stage,Metropolix::ACCUM_TRIGGER)),0,2);const uint16_t marks[]={341,495,511};const uint16_t rows[]={marks[trigger],marks[trigger],marks[trigger]};c.bitmap(x,24,9,3,rows);
         }
